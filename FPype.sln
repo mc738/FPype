@@ -1,0 +1,27 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "FPype", "FPype\FPype.fsproj", "{C0D6F472-AFB1-43C1-99D5-82E87DC8E062}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "_external", "_external", "{115FA2F3-BE8F-4559-A0B2-F44BEB6DEB2A}"
+EndProject
+Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "ToolBox", "..\ToolBox\ToolBox\ToolBox.fsproj", "{D1A71835-4236-4B1A-B754-BFE66F60A23F}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{C0D6F472-AFB1-43C1-99D5-82E87DC8E062}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C0D6F472-AFB1-43C1-99D5-82E87DC8E062}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C0D6F472-AFB1-43C1-99D5-82E87DC8E062}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C0D6F472-AFB1-43C1-99D5-82E87DC8E062}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D1A71835-4236-4B1A-B754-BFE66F60A23F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D1A71835-4236-4B1A-B754-BFE66F60A23F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D1A71835-4236-4B1A-B754-BFE66F60A23F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D1A71835-4236-4B1A-B754-BFE66F60A23F}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{D1A71835-4236-4B1A-B754-BFE66F60A23F} = {115FA2F3-BE8F-4559-A0B2-F44BEB6DEB2A}
+	EndGlobalSection
+EndGlobal

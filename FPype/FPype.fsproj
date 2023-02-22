@@ -1,0 +1,34 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net6.0</TargetFramework>
+        <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <Compile Include="Core\Types.fs" />
+        <Compile Include="Core\Paths.fs" />
+        <Compile Include="Core\JPath.fs" />
+        <Compile Include="Core\Queries.fs" />
+        <Compile Include="Data\Models.fs" />
+        <Compile Include="Data\Store.fs" />
+        <Compile Include="Data\Grouping.fs" />
+        <Compile Include="Actions\Import.fs" />
+        <Compile Include="Actions\Extract.fs" />
+        <Compile Include="Actions\Transform.fs" />
+        <Compile Include="Configuration\Persistence.fs" />
+        <Compile Include="Configuration\Impl.fs" />
+        <Compile Include="Common.fs" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\..\ToolBox\ToolBox\ToolBox.fsproj" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <PackageReference Include="Freql.Csv" Version="0.8.2" />
+      <PackageReference Include="freql.mysql" Version="0.8.2" />
+      <PackageReference Include="freql.sqlite" Version="0.8.2" />
+    </ItemGroup>
+
+</Project>
