@@ -232,9 +232,7 @@ module Records =
               table_columns.`column_index`
         FROM table_columns
         """
-    
-        static member TableName() = "table_columns"
-    
+   
     /// A record representing a row in the table `table_models`.
     type TableModel =
         { [<JsonPropertyName("name")>] Name: string }

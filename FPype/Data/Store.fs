@@ -7,6 +7,7 @@ module Store =
     open Microsoft.Data.Sqlite
     open Freql.Sqlite
     open Freql.Core.Common.Types
+    open FsToolbox.Extensions
     open FPype.Core.Types
     open Models
     
@@ -74,6 +75,17 @@ module Store =
         );
         """
         
+        let resourcesTableSql =
+            """
+        CREATE TABLE __resources (
+            name TEXT NOT NULL,
+            type TEXT NOT NULL,
+            data BLOB NOT NULL,
+            hash TEXT NOT NULL,
+            CONSTRAINT __resources_PK PRIMARY KEY (name)
+        );
+        """
+        
         (*
         let contextTableSql =
             """
@@ -92,7 +104,8 @@ module Store =
           Internal.dataSourcesTableSql
           Internal.artifactsTableSql
           Internal.importErrorsTableSql
-          Internal.logTableSql ]
+          Internal.logTableSql
+          Internal.resourcesTableSql ]
         |> List.map ctx.ExecuteSqlNonQuery
         |> ignore
 
@@ -108,6 +121,12 @@ module Store =
           Type: string
           Data: BlobField }
 
+    type Resource =
+        { Name: string
+          Type: string
+          Data: BlobField
+          Hash: string }
+    
     type ActionResult =
         { Step: string
           Result: string
@@ -161,6 +180,23 @@ module Store =
             [ box name ]
         )
 
+    let addResource (ctx: SqliteContext) (name: string) (resourceType: string) (raw: MemoryStream) =
+        let hash = raw.GetSHA256Hash()
+        
+        ({
+            Name = name
+            Type = resourceType
+            Data = BlobField.FromBytes raw
+            Hash = hash
+        }: Resource)
+        |> fun r -> ctx.Insert("__resources", r)
+        
+    let getResource (ctx: SqliteContext) (name: string) =
+        ctx.SelectSingleAnon<Resource>(
+            "SELECT name, type, data, hash FROM __resources WHERE name = @0;",
+            [ box name ]
+        )
+    
     let addResult (ctx: SqliteContext) (result: ActionResult) = ctx.Insert("__run_state", result)
 
     let addImportError (ctx: SqliteContext) (error: ImportError) = ctx.Insert("__import_errors", error)

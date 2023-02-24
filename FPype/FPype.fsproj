@@ -10,6 +10,7 @@
         <Compile Include="Core\Paths.fs" />
         <Compile Include="Core\JPath.fs" />
         <Compile Include="Core\Queries.fs" />
+        <Compile Include="Data\Resources\Grok.fs" />
         <Compile Include="Data\Models.fs" />
         <Compile Include="Data\Store.fs" />
         <Compile Include="Data\Grouping.fs" />
@@ -22,13 +23,10 @@
     </ItemGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\..\ToolBox\ToolBox\ToolBox.fsproj" />
-    </ItemGroup>
-
-    <ItemGroup>
       <PackageReference Include="Freql.Csv" Version="0.8.2" />
       <PackageReference Include="freql.mysql" Version="0.8.2" />
       <PackageReference Include="freql.sqlite" Version="0.8.2" />
+      <PackageReference Include="FsToolbox" Version="0.1.1" />
     </ItemGroup>
 
 </Project>

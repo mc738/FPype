@@ -4,7 +4,7 @@ module JPath =
       
     open System
     open System.Text.Json
-    open ToolBox.Core
+    open FsToolbox.Core
     open FPype.Core.Paths
     
     type JPathSelector =

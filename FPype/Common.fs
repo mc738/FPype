@@ -4,10 +4,11 @@
     open System.IO
     open System.Text.Json
     open FPype.Actions
+    open FPype.Configuration
     open FPype.Core.Types
     open FPype.Data.Models
     open FPype.Data.Store
-    open ToolBox.Core
+    open FsToolbox.Core
 
     module Serialization =
 

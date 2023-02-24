@@ -12,7 +12,7 @@ open FPype.Data.Store
 open FPype.Configuration.Persistence
 open Freql.Core.Common.Types
 open Freql.Sqlite
-open ToolBox.Core
+open FsToolbox.Core
 
 type PipelineAction =
     { Name: string

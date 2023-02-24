@@ -2,7 +2,7 @@
 
 open System.Text.Json
 open FPype.Core.Types
-open ToolBox.Core
+open FsToolbox.Core
 
 module Models =
     
