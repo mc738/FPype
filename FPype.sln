@@ -8,6 +8,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Documentation", "Documentat
 		README.md = README.md
 	EndProjectSection
 EndProject
+Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "FPype.App", "FPype.App\FPype.App.fsproj", "{8E074341-9199-475D-8728-C6254B174184}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -18,6 +20,10 @@ Global
 		{C0D6F472-AFB1-43C1-99D5-82E87DC8E062}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{C0D6F472-AFB1-43C1-99D5-82E87DC8E062}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{C0D6F472-AFB1-43C1-99D5-82E87DC8E062}.Release|Any CPU.Build.0 = Release|Any CPU
+		{8E074341-9199-475D-8728-C6254B174184}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{8E074341-9199-475D-8728-C6254B174184}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{8E074341-9199-475D-8728-C6254B174184}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{8E074341-9199-475D-8728-C6254B174184}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
 	EndGlobalSection

@@ -1,8 +1,10 @@
 ﻿namespace FPype.Actions
 
+open System.Text.Json
 open FPype.Core.Types
 open FPype.Data.Models
 open FPype.Data.Store
+open FsToolbox.Core
 open FsToolbox.Tools
 
 [<RequireQualifiedAccess>]
@@ -159,32 +161,51 @@ module Extract =
             store.Log("parse_csv", $"Imported {r.Length} row(s) to table `{tableName}`.")
             store)
 
-    let grok (name: string) (columns: TableColumn list) (tableName: string) (store: PipelineStore) =
-        //store
+    [<RequireQualifiedAccess>]
+    module Grok =
+        
+        let name = "grok"
         
         
-        let grok = Grok.create ([] |> Map.ofList) ""
+        let run (name: string) (columns: TableColumn list) (tableName: string) (store: PipelineStore) =
+            //store
+            
+            
+            let grok = Grok.create ([] |> Map.ofList) ""
+            
+            store.GetDataSource name
+            |> Option.map (fun ds ->
+                match ds.Type with
+                | "file" ->
+                    try
+                        File.ReadAllLines ds.Uri |> Ok
+                    with
+                    | exn -> Error $"Could not load file `{ds.Uri}`: {exn.Message}"
+                | _ -> Error $"Unsupported source type: `{ds.Type}`")
+            |> Option.defaultWith (fun _ -> Error $"Data source `{name}` not found.")
+            |> Result.map (Internal.createGrokRows columns grok)
+            |> Result.bind (fun r ->
+                match r.Errors |> List.isEmpty |> not with
+                | true ->
+                    store.LogWarning("grok", $"Error parsing {r.Errors.Length} row(s)")
+                    r.Errors |> List.map (fun e -> store.AddImportError("parse_csv", e.Message, $"{e.LineNumber}:{e.ColumnNumber} - {e.Line}")) |> ignore
+                | false -> ()
+                store.CreateTable(tableName, columns)
+                |> fun t -> { t with Rows = r.Rows }
+                |> store.InsertRows)
+            |> Result.map (fun r ->
+                store.Log("grok", $"Imported {r.Length} row(s) to table `{tableName}`.")
+                store) 
         
-        store.GetDataSource name
-        |> Option.map (fun ds ->
-            match ds.Type with
-            | "file" ->
-                try
-                    File.ReadAllLines ds.Uri |> Ok
-                with
-                | exn -> Error $"Could not load file `{ds.Uri}`: {exn.Message}"
-            | _ -> Error $"Unsupported source type: `{ds.Type}`")
-        |> Option.defaultWith (fun _ -> Error $"Data source `{name}` not found.")
-        |> Result.map (Internal.createGrokRows columns grok)
-        |> Result.bind (fun r ->
-            match r.Errors |> List.isEmpty |> not with
-            | true ->
-                store.LogWarning("grok", $"Error parsing {r.Errors.Length} row(s)")
-                r.Errors |> List.map (fun e -> store.AddImportError("parse_csv", e.Message, $"{e.LineNumber}:{e.ColumnNumber} - {e.Line}")) |> ignore
-            | false -> ()
-            store.CreateTable(tableName, columns)
-            |> fun t -> { t with Rows = r.Rows }
-            |> store.InsertRows)
-        |> Result.map (fun r ->
-            store.Log("grok", $"Imported {r.Length} row(s) to table `{tableName}`.")
-            store) 
+        let deserialize (element: JsonElement) =
+            match Json.tryGetStringProperty "source" element, Json.tryGetStringProperty "table" element with
+            | Some source, Some tableName ->
+                Tables.getTable ctx tableName
+                |> Option.map (fun t ->
+                    Tables.createColumns ctx t.Name
+                    |> Result.map (fun tc -> run source tc t.Name))
+                |> Option.defaultValue (Error $"Table `{tableName}` not found")
+            | None, _ -> Error "Missing source property"
+            | _, None -> Error "Missing table property"
+        
+        

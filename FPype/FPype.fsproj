@@ -14,10 +14,17 @@
         <Compile Include="Data\Models.fs" />
         <Compile Include="Data\Store.fs" />
         <Compile Include="Data\Grouping.fs" />
+        <Compile Include="Actions\Common.fs" />
         <Compile Include="Actions\Import.fs" />
         <Compile Include="Actions\Extract.fs" />
         <Compile Include="Actions\Transform.fs" />
         <Compile Include="Configuration\Persistence.fs" />
+        <Compile Include="Configuration\Common.fs" />
+        <Compile Include="Configuration\Tables.fs" />
+        <Compile Include="Configuration\Queries.fs" />
+        <Compile Include="Configuration\ObjectMappers.fs" />
+        <Compile Include="Configuration\Groups.fs" />
+        <Compile Include="Configuration\Actions.fs" />
         <Compile Include="Configuration\Impl.fs" />
         <Compile Include="Common.fs" />
     </ItemGroup>
