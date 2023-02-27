@@ -72,13 +72,13 @@ module Tables =
     let getTable (ctx: SqliteContext) (tableName: string) =
         Operations.selectTableModelRecord ctx [ "WHERE name = @0" ] [ tableName ]
 
-    let getTableVersion (ctx: SqliteContext) (tableName: string) (version: int) =
+    let getVersion (ctx: SqliteContext) (tableName: string) (version: int) =
         Operations.selectTableModelVersionRecord
             ctx
             [ "WHERE table_model = @0 AND version = @1;" ]
             [ tableName; version ]
 
-    let getLatestTableVersion (ctx: SqliteContext) (tableName: string) =
+    let getLatestVersion (ctx: SqliteContext) (tableName: string) =
         Operations.selectTableModelVersionRecord
             ctx
             [ "WHERE table_model = @0 ORDER BY version DESC LIMIT 1;" ]
@@ -86,8 +86,8 @@ module Tables =
 
     let tryCreateTableModel (ctx: SqliteContext) (tableName: string) (version: ItemVersion) =
         match version with
-        | Latest -> getLatestTableVersion ctx tableName
-        | Specific v -> getTableVersion ctx tableName v
+        | Latest -> getLatestVersion ctx tableName
+        | Specific v -> getVersion ctx tableName v
         |> Option.map (fun tv ->
             createColumns ctx tv.Id
             |> Result.map (fun tc ->

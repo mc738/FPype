@@ -22,7 +22,7 @@
         <Compile Include="Configuration\Common.fs" />
         <Compile Include="Configuration\Tables.fs" />
         <Compile Include="Configuration\Queries.fs" />
-        <Compile Include="Configuration\ObjectMappers.fs" />
+        <Compile Include="Configuration\TableObjectMappers.fs" />
         <Compile Include="Configuration\Groups.fs" />
         <Compile Include="Configuration\Actions.fs" />
         <Compile Include="Configuration\Serialization.fs" />

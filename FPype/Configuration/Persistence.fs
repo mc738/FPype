@@ -5,7 +5,7 @@ open System.Text.Json.Serialization
 open Freql.Core.Common
 open Freql.Sqlite
 
-/// Module generated on 26/02/2023 14:30:00 (utc) via Freql.Sqlite.Tools.
+/// Module generated on 27/02/2023 20:05:15 (utc) via Freql.Sqlite.Tools.
 [<RequireQualifiedAccess>]
 module Records =
     /// A record representing a row in the table `action_types`.
@@ -30,95 +30,7 @@ module Records =
     
         static member TableName() = "action_types"
     
-    /// A record representing a row in the table `object_mapper_versions`.
-    type ObjectMapperVersion =
-        { [<JsonPropertyName("id")>] Id: string
-          [<JsonPropertyName("objectMapper")>] ObjectMapper: string
-          [<JsonPropertyName("version")>] Version: int
-          [<JsonPropertyName("mapper")>] Mapper: BlobField
-          [<JsonPropertyName("hash")>] Hash: string
-          [<JsonPropertyName("createdOn")>] CreatedOn: DateTime option }
-    
-        static member Blank() =
-            { Id = String.Empty
-              ObjectMapper = String.Empty
-              Version = 0
-              Mapper = BlobField.Empty()
-              Hash = String.Empty
-              CreatedOn = None }
-    
-        static member CreateTableSql() = """
-        CREATE TABLE object_mapper_versions (
-	id TEXT NOT NULL,
-    object_mapper TEXT NOT NULL,
-	version INTEGER NOT NULL,
-	mapper BLOB NOT NULL,
-	hash TEXT NOT NULL,
-	created_on INTEGER,
-	CONSTRAINT object_mapper_versions_PK PRIMARY KEY (id),
-	CONSTRAINT object_mapper_versions_UN UNIQUE (object_mapper,version),
-	CONSTRAINT object_mapper_versions_FK FOREIGN KEY (object_mapper) REFERENCES object_mappers(name)
-)
-        """
-    
-        static member SelectSql() = """
-        SELECT
-              object_mapper_versions.`id`,
-              object_mapper_versions.`object_mapper`,
-              object_mapper_versions.`version`,
-              object_mapper_versions.`mapper`,
-              object_mapper_versions.`hash`,
-              object_mapper_versions.`created_on`
-        FROM object_mapper_versions
-        """
-    
-        static member TableName() = "object_mapper_versions"
-    
-    /// A record representing a row in the table `object_mappers`.
-    type ObjectMapper =
-        { [<JsonPropertyName("name")>] Name: string }
-    
-        static member Blank() =
-            { Name = String.Empty }
-    
-        static member CreateTableSql() = """
-        CREATE TABLE object_mappers (
-	name TEXT NOT NULL,
-	CONSTRAINT object_mappers_PK PRIMARY KEY (name)
-)
-        """
-    
-        static member SelectSql() = """
-        SELECT
-              object_mappers.`name`
-        FROM object_mappers
-        """
-    
-        static member TableName() = "object_mappers"
-    
-    /// A record representing a row in the table `object_table_mapper`.
-    type ObjectTableMapper =
-        { [<JsonPropertyName("name")>] Name: string }
-    
-        static member Blank() =
-            { Name = String.Empty }
-    
-        static member CreateTableSql() = """
-        CREATE TABLE object_table_mapper (
-	name TEXT NOT NULL,
-	CONSTRAINT object_table_mapper_PK PRIMARY KEY (name)
-)
-        """
-    
-        static member SelectSql() = """
-        SELECT
-              object_table_mapper.`name`
-        FROM object_table_mapper
-        """
-    
-        static member TableName() = "object_table_mapper"
-    
-    /// A record representing a row in the table `object_table_mapper_version`.
+    /// A record representing a row in the table `object_table_mapper_versions`.
     type ObjectTableMapperVersion =
         { [<JsonPropertyName("id")>] Id: string
           [<JsonPropertyName("objectTableMapper")>] ObjectTableMapper: string
@@ -138,7 +50,7 @@ module Records =
               CreatedOn = DateTime.UtcNow }
     
         static member CreateTableSql() = """
-        CREATE TABLE object_table_mapper_version (
+        CREATE TABLE object_table_mapper_versions (
 	id TEXT NOT NULL,
 	object_table_mapper TEXT NOT NULL,
 	version INTEGER NOT NULL,
@@ -146,26 +58,26 @@ module Records =
 	mapper BLOB NOT NULL,
 	hash TEXT NOT NULL,
 	created_on TEXT NOT NULL,
-	CONSTRAINT object_table_mapper_version_PK PRIMARY KEY (id),
-	CONSTRAINT object_table_mapper_version_UN UNIQUE (object_table_mapper,version),
-	CONSTRAINT object_table_mapper_version_FK FOREIGN KEY (object_table_mapper) REFERENCES object_table_mapper(name),
-	CONSTRAINT object_table_mapper_version_FK_2 FOREIGN KEY (table_model_version_id) REFERENCES table_model_versions(id)
+	CONSTRAINT object_table_mapper_versions_PK PRIMARY KEY (id),
+	CONSTRAINT object_table_mapper_versions_UN UNIQUE (object_table_mapper,version),
+	CONSTRAINT object_table_mapper_versions_FK FOREIGN KEY (object_table_mapper) REFERENCES object_table_mappers(name),
+	CONSTRAINT object_table_mapper_versions_FK_2 FOREIGN KEY (table_model_version_id) REFERENCES table_model_versions(id)
 )
         """
     
         static member SelectSql() = """
         SELECT
-              object_table_mapper_version.`id`,
-              object_table_mapper_version.`object_table_mapper`,
-              object_table_mapper_version.`version`,
-              object_table_mapper_version.`table_model_version_id`,
-              object_table_mapper_version.`mapper`,
-              object_table_mapper_version.`hash`,
-              object_table_mapper_version.`created_on`
-        FROM object_table_mapper_version
+              object_table_mapper_versions.`id`,
+              object_table_mapper_versions.`object_table_mapper`,
+              object_table_mapper_versions.`version`,
+              object_table_mapper_versions.`table_model_version_id`,
+              object_table_mapper_versions.`mapper`,
+              object_table_mapper_versions.`hash`,
+              object_table_mapper_versions.`created_on`
+        FROM object_table_mapper_versions
         """
     
-        static member TableName() = "object_table_mapper_version"
+        static member TableName() = "object_table_mapper_versions"
     
     /// A record representing a row in the table `pipeline_actions`.
     type PipelineAction =
@@ -595,8 +507,74 @@ module Records =
     
         static member TableName() = "table_models"
     
+    /// A record representing a row in the table `table_object_mapper_versions`.
+    type TableObjectMapperVersion =
+        { [<JsonPropertyName("id")>] Id: string
+          [<JsonPropertyName("tableObjectMapper")>] TableObjectMapper: string
+          [<JsonPropertyName("version")>] Version: int
+          [<JsonPropertyName("mapper")>] Mapper: BlobField
+          [<JsonPropertyName("hash")>] Hash: string
+          [<JsonPropertyName("createdOn")>] CreatedOn: DateTime }
+    
+        static member Blank() =
+            { Id = String.Empty
+              TableObjectMapper = String.Empty
+              Version = 0
+              Mapper = BlobField.Empty()
+              Hash = String.Empty
+              CreatedOn = DateTime.UtcNow }
+    
+        static member CreateTableSql() = """
+        CREATE TABLE table_object_mapper_versions (
+	id TEXT NOT NULL,
+    table_object_mapper TEXT NOT NULL,
+	version INTEGER NOT NULL,
+	mapper BLOB NOT NULL,
+	hash TEXT NOT NULL,
+	created_on TEXT NOT NULL,
+	CONSTRAINT table_object_mapper_versions_PK PRIMARY KEY (id),
+	CONSTRAINT table_object_mapper_versions_UN UNIQUE (table_object_mapper,version),
+	CONSTRAINT table_object_mapper_versions_FK FOREIGN KEY (table_object_mapper) REFERENCES table_object_mappers(name)
+)
+        """
+    
+        static member SelectSql() = """
+        SELECT
+              table_object_mapper_versions.`id`,
+              table_object_mapper_versions.`table_object_mapper`,
+              table_object_mapper_versions.`version`,
+              table_object_mapper_versions.`mapper`,
+              table_object_mapper_versions.`hash`,
+              table_object_mapper_versions.`created_on`
+        FROM table_object_mapper_versions
+        """
+    
+        static member TableName() = "table_object_mapper_versions"
+    
+    /// A record representing a row in the table `table_object_mappers`.
+    type TableObjectMapper =
+        { [<JsonPropertyName("name")>] Name: string }
+    
+        static member Blank() =
+            { Name = String.Empty }
+    
+        static member CreateTableSql() = """
+        CREATE TABLE table_object_mappers (
+	name TEXT NOT NULL,
+	CONSTRAINT table_object_mappers_PK PRIMARY KEY (name)
+)
+        """
+    
+        static member SelectSql() = """
+        SELECT
+              table_object_mappers.`name`
+        FROM table_object_mappers
+        """
+    
+        static member TableName() = "table_object_mappers"
+    
 
-/// Module generated on 26/02/2023 14:30:00 (utc) via Freql.Tools.
+/// Module generated on 27/02/2023 20:05:15 (utc) via Freql.Tools.
 [<RequireQualifiedAccess>]
 module Parameters =
     /// A record representing a new row in the table `action_types`.
@@ -607,41 +585,7 @@ module Parameters =
             { Name = String.Empty }
     
     
-    /// A record representing a new row in the table `object_mapper_versions`.
-    type NewObjectMapperVersion =
-        { [<JsonPropertyName("id")>] Id: string
-          [<JsonPropertyName("objectMapper")>] ObjectMapper: string
-          [<JsonPropertyName("version")>] Version: int
-          [<JsonPropertyName("mapper")>] Mapper: BlobField
-          [<JsonPropertyName("hash")>] Hash: string
-          [<JsonPropertyName("createdOn")>] CreatedOn: DateTime option }
-    
-        static member Blank() =
-            { Id = String.Empty
-              ObjectMapper = String.Empty
-              Version = 0
-              Mapper = BlobField.Empty()
-              Hash = String.Empty
-              CreatedOn = None }
-    
-    
-    /// A record representing a new row in the table `object_mappers`.
-    type NewObjectMapper =
-        { [<JsonPropertyName("name")>] Name: string }
-    
-        static member Blank() =
-            { Name = String.Empty }
-    
-    
-    /// A record representing a new row in the table `object_table_mapper`.
-    type NewObjectTableMapper =
-        { [<JsonPropertyName("name")>] Name: string }
-    
-        static member Blank() =
-            { Name = String.Empty }
-    
-    
-    /// A record representing a new row in the table `object_table_mapper_version`.
+    /// A record representing a new row in the table `object_table_mapper_versions`.
     type NewObjectTableMapperVersion =
         { [<JsonPropertyName("id")>] Id: string
           [<JsonPropertyName("objectTableMapper")>] ObjectTableMapper: string
@@ -831,7 +775,33 @@ module Parameters =
             { Name = String.Empty }
     
     
-/// Module generated on 26/02/2023 14:30:00 (utc) via Freql.Tools.
+    /// A record representing a new row in the table `table_object_mapper_versions`.
+    type NewTableObjectMapperVersion =
+        { [<JsonPropertyName("id")>] Id: string
+          [<JsonPropertyName("tableObjectMapper")>] TableObjectMapper: string
+          [<JsonPropertyName("version")>] Version: int
+          [<JsonPropertyName("mapper")>] Mapper: BlobField
+          [<JsonPropertyName("hash")>] Hash: string
+          [<JsonPropertyName("createdOn")>] CreatedOn: DateTime }
+    
+        static member Blank() =
+            { Id = String.Empty
+              TableObjectMapper = String.Empty
+              Version = 0
+              Mapper = BlobField.Empty()
+              Hash = String.Empty
+              CreatedOn = DateTime.UtcNow }
+    
+    
+    /// A record representing a new row in the table `table_object_mappers`.
+    type NewTableObjectMapper =
+        { [<JsonPropertyName("name")>] Name: string }
+    
+        static member Blank() =
+            { Name = String.Empty }
+    
+    
+/// Module generated on 27/02/2023 20:05:15 (utc) via Freql.Tools.
 [<RequireQualifiedAccess>]
 module Operations =
 
@@ -861,79 +831,7 @@ module Operations =
     let insertActionType (context: SqliteContext) (parameters: Parameters.NewActionType) =
         context.Insert("action_types", parameters)
     
-    /// Select a `Records.ObjectMapperVersion` from the table `object_mapper_versions`.
-    /// Internally this calls `context.SelectSingleAnon<Records.ObjectMapperVersion>` and uses Records.ObjectMapperVersion.SelectSql().
-    /// The caller can provide extra string lines to create a query and boxed parameters.
-    /// It is up to the caller to verify the sql and parameters are correct,
-    /// this should be considered an internal function (not exposed in public APIs).
-    /// Parameters are assigned names based on their order in 0 indexed array. For example: @0,@1,@2...
-    /// Example: selectObjectMapperVersionRecord ctx "WHERE `field` = @0" [ box `value` ]
-    let selectObjectMapperVersionRecord (context: SqliteContext) (query: string list) (parameters: obj list) =
-        let sql = [ Records.ObjectMapperVersion.SelectSql() ] @ query |> buildSql
-        context.SelectSingleAnon<Records.ObjectMapperVersion>(sql, parameters)
-    
-    /// Internally this calls `context.SelectAnon<Records.ObjectMapperVersion>` and uses Records.ObjectMapperVersion.SelectSql().
-    /// The caller can provide extra string lines to create a query and boxed parameters.
-    /// It is up to the caller to verify the sql and parameters are correct,
-    /// this should be considered an internal function (not exposed in public APIs).
-    /// Parameters are assigned names based on their order in 0 indexed array. For example: @0,@1,@2...
-    /// Example: selectObjectMapperVersionRecords ctx "WHERE `field` = @0" [ box `value` ]
-    let selectObjectMapperVersionRecords (context: SqliteContext) (query: string list) (parameters: obj list) =
-        let sql = [ Records.ObjectMapperVersion.SelectSql() ] @ query |> buildSql
-        context.SelectAnon<Records.ObjectMapperVersion>(sql, parameters)
-    
-    let insertObjectMapperVersion (context: SqliteContext) (parameters: Parameters.NewObjectMapperVersion) =
-        context.Insert("object_mapper_versions", parameters)
-    
-    /// Select a `Records.ObjectMapper` from the table `object_mappers`.
-    /// Internally this calls `context.SelectSingleAnon<Records.ObjectMapper>` and uses Records.ObjectMapper.SelectSql().
-    /// The caller can provide extra string lines to create a query and boxed parameters.
-    /// It is up to the caller to verify the sql and parameters are correct,
-    /// this should be considered an internal function (not exposed in public APIs).
-    /// Parameters are assigned names based on their order in 0 indexed array. For example: @0,@1,@2...
-    /// Example: selectObjectMapperRecord ctx "WHERE `field` = @0" [ box `value` ]
-    let selectObjectMapperRecord (context: SqliteContext) (query: string list) (parameters: obj list) =
-        let sql = [ Records.ObjectMapper.SelectSql() ] @ query |> buildSql
-        context.SelectSingleAnon<Records.ObjectMapper>(sql, parameters)
-    
-    /// Internally this calls `context.SelectAnon<Records.ObjectMapper>` and uses Records.ObjectMapper.SelectSql().
-    /// The caller can provide extra string lines to create a query and boxed parameters.
-    /// It is up to the caller to verify the sql and parameters are correct,
-    /// this should be considered an internal function (not exposed in public APIs).
-    /// Parameters are assigned names based on their order in 0 indexed array. For example: @0,@1,@2...
-    /// Example: selectObjectMapperRecords ctx "WHERE `field` = @0" [ box `value` ]
-    let selectObjectMapperRecords (context: SqliteContext) (query: string list) (parameters: obj list) =
-        let sql = [ Records.ObjectMapper.SelectSql() ] @ query |> buildSql
-        context.SelectAnon<Records.ObjectMapper>(sql, parameters)
-    
-    let insertObjectMapper (context: SqliteContext) (parameters: Parameters.NewObjectMapper) =
-        context.Insert("object_mappers", parameters)
-    
-    /// Select a `Records.ObjectTableMapper` from the table `object_table_mapper`.
-    /// Internally this calls `context.SelectSingleAnon<Records.ObjectTableMapper>` and uses Records.ObjectTableMapper.SelectSql().
-    /// The caller can provide extra string lines to create a query and boxed parameters.
-    /// It is up to the caller to verify the sql and parameters are correct,
-    /// this should be considered an internal function (not exposed in public APIs).
-    /// Parameters are assigned names based on their order in 0 indexed array. For example: @0,@1,@2...
-    /// Example: selectObjectTableMapperRecord ctx "WHERE `field` = @0" [ box `value` ]
-    let selectObjectTableMapperRecord (context: SqliteContext) (query: string list) (parameters: obj list) =
-        let sql = [ Records.ObjectTableMapper.SelectSql() ] @ query |> buildSql
-        context.SelectSingleAnon<Records.ObjectTableMapper>(sql, parameters)
-    
-    /// Internally this calls `context.SelectAnon<Records.ObjectTableMapper>` and uses Records.ObjectTableMapper.SelectSql().
-    /// The caller can provide extra string lines to create a query and boxed parameters.
-    /// It is up to the caller to verify the sql and parameters are correct,
-    /// this should be considered an internal function (not exposed in public APIs).
-    /// Parameters are assigned names based on their order in 0 indexed array. For example: @0,@1,@2...
-    /// Example: selectObjectTableMapperRecords ctx "WHERE `field` = @0" [ box `value` ]
-    let selectObjectTableMapperRecords (context: SqliteContext) (query: string list) (parameters: obj list) =
-        let sql = [ Records.ObjectTableMapper.SelectSql() ] @ query |> buildSql
-        context.SelectAnon<Records.ObjectTableMapper>(sql, parameters)
-    
-    let insertObjectTableMapper (context: SqliteContext) (parameters: Parameters.NewObjectTableMapper) =
-        context.Insert("object_table_mapper", parameters)
-    
-    /// Select a `Records.ObjectTableMapperVersion` from the table `object_table_mapper_version`.
+    /// Select a `Records.ObjectTableMapperVersion` from the table `object_table_mapper_versions`.
     /// Internally this calls `context.SelectSingleAnon<Records.ObjectTableMapperVersion>` and uses Records.ObjectTableMapperVersion.SelectSql().
     /// The caller can provide extra string lines to create a query and boxed parameters.
     /// It is up to the caller to verify the sql and parameters are correct,
@@ -955,7 +853,7 @@ module Operations =
         context.SelectAnon<Records.ObjectTableMapperVersion>(sql, parameters)
     
     let insertObjectTableMapperVersion (context: SqliteContext) (parameters: Parameters.NewObjectTableMapperVersion) =
-        context.Insert("object_table_mapper_version", parameters)
+        context.Insert("object_table_mapper_versions", parameters)
     
     /// Select a `Records.PipelineAction` from the table `pipeline_actions`.
     /// Internally this calls `context.SelectSingleAnon<Records.PipelineAction>` and uses Records.PipelineAction.SelectSql().
@@ -1244,4 +1142,52 @@ module Operations =
     
     let insertTableModel (context: SqliteContext) (parameters: Parameters.NewTableModel) =
         context.Insert("table_models", parameters)
+    
+    /// Select a `Records.TableObjectMapperVersion` from the table `table_object_mapper_versions`.
+    /// Internally this calls `context.SelectSingleAnon<Records.TableObjectMapperVersion>` and uses Records.TableObjectMapperVersion.SelectSql().
+    /// The caller can provide extra string lines to create a query and boxed parameters.
+    /// It is up to the caller to verify the sql and parameters are correct,
+    /// this should be considered an internal function (not exposed in public APIs).
+    /// Parameters are assigned names based on their order in 0 indexed array. For example: @0,@1,@2...
+    /// Example: selectTableObjectMapperVersionRecord ctx "WHERE `field` = @0" [ box `value` ]
+    let selectTableObjectMapperVersionRecord (context: SqliteContext) (query: string list) (parameters: obj list) =
+        let sql = [ Records.TableObjectMapperVersion.SelectSql() ] @ query |> buildSql
+        context.SelectSingleAnon<Records.TableObjectMapperVersion>(sql, parameters)
+    
+    /// Internally this calls `context.SelectAnon<Records.TableObjectMapperVersion>` and uses Records.TableObjectMapperVersion.SelectSql().
+    /// The caller can provide extra string lines to create a query and boxed parameters.
+    /// It is up to the caller to verify the sql and parameters are correct,
+    /// this should be considered an internal function (not exposed in public APIs).
+    /// Parameters are assigned names based on their order in 0 indexed array. For example: @0,@1,@2...
+    /// Example: selectTableObjectMapperVersionRecords ctx "WHERE `field` = @0" [ box `value` ]
+    let selectTableObjectMapperVersionRecords (context: SqliteContext) (query: string list) (parameters: obj list) =
+        let sql = [ Records.TableObjectMapperVersion.SelectSql() ] @ query |> buildSql
+        context.SelectAnon<Records.TableObjectMapperVersion>(sql, parameters)
+    
+    let insertTableObjectMapperVersion (context: SqliteContext) (parameters: Parameters.NewTableObjectMapperVersion) =
+        context.Insert("table_object_mapper_versions", parameters)
+    
+    /// Select a `Records.TableObjectMapper` from the table `table_object_mappers`.
+    /// Internally this calls `context.SelectSingleAnon<Records.TableObjectMapper>` and uses Records.TableObjectMapper.SelectSql().
+    /// The caller can provide extra string lines to create a query and boxed parameters.
+    /// It is up to the caller to verify the sql and parameters are correct,
+    /// this should be considered an internal function (not exposed in public APIs).
+    /// Parameters are assigned names based on their order in 0 indexed array. For example: @0,@1,@2...
+    /// Example: selectTableObjectMapperRecord ctx "WHERE `field` = @0" [ box `value` ]
+    let selectTableObjectMapperRecord (context: SqliteContext) (query: string list) (parameters: obj list) =
+        let sql = [ Records.TableObjectMapper.SelectSql() ] @ query |> buildSql
+        context.SelectSingleAnon<Records.TableObjectMapper>(sql, parameters)
+    
+    /// Internally this calls `context.SelectAnon<Records.TableObjectMapper>` and uses Records.TableObjectMapper.SelectSql().
+    /// The caller can provide extra string lines to create a query and boxed parameters.
+    /// It is up to the caller to verify the sql and parameters are correct,
+    /// this should be considered an internal function (not exposed in public APIs).
+    /// Parameters are assigned names based on their order in 0 indexed array. For example: @0,@1,@2...
+    /// Example: selectTableObjectMapperRecords ctx "WHERE `field` = @0" [ box `value` ]
+    let selectTableObjectMapperRecords (context: SqliteContext) (query: string list) (parameters: obj list) =
+        let sql = [ Records.TableObjectMapper.SelectSql() ] @ query |> buildSql
+        context.SelectAnon<Records.TableObjectMapper>(sql, parameters)
+    
+    let insertTableObjectMapper (context: SqliteContext) (parameters: Parameters.NewTableObjectMapper) =
+        context.Insert("table_object_mappers", parameters)
     

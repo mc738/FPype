@@ -1,14 +1,24 @@
-﻿module FPype.Actions
+﻿namespace FPype.Actions
 
-[<RequireQualifiedAccess>]
+[<AutoOpen>]
 module Common =
-    
+
+    open FPype.Data.Store
+
     type TableResolver =
-        {
-            GetName: unit -> string
-            
-        }
-    
-    
+        { GetName: unit -> string
+
+         }
+
+
     ()
 
+    type PipelineAction =
+        { Name: string
+          Action: PipelineStore -> Result<PipelineStore, string> }
+
+        static member Create(name, action) = { Name = name; Action = action }
+
+
+    let createAction (name: string) (action: PipelineStore -> Result<PipelineStore, string>) =
+        PipelineAction.Create(name, action)

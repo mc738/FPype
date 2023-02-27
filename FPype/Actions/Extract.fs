@@ -127,7 +127,43 @@ module Extract =
                     | ParseResult.Failure em -> s, f @ [ em ])
                 ([], [])
             |> (fun (s, e) -> { Rows = s; Errors = e })
+      
+    [<RequireQualifiedAccess>]
+    module ``parse-csv`` =
+        let name = "parse-csv"
         
+        type Parameters =
+            {
+                DataSource: string
+                Table: TableModel
+            }
+        
+        let run (parameters: Parameters) (store: PipelineStore) =
+            store.GetDataSource parameters.DataSource
+            |> Option.map (fun ds ->
+                match ds.Type with
+                | "file" ->
+                    try
+                        File.ReadAllLines ds.Uri |> Ok
+                    with
+                    | exn -> Error $"Could not load file `{ds.Uri}`: {exn.Message}"
+                | _ -> Error $"Unsupported source type: `{ds.Type}`")
+            |> Option.defaultWith (fun _ -> Error $"Data source `{name}` not found.")
+            |> Result.map (Internal.createRows parameters.Table.Columns)
+            |> Result.bind (fun r ->
+                match r.Errors |> List.isEmpty |> not with
+                | true ->
+                    store.LogWarning("parse_csv", $"Error parsing {r.Errors.Length} row(s)")
+                    r.Errors |> List.map (fun e -> store.AddImportError("parse_csv", e.Message, $"{e.LineNumber}:{e.ColumnNumber} - {e.Line}")) |> ignore
+                | false -> ()
+                store.CreateTable(parameters.Table)
+                |> fun t -> { t with Rows = r.Rows }
+                |> store.InsertRows)
+            |> Result.map (fun r ->
+                store.Log("parse_csv", $"Imported {r.Length} row(s) to table `{parameters.Table.Name}`.")
+                store)
+    
+        let createAction (parameters: Parameters) = run parameters |> createAction name
     
     /// Split a source into individual chucks for processing.
     /// This is essentially a preprocessing action.
@@ -135,32 +171,6 @@ module Extract =
         
         ()
     
-    /// Parse a csv file and save to a pipeline store for future processing.
-    let parseCsv (name: string) (columns: TableColumn list) (tableName: string) (store: PipelineStore) =
-        store.GetDataSource name
-        |> Option.map (fun ds ->
-            match ds.Type with
-            | "file" ->
-                try
-                    File.ReadAllLines ds.Uri |> Ok
-                with
-                | exn -> Error $"Could not load file `{ds.Uri}`: {exn.Message}"
-            | _ -> Error $"Unsupported source type: `{ds.Type}`")
-        |> Option.defaultWith (fun _ -> Error $"Data source `{name}` not found.")
-        |> Result.map (Internal.createRows columns)
-        |> Result.bind (fun r ->
-            match r.Errors |> List.isEmpty |> not with
-            | true ->
-                store.LogWarning("parse_csv", $"Error parsing {r.Errors.Length} row(s)")
-                r.Errors |> List.map (fun e -> store.AddImportError("parse_csv", e.Message, $"{e.LineNumber}:{e.ColumnNumber} - {e.Line}")) |> ignore
-            | false -> ()
-            store.CreateTable(tableName, columns)
-            |> fun t -> { t with Rows = r.Rows }
-            |> store.InsertRows)
-        |> Result.map (fun r ->
-            store.Log("parse_csv", $"Imported {r.Length} row(s) to table `{tableName}`.")
-            store)
-
     [<RequireQualifiedAccess>]
     module Grok =
         
@@ -197,6 +207,7 @@ module Extract =
                 store.Log("grok", $"Imported {r.Length} row(s) to table `{tableName}`.")
                 store) 
         
+        (*
         let deserialize (element: JsonElement) =
             match Json.tryGetStringProperty "source" element, Json.tryGetStringProperty "table" element with
             | Some source, Some tableName ->
@@ -207,5 +218,5 @@ module Extract =
                 |> Option.defaultValue (Error $"Table `{tableName}` not found")
             | None, _ -> Error "Missing source property"
             | _, None -> Error "Missing table property"
-        
+        *)
         

@@ -1,10 +1,15 @@
 ﻿namespace FPype.Configuration
 
-module ObjectMappers =
+open System.IO
+open Freql.Core.Common.Types
+
+[<RequireQualifiedAccess>]
+module TableObjectMappers =
 
     open System.Text.Json
     open Freql.Sqlite
     open FsToolbox.Core
+    open FsToolbox.Extensions
     open FPype.Configuration.Persistence
     open FPype.Data.Models
 
@@ -68,7 +73,7 @@ module ObjectMappers =
                 ({ ObjectName = objectName
                    Table = table
                    Query = query
-                   Properties = p }: ObjectTableMap)
+                   Properties = p }: TableObjectMap)
                 |> Ok
             | Error e -> Error $"Failed to create properties. Error: {e}"
         | None, _, _, _ -> Error "Missing `objectName` property"
@@ -76,20 +81,63 @@ module ObjectMappers =
         | _, _, Error e, _ -> Error e
         | _, _, _, None -> Error "Missing `properties` array"
 
-    let getVersion (ctx: SqliteContext) (mapperName: string) (version: int) =
-        Operations.selectTableModelVersionRecord
+    let getLatestVersion (ctx: SqliteContext) (mapperName: string) =
+        Operations.selectTableObjectMapperVersionRecord
             ctx
-            [ "WHERE object_mapper = @0 AND version = @1;" ]
+            [ "WHERE table_object_mapper = @0 ORDER BY version DESC LIMIT 1;" ]
+            [ mapperName ]
+
+    let getVersion (ctx: SqliteContext) (mapperName: string) (version: int) =
+        Operations.selectTableObjectMapperVersionRecord
+            ctx
+            [ "WHERE table_object_mapper = @0 AND version = @1;" ]
             [ mapperName; version ]
 
-    
-    let 
+    let get (ctx: SqliteContext) (mapperName: string) (version: ItemVersion) =
+        match version with
+        | ItemVersion.Latest -> getLatestVersion ctx mapperName
+        | ItemVersion.Specific v -> getVersion ctx mapperName v
 
-    let load (ctx: SqliteContext) (mapperName: string) =
-
-        Operations.selectObjectMapperRecord ctx [ "WHERE name = @0" ] [ mapperName ]
-        |> Option.map (fun omr ->
-            let json = omr.Mapper |> blobToString |> toJson
+    let load (ctx: SqliteContext) (mapperName: string) (version: ItemVersion) =
+        get ctx mapperName version
+        |> Option.map (fun omv ->
+            let json = omv.Mapper |> blobToString |> toJson
 
             tryCreateObjectMapper ctx json)
         |> Option.defaultValue (Error $"Could not find object mapper `{mapperName}`")
+
+    let latestVersion (ctx: SqliteContext) (name: string) =
+        ctx.Bespoke(
+            "SELECT version FROM table_object_mapper_versions WHERE mapper_name = @0 ORDER BY version DESC LIMIT 1;",
+            [ name ],
+            fun reader ->
+                [ while reader.Read() do
+                      reader.GetInt32(0) ]
+        )
+        |> List.tryHead
+
+    let addRaw (ctx: SqliteContext) (name: string) (mapper: string) =
+        use ms = new MemoryStream(mapper.ToUtf8Bytes())
+
+        let version =
+            match latestVersion ctx name with
+            | Some v -> v + 1
+            | None ->
+                // ASSUMPTION if no version exists the query is new.
+                ({ Name = name }: Parameters.NewTableObjectMapper)
+                |> Operations.insertTableObjectMapper ctx
+
+                1
+
+        let hash = ms.GetSHA256Hash()
+
+        ({ Id = createId ()
+           TableObjectMapper = name
+           Version = version
+           Mapper = BlobField.FromBytes ms
+           Hash = hash
+           CreatedOn = timestamp () }: Parameters.NewTableObjectMapperVersion)
+        |> Operations.insertTableObjectMapperVersion ctx
+
+    let addRawTransaction (ctx: SqliteContext) (name: string) (mapper: string) =
+        ctx.ExecuteInTransaction(fun t -> addRaw t name mapper)

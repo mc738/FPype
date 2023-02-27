@@ -10,6 +10,7 @@ open FPype.Data.Models
 open FPype.Data.Store
 open FsToolbox.Core
 
+(*
 module Serialization =
 
     let getData (element: JsonElement) =
@@ -102,6 +103,7 @@ module Serialization =
             | _, Some _ -> Error $"Unknown action: {action}"
             | _, None -> Error "Missing data property.")
         |> Option.defaultValue (Error "Missing `action` property.")
+*)
 
 type PipelineContext =
     { Id: string
@@ -134,6 +136,10 @@ type PipelineContext =
             store.AddStateValue("__base_path", dir)
             store.AddStateValue("__imports_path", importDir)
 
+            
+            // TODO add resources
+            
+            
             { Id = id
               Directory = dir
               ImportsPath = importDir

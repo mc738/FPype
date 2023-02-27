@@ -1,5 +1,7 @@
 ﻿namespace FPype.Actions
 
+open FPype.Data.Models
+
 
 [<RequireQualifiedAccess>]
 module Transform =
@@ -10,24 +12,20 @@ module Transform =
     open FPype.Data.Models
     open FPype.Data.Store
     open FPype.Data.Grouping
-    
+
     module Internal =
-        
+
         let rec createProperty (tr: TableRow) (store: PipelineStore) (pm: PropertyMap) =
             let v =
                 match pm.Source with
-                | TableColumn i ->
-                    tr.Values
-                    |> List.item i
-                    |> ObjectPropertyType.Value
+                | TableColumn i -> tr.Values |> List.item i |> ObjectPropertyType.Value
                 | Table rots ->
 
                     let parameters =
                         rots.ParameterIndexes
-                        |> List.map (fun i -> tr.Values |> List.item i |> fun v -> v.Box())
+                        |> List.map (fun i -> tr.Values |> List.item i |> (fun v -> v.Box()))
 
-                    let st =
-                        store.BespokeSelectRows(rots.Table, rots.Query, parameters)
+                    let st = store.BespokeSelectRows(rots.Table, rots.Query, parameters)
 
                     st.Rows
                     |> List.map (fun sr ->
@@ -37,143 +35,162 @@ module Transform =
 
             ({ Name = pm.Name; Value = v }: ObjectProperty)
 
-        let buildObjects (map: ObjectTableMap)  (store: PipelineStore) =
-            let t =
-                store.BespokeSelectRows(map.Table, map.Query, [])
+        let buildObjects (map: TableObjectMap) (store: PipelineStore) =
+            let t = store.BespokeSelectRows(map.Table, map.Query, [])
 
             t.Rows
             |> List.map (fun r ->
 
-                let p =
-                    map.Properties |> List.map (createProperty r store)
+                let p = map.Properties |> List.map (createProperty r store)
 
                 ({ Name = map.ObjectName
                    Properties = p }: ObjectModel))
 
-    /// Aggregate data in a store and save the results in a new table.
-    let aggregate (tableName) (columns) (sql) (parameters) (store: PipelineStore) =
-        store.CreateTable(tableName, columns)
-        |> fun t -> store.BespokeSelectRows(t, sql, parameters)
-        |> store.InsertRows
-        |> Result.map (fun r ->
-            store.Log("aggregate", $"Aggregated and saved {r.Length} row(s) to table `{tableName}`.")
-            store)
+    [<RequireQualifiedAccess>]
+    module ``aggregate`` =
+        let name = "aggregate"
 
-    type QueryData = { Condition: string; Values: obj list }
+        type Parameters =
+            { Table: TableModel
+              Sql: string
+              Parameters: obj list }
 
-    let aggregateByDate
-        (dates: DateGroups)
-        (columns: TableColumn list)
-        (tableName: string)
-        (selectSql: string)
-        (store: PipelineStore)
-        =
+        let run (parameters: Parameters) (store: PipelineStore) =
+            store.CreateTable(parameters.Table)
+            |> fun t -> store.BespokeSelectRows(t, parameters.Sql, parameters.Parameters)
+            |> store.InsertRows
+            |> Result.map (fun r ->
+                store.Log("aggregate", $"Aggregated and saved {r.Length} row(s) to table `{parameters.Table.Name}`.")
+                store)
+            
+        let createAction (parameters: Parameters) = run parameters |> createAction name
 
-        let t =
-            { Name = tableName
-              Columns = columns
-              Rows = [] }
+    [<RequireQualifiedAccess>]
+    module ``aggregate-by-date`` =
 
-        // Create columns for the results table, with start and end dates plus label.        
-        let rtc =
-            [ { Name = dates.Label
-                Type = BaseType.DateTime
-                ImportHandler = None }
-              { Name = "start_date"
-                Type = BaseType.DateTime
-                ImportHandler = None }
-              { Name = "end_date"
-                Type = BaseType.DateTime
-                ImportHandler = None } ]
-            @ columns
-        
-        let rt = store.CreateTable(tableName, rtc) 
-        
-        dates.Groups
-        |> List.map (fun dg ->
-            let condition =
-                $"WHERE DATE({dates.FieldName}) >= DATE(@0) AND DATE({dates.FieldName}) < DATE(@1)"
+        let name = "aggregate-by-date"
 
-            let parameters =
-                [ dg.StartDate |> box
-                  dg.EndDate |> box ]
+        type Parameters =
+            { Table: TableModel
+              SelectSql: string
+              DateGroups: DateGroups }
 
-            let r =
-                store.BespokeSelectRows(t, $"{selectSql} {condition}", parameters)
+        let run (parameters: Parameters) (store: PipelineStore) =
 
-            r.Rows
-            |> List.map (fun r -> { r with Values = [ Value.String dg.Label; Value.DateTime dg.StartDate; Value.DateTime dg.EndDate ] @ r.Values })
-            |> fun rs -> { rt with Rows = rs }
-            |> store.InsertRows)
-        |> fun _ -> Ok store
+            // Create columns for the results table, with start and end dates plus label.
+            let rtc =
+                [ { Name = parameters.DateGroups.Label
+                    Type = BaseType.DateTime
+                    ImportHandler = None }
+                  { Name = "start_date"
+                    Type = BaseType.DateTime
+                    ImportHandler = None }
+                  { Name = "end_date"
+                    Type = BaseType.DateTime
+                    ImportHandler = None } ]
 
-    let aggregateByDateAndCategory
-        (dates: DateGroups)
-        (categoryField: string)
-        (columns: TableColumn list)
-        (tableName: string)
-        (selectSql: string)
-        (store: PipelineStore)
-        =
+            let rt = store.CreateTable(parameters.Table.PrependColumns(rtc))
 
-        let t =
-            { Name = tableName
-              Columns = columns
-              Rows = [] }
+            parameters.DateGroups.Groups
+            |> List.map (fun dg ->
+                let condition =
+                    $"WHERE DATE({parameters.DateGroups.FieldName}) >= DATE(@0) AND DATE({parameters.DateGroups.FieldName}) < DATE(@1)"
 
-        // Create columns for the results table, with start and end dates plus label.        
-        let rtc =
-            [ { Name = dates.Label
-                Type = BaseType.DateTime
-                ImportHandler = None }
-              { Name = "start_date"
-                Type = BaseType.DateTime
-                ImportHandler = None }
-              { Name = "end_date"
-                Type = BaseType.DateTime
-                ImportHandler = None } ]
-            @ columns
-        
-        let rt = store.CreateTable(tableName, rtc) 
-        
-        dates.Groups
-        |> List.map (fun dg ->
-            let condition =
-                $"WHERE DATE({dates.FieldName}) >= DATE(@0) AND DATE({dates.FieldName}) < DATE(@1) GROUP BY {categoryField}"
+                let queryParameters = [ dg.StartDate |> box; dg.EndDate |> box ]
 
-            let parameters =
-                [ dg.StartDate |> box
-                  dg.EndDate |> box ]
+                let r =
+                    store.BespokeSelectRows(parameters.Table, $"{parameters.SelectSql} {condition}", queryParameters)
 
-            let r =
-                store.BespokeSelectRows(t, $"{selectSql} {condition}", parameters)
+                r.Rows
+                |> List.map (fun r ->
+                    { r with
+                        Values =
+                            [ Value.String dg.Label
+                              Value.DateTime dg.StartDate
+                              Value.DateTime dg.EndDate ]
+                            @ r.Values })
+                |> fun rs -> { rt with Rows = rs }
+                |> store.InsertRows)
+            |> fun _ -> Ok store
+            
+        let createAction (parameters: Parameters) = run parameters |> createAction name
 
-            r.Rows
-            |> List.map (fun r -> { r with Values = [ Value.String dg.Label; Value.DateTime dg.StartDate; Value.DateTime dg.EndDate ] @ r.Values })
-            |> fun rs -> { rt with Rows = rs }
-            |> store.InsertRows)
-        |> fun _ -> Ok store
-    
-    let mapToObject (mapper: ObjectTableMap) (store: PipelineStore) =
-        
-        use ms = new MemoryStream()
+    [<RequireQualifiedAccess>]
+    module ``aggregate-by-date-and-category`` =
 
-        let mutable opts = JsonWriterOptions()
-        opts.Indented <- true
-        
-        use writer = new Utf8JsonWriter(ms, opts)
+        let name = "aggregate-by-date-and-category"
 
-        writer.WriteStartArray()
+        type Parameters =
+            { Table: TableModel
+              SelectSql: string
+              DateGroups: DateGroups
+              CategoryField: string }
 
-        let objs = Internal.buildObjects mapper store
+        let run (parameters: Parameters) (store: PipelineStore) =
 
-        objs
-        |> List.iter (fun co -> co.ToJson writer)
 
-        writer.WriteEndArray()
-        
-        writer.Flush()
+            // Create columns for the results table, with start and end dates plus label.
+            let rtc =
+                [ { Name = parameters.DateGroups.Label
+                    Type = BaseType.DateTime
+                    ImportHandler = None }
+                  { Name = "start_date"
+                    Type = BaseType.DateTime
+                    ImportHandler = None }
+                  { Name = "end_date"
+                    Type = BaseType.DateTime
+                    ImportHandler = None } ]
 
-        store.AddArtifact(mapper.ObjectName, "objects", "object", ms.ToArray())
-        Ok store
+            let rt = store.CreateTable(parameters.Table.PrependColumns(rtc))
 
+            parameters.DateGroups.Groups
+            |> List.map (fun dg ->
+                let condition =
+                    $"WHERE DATE({parameters.DateGroups.FieldName}) >= DATE(@0) AND DATE({parameters.DateGroups.FieldName}) < DATE(@1) GROUP BY {parameters.CategoryField}"
+
+                let queryParameters = [ dg.StartDate |> box; dg.EndDate |> box ]
+
+                let r =
+                    store.BespokeSelectRows(parameters.Table, $"{parameters.SelectSql} {condition}", queryParameters)
+
+                r.Rows
+                |> List.map (fun r ->
+                    { r with
+                        Values =
+                            [ Value.String dg.Label
+                              Value.DateTime dg.StartDate
+                              Value.DateTime dg.EndDate ]
+                            @ r.Values })
+                |> fun rs -> { rt with Rows = rs }
+                |> store.InsertRows)
+            |> fun _ -> Ok store
+            
+        let createAction (parameters: Parameters) = run parameters |> createAction name
+
+    [<RequireQualifiedAccess>]
+    module ``map-to-object`` =
+        let name = "map-to-object"
+
+        let run (mapper: TableObjectMap) (store: PipelineStore) =
+            
+            use ms = new MemoryStream()
+
+            let mutable opts = JsonWriterOptions()
+            opts.Indented <- true
+
+            use writer = new Utf8JsonWriter(ms, opts)
+
+            writer.WriteStartArray()
+
+            let objs = Internal.buildObjects mapper store
+
+            objs |> List.iter (fun co -> co.ToJson writer)
+
+            writer.WriteEndArray()
+
+            writer.Flush()
+
+            store.AddArtifact(mapper.ObjectName, "objects", "object", ms.ToArray())
+            Ok store
+
+        let createAction (mapper: TableObjectMap) = run mapper |> createAction name 

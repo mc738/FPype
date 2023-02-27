@@ -1,5 +1,7 @@
 ﻿namespace FPype.Data
 
+open FPype.Data.Models
+
 module Store =
 
     open System
@@ -380,6 +382,11 @@ module Store =
             createTable ctx name columns
             |> fun c -> ({ Name = name; Columns = c; Rows = [] }: TableModel)
 
+        member ps.CreateTable(model: TableModel) =
+            createTable ctx model.Name model.Columns |> ignore
+            model
+        
+        
         member ps.InsertRows(table: TableModel) = insert ctx table
 
         member ps.SelectRows(table: TableModel) =

@@ -1,4 +1,5 @@
 ﻿namespace FPype.Configuration
+
 open FPype.Data.Models
 open FPype.Data.Store
 open Freql.Sqlite
@@ -8,21 +9,16 @@ type ConfigurationStore(ctx: SqliteContext) =
     static member Load(path) =
         SqliteContext.Open path |> ConfigurationStore
 
-    member pc.GetTable(tableName) =
-        Tables.getTable ctx tableName
-        |> Option.map (fun t ->
-            Tables.createColumns ctx t.Name
-            |> Result.map (fun tc ->
-                ({ Name = t.Name
-                   Columns = tc
-                   Rows = [] }: TableModel)))
-        |> Option.defaultValue (Error $"Table `{tableName}` not found")
+    member pc.GetTable(tableName, ?version: ItemVersion) =
+        ItemVersion.FromOptional version |> Tables.tryCreateTableModel ctx tableName
 
-    member pc.GetQuery(queryName) = Queries.getQuery ctx queryName
+    member pc.GetQuery(queryName, ?version: ItemVersion) =
+        ItemVersion.FromOptional version |> Queries.get ctx queryName
 
-    member pc.CreateActions(pipelineId) =
-        Actions.createActions ctx pipelineId
-        |> flattenResultList
+    member pc.CreateActions(pipelineId, ?version: ItemVersion) =
+        ItemVersion.FromOptional version
+        |> Actions.createActions ctx pipelineId
         |> Result.mapError (fun msg -> $"Could not create actions: {msg}")
 
-    member pc.GetObjectMapper(name) = ObjectMappers.load ctx name
+    member pc.GetTableObjectMapper(name, ?version: ItemVersion) =
+        ItemVersion.FromOptional version |> TableObjectMappers.load ctx name

@@ -53,6 +53,12 @@ module Models =
             tvm
         *)
         
+        member tm.PrependColumns(columns: TableColumn list) =
+            { tm with Columns = columns @ tm.Columns }
+        
+        member tm.AppendColumns(columns: TableColumn list) =
+            { tm with Columns = tm.Columns @ columns }
+        
         member tm.Max(columnIndex: int) =
             tm.Rows
             |> List.maxBy (fun tr -> tr.Values |> List.item columnIndex)
@@ -191,7 +197,10 @@ module Models =
         | Array of ObjectDefinition list
         | FixedArray of ObjectDefinition
 
-    and ObjectTableMap =
+    /// <summary>
+    /// A record representing mapping of values from a table to an object.
+    /// </summary>
+    and TableObjectMap =
         { ObjectName: string
           Table: TableModel
           Query: string
@@ -218,7 +227,6 @@ module Models =
 
         member om.ToJson(writer: Utf8JsonWriter) =
             writer.WriteStartObject()
-
 
             om.Properties
             |> List.iter (fun op -> op.ToJson writer)

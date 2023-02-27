@@ -7,6 +7,7 @@ open System.Text.Json
 open FPype.Core.Types
 open FPype.Data.Store
 open Freql.Core.Common.Types
+open FsToolbox.Core
 
 [<AutoOpen>]
 module Common =
@@ -18,21 +19,49 @@ module Common =
             | true, dt -> CoercionResult.Success <| Value.DateTime dt
             | false, _ -> CoercionResult.Failure "Wrong date format"
 
-    type PipelineAction =
-        { Name: string
-          Action: PipelineStore -> Result<PipelineStore, string> }
-
-        static member Create(name, action) = { Name = name; Action = action }
-        
     type ItemVersion =
         | Latest
         | Specific of int
-        
-    
+
+        static member TryFromJson(json: JsonElement) =
+            Json.tryGetIntProperty "version" json |> Option.map ItemVersion.Specific
+
+        static member FromOptional(version: ItemVersion option) =
+            version |> Option.defaultValue ItemVersion.Latest
+
+        static member FromJson(json: JsonElement) =
+            ItemVersion.TryFromJson json |> ItemVersion.FromOptional
+
+        member iv.ToLabel() =
+            match iv with
+            | Latest -> "latest"
+            | Specific v -> v.ToString()
+
+    type TableVersion =
+        { Name: string
+          Version: ItemVersion }
+
+        static member FromJson(json: JsonElement) =
+            Json.tryGetStringProperty "name" json
+            |> Option.map (fun n ->
+                { Name = n
+                  Version = ItemVersion.FromJson json })
+        //|> Option.defaultWith (fun _ -> Error "Missing table version `name` property.")
+
+        static member TryFromJson(json: JsonElement) =
+            TableVersion.FromJson json
+            |> Option.map Ok
+            |> Option.defaultWith (fun _ -> Error "Missing table version `name` property.")
+
+        static member TryCreate(json: JsonElement option) =
+            json
+            |> Option.map TableVersion.TryFromJson
+            |> Option.defaultValue (Error "Missing `table` object")
+
     let createId _ = Guid.NewGuid().ToString("n")
-    
+
     let timestamp _ = DateTime.UtcNow
-        
+
     let toJson (str: string) = JsonDocument.Parse(str).RootElement
 
     let blobToString (blob: BlobField) =
