@@ -24,6 +24,15 @@ module Common =
 
         static member Create(name, action) = { Name = name; Action = action }
         
+    type ItemVersion =
+        | Latest
+        | Specific of int
+        
+    
+    let createId _ = Guid.NewGuid().ToString("n")
+    
+    let timestamp _ = DateTime.UtcNow
+        
     let toJson (str: string) = JsonDocument.Parse(str).RootElement
 
     let blobToString (blob: BlobField) =
@@ -41,8 +50,3 @@ module Common =
             match errors.IsEmpty with
             | true -> Ok values
             | false -> Error <| String.concat ", " errors
-
-    
-    
-
-    

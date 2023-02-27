@@ -33,27 +33,6 @@ module ObjectMappers =
         | _, _, None, _ -> Error "Missing query"
         | _, _, _, None -> Error "Missing `parameterIndexes` property"
 
-
-    (*
-        let rec createPropertySource (ctx: SqliteContext) (json: JsonElement) =
-            match tryGetStringProperty "type" json with
-            | Some sourceType when sourceType = "table_column" -> createTableColumnSource json
-            | Some sourceType when sourceType = "table" ->
-                match tryGetArrayProperty "properties" json with
-                | Some properties ->
-                    properties |> List.map (createPropertySource ctx)
-                    |> flattenResultList
-                    |> Result.bind (createTableSource ctx json)
-                    //|> flattenResultList
-                    //|> Result.map (fun p -> ({}: RelatedObjectTableSource))
-                    |> ignore
-                    Error ""
-                | None -> Error "Missing `properties` array"
-                //createTableSource ctx json
-            | Some sourceType -> Error $"Unknown property source type `{sourceType}`"
-            | None -> Error "Missing `type` property"
-        *)
-
     let rec tryCreatePropertyMap (ctx: SqliteContext) (json: JsonElement) =
         // TODO if the type is source `table` then rec.
         match Json.tryGetStringProperty "name" json, Json.tryGetProperty "source" json with
@@ -97,6 +76,14 @@ module ObjectMappers =
         | _, _, Error e, _ -> Error e
         | _, _, _, None -> Error "Missing `properties` array"
 
+    let getVersion (ctx: SqliteContext) (mapperName: string) (version: int) =
+        Operations.selectTableModelVersionRecord
+            ctx
+            [ "WHERE object_mapper = @0 AND version = @1;" ]
+            [ mapperName; version ]
+
+    
+    let 
 
     let load (ctx: SqliteContext) (mapperName: string) =
 

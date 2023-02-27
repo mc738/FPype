@@ -13,7 +13,7 @@ module Actions =
     module Import =
 
         module ``import-file`` =
-            let name = ""
+            let name = "import-file"
 
             let deserialize (json: JsonElement) =
                 match Json.tryGetStringProperty "path" json, Json.tryGetStringProperty "name" json with
@@ -22,13 +22,15 @@ module Actions =
                 | _, None -> Error "Missing name property"
                 |> Result.map (fun a -> PipelineAction.Create(name, a))
 
+        let names = [ ``import-file``.name ]
+
         let all = [ ``import-file``.name, ``import-file``.deserialize ]
 
     module Extract =
 
         module ``parse-csv`` =
 
-            let name = ""
+            let name = "parse-csv"
 
             let deserialize (ctx: SqliteContext) (json: JsonElement) =
                 match Json.tryGetStringProperty "source" json, Json.tryGetStringProperty "table" json with
@@ -42,13 +44,15 @@ module Actions =
                 | _, None -> Error "Missing table property"
                 |> Result.map (fun a -> PipelineAction.Create(name, a))
 
+        let names = [ ``parse-csv``.name ]
+
         let all (ctx: SqliteContext) =
             [ ``parse-csv``.name, ``parse-csv``.deserialize ctx ]
 
     module Transform =
 
         module ``aggregate`` =
-            let name = ""
+            let name = "aggregate"
 
             let deserialize (ctx: SqliteContext) (json: JsonElement) =
                 match Queries.tryCreate ctx json, Json.tryGetStringProperty "table" json with
@@ -64,7 +68,7 @@ module Actions =
 
         module ``aggregate-by-category-and-date`` =
 
-            let name = ""
+            let name = "aggregate-by-category-and-date"
 
             let deserialize (ctx: SqliteContext) (json: JsonElement) =
                 match
@@ -88,7 +92,7 @@ module Actions =
 
         module ``aggregate-by-date`` =
 
-            let name = ""
+            let name = "aggregate-by-date"
 
             let deserialize (ctx: SqliteContext) (json: JsonElement) =
                 match
@@ -109,7 +113,7 @@ module Actions =
 
         module ``map-to-object`` =
 
-            let name = ""
+            let name = "map-to-object"
 
             let deserialize (ctx: SqliteContext) (json: JsonElement) =
                 Json.tryGetStringProperty "mapper" json
@@ -118,6 +122,10 @@ module Actions =
                 |> Result.map (fun m -> Transform.mapToObject m)
                 |> Result.map (fun a -> PipelineAction.Create(name, a))
 
+        let names =
+            [ ``aggregate-by-category-and-date``.name
+              ``aggregate-by-date``.name
+              ``map-to-object``.name ]
 
         let all (ctx: SqliteContext) =
             [ ``aggregate``.name, ``aggregate``.deserialize ctx
@@ -127,24 +135,42 @@ module Actions =
 
     module Load =
 
+        let names = []
+
         let all (ctx: SqliteContext) = []
+
+    module Export =
+
+        let names = []
+
+        let all (ctx: SqliteContext) = []
+
+    let names =
+        [ yield! Import.names
+          yield! Extract.names
+          yield! Transform.names
+          yield! Load.names
+          yield! Export.names ]
 
     let all (ctx: SqliteContext) =
         [ yield! Import.all
           yield! Extract.all ctx
           yield! Transform.all ctx
-          yield! Load.all ctx ]
-        
-    let createAction (actionsMap: Map<string,JsonElement -> Result<PipelineAction, string>>) (action: Records.PipelineAction) =
-        let actionData =
-            action.ActionBlob |> blobToString |> toJson
+          yield! Load.all ctx
+          yield! Export.all ctx ]
+
+    let createAction
+        (actionsMap: Map<string, JsonElement -> Result<PipelineAction, string>>)
+        (action: Records.PipelineAction)
+        =
+        let actionData = action.ActionBlob |> blobToString |> toJson
 
         try
             actionsMap.TryFind action.ActionType
             |> Option.map (fun b -> b actionData)
             |> Option.defaultWith (fun _ -> Error $"Unknown action type: `{action.ActionType}`")
-        with
-        | exn -> Error $"Failed to create action. Exception: {exn.Message}"
+        with exn ->
+            Error $"Failed to create action. Exception: {exn.Message}"
 
     let createActions (ctx: SqliteContext) (pipelineId: string) =
         Operations.selectPipelineActionRecords ctx [ "WHERE pipeline_id = @0" ] [ pipelineId ]
