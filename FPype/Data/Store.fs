@@ -1,5 +1,7 @@
 ﻿namespace FPype.Data
 
+open System.IO
+open System.Reflection.Metadata
 open FPype.Data.Models
 
 module Store =
@@ -12,7 +14,7 @@ module Store =
     open FsToolbox.Extensions
     open FPype.Core.Types
     open Models
-    
+
     module Internal =
 
         let stateTableSql =
@@ -76,7 +78,7 @@ module Store =
             timestamp_utc TEXT NOT NULL
         );
         """
-        
+
         let resourcesTableSql =
             """
         CREATE TABLE __resources (
@@ -87,8 +89,21 @@ module Store =
             CONSTRAINT __resources_PK PRIMARY KEY (name)
         );
         """
-        
-        (*
+
+        let cacheTableSql =
+            """
+            CREATE TABLE __cache (
+            item_key TEXT NOT NULL,
+            item_value BLOB NOT NULL,
+            hash TEXT NOT NULL,
+            created_on TEXT NOT NULL,
+            expires_on TEXT NOT NULL,
+            CONSTRAINT __cache_PK PRIMARY KEY (item_key)
+        );
+        """
+
+
+    (*
         let contextTableSql =
             """
         CREATE TABLE __log (
@@ -107,7 +122,8 @@ module Store =
           Internal.artifactsTableSql
           Internal.importErrorsTableSql
           Internal.logTableSql
-          Internal.resourcesTableSql ]
+          Internal.resourcesTableSql
+          Internal.cacheTableSql ]
         |> List.map ctx.ExecuteSqlNonQuery
         |> ignore
 
@@ -128,7 +144,14 @@ module Store =
           Type: string
           Data: BlobField
           Hash: string }
-    
+
+    type CacheItem =
+        { ItemKey: string
+          ItemValue: BlobField
+          Hash: string
+          CreatedOn: DateTime
+          ExpiresOn: DateTime }
+
     type ActionResult =
         { Step: string
           Result: string
@@ -159,7 +182,7 @@ module Store =
 
     let getStateValue (ctx: SqliteContext) (key: string) =
         ctx.SelectSingleAnon<StateValue>("SELECT * FROM __state WHERE name = @0", [ key ])
-    
+
     let addDataSource (ctx: SqliteContext) (source: DataSource) = ctx.Insert("__data_sources", source)
 
     let getDataSource (ctx: SqliteContext) (name: string) =
@@ -182,23 +205,58 @@ module Store =
             [ box name ]
         )
 
-    let addResource (ctx: SqliteContext) (name: string) (resourceType: string) (raw: MemoryStream) =
-        let hash = raw.GetSHA256Hash()
-        
-        ({
-            Name = name
-            Type = resourceType
-            Data = BlobField.FromBytes raw
-            Hash = hash
-        }: Resource)
+    let addResource (ctx: SqliteContext) (name: string) (resourceType: string) (data: byte array) =
+        use ms = new MemoryStream(data)
+        let hash = ms.GetSHA256Hash()
+
+        ({ Name = name
+           Type = resourceType
+           Data = BlobField.FromBytes ms
+           Hash = hash }: Resource)
         |> fun r -> ctx.Insert("__resources", r)
-        
+
     let getResource (ctx: SqliteContext) (name: string) =
-        ctx.SelectSingleAnon<Resource>(
-            "SELECT name, type, data, hash FROM __resources WHERE name = @0;",
-            [ box name ]
+        ctx.SelectSingleAnon<Resource>("SELECT name, type, data, hash FROM __resources WHERE name = @0;", [ box name ])
+
+    let deleteCacheItem (ctx: SqliteContext) (key: string) =
+        ctx.ExecuteVerbatimNonQueryAnon("DELETE FROM __cache WHERE item_key = @0;", [ key ])
+        |> ignore
+
+    let getCacheItem (ctx: SqliteContext) (key: string) =
+        ctx.SelectSingleAnon<CacheItem>(
+            "SELECT item_key, item_value, hash, created_on, expires_on FROM __cache WHERE name = @0",
+            [ key ]
         )
-    
+        |> Option.bind (fun ci ->
+            match DateTime.UtcNow <= ci.ExpiresOn with
+            | true -> Some ci
+            | false ->
+                // If the item has expired then delete it and return none.
+                deleteCacheItem ctx key |> ignore
+                None)
+
+    let addCacheItem (ctx: SqliteContext) (key: string) (value: byte array) (ttl: int) =
+        let now = DateTime.UtcNow
+
+        use ms = new MemoryStream(value)
+        let hash = ms.GetSHA256Hash()
+
+        match getCacheItem ctx key with
+        | Some ci ->
+            // If the item already exists then cache delete it.
+            deleteCacheItem ctx key |> ignore
+        | None -> ()
+
+        ({ ItemKey = key
+           ItemValue = BlobField.FromBytes ms
+           Hash = hash
+           CreatedOn = now
+           ExpiresOn = now.AddMinutes(ttl) })
+        |> fun p -> ctx.Insert("__cache", p)
+
+    let clearCache (ctx: SqliteContext) =
+        ctx.ExecuteVerbatimNonQueryAnon("DELETE FROM __cache", []) |> ignore
+
     let addResult (ctx: SqliteContext) (result: ActionResult) = ctx.Insert("__run_state", result)
 
     let addImportError (ctx: SqliteContext) (error: ImportError) = ctx.Insert("__import_errors", error)
@@ -227,17 +285,12 @@ module Store =
         let columnText =
             columns
             |> List.map (fun c ->
-                let tn =
-                    typeName c.Type true |> fun (a, b) -> $"{a}{b}"
+                let tn = typeName c.Type true |> fun (a, b) -> $"{a}{b}"
 
                 $"{c.Name} {tn}")
             |> String.concat ","
 
-        String.concat
-            ""
-            [ $"CREATE TABLE {tableName} ("
-              columnText
-              ")" ]
+        String.concat "" [ $"CREATE TABLE {tableName} ("; columnText; ")" ]
         |> ctx.ExecuteSqlNonQuery
         |> fun _ -> columns
 
@@ -249,18 +302,9 @@ module Store =
             |> fun (c, p) -> String.concat "," c, String.concat "," p
 
         let sql =
-            String.concat
-                ""
-                [ $"INSERT INTO {model.Name} ("
-                  columns
-                  ")"
-                  " VALUES ("
-                  parameters
-                  ")" ]
+            String.concat "" [ $"INSERT INTO {model.Name} ("; columns; ")"; " VALUES ("; parameters; ")" ]
 
-        ctx.ExecuteInTransaction (fun t ->
-            model.Rows
-            |> List.map (fun r -> t.ExecuteVerbatimNonQueryAnon(sql, r.Box())))
+        ctx.ExecuteInTransaction(fun t -> model.Rows |> List.map (fun r -> t.ExecuteVerbatimNonQueryAnon(sql, r.Box())))
 
     let mapper (columns: TableColumn list) (reader: SqliteDataReader) =
         let rec handler t i =
@@ -290,30 +334,16 @@ module Store =
               |> TableRow.FromValues ]
 
     let select (ctx: SqliteContext) (model: TableModel) =
-        let names =
-            model.Columns
-            |> List.map (fun n -> n.Name)
-            |> String.concat ","
+        let names = model.Columns |> List.map (fun n -> n.Name) |> String.concat ","
 
-        let sql =
-            [ "SELECT"; names; "FROM"; model.Name ]
-            |> String.concat " "
+        let sql = [ "SELECT"; names; "FROM"; model.Name ] |> String.concat " "
 
         ctx.Bespoke<TableRow>(sql, [], mapper model.Columns)
 
     let conditionalSelect (ctx: SqliteContext) (model: TableModel) (conditions: string) (parameters: obj list) =
-        let names =
-            model.Columns
-            |> List.map (fun n -> n.Name)
-            |> String.concat ","
+        let names = model.Columns |> List.map (fun n -> n.Name) |> String.concat ","
 
-        let sql =
-            [ "SELECT"
-              names
-              "FROM"
-              model.Name
-              conditions ]
-            |> String.concat " "
+        let sql = [ "SELECT"; names; "FROM"; model.Name; conditions ] |> String.concat " "
 
         ctx.Bespoke<TableRow>(sql, parameters, mapper model.Columns)
 
@@ -334,13 +364,12 @@ module Store =
             addStateValue ctx { Name = name; Value = value }
 
         member ps.UpdateStateValue(name, value) = updateStateValue ctx name value
-            
+
         member ps.GetState() = getState ctx
 
         member ps.GetStateValue(key) =
-            getStateValue ctx key
-            |> Option.map (fun sv -> sv.Value)
-        
+            getStateValue ctx key |> Option.map (fun sv -> sv.Value)
+
         member ps.AddDataSource(name, sourceType, uri, collectionName) =
             ({ Name = name
                Type = sourceType
@@ -364,6 +393,21 @@ module Store =
 
         member ps.GetArtifact(name) = getArtifact ctx name
 
+        member ps.AddResource(name, resourceType, data: byte array) = addResource ctx name resourceType data
+
+        member ps.GetResource(name) =
+            getResource ctx name |> Option.map (fun r -> r.Data.ToBytes())
+
+        member ps.AddCacheItem(key: string, value: byte array, ?ttl: int) =
+            defaultArg ttl 1000000 |> addCacheItem ctx key value
+
+        member ps.GetCacheItem(key: string) =
+            getCacheItem ctx key |> Option.map (fun r -> r.ItemValue.ToBytes())
+
+        member ps.DeleteCacheItem(key: string) = deleteCacheItem ctx key
+
+        member ps.ClearCache() = clearCache ctx
+
         member ps.AddResult(step, result, startUtc, endUtc, serial) =
             ({ Step = step
                Result = result
@@ -385,21 +429,18 @@ module Store =
         member ps.CreateTable(model: TableModel) =
             createTable ctx model.Name model.Columns |> ignore
             model
-        
-        
+
         member ps.InsertRows(table: TableModel) = insert ctx table
 
         member ps.SelectRows(table: TableModel) =
-            select ctx table
-            |> fun r -> { table with Rows = r }
+            select ctx table |> fun r -> { table with Rows = r }
 
         member ps.SelectRows(table: TableModel, condition, parameters) =
             conditionalSelect ctx table condition parameters
             |> fun r -> { table with Rows = r }
 
         member ps.BespokeSelectRows(table: TableModel, sql, parameters) =
-            bespokeSelect ctx table sql parameters
-            |> fun r -> { table with Rows = r }
+            bespokeSelect ctx table sql parameters |> fun r -> { table with Rows = r }
 
         member ps.Log(step, message) =
             ({ Step = step

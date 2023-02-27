@@ -5,7 +5,7 @@ open System.Text.Json.Serialization
 open Freql.Core.Common
 open Freql.Sqlite
 
-/// Module generated on 27/02/2023 20:05:15 (utc) via Freql.Sqlite.Tools.
+/// Module generated on 27/02/2023 23:44:41 (utc) via Freql.Sqlite.Tools.
 [<RequireQualifiedAccess>]
 module Records =
     /// A record representing a row in the table `action_types`.
@@ -78,6 +78,28 @@ module Records =
         """
     
         static member TableName() = "object_table_mapper_versions"
+    
+    /// A record representing a row in the table `object_table_mappers`.
+    type ObjectTableMapper =
+        { [<JsonPropertyName("name")>] Name: string }
+    
+        static member Blank() =
+            { Name = String.Empty }
+    
+        static member CreateTableSql() = """
+        CREATE TABLE object_table_mappers (
+	name TEXT NOT NULL,
+	CONSTRAINT object_table_mappers_PK PRIMARY KEY (name)
+)
+        """
+    
+        static member SelectSql() = """
+        SELECT
+              object_table_mappers.`name`
+        FROM object_table_mappers
+        """
+    
+        static member TableName() = "object_table_mappers"
     
     /// A record representing a row in the table `pipeline_actions`.
     type PipelineAction =
@@ -574,7 +596,7 @@ module Records =
         static member TableName() = "table_object_mappers"
     
 
-/// Module generated on 27/02/2023 20:05:15 (utc) via Freql.Tools.
+/// Module generated on 27/02/2023 23:44:41 (utc) via Freql.Tools.
 [<RequireQualifiedAccess>]
 module Parameters =
     /// A record representing a new row in the table `action_types`.
@@ -603,6 +625,14 @@ module Parameters =
               Mapper = BlobField.Empty()
               Hash = String.Empty
               CreatedOn = DateTime.UtcNow }
+    
+    
+    /// A record representing a new row in the table `object_table_mappers`.
+    type NewObjectTableMapper =
+        { [<JsonPropertyName("name")>] Name: string }
+    
+        static member Blank() =
+            { Name = String.Empty }
     
     
     /// A record representing a new row in the table `pipeline_actions`.
@@ -801,7 +831,7 @@ module Parameters =
             { Name = String.Empty }
     
     
-/// Module generated on 27/02/2023 20:05:15 (utc) via Freql.Tools.
+/// Module generated on 27/02/2023 23:44:41 (utc) via Freql.Tools.
 [<RequireQualifiedAccess>]
 module Operations =
 
@@ -854,6 +884,30 @@ module Operations =
     
     let insertObjectTableMapperVersion (context: SqliteContext) (parameters: Parameters.NewObjectTableMapperVersion) =
         context.Insert("object_table_mapper_versions", parameters)
+    
+    /// Select a `Records.ObjectTableMapper` from the table `object_table_mappers`.
+    /// Internally this calls `context.SelectSingleAnon<Records.ObjectTableMapper>` and uses Records.ObjectTableMapper.SelectSql().
+    /// The caller can provide extra string lines to create a query and boxed parameters.
+    /// It is up to the caller to verify the sql and parameters are correct,
+    /// this should be considered an internal function (not exposed in public APIs).
+    /// Parameters are assigned names based on their order in 0 indexed array. For example: @0,@1,@2...
+    /// Example: selectObjectTableMapperRecord ctx "WHERE `field` = @0" [ box `value` ]
+    let selectObjectTableMapperRecord (context: SqliteContext) (query: string list) (parameters: obj list) =
+        let sql = [ Records.ObjectTableMapper.SelectSql() ] @ query |> buildSql
+        context.SelectSingleAnon<Records.ObjectTableMapper>(sql, parameters)
+    
+    /// Internally this calls `context.SelectAnon<Records.ObjectTableMapper>` and uses Records.ObjectTableMapper.SelectSql().
+    /// The caller can provide extra string lines to create a query and boxed parameters.
+    /// It is up to the caller to verify the sql and parameters are correct,
+    /// this should be considered an internal function (not exposed in public APIs).
+    /// Parameters are assigned names based on their order in 0 indexed array. For example: @0,@1,@2...
+    /// Example: selectObjectTableMapperRecords ctx "WHERE `field` = @0" [ box `value` ]
+    let selectObjectTableMapperRecords (context: SqliteContext) (query: string list) (parameters: obj list) =
+        let sql = [ Records.ObjectTableMapper.SelectSql() ] @ query |> buildSql
+        context.SelectAnon<Records.ObjectTableMapper>(sql, parameters)
+    
+    let insertObjectTableMapper (context: SqliteContext) (parameters: Parameters.NewObjectTableMapper) =
+        context.Insert("object_table_mappers", parameters)
     
     /// Select a `Records.PipelineAction` from the table `pipeline_actions`.
     /// Internally this calls `context.SelectSingleAnon<Records.PipelineAction>` and uses Records.PipelineAction.SelectSql().
