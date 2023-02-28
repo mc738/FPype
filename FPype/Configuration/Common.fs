@@ -19,6 +19,7 @@ module Common =
             | true, dt -> CoercionResult.Success <| Value.DateTime dt
             | false, _ -> CoercionResult.Failure "Wrong date format"
 
+    [<RequireQualifiedAccess>]
     type ItemVersion =
         | Latest
         | Specific of int
@@ -58,6 +59,16 @@ module Common =
             |> Option.map TableVersion.TryFromJson
             |> Option.defaultValue (Error "Missing `table` object")
 
+    [<RequireQualifiedAccess>]
+    type IdType =
+        | Generated
+        | Specific of string
+        
+        member id.Get() =
+            match id with
+            | Generated -> Guid.NewGuid().ToString("n")
+            | Specific v -> v
+        
     let createId _ = Guid.NewGuid().ToString("n")
 
     let timestamp _ = DateTime.UtcNow

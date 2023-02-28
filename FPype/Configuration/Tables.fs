@@ -112,7 +112,17 @@ module Tables =
         )
         |> List.tryHead
 
-    let add (ctx: SqliteContext) (tableName: string) (columns: NewColumn list) =
+    let getVersionId (ctx: SqliteContext) (tableName: string) (version: int) =
+        ctx.Bespoke(
+            "SELECT id FROM table_model_versions WHERE table_model = @0 AND version = @1 LIMIT 1;",
+            [ query; version ],
+            fun reader ->
+                [ while reader.Read() do
+                      reader.GetString(0) ]
+        )
+        |> List.tryHead
+
+    let addLatestVersion (ctx: SqliteContext) (id: IdType) (tableName: string) (columns: NewColumn list) =
         let version =
             match latestVersion ctx tableName with
             | Some v -> v + 1
@@ -123,7 +133,7 @@ module Tables =
 
                 1
 
-        let versionId = createId ()
+        let versionId = id.Get()
 
         ({ Id = versionId
            TableModel = tableName
@@ -155,5 +165,84 @@ module Tables =
                    ColumnIndex = i }: Parameters.NewTableColumn)
                 |> Operations.insertTableColumn ctx)
 
-    let addTransaction (ctx: SqliteContext) (tableName: string) (columns: NewColumn list) =
-        ctx.ExecuteInTransaction(fun t -> add t tableName columns)
+    let addLatestVersionTransaction (ctx: SqliteContext) (id: IdType) (tableName: string) (columns: NewColumn list) =
+        ctx.ExecuteInTransaction(fun t -> addLatestVersion t id tableName columns)
+
+    let addSpecificVersion
+        (ctx: SqliteContext)
+        (id: IdType)
+        (tableName: string)
+        (columns: NewColumn list)
+        (version: int)
+        =
+        match getVersionId ctx tableName version with
+        | Some _ -> Error $"Version `{version}` of table `{tableName}` already exists."
+        | None ->
+            match Operations.selectTableModelRecord ctx [ "WHERE name = @0;" ] [ tableName ] with
+            | Some _ -> ()
+            | None ->
+                ({ Name = tableName }: Parameters.NewTableModel)
+                |> Operations.insertTableModel ctx
+
+            let versionId = id.Get()
+
+            ({ Id = versionId
+               TableModel = tableName
+               Version = version
+               CreatedOn = timestamp () }: Parameters.NewTableModelVersion)
+            |> Operations.insertTableModelVersion ctx
+
+            columns
+            |> List.iteri (fun i tc ->
+                match tc.ImportHandler with
+                | Some ih ->
+                    use ms = new MemoryStream(ih.ToUtf8Bytes())
+
+                    ({ Id = createId ()
+                       TableVersionId = versionId
+                       Name = tc.Name
+                       DataType = tc.DataType
+                       Optional = tc.Optional
+                       ImportHandler = BlobField.FromBytes ms |> Some
+                       ColumnIndex = i }: Parameters.NewTableColumn)
+                    |> Operations.insertTableColumn ctx
+                | None ->
+                    ({ Id = createId ()
+                       TableVersionId = versionId
+                       Name = tc.Name
+                       DataType = tc.DataType
+                       Optional = tc.Optional
+                       ImportHandler = None
+                       ColumnIndex = i }: Parameters.NewTableColumn)
+                    |> Operations.insertTableColumn ctx)
+            |> Ok
+
+    let addSpecificVersionTransaction
+        (ctx: SqliteContext)
+        (id: IdType)
+        (tableName: string)
+        (columns: NewColumn list)
+        (version: int)
+        =
+        ctx.ExecuteInTransactionV2(fun t -> addSpecificVersion t id tableName columns version)
+
+    let add
+        (ctx: SqliteContext)
+        (id: IdType)
+        (tableName: string)
+        (columns: NewColumn list)
+        (version: ItemVersion)
+        =
+        match version with
+        | ItemVersion.Latest -> addLatestVersion ctx id tableName columns |> Ok
+        | ItemVersion.Specific v -> addSpecificVersion ctx id tableName columns v
+        
+    let addTransaction
+        (ctx: SqliteContext)
+        (id: IdType)
+        (tableName: string)
+        (columns: NewColumn list)
+        (version: ItemVersion)
+        =
+        ctx.ExecuteInTransactionV2(fun t -> add t id tableName columns version)
+    

@@ -5,7 +5,7 @@ open System.Text.Json.Serialization
 open Freql.Core.Common
 open Freql.Sqlite
 
-/// Module generated on 27/02/2023 23:44:41 (utc) via Freql.Sqlite.Tools.
+/// Module generated on 28/02/2023 19:12:51 (utc) via Freql.Sqlite.Tools.
 [<RequireQualifiedAccess>]
 module Records =
     /// A record representing a row in the table `action_types`.
@@ -358,7 +358,8 @@ module Records =
         { [<JsonPropertyName("id")>] Id: string
           [<JsonPropertyName("resource")>] Resource: string
           [<JsonPropertyName("version")>] Version: int
-          [<JsonPropertyName("rawBlob")>] RawBlob: string
+          [<JsonPropertyName("resourceType")>] ResourceType: string
+          [<JsonPropertyName("rawBlob")>] RawBlob: BlobField
           [<JsonPropertyName("hash")>] Hash: string
           [<JsonPropertyName("createdOn")>] CreatedOn: DateTime }
     
@@ -366,7 +367,8 @@ module Records =
             { Id = String.Empty
               Resource = String.Empty
               Version = 0
-              RawBlob = String.Empty
+              ResourceType = String.Empty
+              RawBlob = BlobField.Empty()
               Hash = String.Empty
               CreatedOn = DateTime.UtcNow }
     
@@ -375,7 +377,8 @@ module Records =
 	id TEXT NOT NULL,
 	resource TEXT NOT NULL,
 	version INTEGER NOT NULL,
-	raw_blob TEXT NOT NULL,
+	resource_type TEXT NOT NULL,
+	raw_blob BLOB NOT NULL,
 	hash TEXT NOT NULL,
 	created_on TEXT NOT NULL,
 	CONSTRAINT resource_versions_PK PRIMARY KEY (id),
@@ -389,6 +392,7 @@ module Records =
               resource_versions.`id`,
               resource_versions.`resource`,
               resource_versions.`version`,
+              resource_versions.`resource_type`,
               resource_versions.`raw_blob`,
               resource_versions.`hash`,
               resource_versions.`created_on`
@@ -399,25 +403,21 @@ module Records =
     
     /// A record representing a row in the table `resources`.
     type Resource =
-        { [<JsonPropertyName("name")>] Name: string
-          [<JsonPropertyName("type")>] Type: string }
+        { [<JsonPropertyName("name")>] Name: string }
     
         static member Blank() =
-            { Name = String.Empty
-              Type = String.Empty }
+            { Name = String.Empty }
     
         static member CreateTableSql() = """
         CREATE TABLE resources (
 	name TEXT NOT NULL,
-	"type" TEXT NOT NULL,
 	CONSTRAINT resources_PK PRIMARY KEY (name)
 )
         """
     
         static member SelectSql() = """
         SELECT
-              resources.`name`,
-              resources.`type`
+              resources.`name`
         FROM resources
         """
     
@@ -596,7 +596,7 @@ module Records =
         static member TableName() = "table_object_mappers"
     
 
-/// Module generated on 27/02/2023 23:44:41 (utc) via Freql.Tools.
+/// Module generated on 28/02/2023 19:12:51 (utc) via Freql.Tools.
 [<RequireQualifiedAccess>]
 module Parameters =
     /// A record representing a new row in the table `action_types`.
@@ -740,7 +740,8 @@ module Parameters =
         { [<JsonPropertyName("id")>] Id: string
           [<JsonPropertyName("resource")>] Resource: string
           [<JsonPropertyName("version")>] Version: int
-          [<JsonPropertyName("rawBlob")>] RawBlob: string
+          [<JsonPropertyName("resourceType")>] ResourceType: string
+          [<JsonPropertyName("rawBlob")>] RawBlob: BlobField
           [<JsonPropertyName("hash")>] Hash: string
           [<JsonPropertyName("createdOn")>] CreatedOn: DateTime }
     
@@ -748,19 +749,18 @@ module Parameters =
             { Id = String.Empty
               Resource = String.Empty
               Version = 0
-              RawBlob = String.Empty
+              ResourceType = String.Empty
+              RawBlob = BlobField.Empty()
               Hash = String.Empty
               CreatedOn = DateTime.UtcNow }
     
     
     /// A record representing a new row in the table `resources`.
     type NewResource =
-        { [<JsonPropertyName("name")>] Name: string
-          [<JsonPropertyName("type")>] Type: string }
+        { [<JsonPropertyName("name")>] Name: string }
     
         static member Blank() =
-            { Name = String.Empty
-              Type = String.Empty }
+            { Name = String.Empty }
     
     
     /// A record representing a new row in the table `table_columns`.
@@ -831,7 +831,7 @@ module Parameters =
             { Name = String.Empty }
     
     
-/// Module generated on 27/02/2023 23:44:41 (utc) via Freql.Tools.
+/// Module generated on 28/02/2023 19:12:51 (utc) via Freql.Tools.
 [<RequireQualifiedAccess>]
 module Operations =
 

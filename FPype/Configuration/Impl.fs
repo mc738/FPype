@@ -61,4 +61,6 @@ type ConfigurationStore(ctx: SqliteContext) =
     member pc.AddTableObjectMapper(name, mapper) =
         TableObjectMappers.addRaw ctx name mapper
 
+
+
 //member pc.GetPipelineResources(pipeline: string, ?version: Version) =

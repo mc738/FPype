@@ -26,8 +26,8 @@ module Queries =
 
     let get (ctx: SqliteContext) (queryName: string) (version: ItemVersion) =
         match version with
-        | Latest -> getLatestVersion ctx queryName
-        | Specific v -> getVersion ctx queryName v
+        | ItemVersion.Latest -> getLatestVersion ctx queryName
+        | ItemVersion.Specific v -> getVersion ctx queryName v
         |> Option.map (fun qr -> qr.QueryBlob |> blobToString)
 
     let tryCreate (ctx: SqliteContext) (json: JsonElement) =
@@ -46,7 +46,17 @@ module Queries =
         )
         |> List.tryHead
 
-    let add (ctx: SqliteContext) (name: string) (query: string) =
+    let getVersionId (ctx: SqliteContext) (query: string) (version: int) =
+        ctx.Bespoke(
+            "SELECT id FROM query_versions WHERE query_name = @0 AND version = @1 LIMIT 1;",
+            [ query; version ],
+            fun reader ->
+                [ while reader.Read() do
+                      reader.GetString(0) ]
+        )
+        |> List.tryHead
+
+    let addLatestVersion (ctx: SqliteContext) (id: IdType) (name: string) (query: string) =
         use ms = new MemoryStream(query.ToUtf8Bytes())
 
         let version =
@@ -59,7 +69,7 @@ module Queries =
 
         let hash = ms.GetSHA256Hash()
 
-        ({ Id = createId ()
+        ({ Id = id.Get()
            QueryName = name
            Version = version
            QueryBlob = BlobField.FromBytes ms
@@ -67,5 +77,37 @@ module Queries =
            CreatedOn = timestamp () }: Parameters.NewQueryVersion)
         |> Operations.insertQueryVersion ctx
 
-    let addTransaction (ctx: SqliteContext) (name: string) (query: string) =
-        ctx.ExecuteInTransaction(fun t -> add t name query)
+    let addLatestTransaction (ctx: SqliteContext) (id: IdType) (name: string) (query: string) =
+        ctx.ExecuteInTransaction(fun t -> addLatestVersion t id name query)
+
+    let addSpecificVersion (ctx: SqliteContext) (id: IdType) (name: string) (query: string) (version: int) =
+        match getVersionId ctx query version with
+        | Some _ -> Error $"Version `{version}` of query `{query}` already exists."
+        | None ->
+            match Operations.selectQueryRecord ctx [ "WHERE name = @0;" ] [ name ] with
+            | Some _ -> ()
+            | None -> ({ Name = name }: Parameters.NewQuery) |> Operations.insertQuery ctx
+
+            use ms = new MemoryStream(query.ToUtf8Bytes())
+
+            let hash = ms.GetSHA256Hash()
+
+            ({ Id = id.Get()
+               QueryName = name
+               Version = version
+               QueryBlob = BlobField.FromBytes ms
+               Hash = hash
+               CreatedOn = timestamp () }: Parameters.NewQueryVersion)
+            |> Operations.insertQueryVersion ctx
+            |> Ok
+
+    let addSpecificVersionTransaction (ctx: SqliteContext) (id: IdType) (name: string) (query: string) (version: int) =
+        ctx.ExecuteInTransactionV2(fun t -> addSpecificVersion t id name query version)
+
+    let add (ctx: SqliteContext) (id: IdType) (name: string) (query: string) (version: ItemVersion) =
+        match version with
+        | ItemVersion.Latest -> addLatestVersion ctx id name query |> Ok
+        | ItemVersion.Specific v -> addSpecificVersion ctx id name query v
+        
+    let addTransaction (ctx: SqliteContext) (id: IdType) (name: string) (query: string) (version: ItemVersion) =
+        ctx.ExecuteInTransactionV2(fun t -> add t id name query version)

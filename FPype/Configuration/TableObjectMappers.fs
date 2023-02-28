@@ -116,7 +116,17 @@ module TableObjectMappers =
         )
         |> List.tryHead
 
-    let addRaw (ctx: SqliteContext) (name: string) (mapper: string) =
+    let getVersionId (ctx: SqliteContext) (name: string) (version: int) =
+        ctx.Bespoke(
+            "SELECT id FROM table_object_mapper_versions WHERE mapper_name = @0 AND version = @1 LIMIT 1;",
+            [ query; version ],
+            fun reader ->
+                [ while reader.Read() do
+                      reader.GetString(0) ]
+        )
+        |> List.tryHead
+
+    let addRawLatestVersion (ctx: SqliteContext) (id: IdType) (name: string) (mapper: string) =
         use ms = new MemoryStream(mapper.ToUtf8Bytes())
 
         let version =
@@ -131,7 +141,7 @@ module TableObjectMappers =
 
         let hash = ms.GetSHA256Hash()
 
-        ({ Id = createId ()
+        ({ Id = id.Get()
            TableObjectMapper = name
            Version = version
            Mapper = BlobField.FromBytes ms
@@ -139,5 +149,45 @@ module TableObjectMappers =
            CreatedOn = timestamp () }: Parameters.NewTableObjectMapperVersion)
         |> Operations.insertTableObjectMapperVersion ctx
 
-    let addRawTransaction (ctx: SqliteContext) (name: string) (mapper: string) =
-        ctx.ExecuteInTransaction(fun t -> addRaw t name mapper)
+    let addRawLatestVersionTransaction (ctx: SqliteContext) (id: IdType) (name: string) (mapper: string) =
+        ctx.ExecuteInTransaction(fun t -> addRawLatestVersion t id name mapper)
+
+    let addSpecificVersionRaw (ctx: SqliteContext) (id: IdType) (name: string) (mapper: string) (version: int) =
+        match getVersionId ctx name version with
+        | Some _ -> Error $"Version `{version}` of table object mapper `{name}` already exists."
+        | None ->
+            match Operations.selectTableObjectMapperRecord ctx [ "WHERE name = @0;" ] [ name ] with
+            | Some _ -> ()
+            | None ->
+                ({ Name = name }: Parameters.NewTableObjectMapper)
+                |> Operations.insertTableObjectMapper ctx
+
+            use ms = new MemoryStream(mapper.ToUtf8Bytes())
+
+            let hash = ms.GetSHA256Hash()
+
+            ({ Id = id.Get()
+               TableObjectMapper = name
+               Version = version
+               Mapper = BlobField.FromBytes ms
+               Hash = hash
+               CreatedOn = timestamp () }: Parameters.NewTableObjectMapperVersion)
+            |> Operations.insertTableObjectMapperVersion ctx
+            |> Ok
+
+    let addSpecificVersionRawTransaction
+        (ctx: SqliteContext)
+        (id: IdType)
+        (name: string)
+        (mapper: string)
+        (version: int)
+        =
+        ctx.ExecuteInTransactionV2(fun t -> addSpecificVersionRaw t id name mapper version)
+
+    let addRaw (ctx: SqliteContext) (id: IdType) (name: string) (mapper: string) (version: ItemVersion) =
+        match version with
+        | ItemVersion.Latest -> addRawLatestVersion ctx id name mapper |> Ok
+        | ItemVersion.Specific v -> addSpecificVersionRaw ctx id name mapper v
+
+    let addRawTransaction (ctx: SqliteContext) (id: IdType) (name: string) (mapper: string) (version: ItemVersion) =
+        ctx.ExecuteInTransactionV2(fun t -> addRaw t id name mapper version)
