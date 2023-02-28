@@ -6,6 +6,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Documentation", "Documentat
 	ProjectSection(SolutionItems) = preProject
 		LICENSE = LICENSE
 		README.md = README.md
+		pipeline_action_examples.md = pipeline_action_examples.md
 	EndProjectSection
 EndProject
 Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "FPype.App", "FPype.App\FPype.App.fsproj", "{8E074341-9199-475D-8728-C6254B174184}"
