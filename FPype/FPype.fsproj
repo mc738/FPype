@@ -20,6 +20,7 @@
         <Compile Include="Actions\Transform.fs" />
         <Compile Include="Configuration\Persistence.fs" />
         <Compile Include="Configuration\Common.fs" />
+        <Compile Include="Configuration\Pipelines.fs" />
         <Compile Include="Configuration\Tables.fs" />
         <Compile Include="Configuration\Queries.fs" />
         <Compile Include="Configuration\TableObjectMappers.fs" />

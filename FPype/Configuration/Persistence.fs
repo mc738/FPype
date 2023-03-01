@@ -5,7 +5,7 @@ open System.Text.Json.Serialization
 open Freql.Core.Common
 open Freql.Sqlite
 
-/// Module generated on 28/02/2023 19:12:51 (utc) via Freql.Sqlite.Tools.
+/// Module generated on 28/02/2023 22:59:02 (utc) via Freql.Sqlite.Tools.
 [<RequireQualifiedAccess>]
 module Records =
     /// A record representing a row in the table `action_types`.
@@ -226,12 +226,14 @@ module Records =
         { [<JsonPropertyName("id")>] Id: string
           [<JsonPropertyName("pipeline")>] Pipeline: string
           [<JsonPropertyName("version")>] Version: int
+          [<JsonPropertyName("description")>] Description: string
           [<JsonPropertyName("createdOn")>] CreatedOn: DateTime }
     
         static member Blank() =
             { Id = String.Empty
               Pipeline = String.Empty
               Version = 0
+              Description = String.Empty
               CreatedOn = DateTime.UtcNow }
     
         static member CreateTableSql() = """
@@ -239,10 +241,11 @@ module Records =
 	id TEXT NOT NULL,
 	pipeline TEXT NOT NULL,
 	version INTEGER NOT NULL,
+	description TEXT NOT NULL,
 	created_on TEXT NOT NULL,
 	CONSTRAINT pipeline_versions_PK PRIMARY KEY (id),
 	CONSTRAINT pipeline_versions_UN UNIQUE (pipeline,version),
-	CONSTRAINT pipeline_versions_FK FOREIGN KEY (pipeline) REFERENCES pipelines(id)
+	CONSTRAINT pipeline_versions_FK FOREIGN KEY (pipeline) REFERENCES pipelines(name)
 )
         """
     
@@ -251,6 +254,7 @@ module Records =
               pipeline_versions.`id`,
               pipeline_versions.`pipeline`,
               pipeline_versions.`version`,
+              pipeline_versions.`description`,
               pipeline_versions.`created_on`
         FROM pipeline_versions
         """
@@ -259,29 +263,21 @@ module Records =
     
     /// A record representing a row in the table `pipelines`.
     type Pipeline =
-        { [<JsonPropertyName("id")>] Id: string
-          [<JsonPropertyName("name")>] Name: string
-          [<JsonPropertyName("description")>] Description: string }
+        { [<JsonPropertyName("name")>] Name: string }
     
         static member Blank() =
-            { Id = String.Empty
-              Name = String.Empty
-              Description = String.Empty }
+            { Name = String.Empty }
     
         static member CreateTableSql() = """
         CREATE TABLE pipelines (
-	id TEXT NOT NULL,
 	name TEXT NOT NULL,
-	description TEXT NOT NULL,
-	CONSTRAINT pipelines_PK PRIMARY KEY (id)
+	CONSTRAINT pipelines_PK PRIMARY KEY (name)
 )
         """
     
         static member SelectSql() = """
         SELECT
-              pipelines.`id`,
-              pipelines.`name`,
-              pipelines.`description`
+              pipelines.`name`
         FROM pipelines
         """
     
@@ -596,7 +592,7 @@ module Records =
         static member TableName() = "table_object_mappers"
     
 
-/// Module generated on 28/02/2023 19:12:51 (utc) via Freql.Tools.
+/// Module generated on 28/02/2023 22:59:02 (utc) via Freql.Tools.
 [<RequireQualifiedAccess>]
 module Parameters =
     /// A record representing a new row in the table `action_types`.
@@ -688,25 +684,23 @@ module Parameters =
         { [<JsonPropertyName("id")>] Id: string
           [<JsonPropertyName("pipeline")>] Pipeline: string
           [<JsonPropertyName("version")>] Version: int
+          [<JsonPropertyName("description")>] Description: string
           [<JsonPropertyName("createdOn")>] CreatedOn: DateTime }
     
         static member Blank() =
             { Id = String.Empty
               Pipeline = String.Empty
               Version = 0
+              Description = String.Empty
               CreatedOn = DateTime.UtcNow }
     
     
     /// A record representing a new row in the table `pipelines`.
     type NewPipeline =
-        { [<JsonPropertyName("id")>] Id: string
-          [<JsonPropertyName("name")>] Name: string
-          [<JsonPropertyName("description")>] Description: string }
+        { [<JsonPropertyName("name")>] Name: string }
     
         static member Blank() =
-            { Id = String.Empty
-              Name = String.Empty
-              Description = String.Empty }
+            { Name = String.Empty }
     
     
     /// A record representing a new row in the table `queries`.
@@ -831,7 +825,7 @@ module Parameters =
             { Name = String.Empty }
     
     
-/// Module generated on 28/02/2023 19:12:51 (utc) via Freql.Tools.
+/// Module generated on 28/02/2023 22:59:02 (utc) via Freql.Tools.
 [<RequireQualifiedAccess>]
 module Operations =
 

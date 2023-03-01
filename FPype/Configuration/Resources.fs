@@ -11,10 +11,8 @@ module Resources =
     open FsToolbox.Extensions
     open FPype.Configuration.Persistence
 
-
     let getPipelineResources (ctx: SqliteContext) (pipelineVersionId: string) =
         Operations.selectPipelineResourceRecords ctx [ "WHERE pipeline_version_id = @0;" ] [ pipelineVersionId ]
-
 
     let getResourceVersionById (ctx: SqliteContext) (id: string) =
         Operations.selectResourceVersionRecord ctx [ "WHERE id = @0;" ] [ id ]
@@ -24,7 +22,6 @@ module Resources =
 
     let getVersion (ctx: SqliteContext) (resource: string) (version: int) =
         Operations.selectResourceVersionRecord ctx [ "WHERE resource = @0 AND version = @1;" ] [ resource; version ]
-
 
     let get (ctx: SqliteContext) (resource: string) (version: ItemVersion) =
         match version with

@@ -1,5 +1,6 @@
 ﻿namespace FPype.Configuration
 
+open System
 open System.IO
 open FPype.Configuration.Persistence
 open FPype.Data.Models
@@ -44,11 +45,15 @@ type ConfigurationStore(ctx: SqliteContext) =
     member pc.GetTable(tableName, ?version: ItemVersion) =
         ItemVersion.FromOptional version |> Tables.tryCreateTableModel ctx tableName
 
+    member pc.AddTable(id, tableName, columns, ?version) =
+        ItemVersion.FromOptional version
+        |> Tables.addTransaction ctx id tableName columns
+
     member pc.GetQuery(queryName, ?version: ItemVersion) =
         ItemVersion.FromOptional version |> Queries.get ctx queryName
-        
-    member pc.AddQuery(name, query) =
-        Queries.add ctx name query
+
+    member pc.AddQuery(id, name, query, ?version: ItemVersion) =
+        ItemVersion.FromOptional version |> Queries.addTransaction ctx id name query
 
     member pc.CreateActions(pipelineId, ?version: ItemVersion) =
         ItemVersion.FromOptional version
@@ -58,8 +63,9 @@ type ConfigurationStore(ctx: SqliteContext) =
     member pc.GetTableObjectMapper(name, ?version: ItemVersion) =
         ItemVersion.FromOptional version |> TableObjectMappers.load ctx name
 
-    member pc.AddTableObjectMapper(name, mapper) =
-        TableObjectMappers.addRaw ctx name mapper
+    member pc.AddTableObjectMapper(id, name, mapper, ?version) =
+        ItemVersion.FromOptional version
+        |> TableObjectMappers.addRawTransaction ctx id name mapper
 
 
 

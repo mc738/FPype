@@ -166,12 +166,28 @@ module Actions =
 
     let createActions (ctx: SqliteContext) (pipelineId: string) (version: ItemVersion) =
         match version with
-        | ItemVersion.Latest -> Operations.selectPipelineVersionRecord ctx [ "WHERE pipeline = @0 ORDER BY version DESC LIMIT 1;" ] [ pipelineId ]
-        | ItemVersion.Specific v -> Operations.selectPipelineVersionRecord ctx [ "WHERE pipeline = @0 AND version = @1;" ] [ pipelineId; v ]
+        | ItemVersion.Latest ->
+            Operations.selectPipelineVersionRecord
+                ctx
+                [ "WHERE pipeline = @0 ORDER BY version DESC LIMIT 1;" ]
+                [ pipelineId ]
+        | ItemVersion.Specific v ->
+            Operations.selectPipelineVersionRecord ctx [ "WHERE pipeline = @0 AND version = @1;" ] [ pipelineId; v ]
         |> Option.map (fun pv ->
-             Operations.selectPipelineActionRecords ctx [ "WHERE pipeline_version_id = @0" ] [ pv.Id ]
-             |> List.sortBy (fun pa -> pa.Step)
-             |> List.map (createAction (all ctx |> Map.ofList))
-             |> flattenResultList)
+            Operations.selectPipelineActionRecords ctx [ "WHERE pipeline_version_id = @0" ] [ pv.Id ]
+            |> List.sortBy (fun pa -> pa.Step)
+            |> List.map (createAction (all ctx |> Map.ofList))
+            |> flattenResultList)
         |> Option.defaultWith (fun _ -> Error $"Pipeline `{pipelineId}` (version {version.ToLabel()}) not found.")
-        
+
+    let getLastActionStep (ctx: SqliteContext) (pipelineVersionId: string) =
+        ctx.Bespoke(
+            "SELECT step FROM pipeline_actions WHERE pipeline_version_id = @0 ORDER BY step DESC LIMIT 1;",
+            [ pipelineVersionId ],
+            fun reader ->
+                [ while reader.Read() do
+                      reader.GetInt32(0) ]
+        )
+        |> List.tryHead
+    
+    let addAction () = ()
