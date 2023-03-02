@@ -46,14 +46,21 @@ type ConfigurationStore(ctx: SqliteContext) =
         ItemVersion.FromOptional version |> Tables.tryCreateTableModel ctx tableName
 
     member pc.AddTable(id, tableName, columns, ?version) =
-        ItemVersion.FromOptional version
-        |> Tables.addTransaction ctx id tableName columns
+        ({ Id = id
+           Name = tableName
+           Version = ItemVersion.FromOptional version
+           Columns = columns }: Tables.NewTable)
+        |> Tables.addTransaction ctx
 
     member pc.GetQuery(queryName, ?version: ItemVersion) =
         ItemVersion.FromOptional version |> Queries.get ctx queryName
 
     member pc.AddQuery(id, name, query, ?version: ItemVersion) =
-        ItemVersion.FromOptional version |> Queries.addTransaction ctx id name query
+        ({ Id = id
+           Name = name
+           Version = ItemVersion.FromOptional version
+           Query = query }: Queries.NewQuery)
+        |> Queries.addTransaction ctx
 
     member pc.CreateActions(pipelineId, ?version: ItemVersion) =
         ItemVersion.FromOptional version
@@ -64,8 +71,11 @@ type ConfigurationStore(ctx: SqliteContext) =
         ItemVersion.FromOptional version |> TableObjectMappers.load ctx name
 
     member pc.AddTableObjectMapper(id, name, mapper, ?version) =
-        ItemVersion.FromOptional version
-        |> TableObjectMappers.addRawTransaction ctx id name mapper
+        ({ Id = id
+           Name = name
+           Version = ItemVersion.FromOptional version
+           Mapper = mapper }: TableObjectMappers.NewTableObjectMapper)
+        |> TableObjectMappers.addRawTransaction ctx
 
 
 

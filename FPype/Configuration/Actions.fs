@@ -14,6 +14,15 @@ module Actions =
     open FsToolbox.Extensions
     open FPype.Actions
 
+    type NewPipelineAction =
+        { Id: IdType
+          Name: string
+          Pipeline: string
+          Version: ItemVersion
+          ActionType: string
+          ActionData: string
+          Step: int option }
+
     module Import =
 
         module ``import-file`` =
@@ -266,4 +275,22 @@ module Actions =
                    Step = step }: Parameters.NewPipelineAction)
                 |> Operations.insertPipelineAction ctx
                 |> Ok)
-        |> Option.defaultWith (fun _ -> Error $"Version `{version.ToLabel()}` of pipeline `{pipeline}` not found.")
+        |> Option.defaultWith (fun _ -> Error $"Version `{version.ToLabel()}` of pipeline `{pipeline}` not found")
+
+    let add (ctx: SqliteContext) (action: NewPipelineAction) =
+        match action.Step with
+        | Some s ->
+            addActionAsSpecificStep
+                ctx
+                action.Pipeline
+                action.Version
+                action.Id
+                action.Name
+                action.ActionType
+                action.ActionData
+                s
+        | None ->
+            addActionAsLast ctx action.Pipeline action.Version action.Id action.Name action.ActionType action.ActionData
+
+    let addTransaction (ctx: SqliteContext) (action: NewPipelineAction) =
+        ctx.ExecuteInTransactionV2(fun t -> add t action)
