@@ -17,7 +17,8 @@ module Tables =
     open FPype.Configuration.Persistence
 
     type NewTable =
-        { Name: string
+        { Id: IdType
+          Name: string
           Version: ItemVersion
           Columns: NewColumn list }
 
@@ -86,8 +87,8 @@ module Tables =
 
     let tryCreateTableModel (ctx: SqliteContext) (tableName: string) (version: ItemVersion) =
         match version with
-        | Latest -> getLatestVersion ctx tableName
-        | Specific v -> getVersion ctx tableName v
+        | ItemVersion.Latest -> getLatestVersion ctx tableName
+        | ItemVersion.Specific v -> getVersion ctx tableName v
         |> Option.map (fun tv ->
             createColumns ctx tv.Id
             |> Result.map (fun tc ->
@@ -228,21 +229,15 @@ module Tables =
 
     let add
         (ctx: SqliteContext)
-        (id: IdType)
-        (tableName: string)
-        (columns: NewColumn list)
-        (version: ItemVersion)
+        (table: NewTable)
         =
-        match version with
-        | ItemVersion.Latest -> addLatestVersion ctx id tableName columns |> Ok
-        | ItemVersion.Specific v -> addSpecificVersion ctx id tableName columns v
+        match table.Version with
+        | ItemVersion.Latest -> addLatestVersion ctx table.Id table.Name table.Columns |> Ok
+        | ItemVersion.Specific v -> addSpecificVersion ctx table.Id table.Name table.Columns v
         
     let addTransaction
         (ctx: SqliteContext)
-        (id: IdType)
-        (tableName: string)
-        (columns: NewColumn list)
-        (version: ItemVersion)
+        (table: NewTable)
         =
-        ctx.ExecuteInTransactionV2(fun t -> add t id tableName columns version)
+        ctx.ExecuteInTransactionV2(fun t -> add t table)
     

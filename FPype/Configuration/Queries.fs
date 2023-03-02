@@ -12,6 +12,12 @@ module Queries =
     open FsToolbox.Extensions
     open FPype.Configuration.Persistence
 
+    type NewQuery =
+        { Id: IdType
+          Name: string
+          Version: ItemVersion
+          Query: string }
+
     let getLatestVersion (ctx: SqliteContext) (queryName: string) =
         Operations.selectQueryVersionRecord
             ctx
@@ -104,10 +110,10 @@ module Queries =
     let addSpecificVersionTransaction (ctx: SqliteContext) (id: IdType) (name: string) (query: string) (version: int) =
         ctx.ExecuteInTransactionV2(fun t -> addSpecificVersion t id name query version)
 
-    let add (ctx: SqliteContext) (id: IdType) (name: string) (query: string) (version: ItemVersion) =
-        match version with
-        | ItemVersion.Latest -> addLatestVersion ctx id name query |> Ok
-        | ItemVersion.Specific v -> addSpecificVersion ctx id name query v
-        
-    let addTransaction (ctx: SqliteContext) (id: IdType) (name: string) (query: string) (version: ItemVersion) =
-        ctx.ExecuteInTransactionV2(fun t -> add t id name query version)
+    let add (ctx: SqliteContext) (query: NewQuery) =
+        match query.Version with
+        | ItemVersion.Latest -> addLatestVersion ctx query.Id query.Name query.Query |> Ok
+        | ItemVersion.Specific v -> addSpecificVersion ctx query.Id query.Name query.Query v
+
+    let addTransaction (ctx: SqliteContext) (query: NewQuery) =
+        ctx.ExecuteInTransactionV2(fun t -> add t query)

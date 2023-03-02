@@ -63,12 +63,22 @@ module Common =
     type IdType =
         | Generated
         | Specific of string
-        
+
+        static member FromJson(json: JsonElement) =
+            match Json.tryGetStringProperty "id" json with
+            | Some id -> IdType.Specific id
+            | None -> IdType.Generated
+
         member id.Get() =
             match id with
             | Generated -> Guid.NewGuid().ToString("n")
             | Specific v -> v
-        
+            
+        member id.Generate() =
+            match id with
+            | Generated -> Guid.NewGuid().ToString("n") |> Specific
+            | id -> id
+
     let createId _ = Guid.NewGuid().ToString("n")
 
     let timestamp _ = DateTime.UtcNow

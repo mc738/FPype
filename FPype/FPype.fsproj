@@ -11,6 +11,7 @@
         <Compile Include="Core\JPath.fs" />
         <Compile Include="Core\Queries.fs" />
         <Compile Include="Data\Resources\Grok.fs" />
+        <Compile Include="Data\Common.fs" />
         <Compile Include="Data\Models.fs" />
         <Compile Include="Data\Store.fs" />
         <Compile Include="Data\Grouping.fs" />
@@ -29,6 +30,7 @@
         <Compile Include="Configuration\Actions.fs" />
         <Compile Include="Configuration\Serialization.fs" />
         <Compile Include="Configuration\Impl.fs" />
+        <Compile Include="Configuration\Import.fs" />
         <Compile Include="Common.fs" />
     </ItemGroup>
 

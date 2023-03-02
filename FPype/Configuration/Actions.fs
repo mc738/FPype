@@ -1,13 +1,17 @@
 ﻿namespace FPype.Configuration
 
+open System.IO
 open System.Text.Json
 open FPype.Configuration.Persistence
+open Freql.Core.Common.Types
+open Google.Protobuf.WellKnownTypes
 
 module Actions =
 
     open System.Text.Json
     open Freql.Sqlite
     open FsToolbox.Core
+    open FsToolbox.Extensions
     open FPype.Actions
 
     module Import =
@@ -189,5 +193,77 @@ module Actions =
                       reader.GetInt32(0) ]
         )
         |> List.tryHead
-    
-    let addAction () = ()
+
+    let stepExists (ctx: SqliteContext) (pipelineVersionId: string) (step: int) =
+        ctx.Bespoke(
+            "SELECT step FROM pipeline_actions WHERE pipeline_version_id = @0 AND step = @1 LIMIT 1;",
+            [ pipelineVersionId; step ],
+            fun reader ->
+                [ while reader.Read() do
+                      reader.GetInt32(0) ]
+        )
+        |> List.tryHead
+        |> Option.map (fun _ -> true)
+        |> Option.defaultValue false
+
+    let addActionAsLast
+        (ctx: SqliteContext)
+        (pipeline: string)
+        (version: ItemVersion)
+        (id: IdType)
+        (name: string)
+        (actionType: string)
+        (actionData: string)
+        =
+        //let versionId =
+        match version with
+        | ItemVersion.Latest -> Pipelines.getLatestVersionId ctx pipeline
+        | ItemVersion.Specific v -> Pipelines.getVersionId ctx pipeline v
+        |> Option.map (fun versionId ->
+            let prevStep = getLastActionStep ctx versionId |> Option.defaultValue 0
+
+            use ms = new MemoryStream(actionData.ToUtf8Bytes())
+            let hash = ms.GetSHA256Hash()
+
+            ({ Id = id.Get()
+               PipelineVersionId = versionId
+               Name = name
+               ActionType = actionType
+               ActionBlob = BlobField.FromBytes ms
+               Hash = hash
+               Step = prevStep + 1 }: Parameters.NewPipelineAction)
+            |> Operations.insertPipelineAction ctx
+            |> Ok)
+        |> Option.defaultWith (fun _ -> Error $"Version `{version.ToLabel()}` of pipeline `{pipeline}` not found.")
+
+    let addActionAsSpecificStep
+        (ctx: SqliteContext)
+        (pipeline: string)
+        (version: ItemVersion)
+        (id: IdType)
+        (name: string)
+        (actionType: string)
+        (actionData: string)
+        (step: int)
+        =
+        match version with
+        | ItemVersion.Latest -> Pipelines.getLatestVersionId ctx pipeline
+        | ItemVersion.Specific v -> Pipelines.getVersionId ctx pipeline v
+        |> Option.map (fun versionId ->
+
+            match stepExists ctx versionId step with
+            | true -> Error $"Version `{version.ToLabel()}` of pipeline `{pipeline}` already contains step `{step}`."
+            | false ->
+                use ms = new MemoryStream(actionData.ToUtf8Bytes())
+                let hash = ms.GetSHA256Hash()
+
+                ({ Id = id.Get()
+                   PipelineVersionId = versionId
+                   Name = name
+                   ActionType = actionType
+                   ActionBlob = BlobField.FromBytes ms
+                   Hash = hash
+                   Step = step }: Parameters.NewPipelineAction)
+                |> Operations.insertPipelineAction ctx
+                |> Ok)
+        |> Option.defaultWith (fun _ -> Error $"Version `{version.ToLabel()}` of pipeline `{pipeline}` not found.")

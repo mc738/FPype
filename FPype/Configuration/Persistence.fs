@@ -5,7 +5,7 @@ open System.Text.Json.Serialization
 open Freql.Core.Common
 open Freql.Sqlite
 
-/// Module generated on 28/02/2023 22:59:02 (utc) via Freql.Sqlite.Tools.
+/// Module generated on 01/03/2023 19:59:33 (utc) via Freql.Sqlite.Tools.
 [<RequireQualifiedAccess>]
 module Records =
     /// A record representing a row in the table `action_types`.
@@ -109,7 +109,7 @@ module Records =
           [<JsonPropertyName("actionType")>] ActionType: string
           [<JsonPropertyName("actionBlob")>] ActionBlob: BlobField
           [<JsonPropertyName("hash")>] Hash: string
-          [<JsonPropertyName("step")>] Step: int64 }
+          [<JsonPropertyName("step")>] Step: int }
     
         static member Blank() =
             { Id = String.Empty
@@ -118,7 +118,7 @@ module Records =
               ActionType = String.Empty
               ActionBlob = BlobField.Empty()
               Hash = String.Empty
-              Step = 0L }
+              Step = 0 }
     
         static member CreateTableSql() = """
         CREATE TABLE pipeline_actions (
@@ -155,14 +155,14 @@ module Records =
         { [<JsonPropertyName("id")>] Id: string
           [<JsonPropertyName("pipelineVersionId")>] PipelineVersionId: string
           [<JsonPropertyName("name")>] Name: string
-          [<JsonPropertyName("required")>] Required: int64
+          [<JsonPropertyName("required")>] Required: bool
           [<JsonPropertyName("defaultValue")>] DefaultValue: string option }
     
         static member Blank() =
             { Id = String.Empty
               PipelineVersionId = String.Empty
               Name = String.Empty
-              Required = 0L
+              Required = true
               DefaultValue = None }
     
         static member CreateTableSql() = """
@@ -592,7 +592,7 @@ module Records =
         static member TableName() = "table_object_mappers"
     
 
-/// Module generated on 28/02/2023 22:59:02 (utc) via Freql.Tools.
+/// Module generated on 01/03/2023 19:59:33 (utc) via Freql.Tools.
 [<RequireQualifiedAccess>]
 module Parameters =
     /// A record representing a new row in the table `action_types`.
@@ -639,7 +639,7 @@ module Parameters =
           [<JsonPropertyName("actionType")>] ActionType: string
           [<JsonPropertyName("actionBlob")>] ActionBlob: BlobField
           [<JsonPropertyName("hash")>] Hash: string
-          [<JsonPropertyName("step")>] Step: int64 }
+          [<JsonPropertyName("step")>] Step: int }
     
         static member Blank() =
             { Id = String.Empty
@@ -648,7 +648,7 @@ module Parameters =
               ActionType = String.Empty
               ActionBlob = BlobField.Empty()
               Hash = String.Empty
-              Step = 0L }
+              Step = 0 }
     
     
     /// A record representing a new row in the table `pipeline_args`.
@@ -656,14 +656,14 @@ module Parameters =
         { [<JsonPropertyName("id")>] Id: string
           [<JsonPropertyName("pipelineVersionId")>] PipelineVersionId: string
           [<JsonPropertyName("name")>] Name: string
-          [<JsonPropertyName("required")>] Required: int64
+          [<JsonPropertyName("required")>] Required: bool
           [<JsonPropertyName("defaultValue")>] DefaultValue: string option }
     
         static member Blank() =
             { Id = String.Empty
               PipelineVersionId = String.Empty
               Name = String.Empty
-              Required = 0L
+              Required = true
               DefaultValue = None }
     
     
@@ -825,7 +825,7 @@ module Parameters =
             { Name = String.Empty }
     
     
-/// Module generated on 28/02/2023 22:59:02 (utc) via Freql.Tools.
+/// Module generated on 01/03/2023 19:59:33 (utc) via Freql.Tools.
 [<RequireQualifiedAccess>]
 module Operations =
 

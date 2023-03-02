@@ -1,10 +1,10 @@
 ﻿namespace FPype.Configuration
 
-open FPype.Configuration.Persistence
-open Freql.Sqlite
-
 module Pipelines =
 
+    open Freql.Sqlite
+    open FPype.Configuration.Persistence
+    open FPype.Data
 
     let getLatestVersion (ctx: SqliteContext) (pipeline: string) =
         Operations.selectPipelineVersionRecord ctx [ "WHERE pipeline = @0 ORDER BY version DESC LIMIT 1;" ] [ pipeline ]
@@ -36,7 +36,17 @@ module Pipelines =
                       reader.GetString(0) ]
         )
         |> List.tryHead
-
+        
+    let getLatestVersionId (ctx: SqliteContext) (pipeline: string) =
+        ctx.Bespoke(
+            "SELECT id FROM pipeline_versions WHERE pipeline = @0 ORDER BY version DESC LIMIT 1;",
+            [ pipeline ],
+            fun reader ->
+                [ while reader.Read() do
+                      reader.GetString(0) ]
+        )
+        |> List.tryHead
+        
     let addLatestVersion (ctx: SqliteContext) (id: IdType) (pipeline: string) (description: string) =
         let version =
             match latestVersion ctx pipeline with
@@ -95,4 +105,45 @@ module Pipelines =
         =
         ctx.ExecuteInTransactionV2(fun t -> add t id pipeline description version)
 
-    
+    let getPipelineArg (ctx: SqliteContext) (versionId: string) (name: string) =
+        Operations.selectPipelineArgRecord ctx [ "WHERE pipeline_version_id = @0 AND name = @1;" ] [ versionId; name ]
+        |> Option.map (fun pa ->
+            ({ Name = pa.Name
+               Required = pa.Required
+               DefaultValue = pa.DefaultValue }: PipelineArg))
+
+    let getPipelineArgs (ctx: SqliteContext) (versionId: string) =
+        Operations.selectPipelineArgRecords ctx [ "WHERE pipeline_version_id = @0;" ] [ versionId ]
+        |> List.map (fun pa ->
+            ({ Name = pa.Name
+               Required = pa.Required
+               DefaultValue = pa.DefaultValue }: PipelineArg))
+
+    let addPipelineArg
+        (ctx: SqliteContext)
+        (id: IdType)
+        (versionId: string)
+        (name: string)
+        (required: bool)
+        (defaultValue: string option)
+        =
+        match getPipelineArg ctx versionId name with
+        | Some _ -> Error $"Pipeline arg `{name}` already exists for pipeline version `{versionId}`."
+        | None ->
+            ({ Id = id.Get()
+               PipelineVersionId = versionId
+               Name = name
+               Required = required
+               DefaultValue = defaultValue }: Parameters.NewPipelineArg)
+            |> Operations.insertPipelineArg ctx
+            |> Ok
+
+    let addPipelineArgTransaction
+        (ctx: SqliteContext)
+        (id: IdType)
+        (versionId: string)
+        (name: string)
+        (required: bool)
+        (defaultValue: string option)
+        =
+        ctx.ExecuteInTransactionV2(fun t -> addPipelineArg t id versionId name required defaultValue)

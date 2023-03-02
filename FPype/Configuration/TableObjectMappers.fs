@@ -13,6 +13,12 @@ module TableObjectMappers =
     open FPype.Configuration.Persistence
     open FPype.Data.Models
 
+    type NewTableObjectMapper =
+        { Id: IdType
+          Name: string
+          Version: ItemVersion
+          Mapper: string }
+
     let createTableColumnSource (json: JsonElement) =
         match Json.tryGetIntProperty "index" json with
         | Some i -> PropertySource.TableColumn i |> Ok
@@ -184,10 +190,10 @@ module TableObjectMappers =
         =
         ctx.ExecuteInTransactionV2(fun t -> addSpecificVersionRaw t id name mapper version)
 
-    let addRaw (ctx: SqliteContext) (id: IdType) (name: string) (mapper: string) (version: ItemVersion) =
-        match version with
-        | ItemVersion.Latest -> addRawLatestVersion ctx id name mapper |> Ok
-        | ItemVersion.Specific v -> addSpecificVersionRaw ctx id name mapper v
+    let addRaw (ctx: SqliteContext) (mapper: NewTableObjectMapper) =
+        match mapper.Version with
+        | ItemVersion.Latest -> addRawLatestVersion ctx mapper.Id mapper.Name mapper.Mapper |> Ok
+        | ItemVersion.Specific v -> addSpecificVersionRaw ctx mapper.Id mapper.Name mapper.Mapper v
 
-    let addRawTransaction (ctx: SqliteContext) (id: IdType) (name: string) (mapper: string) (version: ItemVersion) =
-        ctx.ExecuteInTransactionV2(fun t -> addRaw t id name mapper version)
+    let addRawTransaction (ctx: SqliteContext) (mapper: NewTableObjectMapper) =
+        ctx.ExecuteInTransactionV2(fun t -> addRaw t mapper)
