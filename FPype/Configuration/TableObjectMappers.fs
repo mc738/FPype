@@ -2,6 +2,7 @@
 
 open System.IO
 open Freql.Core.Common.Types
+open Microsoft.FSharp.Core
 
 [<RequireQualifiedAccess>]
 module TableObjectMappers =
@@ -12,6 +13,18 @@ module TableObjectMappers =
     open FsToolbox.Extensions
     open FPype.Configuration.Persistence
     open FPype.Data.Models
+
+    [<AutoOpen>]
+    module private Internal =
+
+        let createQueryAndTable (ctx: SqliteContext) (queryVersion: QueryVersion) (tableVersion: TableVersion) =
+            Queries.get ctx queryVersion.Name queryVersion.Version
+            |> Option.map (fun q ->
+                Tables.tryCreateTableModel ctx tableVersion.Name tableVersion.Version
+                |> Result.map (fun t -> q, t))
+            |> Option.defaultWith (fun _ ->
+                Error
+                    $"Error creating query: query `{queryVersion.Name}` (version `{queryVersion.Version.ToLabel()}`) not found")
 
     type NewTableObjectMapper =
         { Id: IdType
@@ -27,21 +40,22 @@ module TableObjectMappers =
     let rec createTableSource (ctx: SqliteContext) (json: JsonElement) (properties: PropertyMap list) =
         match
             Json.tryGetStringProperty "name" json,
-            Tables.loadTableFromJson ctx "table" json,
-            Queries.tryCreate ctx json,
+            TableVersion.TryCreate json,
+            QueryVersion.TryCreate json,
             Json.tryGetIntArrayProperty "parameterIndexes" json
         with
-        | Some name, Ok table, Some query, Some parameterIndexes ->
-            ({ Name = name
-               Query = query
-               Table = table
-               ParameterIndexes = parameterIndexes
-               Properties = properties }: RelatedObjectTableSource)
-            |> PropertySource.Table
-            |> Ok
+        | Some name, Ok table, Ok query, Some parameterIndexes ->
+            createQueryAndTable ctx query table
+            |> Result.map (fun (q, t) ->
+                ({ Name = name
+                   Query = q
+                   Table = t
+                   ParameterIndexes = parameterIndexes
+                   Properties = properties }: RelatedObjectTableSource)
+                |> PropertySource.Table)
         | None, _, _, _ -> Error "Missing `name` property"
-        | _, Error e, _, _ -> Error e
-        | _, _, None, _ -> Error "Missing query"
+        | _, Error e, _, _ -> Error $"Error creating table: {e}"
+        | _, _, Error e, _ -> Error $"Error creating query: {e}"
         | _, _, _, None -> Error "Missing `parameterIndexes` property"
 
     let rec tryCreatePropertyMap (ctx: SqliteContext) (json: JsonElement) =
@@ -65,26 +79,26 @@ module TableObjectMappers =
         | _, None -> Error "Missing `type` property"
 
     let tryCreateObjectMapper (ctx: SqliteContext) (json: JsonElement) =
-
         match
             Json.tryGetStringProperty "objectName" json,
-            Queries.tryCreate ctx json,
-            Tables.loadTableFromJson ctx "table" json,
+            QueryVersion.TryCreate json,
+            TableVersion.TryCreate json,
             Json.tryGetArrayProperty "properties" json
         with
-        | Some objectName, Some query, Ok table, Some properties ->
+        | Some objectName, Ok query, Ok table, Some properties ->
 
             match properties |> List.map (tryCreatePropertyMap ctx) |> flattenResultList with
             | Ok p ->
-                ({ ObjectName = objectName
-                   Table = table
-                   Query = query
-                   Properties = p }: TableObjectMap)
-                |> Ok
+                createQueryAndTable ctx query table
+                |> Result.map (fun (q, t) ->
+                    ({ ObjectName = objectName
+                       Table = t
+                       Query = q
+                       Properties = p }: TableObjectMap))
             | Error e -> Error $"Failed to create properties. Error: {e}"
         | None, _, _, _ -> Error "Missing `objectName` property"
-        | _, None, _, _ -> Error "Could not load query"
-        | _, _, Error e, _ -> Error e
+        | _, Error e, _, _ -> Error $"Error creating query: {e}"
+        | _, _, Error e, _ -> Error $"Error creating table: {e}"
         | _, _, _, None -> Error "Missing `properties` array"
 
     let getLatestVersion (ctx: SqliteContext) (mapperName: string) =

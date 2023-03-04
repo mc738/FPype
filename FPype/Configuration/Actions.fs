@@ -5,6 +5,7 @@ open System.Text.Json
 open FPype.Configuration.Persistence
 open Freql.Core.Common.Types
 open Google.Protobuf.WellKnownTypes
+open Microsoft.FSharp.Core
 
 module Actions =
 
@@ -22,6 +23,18 @@ module Actions =
           ActionType: string
           ActionData: string
           Step: int option }
+
+    [<AutoOpen>]
+    module private Internal =
+
+        let createQueryAndTable (ctx: SqliteContext) (queryVersion: QueryVersion) (tableVersion: TableVersion) =
+            Queries.get ctx queryVersion.Name queryVersion.Version
+            |> Option.map (fun q ->
+                Tables.tryCreateTableModel ctx tableVersion.Name tableVersion.Version
+                |> Result.map (fun t -> q, t))
+            |> Option.defaultWith (fun _ ->
+                Error
+                    $"Error creating query: query `{queryVersion.Name}` (version `{queryVersion.Version.ToLabel()}`) not found")
 
     module Import =
 
@@ -44,9 +57,7 @@ module Actions =
         module ``parse-csv`` =
 
             let deserialize (ctx: SqliteContext) (json: JsonElement) =
-                match
-                    Json.tryGetStringProperty "source" json, Json.tryGetProperty "table" json |> TableVersion.TryCreate
-                with
+                match Json.tryGetStringProperty "source" json, TableVersion.TryCreate json with
                 | Some source, Ok tableVersion ->
                     Tables.tryCreateTableModel ctx tableVersion.Name tableVersion.Version
                     |> Result.map (fun t ->
@@ -65,15 +76,13 @@ module Actions =
         module ``aggregate`` =
 
             let deserialize (ctx: SqliteContext) (json: JsonElement) =
-                match Queries.tryCreate ctx json, Json.tryGetProperty "table" json |> TableVersion.TryCreate with
-                | Some query, Ok tableVersion ->
-                    Tables.tryCreateTableModel ctx tableVersion.Name tableVersion.Version
-                    |> Result.map (fun t ->
-                        ({ Table = t
-                           Sql = query
-                           Parameters = [] }: Transform.``aggregate``.Parameters)
+                match QueryVersion.TryCreate json, TableVersion.TryCreate json with
+                | Ok query, Ok tableVersion ->
+                    createQueryAndTable ctx query tableVersion
+                    |> Result.map (fun (q, t) ->
+                        ({ Table = t; Sql = q; Parameters = [] }: Transform.``aggregate``.Parameters)
                         |> Transform.aggregate.createAction)
-                | None, _ -> Error "Missing `query` property"
+                | Error e, _ -> Error $"Error creating query: {e}"
                 | _, Error e -> Error $"Error creating table: {e}"
 
         module ``aggregate-by-date-and-category`` =
@@ -82,28 +91,28 @@ module Actions =
                 match
                     Json.tryGetElementsProperty "dateGroups" json |> Groups.createDateGroup,
                     Json.tryGetStringProperty "categoryField" json,
-                    Json.tryGetProperty "table" json |> TableVersion.TryCreate,
-                    Queries.tryCreate ctx json
+                    TableVersion.TryCreate json,
+                    QueryVersion.TryCreate json
                 with
-                | Ok dateGroup, Some categoryField, Ok tableVersion, Some query ->
-                    Tables.tryCreateTableModel ctx tableVersion.Name tableVersion.Version
-                    |> Result.map (fun t ->
+                | Ok dateGroup, Some categoryField, Ok tableVersion, Ok query ->
+                    createQueryAndTable ctx query tableVersion
+                    |> Result.map (fun (q, t) ->
                         ({ Table = t
-                           SelectSql = query
+                           SelectSql = q
                            DateGroups = dateGroup
                            CategoryField = categoryField }: Transform.``aggregate-by-date-and-category``.Parameters)
                         |> Transform.``aggregate-by-date-and-category``.createAction)
                 | Error e, _, _, _ -> Error $"Error creating date groups: {e}"
                 | _, None, _, _ -> Error "Missing `category` field"
                 | _, _, Error e, _ -> Error $"Error creating table: {e}"
-                | _, _, _, None -> Error "Missing `query` field"
+                | _, _, _, Error e -> Error $"Error creating query: {e}"
 
         module ``aggregate-by-date`` =
 
             let deserialize (ctx: SqliteContext) (json: JsonElement) =
                 match
                     Json.tryGetElementsProperty "dateGroups" json |> Groups.createDateGroup,
-                    Json.tryGetProperty "table" json |> TableVersion.TryCreate,
+                    TableVersion.TryCreate json,
                     Queries.tryCreate ctx json
                 with
                 | Ok dateGroup, Ok tableVersion, Some query ->

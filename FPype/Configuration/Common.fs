@@ -54,11 +54,32 @@ module Common =
             |> Option.map Ok
             |> Option.defaultWith (fun _ -> Error "Missing table version `name` property.")
 
-        static member TryCreate(json: JsonElement option) =
-            json
+        static member TryCreate(json: JsonElement) =
+            Json.tryGetProperty "table" json
             |> Option.map TableVersion.TryFromJson
             |> Option.defaultValue (Error "Missing `table` object")
 
+    type QueryVersion =
+        { Name: string
+          Version: ItemVersion }
+        
+        static member FromJson(json: JsonElement) =
+            Json.tryGetStringProperty "name" json
+            |> Option.map (fun n ->
+                { Name = n
+                  Version = ItemVersion.FromJson json })
+        //|> Option.defaultWith (fun _ -> Error "Missing table version `name` property.")
+
+        static member TryFromJson(json: JsonElement) =
+            QueryVersion.FromJson json
+            |> Option.map Ok
+            |> Option.defaultWith (fun _ -> Error "Missing query version `name` property.")
+
+        static member TryCreate(json: JsonElement) =
+            Json.tryGetProperty "query" json
+            |> Option.map QueryVersion.TryFromJson
+            |> Option.defaultValue (Error "Missing `query` object")
+    
     [<RequireQualifiedAccess>]
     type IdType =
         | Generated
