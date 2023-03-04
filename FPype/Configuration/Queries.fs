@@ -27,7 +27,7 @@ module Queries =
     let getVersion (ctx: SqliteContext) (queryName: string) (version: int) =
         Operations.selectQueryVersionRecord
             ctx
-            [ "WHERE query_versions.`query_name` = @0 AND query_versions.version = @0" ]
+            [ "WHERE query_versions.`query_name` = @0 AND query_versions.version = @1;" ]
             [ queryName; version ]
 
     let get (ctx: SqliteContext) (queryName: string) (version: ItemVersion) =

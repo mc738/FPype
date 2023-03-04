@@ -13,7 +13,7 @@ type ConfigurationStore(ctx: SqliteContext) =
         match File.Exists path with
         | true -> SqliteContext.Open path |> ConfigurationStore
         | false ->
-            let ctx = SqliteContext.Create path
+            use ctx = SqliteContext.Create path
 
             [ Records.ActionType.CreateTableSql()
               Records.Pipeline.CreateTableSql()
@@ -77,6 +77,8 @@ type ConfigurationStore(ctx: SqliteContext) =
            Mapper = mapper }: TableObjectMappers.NewTableObjectMapper)
         |> TableObjectMappers.addRawTransaction ctx
 
+    member pc.ImportFromFile(path: string) =
+        Import.fromFileTransaction ctx path
 
 
 //member pc.GetPipelineResources(pipeline: string, ?version: Version) =

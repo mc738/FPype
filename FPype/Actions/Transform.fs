@@ -68,7 +68,7 @@ module Transform =
     [<RequireQualifiedAccess>]
     module ``aggregate-by-date`` =
 
-        let name = "aggregate-by-date"
+        let name = "aggregate_by_date"
 
         type Parameters =
             { Table: TableModel
@@ -118,7 +118,7 @@ module Transform =
     [<RequireQualifiedAccess>]
     module ``aggregate-by-date-and-category`` =
 
-        let name = "aggregate-by-date-and-category"
+        let name = "aggregate_by_date_and_category"
 
         type Parameters =
             { Table: TableModel
@@ -169,7 +169,7 @@ module Transform =
 
     [<RequireQualifiedAccess>]
     module ``map-to-object`` =
-        let name = "map-to-object"
+        let name = "map_to_object"
 
         let run (mapper: TableObjectMap) (store: PipelineStore) =
             

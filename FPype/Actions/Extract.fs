@@ -130,7 +130,7 @@ module Extract =
       
     [<RequireQualifiedAccess>]
     module ``parse-csv`` =
-        let name = "parse-csv"
+        let name = "parse_csv"
         
         type Parameters =
             {

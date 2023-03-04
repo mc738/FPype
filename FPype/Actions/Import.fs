@@ -10,7 +10,7 @@ module Import =
 
     [<RequireQualifiedAccess>]
     module ``import-file`` =
-        let name = "import-file"
+        let name = "import_file"
 
         type Parameters = { Path: string; Name: string }
 

@@ -21,4 +21,8 @@
       <PackageReference Include="fstoolbox" Version="0.1.1" />
     </ItemGroup>
 
+    <ItemGroup>
+      <ProjectReference Include="..\FPype\FPype.fsproj" />
+    </ItemGroup>
+
 </Project>

@@ -113,18 +113,18 @@ module Actions =
                 match
                     Json.tryGetElementsProperty "dateGroups" json |> Groups.createDateGroup,
                     TableVersion.TryCreate json,
-                    Queries.tryCreate ctx json
+                    QueryVersion.TryCreate json
                 with
-                | Ok dateGroup, Ok tableVersion, Some query ->
-                    Tables.tryCreateTableModel ctx tableVersion.Name tableVersion.Version
-                    |> Result.map (fun t ->
+                | Ok dateGroup, Ok tableVersion, Ok query ->
+                    createQueryAndTable ctx query tableVersion 
+                    |> Result.map (fun (q, t) ->
                         ({ Table = t
-                           SelectSql = query
+                           SelectSql = q
                            DateGroups = dateGroup }: Transform.``aggregate-by-date``.Parameters)
                         |> Transform.``aggregate-by-date``.createAction)
                 | Error e, _, _ -> Error $"Error creating date groups: {e}"
                 | _, Error e, _ -> Error $"Error creating table: {e}"
-                | _, _, None -> Error "Missing query field"
+                | _, _, Error e -> Error $"Error creating query: {e}"
 
         module ``map-to-object`` =
 

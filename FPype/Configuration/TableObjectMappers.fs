@@ -128,7 +128,7 @@ module TableObjectMappers =
 
     let latestVersion (ctx: SqliteContext) (name: string) =
         ctx.Bespoke(
-            "SELECT version FROM table_object_mapper_versions WHERE mapper_name = @0 ORDER BY version DESC LIMIT 1;",
+            "SELECT version FROM table_object_mapper_versions WHERE table_object_mapper = @0 ORDER BY version DESC LIMIT 1;",
             [ name ],
             fun reader ->
                 [ while reader.Read() do
@@ -138,8 +138,8 @@ module TableObjectMappers =
 
     let getVersionId (ctx: SqliteContext) (name: string) (version: int) =
         ctx.Bespoke(
-            "SELECT id FROM table_object_mapper_versions WHERE mapper_name = @0 AND version = @1 LIMIT 1;",
-            [ query; version ],
+            "SELECT id FROM table_object_mapper_versions WHERE table_object_mapper = @0 AND version = @1 LIMIT 1;",
+            [ name; version ],
             fun reader ->
                 [ while reader.Read() do
                       reader.GetString(0) ]

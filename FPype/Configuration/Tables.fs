@@ -116,7 +116,7 @@ module Tables =
     let getVersionId (ctx: SqliteContext) (tableName: string) (version: int) =
         ctx.Bespoke(
             "SELECT id FROM table_model_versions WHERE table_model = @0 AND version = @1 LIMIT 1;",
-            [ query; version ],
+            [ tableName; version ],
             fun reader ->
                 [ while reader.Read() do
                       reader.GetString(0) ]

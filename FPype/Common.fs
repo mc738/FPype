@@ -149,7 +149,7 @@ type PipelineContext =
 
     static member Create(config: ConfigurationStore, basePath: string, logToConsole: bool, pipeline: string, version: ItemVersion, args: Map<string, string>) =
         config.CreateActions(pipeline, version)
-        |> Result.map (fun pa ->
+        |> Result.bind (fun pa ->
             let ctx = PipelineContext.Initialize(basePath, logToConsole, pa)
             
             // Get and validate args
