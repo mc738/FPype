@@ -1,24 +1,26 @@
 ﻿namespace FPype.Actions
 
-open System.Text.Json
-open FPype.Core.Types
-open FPype.Data.Models
-open FPype.Data.Store
-open FsToolbox.Core
-open FsToolbox.Tools
 
 [<RequireQualifiedAccess>]
 module Extract =
-    
+
+
+    open System.Text.Json
+    open FPype.Core.Types
+    open FPype.Data.Models
+    open FPype.Data.Store
+    open FsToolbox.Core
+    open FsToolbox.Tools
+    open FPype.Core
     open System.IO
     open Freql.Csv
     open FPype.Core.Types
     open FPype.Data.Models
     open FPype.Data.Store
-    
+
     module Internal =
-        
-            
+
+
         type ErrorMessage =
             { Message: string
               LineNumber: int
@@ -33,9 +35,9 @@ module Extract =
         type ParseResults =
             { Rows: TableRow list
               Errors: ErrorMessage list }
-        
-        
-        let createRows (columns: TableColumn list) (lines: string array)  =
+
+
+        let createRows (columns: TableColumn list) (lines: string array) =
             lines
             |> Array.mapi (fun lineNo l ->
                 let splitLine = CsvParser.parseLine l
@@ -83,20 +85,20 @@ module Extract =
                     | ParseResult.Failure em -> s, f @ [ em ])
                 ([], [])
             |> (fun (s, e) -> { Rows = s; Errors = e })
-            
-        let createGrokRows (columns: TableColumn list) (grok: Grok.GrokContext) (lines: string array)  =
+
+        let createGrokRows (columns: TableColumn list) (grok: Grok.GrokContext) (lines: string array) =
             lines
             |> Array.mapi (fun lineNo l ->
                 let splitLine = Grok.run grok l
 
                 columns
                 |> List.mapi (fun colNo c ->
-                    
+
                     splitLine.TryFind c.Name
                     |> Option.map (fun v -> Value.CoerceValueToType(v, c.Type))
                     |> Option.defaultWith (fun _ ->
                         match c.Type with
-                        | BaseType.Option _ -> CoercionResult.Success (Value.Option None)
+                        | BaseType.Option _ -> CoercionResult.Success(Value.Option None)
                         | _ -> CoercionResult.Failure $"Column `{c.Name}` value not found")
                     |> fun r ->
                         match r with
@@ -127,17 +129,15 @@ module Extract =
                     | ParseResult.Failure em -> s, f @ [ em ])
                 ([], [])
             |> (fun (s, e) -> { Rows = s; Errors = e })
-      
+
     [<RequireQualifiedAccess>]
     module ``parse-csv`` =
         let name = "parse_csv"
-        
+
         type Parameters =
-            {
-                DataSource: string
-                Table: TableModel
-            }
-        
+            { DataSource: string
+              Table: TableModel }
+
         let run (parameters: Parameters) (store: PipelineStore) =
             store.GetDataSource parameters.DataSource
             |> Option.map (fun ds ->
@@ -145,8 +145,8 @@ module Extract =
                 | "file" ->
                     try
                         File.ReadAllLines ds.Uri |> Ok
-                    with
-                    | exn -> Error $"Could not load file `{ds.Uri}`: {exn.Message}"
+                    with exn ->
+                        Error $"Could not load file `{ds.Uri}`: {exn.Message}"
                 | _ -> Error $"Unsupported source type: `{ds.Type}`")
             |> Option.defaultWith (fun _ -> Error $"Data source `{name}` not found.")
             |> Result.map (Internal.createRows parameters.Table.Columns)
@@ -154,43 +154,93 @@ module Extract =
                 match r.Errors |> List.isEmpty |> not with
                 | true ->
                     store.LogWarning("parse_csv", $"Error parsing {r.Errors.Length} row(s)")
-                    r.Errors |> List.map (fun e -> store.AddImportError("parse_csv", e.Message, $"{e.LineNumber}:{e.ColumnNumber} - {e.Line}")) |> ignore
+
+                    r.Errors
+                    |> List.map (fun e ->
+                        store.AddImportError("parse_csv", e.Message, $"{e.LineNumber}:{e.ColumnNumber} - {e.Line}"))
+                    |> ignore
                 | false -> ()
+
                 store.CreateTable(parameters.Table)
                 |> fun t -> { t with Rows = r.Rows }
                 |> store.InsertRows)
             |> Result.map (fun r ->
                 store.Log("parse_csv", $"Imported {r.Length} row(s) to table `{parameters.Table.Name}`.")
                 store)
-    
+
         let createAction (parameters: Parameters) = run parameters |> createAction name
-    
+
+    [<RequireQualifiedAccess>]
+    module ``parse-csv-collection`` =
+        let name = "parse_csv_collection"
+
+        type Parameters =
+            { CollectionName: string
+              Table: TableModel }
+
+        let run (parameters: Parameters) (store: PipelineStore) =
+            store.GetSourcesByCollection parameters.CollectionName
+            |> List.map (fun ds ->
+                match ds.Type with
+                | "file" ->
+                    try
+                        File.ReadAllLines ds.Uri |> Ok
+                    with exn ->
+                        Error $"Could not load file `{ds.Uri}`: {exn.Message}"
+                | _ -> Error $"Unsupported source type: `{ds.Type}`"
+                |> Result.map (Internal.createRows parameters.Table.Columns)
+                |> Result.bind (fun r ->
+                    match r.Errors |> List.isEmpty |> not with
+                    | true ->
+                        store.LogWarning("parse_csv", $"Error parsing {r.Errors.Length} row(s) from source `{ds.Name}`")
+
+                        r.Errors
+                        |> List.map (fun e ->
+                            store.AddImportError(name, e.Message, $"{e.LineNumber}:{e.ColumnNumber} - {e.Line}"))
+                        |> ignore
+                    | false -> ()
+
+                    store.CreateTable(parameters.Table)
+                    |> fun t -> { t with Rows = r.Rows }
+                    |> store.InsertRows)
+                |> Result.map (fun r ->
+                    store.Log(
+                        name,
+                        $"Imported {r.Length} row(s) from data source `{ds.Name}` to table `{parameters.Table.Name}`."
+                    )
+                    // TODO add result?
+                    ))
+            |> flattenResultList
+            |> Result.map (fun _ -> store)
+
+
+        let createAction (parameters: Parameters) = run parameters |> createAction name
+
     /// Split a source into individual chucks for processing.
     /// This is essentially a preprocessing action.
     let splitSource (path: string) =
-        
+
         ()
-    
+
     [<RequireQualifiedAccess>]
     module Grok =
-        
+
         let name = "grok"
-        
-        
+
+
         let run (name: string) (columns: TableColumn list) (tableName: string) (store: PipelineStore) =
             //store
-            
-            
+
             let grok = Grok.create ([] |> Map.ofList) ""
-            
+
             store.GetDataSource name
             |> Option.map (fun ds ->
                 match ds.Type with
                 | "file" ->
                     try
                         File.ReadAllLines ds.Uri |> Ok
-                    with
-                    | exn -> Error $"Could not load file `{ds.Uri}`: {exn.Message}"
+                    with exn ->
+                        Error $"Could not load file `{ds.Uri}`: {exn.Message}"
                 | _ -> Error $"Unsupported source type: `{ds.Type}`")
             |> Option.defaultWith (fun _ -> Error $"Data source `{name}` not found.")
             |> Result.map (Internal.createGrokRows columns grok)
@@ -198,16 +248,21 @@ module Extract =
                 match r.Errors |> List.isEmpty |> not with
                 | true ->
                     store.LogWarning("grok", $"Error parsing {r.Errors.Length} row(s)")
-                    r.Errors |> List.map (fun e -> store.AddImportError("parse_csv", e.Message, $"{e.LineNumber}:{e.ColumnNumber} - {e.Line}")) |> ignore
+
+                    r.Errors
+                    |> List.map (fun e ->
+                        store.AddImportError("parse_csv", e.Message, $"{e.LineNumber}:{e.ColumnNumber} - {e.Line}"))
+                    |> ignore
                 | false -> ()
+
                 store.CreateTable(tableName, columns)
                 |> fun t -> { t with Rows = r.Rows }
                 |> store.InsertRows)
             |> Result.map (fun r ->
                 store.Log("grok", $"Imported {r.Length} row(s) to table `{tableName}`.")
-                store) 
-        
-        (*
+                store)
+
+(*
         let deserialize (element: JsonElement) =
             match Json.tryGetStringProperty "source" element, Json.tryGetStringProperty "table" element with
             | Some source, Some tableName ->
@@ -219,4 +274,3 @@ module Extract =
             | None, _ -> Error "Missing source property"
             | _, None -> Error "Missing table property"
         *)
-        

@@ -108,16 +108,3 @@ module Common =
 
     let blobToString (blob: BlobField) =
         blob.ToBytes() |> Encoding.UTF8.GetString
-
-    let flattenResultList (r: Result<'a, string> list) =
-        r
-        |> List.fold
-            (fun (s, err) r ->
-                match r with
-                | Ok v -> s @ [ v ], err
-                | Error e -> s, err @ [ e ])
-            ([], [])
-        |> fun (values, errors) ->
-            match errors.IsEmpty with
-            | true -> Ok values
-            | false -> Error <| String.concat ", " errors

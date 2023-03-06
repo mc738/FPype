@@ -1,19 +1,20 @@
 ﻿namespace FPype.Configuration
 
-open System.IO
-open Freql.Core.Common.Types
-open Microsoft.FSharp.Core
-
 [<RequireQualifiedAccess>]
 module TableObjectMappers =
 
+    open System.IO
+    open Freql.Core.Common.Types
+    open Microsoft.FSharp.Core
     open System.Text.Json
     open Freql.Sqlite
     open FsToolbox.Core
     open FsToolbox.Extensions
+    open FPype.Core
     open FPype.Configuration.Persistence
     open FPype.Data.Models
 
+    
     [<AutoOpen>]
     module private Internal =
 

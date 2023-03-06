@@ -6,6 +6,7 @@
     </PropertyGroup>
 
     <ItemGroup>
+        <Compile Include="Core\Common.fs" />
         <Compile Include="Core\Types.fs" />
         <Compile Include="Core\Paths.fs" />
         <Compile Include="Core\JPath.fs" />

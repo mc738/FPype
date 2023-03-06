@@ -1,15 +1,16 @@
 ﻿namespace FPype.Configuration
 
-open System.IO
-open System.Text.Json
-open Freql.Sqlite
-open FsToolbox.Core
-open Google.Protobuf.WellKnownTypes
-open Microsoft.FSharp.Core
-open FPype.Core.Logging
-
 module Import =
 
+    open System.IO
+    open System.Text.Json
+    open Freql.Sqlite
+    open FsToolbox.Core
+    open Google.Protobuf.WellKnownTypes
+    open Microsoft.FSharp.Core
+    open FPype.Core
+    open FPype.Core.Logging
+    
     [<AutoOpen>]
     module private Helpers =
 

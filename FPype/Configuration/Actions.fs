@@ -1,18 +1,17 @@
 ﻿namespace FPype.Configuration
 
-open System.IO
-open System.Text.Json
-open FPype.Configuration.Persistence
-open Freql.Core.Common.Types
-open Google.Protobuf.WellKnownTypes
-open Microsoft.FSharp.Core
-
 module Actions =
 
+    open System.IO
+    open System.Text.Json
+    open FPype.Configuration.Persistence
+    open Freql.Core.Common.Types
+    open Microsoft.FSharp.Core
     open System.Text.Json
     open Freql.Sqlite
     open FsToolbox.Core
     open FsToolbox.Extensions
+    open FPype.Core
     open FPype.Actions
 
     type NewPipelineAction =
@@ -48,9 +47,30 @@ module Actions =
                 | None, _ -> Error "Missing path property"
                 | _, None -> Error "Missing name property"
 
-        let names = [ Import.``import-file``.name ]
+        module ``chunk-file`` =
 
-        let all = [ Import.``import-file``.name, ``import-file``.deserialize ]
+            let deserialize (json: JsonElement) =
+                match
+                    Json.tryGetStringProperty "path" json,
+                    Json.tryGetStringProperty "name" json,
+                    Json.tryGetIntProperty "size" json
+                with
+                | Some path, Some name, Some size ->
+                    ({ Path = path
+                       CollectionName = name
+                       ChunkSize = size }: Import.``chunk-file``.Parameters)
+                    |> Import.``chunk-file``.createAction
+                    |> Ok
+                | None, _, _ -> Error "Missing path property"
+                | _, None, _ -> Error "Missing name property"
+                | _, _, None -> Error "Missing size property"
+
+
+
+        let names = [ Import.``import-file``.name; Import.``chunk-file``.name ]
+
+        let all = [ Import.``import-file``.name, ``import-file``.deserialize
+                    Import.``chunk-file``.name, ``chunk-file``.deserialize ]
 
     module Extract =
 
@@ -66,10 +86,25 @@ module Actions =
                 | None, _ -> Error "Missing source property"
                 | _, Error e -> Error $"Error creating table: {e}"
 
-        let names = [ Extract.``parse-csv``.name ]
+        module ``parse-csv-collection`` =
+
+            let deserialize (ctx: SqliteContext) (json: JsonElement) =
+                match Json.tryGetStringProperty "collect" json, TableVersion.TryCreate json with
+                | Some collection, Ok tableVersion ->
+                    Tables.tryCreateTableModel ctx tableVersion.Name tableVersion.Version
+                    |> Result.map (fun t ->
+                        ({ CollectionName = collection
+                           Table = t }: Extract.``parse-csv-collection``.Parameters)
+                        |> Extract.``parse-csv-collection``.createAction)
+                | None, _ -> Error "Missing collection property"
+                | _, Error e -> Error $"Error creating table: {e}"
+
+
+        let names = [ Extract.``parse-csv``.name; Extract.``parse-csv-collection``.name ]
 
         let all (ctx: SqliteContext) =
-            [ Extract.``parse-csv``.name, ``parse-csv``.deserialize ctx ]
+            [ Extract.``parse-csv``.name, ``parse-csv``.deserialize ctx
+              Extract.``parse-csv-collection``.name, ``parse-csv``.deserialize ctx ]
 
     module Transform =
 
@@ -116,7 +151,7 @@ module Actions =
                     QueryVersion.TryCreate json
                 with
                 | Ok dateGroup, Ok tableVersion, Ok query ->
-                    createQueryAndTable ctx query tableVersion 
+                    createQueryAndTable ctx query tableVersion
                     |> Result.map (fun (q, t) ->
                         ({ Table = t
                            SelectSql = q
