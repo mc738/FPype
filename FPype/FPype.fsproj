@@ -30,7 +30,6 @@
         <Compile Include="Configuration\Resources.fs" />
         <Compile Include="Configuration\Groups.fs" />
         <Compile Include="Configuration\Actions.fs" />
-        <Compile Include="Configuration\Serialization.fs" />
         <Compile Include="Configuration\Import.fs" />
         <Compile Include="Configuration\Impl.fs" />
         <Compile Include="Common.fs" />

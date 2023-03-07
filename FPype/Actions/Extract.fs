@@ -233,7 +233,7 @@ module Extract =
         ()
 
     [<RequireQualifiedAccess>]
-    module Grok =
+    module ``grok`` =
 
         let name = "grok"
 
@@ -244,7 +244,7 @@ module Extract =
               GrokString: string
               ExtraPatterns: (string * string) list }
 
-        let run (parameters: Parameters) (name: string) (columns: TableColumn list) (tableName: string) (store: PipelineStore) =
+        let run (parameters: Parameters) (store: PipelineStore) =
             //store
 
             let patterns =
@@ -269,7 +269,7 @@ module Extract =
                         Error $"Could not load file `{ds.Uri}`: {exn.Message}"
                 | _ -> Error $"Unsupported source type: `{ds.Type}`")
             |> Option.defaultWith (fun _ -> Error $"Data source `{name}` not found.")
-            |> Result.map (Internal.createGrokRows columns grok)
+            |> Result.map (Internal.createGrokRows parameters.Table.Columns grok)
             |> Result.bind (fun r ->
                 match r.Errors |> List.isEmpty |> not with
                 | true ->
@@ -281,12 +281,14 @@ module Extract =
                     |> ignore
                 | false -> ()
 
-                store.CreateTable(tableName, columns)
+                store.CreateTable(parameters.Table)
                 |> fun t -> { t with Rows = r.Rows }
                 |> store.InsertRows)
             |> Result.map (fun r ->
-                store.Log("grok", $"Imported {r.Length} row(s) to table `{tableName}`.")
+                store.Log("grok", $"Imported {r.Length} row(s) to table `{parameters.Table.Name}`.")
                 store)
+
+        let createAction parameters = run parameters |> createAction name
 
 (*
         let deserialize (element: JsonElement) =

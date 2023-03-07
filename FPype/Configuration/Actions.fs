@@ -69,8 +69,9 @@ module Actions =
 
         let names = [ Import.``import-file``.name; Import.``chunk-file``.name ]
 
-        let all = [ Import.``import-file``.name, ``import-file``.deserialize
-                    Import.``chunk-file``.name, ``chunk-file``.deserialize ]
+        let all =
+            [ Import.``import-file``.name, ``import-file``.deserialize
+              Import.``chunk-file``.name, ``chunk-file``.deserialize ]
 
     module Extract =
 
@@ -89,7 +90,7 @@ module Actions =
         module ``parse-csv-collection`` =
 
             let deserialize (ctx: SqliteContext) (json: JsonElement) =
-                match Json.tryGetStringProperty "collect" json, TableVersion.TryCreate json with
+                match Json.tryGetStringProperty "collection" json, TableVersion.TryCreate json with
                 | Some collection, Ok tableVersion ->
                     Tables.tryCreateTableModel ctx tableVersion.Name tableVersion.Version
                     |> Result.map (fun t ->
@@ -100,11 +101,45 @@ module Actions =
                 | _, Error e -> Error $"Error creating table: {e}"
 
 
-        let names = [ Extract.``parse-csv``.name; Extract.``parse-csv-collection``.name ]
+        module ``grok`` =
+
+            let deserialize (ctx: SqliteContext) (json: JsonElement) =
+                match
+                    Json.tryGetStringProperty "source" json,
+                    Json.tryGetStringProperty "grokString" json,
+                    TableVersion.TryCreate json
+                with
+                | Some source, Some grokString, Ok tableVersion ->
+                    Tables.tryCreateTableModel ctx tableVersion.Name tableVersion.Version
+                    |> Result.map (fun t ->
+                        ({ DataSource = source
+                           Table = t
+                           GrokString = grokString
+                           ExtraPatterns =
+                             Json.tryGetArrayProperty "extraPatterns" json
+                             |> Option.map (fun eps ->
+                                 eps
+                                 |> List.choose (fun ep ->
+                                     match
+                                         Json.tryGetStringProperty "name" ep, Json.tryGetStringProperty "pattern" ep
+                                     with
+                                     | Some n, Some p -> Some(n, p)
+                                     | _ -> None))
+                             |> Option.defaultValue [] }: Extract.``grok``.Parameters)
+                        |> Extract.``grok``.createAction)
+                | None, _, _ -> Error "Missing source property"
+                | _, None, _ -> Error "Missing grokString property"
+                | _, _, Error e -> Error $"Error creating table: {e}"
+
+        let names =
+            [ Extract.``parse-csv``.name
+              Extract.``parse-csv-collection``.name
+              Extract.``grok``.name ]
 
         let all (ctx: SqliteContext) =
             [ Extract.``parse-csv``.name, ``parse-csv``.deserialize ctx
-              Extract.``parse-csv-collection``.name, ``parse-csv``.deserialize ctx ]
+              Extract.``parse-csv-collection``.name, ``parse-csv``.deserialize ctx
+              Extract.``grok``.name, ``grok``.deserialize ctx ]
 
     module Transform =
 
