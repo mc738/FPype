@@ -1,5 +1,7 @@
 ﻿namespace FPype.Actions
 
+open System
+
 
 [<RequireQualifiedAccess>]
 module Extract =
@@ -11,6 +13,7 @@ module Extract =
     open FPype.Data.Store
     open FsToolbox.Core
     open FsToolbox.Tools
+    open FsToolbox.Extensions
     open FPype.Core
     open System.IO
     open Freql.Csv
@@ -85,6 +88,13 @@ module Extract =
                     | ParseResult.Failure em -> s, f @ [ em ])
                 ([], [])
             |> (fun (s, e) -> { Rows = s; Errors = e })
+
+        let parseGrokPattern (str: string) =
+            match str.StartsWith('#') || String.IsNullOrWhiteSpace(str) with
+            | true -> None
+            | false ->
+                let i = str.IndexOf(' ')
+                Some(str.[0 .. i - 1], str.[i + 1 ..])
 
         let createGrokRows (columns: TableColumn list) (grok: Grok.GrokContext) (lines: string array) =
             lines
@@ -208,8 +218,8 @@ module Extract =
                         name,
                         $"Imported {r.Length} row(s) from data source `{ds.Name}` to table `{parameters.Table.Name}`."
                     )
-                    // TODO add result?
-                    ))
+                // TODO add result?
+                ))
             |> flattenResultList
             |> Result.map (fun _ -> store)
 
@@ -228,10 +238,26 @@ module Extract =
         let name = "grok"
 
 
-        let run (name: string) (columns: TableColumn list) (tableName: string) (store: PipelineStore) =
+        type Parameters =
+            { DataSource: string
+              Table: TableModel 
+              GrokString: string
+              ExtraPatterns: (string * string) list }
+
+        let run (parameters: Parameters) (name: string) (columns: TableColumn list) (tableName: string) (store: PipelineStore) =
             //store
 
-            let grok = Grok.create ([] |> Map.ofList) ""
+            let patterns =
+                store.GetResource("grok_patterns")
+                |> Option.map (fun r ->
+                    (String.FromUtfBytes r).Split(Environment.NewLine)
+                    |> Array.choose Internal.parseGrokPattern
+                    |> List.ofArray)
+                |> Option.defaultValue []
+                |> List.append parameters.ExtraPatterns
+                |> Map.ofList
+
+            let grok = Grok.create patterns parameters.GrokString
 
             store.GetDataSource name
             |> Option.map (fun ds ->

@@ -135,7 +135,7 @@ type PipelineContext =
             store.AddStateValue("__user_name", Environment.UserName)
             store.AddStateValue("__base_path", dir)
             store.AddStateValue("__imports_path", importDir)
-            
+
             { Id = id
               Directory = dir
               ImportsPath = importDir
@@ -147,16 +147,32 @@ type PipelineContext =
 
         | false -> Error $"Base directory `{basePath}` does not exist."
 
-    static member Create(config: ConfigurationStore, basePath: string, logToConsole: bool, pipeline: string, version: ItemVersion, args: Map<string, string>) =
+    static member Create
+        (
+            config: ConfigurationStore,
+            basePath: string,
+            logToConsole: bool,
+            pipeline: string,
+            version: ItemVersion,
+            args: Map<string, string>
+        ) =
         config.CreateActions(pipeline, version)
         |> Result.bind (fun pa ->
-            let ctx = PipelineContext.Initialize(basePath, logToConsole, pa)
-            
-            // Get and validate args
-            
-            
-            ctx)
-    
+            PipelineContext.Initialize(basePath, logToConsole, pa)
+            |> Result.map (fun ctx ->
+
+                config.GetPipelineVersion(pipeline, version)
+                |> Option.iter (fun pv ->
+                    config.GetPipelineResources(pv.Id)
+                    |> List.iter (fun pr ->
+                        match config.GetResourceVersion(pr.ResourceVersionId) with
+                        | Some r -> ctx.Store.AddResource(r.Resource, r.ResourceType, r.RawBlob.ToBytes())
+                        | None -> ()))
+
+                // Get and validate args
+
+                ctx))
+
     static member Deserialize(json: string) =
         try
             let jDoc = JsonDocument.Parse json
@@ -199,5 +215,3 @@ type PipelineContext =
 
         p.Actions
         |> List.fold (fun r a -> r |> Result.bind (executeAction a)) (Ok p.Store)
-
-    

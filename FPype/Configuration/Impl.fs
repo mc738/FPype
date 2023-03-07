@@ -77,6 +77,15 @@ type ConfigurationStore(ctx: SqliteContext) =
            Mapper = mapper }: TableObjectMappers.NewTableObjectMapper)
         |> TableObjectMappers.addRawTransaction ctx
 
+    member pc.GetPipelineVersion(name, ?version: ItemVersion) =
+        Pipelines.get ctx name (version |> ItemVersion.FromOptional)
+    
+    member pc.GetPipelineResources(pipelineVersionId) =
+        Resources.getPipelineResources ctx pipelineVersionId
+    
+    member pc.GetResourceVersion(resourceVersionId) =
+        Resources.getResourceVersionById ctx resourceVersionId
+    
     member pc.ImportFromFile(path: string) =
         Import.fromFileTransaction ctx path
 

@@ -47,7 +47,7 @@ module Import =
                 let ext = Path.GetExtension(parameters.Path)
 
                 File.ReadLines(parameters.Path)
-                |> Seq.chunkBySize parameters.ChuckSize
+                |> Seq.chunkBySize parameters.ChunkSize
                 |> Seq.iteri (fun i ls ->
                     let path = Path.Combine(importsPath, $"{fileName}___{i}{ext}")
 
