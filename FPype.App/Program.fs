@@ -1,5 +1,16 @@
 ﻿open FPype
 open FPype.Configuration
+open FPype.Data
+
+module Maths =
+    
+    let t _ =
+        
+        let values = [ 1m; 2m; 3m; 3m; 9m; 10m  ]
+        
+        let r = Statistics.standardDeviation values
+        
+        ()
 
 module Example =
 
@@ -65,6 +76,8 @@ module ServerReport =
 
             printfn $"Error: {e}"
 
+
+Maths.t ()
 
 //Example.import ()
 //Example.run ()

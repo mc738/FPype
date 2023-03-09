@@ -119,7 +119,7 @@ module Extract =
                         | _ -> Error("Coerce failure.", lineNo, colNo))
                 |> List.fold
                     (fun (s, f) r ->
-                        // PERFORMANCE would this be better with appending then reverse? 
+                        // PERFORMANCE this used append and then rev because it performs better. 
                         match r with
                         | Ok fv -> fv :: s, f
                         | Error (m, l, c) -> s, (m, l, c) ::  f)
@@ -138,7 +138,7 @@ module Extract =
                         |> ParseResult.Failure)
             |> Array.fold
                 (fun (s, f) r ->
-                    // PERFORMANCE would this be better with appending then reverse? 
+                    // PERFORMANCE this used append and then rev because it performs better.
                     match r with
                     | ParseResult.Success tr -> tr :: s, f
                     | ParseResult.Warning tr -> tr :: s, f
