@@ -234,11 +234,17 @@ module Types =
 
                 match TypeHelpers.isOption (value.GetType().FullName), value with
                 | false, _ ->
-                    // `value` is not an options, so it can be passed straight back into `CoerceValueToType`  
-                    match Value.CoerceValueToType(value, t) with
-                    | CoercionResult.Success fv -> fv |> toOption |> CoercionResult.Success
-                    | CoercionResult.Failure e -> CoercionResult.Failure $"Could not get optional value. Error: '{e}'"
-                    | r -> r
+                    match value.GetType().FullName = TypeHelpers.stringName && String.IsNullOrWhiteSpace(value.ToString()) with
+                    | true ->
+                        // NOTE - Special handling for when a value is passed in as a string and it is  null or whitespace
+                        // In this cases it will be treated as none.
+                        Value.Option None |> CoercionResult.Success
+                    | false ->
+                        // `value` is not an options, so it can be passed straight back into `CoerceValueToType`  
+                        match Value.CoerceValueToType(value, t) with
+                        | CoercionResult.Success fv -> fv |> toOption |> CoercionResult.Success
+                        | CoercionResult.Failure e -> CoercionResult.Failure $"Could not get optional value. Error: '{e}'"
+                        | r -> r
                 | true, TypeHelpers.SomeObj(v1) ->
                     match t with
                     | BaseType.Boolean -> handler v1 typeof<bool> (fun o -> o :?> bool |> Value.Boolean |> toOption)

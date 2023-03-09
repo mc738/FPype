@@ -121,9 +121,10 @@ module Extract =
                     (fun (s, f) r ->
                         // PERFORMANCE would this be better with appending then reverse? 
                         match r with
-                        | Ok fv -> s @ [ fv ], f
-                        | Error (m, l, c) -> s, f @ [ m, l, c ])
+                        | Ok fv -> fv :: s, f
+                        | Error (m, l, c) -> s, (m, l, c) ::  f)
                     ([], [])
+                |> fun (s, f) -> s |> List.rev, f |> List.rev
                 |> fun (s, f) ->
                     match f.Length = 0 with
                     | true -> { Values = s } |> ParseResult.Success
@@ -139,11 +140,11 @@ module Extract =
                 (fun (s, f) r ->
                     // PERFORMANCE would this be better with appending then reverse? 
                     match r with
-                    | ParseResult.Success tr -> s @ [ tr ], f
-                    | ParseResult.Warning tr -> s @ [ tr ], f
-                    | ParseResult.Failure em -> s, f @ [ em ])
+                    | ParseResult.Success tr -> tr :: s, f
+                    | ParseResult.Warning tr -> tr :: s, f
+                    | ParseResult.Failure em -> s, em :: f)
                 ([], [])
-            |> (fun (s, e) -> { Rows = s; Errors = e })
+            |> (fun (s, e) -> { Rows = s |> List.rev; Errors = e |> List.rev })
 
     [<RequireQualifiedAccess>]
     module ``parse-csv`` =

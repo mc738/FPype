@@ -1,5 +1,6 @@
 ﻿namespace FPype.Data
 
+open System
 open System.Text.Json
 open FPype.Core.Types
 open FsToolbox.Core
@@ -179,7 +180,13 @@ module Models =
         static member FromValues(values: Value list) = { Values = values }
 
         member tr.Box() =
-            tr.Values |> List.map (fun v -> v.Box())
+            tr.Values |> List.map (fun v ->
+                match v with
+                | Value.Option iv ->
+                    match iv with
+                    | None -> box DBNull.Value
+                    | Some v -> v.Box()
+                | _ -> v.Box())
 
         member tr.GetDecimal(i) = tr.Values.[i]
 
