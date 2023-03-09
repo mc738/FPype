@@ -11,7 +11,12 @@ type ConfigurationStore(ctx: SqliteContext) =
 
     static member Initialize(path) =
         match File.Exists path with
-        | true -> SqliteContext.Open path |> ConfigurationStore
+        | true ->
+            let cfg = SqliteContext.Open path |> ConfigurationStore
+            // Sync action types to make sure any new ones exist.
+            cfg.SyncActionTypes()
+            cfg
+            
         | false ->
             use ctx = SqliteContext.Create path
 
@@ -41,6 +46,23 @@ type ConfigurationStore(ctx: SqliteContext) =
 
     static member Load(path) =
         SqliteContext.Open path |> ConfigurationStore
+
+    member pc.SyncActionTypes() =
+        let types = Actions.getAllTypes ctx
+
+        Actions.names
+        |> List.iter (fun an ->
+            match
+                types
+                |> List.exists (fun at -> String.Equals(at.Name, an, StringComparison.OrdinalIgnoreCase))
+            with
+            | true -> ()
+            | false -> Actions.addType ctx an
+
+        )
+
+
+        ()
 
     member pc.GetTable(tableName, ?version: ItemVersion) =
         ItemVersion.FromOptional version |> Tables.tryCreateTableModel ctx tableName
@@ -79,15 +101,23 @@ type ConfigurationStore(ctx: SqliteContext) =
 
     member pc.GetPipelineVersion(name, ?version: ItemVersion) =
         Pipelines.get ctx name (version |> ItemVersion.FromOptional)
-    
+
     member pc.GetPipelineResources(pipelineVersionId) =
         Resources.getPipelineResources ctx pipelineVersionId
-    
+
     member pc.GetResourceVersion(resourceVersionId) =
         Resources.getResourceVersionById ctx resourceVersionId
-    
-    member pc.ImportFromFile(path: string) =
-        Import.fromFileTransaction ctx path
+
+    member pc.AddResourceFile(id, resource, resourceType, filePath, ?version) =
+        match File.Exists filePath with
+        | true ->
+            use ms = new MemoryStream(File.ReadAllBytes filePath)
+
+            ItemVersion.FromOptional version
+            |> Resources.add ctx id resource resourceType ms
+        | false -> Error $"File `{filePath}` does not exist."
+
+    member pc.ImportFromFile(path: string) = Import.fromFileTransaction ctx path
 
 
 //member pc.GetPipelineResources(pipeline: string, ?version: Version) =

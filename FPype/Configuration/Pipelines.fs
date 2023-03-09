@@ -26,7 +26,7 @@ module Pipelines =
         Operations.selectPipelineVersionRecord ctx [ "WHERE pipeline = @0 ORDER BY version DESC LIMIT 1;" ] [ pipeline ]
 
     let getVersion (ctx: SqliteContext) (pipeline: string) (version: int) =
-        Operations.selectPipelineVersionRecord ctx [ "WHERE pipeline = @0 AND version = @1;" ] [ pipeline ]
+        Operations.selectPipelineVersionRecord ctx [ "WHERE pipeline = @0 AND version = @1;" ] [ pipeline; version ]
 
     let get (ctx: SqliteContext) (pipeline: string) (version: ItemVersion) =
         match version with

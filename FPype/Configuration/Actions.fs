@@ -373,3 +373,10 @@ module Actions =
 
     let addTransaction (ctx: SqliteContext) (action: NewPipelineAction) =
         ctx.ExecuteInTransactionV2(fun t -> add t action)
+
+    let getAllTypes (ctx: SqliteContext) =
+        Operations.selectActionTypeRecords ctx [] []
+        
+    let addType (ctx: SqliteContext) (name: string) =
+        ({ Name = name }: Parameters.NewActionType)
+        |> Operations.insertActionType ctx

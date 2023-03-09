@@ -105,7 +105,10 @@ module Extract =
                 |> List.mapi (fun colNo c ->
 
                     splitLine.TryFind c.Name
-                    |> Option.map (fun v -> Value.CoerceValueToType(v, c.Type))
+                    |> Option.map (fun v ->
+                        match c.ImportHandler with
+                        | Some ih -> ih v
+                        | None -> Value.CoerceValueToType(v, c.Type))
                     |> Option.defaultWith (fun _ ->
                         match c.Type with
                         | BaseType.Option _ -> CoercionResult.Success(Value.Option None)
@@ -116,6 +119,7 @@ module Extract =
                         | _ -> Error("Coerce failure.", lineNo, colNo))
                 |> List.fold
                     (fun (s, f) r ->
+                        // PERFORMANCE would this be better with appending then reverse? 
                         match r with
                         | Ok fv -> s @ [ fv ], f
                         | Error (m, l, c) -> s, f @ [ m, l, c ])
@@ -133,6 +137,7 @@ module Extract =
                         |> ParseResult.Failure)
             |> Array.fold
                 (fun (s, f) r ->
+                    // PERFORMANCE would this be better with appending then reverse? 
                     match r with
                     | ParseResult.Success tr -> s @ [ tr ], f
                     | ParseResult.Warning tr -> s @ [ tr ], f
@@ -259,7 +264,7 @@ module Extract =
 
             let grok = Grok.create patterns parameters.GrokString
 
-            store.GetDataSource name
+            store.GetDataSource parameters.DataSource
             |> Option.map (fun ds ->
                 match ds.Type with
                 | "file" ->
@@ -268,7 +273,7 @@ module Extract =
                     with exn ->
                         Error $"Could not load file `{ds.Uri}`: {exn.Message}"
                 | _ -> Error $"Unsupported source type: `{ds.Type}`")
-            |> Option.defaultWith (fun _ -> Error $"Data source `{name}` not found.")
+            |> Option.defaultWith (fun _ -> Error $"Data source `{parameters.DataSource}` not found.")
             |> Result.map (Internal.createGrokRows parameters.Table.Columns grok)
             |> Result.bind (fun r ->
                 match r.Errors |> List.isEmpty |> not with
@@ -277,7 +282,7 @@ module Extract =
 
                     r.Errors
                     |> List.map (fun e ->
-                        store.AddImportError("parse_csv", e.Message, $"{e.LineNumber}:{e.ColumnNumber} - {e.Line}"))
+                        store.AddImportError("grok", e.Message, $"{e.LineNumber}:{e.ColumnNumber} - {e.Line}"))
                     |> ignore
                 | false -> ()
 
