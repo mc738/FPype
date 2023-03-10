@@ -62,7 +62,7 @@ module Transform =
             |> Result.map (fun r ->
                 store.Log("aggregate", $"Aggregated and saved {r.Length} row(s) to table `{parameters.Table.Name}`.")
                 store)
-            
+
         let createAction (parameters: Parameters) = run parameters |> createAction name
 
     [<RequireQualifiedAccess>]
@@ -112,7 +112,7 @@ module Transform =
                 |> fun rs -> { rt with Rows = rs }
                 |> store.InsertRows)
             |> fun _ -> Ok store
-            
+
         let createAction (parameters: Parameters) = run parameters |> createAction name
 
     [<RequireQualifiedAccess>]
@@ -164,7 +164,7 @@ module Transform =
                 |> fun rs -> { rt with Rows = rs }
                 |> store.InsertRows)
             |> fun _ -> Ok store
-            
+
         let createAction (parameters: Parameters) = run parameters |> createAction name
 
     [<RequireQualifiedAccess>]
@@ -172,7 +172,7 @@ module Transform =
         let name = "map_to_object"
 
         let run (mapper: TableObjectMap) (store: PipelineStore) =
-            
+
             use ms = new MemoryStream()
 
             let mutable opts = JsonWriterOptions()
@@ -193,4 +193,26 @@ module Transform =
             store.AddArtifact(mapper.ObjectName, "objects", "object", ms.ToArray())
             Ok store
 
-        let createAction (mapper: TableObjectMap) = run mapper |> createAction name 
+        let createAction (mapper: TableObjectMap) = run mapper |> createAction name
+
+
+    [<RequireQualifiedAccess>]
+    module ``merge-results`` =
+
+        let name = "merge_results"
+
+        type Parameters =
+            { Table: TableModel
+              Queries: string list }
+
+        let run (parameters: Parameters) (store: PipelineStore) =
+            let t = store.CreateTable(parameters.Table)
+
+            parameters.Queries
+            |> List.fold (fun t q -> store.BespokeSelectAndAppendRows(t, q, [])) t
+            |> store.InsertRows
+            |> Result.map (fun r ->
+                store.Log("merge_results", $"Merged and saved {r.Length} row(s) to table `{parameters.Table.Name}`.")
+                store)
+
+        let createAction (parameters: Parameters) = run parameters |> createAction name

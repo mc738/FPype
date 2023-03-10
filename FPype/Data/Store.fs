@@ -290,7 +290,7 @@ module Store =
                 $"{c.Name} {tn}")
             |> String.concat ","
 
-        String.concat "" [ $"CREATE TABLE {tableName} ("; columnText; ")" ]
+        String.concat "" [ $"CREATE TABLE IF NOT EXISTS {tableName} ("; columnText; ")" ]
         |> ctx.ExecuteSqlNonQuery
         |> fun _ -> columns
 
@@ -432,6 +432,12 @@ module Store =
 
         member ps.InsertRows(table: TableModel) = insert ctx table
 
+        member ps.SelectRawRows(table: TableModel) =
+            select ctx table
+        
+        member ps.SelectAndAppendRows(table: TableModel) =
+            select ctx table |> table.AppendRows
+        
         member ps.SelectRows(table: TableModel) =
             select ctx table |> fun r -> { table with Rows = r }
 
@@ -442,6 +448,10 @@ module Store =
         member ps.BespokeSelectRows(table: TableModel, sql, parameters) =
             bespokeSelect ctx table sql parameters |> fun r -> { table with Rows = r }
 
+        member ps.BespokeSelectAndAppendRows(table: TableModel, sql, parameters) =
+            bespokeSelect ctx table sql parameters |> table.AppendRows
+
+        
         member ps.Log(step, message) =
             ({ Step = step
                Message = message

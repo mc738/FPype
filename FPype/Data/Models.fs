@@ -59,7 +59,16 @@ module Models =
         
         member tm.AppendColumns(columns: TableColumn list) =
             { tm with Columns = tm.Columns @ columns }
-        
+            
+        member tm.SetRows(rows: TableRow list) =
+            { tm with Rows = rows }
+            
+        member tm.PrependRows(rows: TableRow list) =
+            { tm with Rows = tm.Rows @ rows }
+            
+        member tm.AppendRows(rows: TableRow list) =
+            { tm with Rows = rows @ tm.Rows  }
+            
         member tm.Max(columnIndex: int) =
             tm.Rows
             |> List.maxBy (fun tr -> tr.Values |> List.item columnIndex)
