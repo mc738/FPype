@@ -1,15 +1,20 @@
-﻿open FPype
+﻿open System.IO
+open System.Text.Json
+open FPype
 open FPype.Configuration
+open FPype.Core.JPath
+open FPype.Core.Types
 open FPype.Data
+open Microsoft.FSharp.Core
 
 module Maths =
-    
+
     let t _ =
-        
-        let values = [ 1m; 2m; 3m; 3m; 9m; 10m  ]
-        
+
+        let values = [ 1m; 2m; 3m; 3m; 9m; 10m ]
+
         let r = Statistics.standardDeviation values
-        
+
         ()
 
 module Example =
@@ -51,10 +56,17 @@ module ServerReport =
 
         let r =
             cfg.ImportFromFile "C:\\ProjectData\\Fpype\\server_report\\config_v1.json"
-            |> Result.bind (fun _ -> cfg.AddResourceFile(IdType.Generated, "grok_patterns", "text", "C:\\ProjectData\\Fgrok\\patterns.txt", ItemVersion.Specific 1))
-            
+            |> Result.bind (fun _ ->
+                cfg.AddResourceFile(
+                    IdType.Generated,
+                    "grok_patterns",
+                    "text",
+                    "C:\\ProjectData\\Fgrok\\patterns.txt",
+                    ItemVersion.Specific 1
+                ))
+
         ()
-        
+
     let run _ =
         let cfg = ConfigurationStore.Load "C:\\ProjectData\\Fpype\\fpype2.config"
 
@@ -77,6 +89,81 @@ module ServerReport =
             printfn $"Error: {e}"
 
 
+module PathTest =
+
+
+
+    // To create table columns
+    // Start at top level and get values
+    // Move down a level and fetch more
+    // Continue until lowest level
+    // Build rows
+    
+    
+    let unwrap (r: Result<'a, 'b>) = match r with | Ok v -> v | Error _ -> failwith "Error"
+
+    let run () =
+        
+        // BUG - fails to parse filter expression - from token needed
+        let p = JPath.Compile("$.store.books[?(@.price<10)].face")
+        let p2 = JPath.Compile("$.store.books.face")
+        let p3 = JPath.Compile("$.store.books[?(@.price<10)]")
+        let p4 = JPath.Compile("$.store.books.f")
+        let p5 = JPath.Compile("$.store.f.book")
+        let p6 = JPath.Compile("$.store.f[?(@.price<10)].book")
+        
+        let json =
+            (File.ReadAllText "C:\\ProjectData\\Fpype\\example_data\\example.json"
+             |> JsonDocument.Parse)
+                .RootElement
+
+        let topLevel = JPath.Compile("$.id") |> Result.map (fun jp -> jp.Run(json)) |> unwrap
+        
+        let itemsSelector = JPath.Compile("$.items") |> Result.map (fun jp -> jp.Run(json)) |> unwrap
+        
+        let r =
+            itemsSelector |> List.map (fun el ->
+                let sl1 = JPath.Compile("$.type") |> Result.map (fun jp -> jp.Run(el)) |> unwrap
+                let sl2 = JPath.Compile("$.subId") |> Result.map (fun jp -> jp.Run(el)) |> unwrap
+                let tls = JPath.Compile("$.values") |> Result.map (fun jp -> jp.Run(el)) |> unwrap
+                
+                tls
+                |> List.map (fun el2 ->
+                    let tl1 = JPath.Compile("$.name") |> Result.map (fun jp -> jp.Run(el2)) |> unwrap
+                    let tl2 = JPath.Compile("$.value") |> Result.map (fun jp -> jp.Run(el2)) |> unwrap
+                    
+                    // Zip the bottom level elements to create all rows
+                    
+                    let r =
+                        [
+                            topLevel |> List.tryHead
+                            sl1 |> List.tryHead
+                            sl2 |> List.tryHead
+                            tl1 |> List.tryHead
+                            tl2 |> List.tryHead
+                        ]
+                    
+                    
+                    ()))
+        
+        
+        let secondLevel1 = JPath.Compile("$.items.type") |> Result.map (fun jp -> jp.Run(json)) |> unwrap
+        let secondLevel2 = JPath.Compile("$.items.subId") |> Result.map (fun jp -> jp.Run(json)) |> unwrap
+        
+        
+        let thirdLevel1 = JPath.Compile("$.items.values.name") |> Result.map (fun jp -> jp.Run(json)) |> unwrap
+        let thirdLevel2 = JPath.Compile("$.items.values.value") |> Result.map (fun jp -> jp.Run(json)) |> unwrap
+        
+        
+        let name = topLevel |> List.tryHead |> Option.map (fun v -> Value.FromJsonValue(v, BaseType.String)) 
+        
+        
+        let p1 = JPath.Compile("$.items") |> Result.map (fun jp -> jp.Run(json))
+        
+
+        ()
+
+PathTest.run ()
 Maths.t ()
 
 //Example.import ()

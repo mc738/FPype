@@ -202,21 +202,12 @@ module Paths =
                 | true -> Some ps.Input.[index..]
                 | false -> None
 
+            member ps.GetCharSlice(index) =
+                ps.Input |> Seq.tryItem index |> Option.map (fun c -> String(c, 1))
+
             // Find the end index of a number from the current position.
             member ps.FindNumber() =
-                let chars =
-                    [ '0'
-                      '1'
-                      '2'
-                      '3'
-                      '4'
-                      '5'
-                      '6'
-                      '7'
-                      '8'
-                      '9'
-                      '.'
-                      '-' ]
+                let chars = [ '0'; '1'; '2'; '3'; '4'; '5'; '6'; '7'; '8'; '9'; '.'; '-' ]
 
                 ps.FindNextNotIn chars
 
@@ -236,7 +227,11 @@ module Paths =
                 let newPos = state.Position + 1
 
                 match newPos >= state.Input.Length with
-                | true -> ParserResult.Success state.Sections
+                | true ->
+                    match state.CurrentSection with
+                    | Some cs -> state.Sections @ [ cs ]
+                    | None -> state.Sections
+                    |> ParserResult.Success
                 | false ->
                     match state.Phase with
                     | Root ->
@@ -266,7 +261,10 @@ module Paths =
                                 match state.FindNextIn([ '['; '.' ]) with
                                 | Some foundIndex ->
                                     let name =
-                                        state.GetSlice(state.Position + offset, foundIndex - 1)
+                                        // NOTE special handling required for single letter names. Instead of
+                                        match state.Position + offset = foundIndex - 1 with
+                                        | true -> state.GetCharSlice(state.Position + offset)
+                                        | false -> state.GetSlice(state.Position + offset, foundIndex - 1)
                                         |> Option.defaultValue String.Empty
 
                                     handler (state.SelectorComplete(SelectorToken.Child name, foundIndex))
@@ -282,7 +280,19 @@ module Paths =
                                               Filter = None
                                               ArraySelector = None } ]
                                     )
-                            | None -> ParserResult.MissingSelectorName offset
+                            | None ->
+                                // NOTE - This is to handle the situation where the final selector is a single letter.
+                                // It will have no filter etc.
+
+                                ParserResult.Success(
+                                    state.Sections
+                                    @ [ { Selector =
+                                            state.GetCharSlice(state.Position + offset)
+                                            |> Option.defaultValue String.Empty
+                                            |> SelectorToken.Child
+                                          Filter = None
+                                          ArraySelector = None } ]
+                                )
                         //.
                         | _ -> ParserResult.MissingSelectorToken state.Position
                     | NextToken ->
@@ -304,9 +314,7 @@ module Paths =
                             let v =
                                 match state.Position = endIndex - 1 with
                                 | true -> $"{state.CurrentChar}"
-                                | false ->
-                                    state.GetSlice(state.Position, endIndex - 1)
-                                    |> Option.defaultValue ""
+                                | false -> state.GetSlice(state.Position, endIndex - 1) |> Option.defaultValue ""
 
 
                             handler (state.ArraySelectorComplete(v, endIndex + 1))
@@ -316,14 +324,15 @@ module Paths =
                         | Some endIndex ->
                             handler (
                                 state.FilterComplete(
-                                    state.GetSlice(state.Position + 1, endIndex - 1)
-                                    |> Option.defaultValue "",
+                                    state.GetSlice(state.Position + 1, endIndex - 1) |> Option.defaultValue "",
                                     endIndex + 2
                                 )
                             )
                         | None -> ParserResult.MissingChar(state.Position, [ ')'; ']' ])
 
-            handler (ParserState.Start(input))
+            let r = handler (ParserState.Start(input))
+
+            r
 
     type Selector =
         | Child of string
@@ -394,8 +403,36 @@ module Paths =
 
     and FilterExpression =
         | Operator of FilterOperator
-        | And of FilterOperator list
-        | Or of FilterOperator list
+        | And of FilterOperator * FilterOperator
+        | Or of FilterOperator * FilterOperator
+        | All of FilterOperator list
+        | Any of FilterOperator list
+        
+        static member FromToken(token: string option) =
+            // How this can be split?
+            
+            // 1. Brackets (top level)
+            // 2. And/Or/All/Any
+            // 3. Individual bits
+            
+            // Precedence
+            // L to R grouping
+            // expr1 && expr2 || expr3
+            //
+            // will be
+            //
+            // (expr1 && expr2) || expr3
+            //
+            // expr1 && expr2 && expr3 || expr4
+            //
+            // will be
+            //
+            // (expr1 && expr2 && expr3) || expr4
+            
+            
+            
+            
+            ()
 
     and ArraySelector =
         | Index of int
@@ -451,7 +488,7 @@ module Paths =
                 tokens
                 |> List.map (fun t ->
                     { Selector = Selector.FromToken t.Selector
-                      FilterExpression = None
+                      FilterExpression = None // TODO implement filter from token
                       ArraySelector = ArraySelector.FromToken t.ArraySelector })
                 |> Path.Create
                 |> Ok

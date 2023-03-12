@@ -216,3 +216,9 @@ module Transform =
                 store)
 
         let createAction (parameters: Parameters) = run parameters |> createAction name
+
+
+    [<RequireQualifiedAccess>]
+    module ``map-to-table`` =
+    
+        ()

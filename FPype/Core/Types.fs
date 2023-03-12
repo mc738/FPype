@@ -1,23 +1,26 @@
 ﻿namespace FPype.Core
 
 open System
+open System.Text.Json
 open System.Text.RegularExpressions
 
 module Types =
-    
+
     module private TypeHelpers =
-        
+
         // An active pattern to get an option value from an object.
         let (|SomeObj|_|) =
-          let ty = typedefof<option<_>>
-          fun (a:obj) ->
-            let aty = a.GetType()
-            let v = aty.GetProperty("Value")
-            if aty.IsGenericType && aty.GetGenericTypeDefinition() = ty then
-              if a = null then None
-              else Some(v.GetValue(a, [| |]))
-            else None
-        
+            let ty = typedefof<option<_>>
+
+            fun (a: obj) ->
+                let aty = a.GetType()
+                let v = aty.GetProperty("Value")
+
+                if aty.IsGenericType && aty.GetGenericTypeDefinition() = ty then
+                    if a = null then None else Some(v.GetValue(a, [||]))
+                else
+                    None
+
         let getName<'T> = typeof<'T>.FullName
 
         let typeName (t: Type) = t.FullName
@@ -55,20 +58,30 @@ module Types =
         let stringName = getName<string>
 
         let isOption (name: string) =
-            Regex.Match(name, "(?<=Microsoft.FSharp.Core.FSharpOption`1\[\[).+?(?=\,)").Success
-            
+            Regex
+                .Match(
+                    name,
+                    "(?<=Microsoft.FSharp.Core.FSharpOption`1\[\[).+?(?=\,)"
+                )
+                .Success
+
         let getOptionType name =
             // Maybe a bit wasteful doing this twice.
-            Regex.Match(name, "(?<=Microsoft.FSharp.Core.FSharpOption`1\[\[).+?(?=\,)").Value
-        
-    
+            Regex
+                .Match(
+                    name,
+                    "(?<=Microsoft.FSharp.Core.FSharpOption`1\[\[).+?(?=\,)"
+                )
+                .Value
+
+
         let convert (value: obj) (target: Type) =
             try
                 Convert.ChangeType(value, target) |> Ok
-            with
-            | ex -> Error ex.Message
-            
-    /// An internal DU for representing base types.            
+            with ex ->
+                Error ex.Message
+
+    /// An internal DU for representing base types.
     [<RequireQualifiedAccess>]
     type BaseType =
         | Boolean
@@ -101,22 +114,21 @@ module Types =
             | t when t = TypeHelpers.uuidName -> Ok BaseType.Guid
             | t when TypeHelpers.isOption t = true ->
                 let ot = TypeHelpers.getOptionType t
+
                 match BaseType.TryFromName ot with
-                | Ok st -> Ok (BaseType.Option st)
+                | Ok st -> Ok(BaseType.Option st)
                 | Error e -> Error e
             | _ -> Error $"Type `{name}` not supported."
 
-        static member TryFromType(typeInfo: Type) =
-            BaseType.TryFromName(typeInfo.FullName)
+        static member TryFromType(typeInfo: Type) = BaseType.TryFromName(typeInfo.FullName)
 
         static member FromName(name: string) =
             match BaseType.TryFromName name with
             | Ok st -> st
             | Error _ -> BaseType.String
 
-        static member FromType(typeInfo: Type) =
-            BaseType.FromName(typeInfo.FullName)
-            
+        static member FromType(typeInfo: Type) = BaseType.FromName(typeInfo.FullName)
+
         (*
         static member GetDataTypes() =
             seq {
@@ -134,7 +146,7 @@ module Types =
                 DataType("uuid", "Uuid")
             }
         *)
-        
+
         static member FromId(id: string, optional: bool) =
             match id with
             | "bool" -> Some BaseType.Boolean
@@ -150,13 +162,16 @@ module Types =
             | "string" -> Some BaseType.String
             | "uuid" -> Some BaseType.Guid
             | _ -> None
-            |> Option.map (fun bt -> match optional with true -> BaseType.Option bt | false -> bt)
-         
+            |> Option.map (fun bt ->
+                match optional with
+                | true -> BaseType.Option bt
+                | false -> bt)
+
         (*   
         static member FromDataType(dataType: DataType, optional: bool) =
             BaseType.FromId(dataType.Id, optional)
         *)
-          
+
         (*    
         member bt.ToDateType() =
             let rec get (t: BaseType) =
@@ -176,12 +191,12 @@ module Types =
                 
             get bt
         *)
-        
+
         member bt.IsOptionType() =
             match bt with
             | BaseType.Option _ -> true
             | _ -> false
-            
+
     [<RequireQualifiedAccess>]
     type CoercionResult =
         | Success of Value
@@ -189,7 +204,17 @@ module Types =
         | NonScalarValue of string
         | NullValue of string
         | Failure of string
-            
+
+        static member bind (fn: Value -> CoercionResult) (cr: CoercionResult) =
+            match cr with
+            | Success v -> fn v
+            | _ -> cr
+
+        static member map (fn: Value -> Value) (cr: CoercionResult) =
+            match cr with
+            | Success v -> fn v |> CoercionResult.Success
+            | _ -> cr
+
     and [<RequireQualifiedAccess>] Value =
         | Boolean of bool
         | Byte of byte
@@ -214,7 +239,7 @@ module Types =
                     | Error e -> CoercionResult.Failure e
 
             let handler1 = handler value
-            
+
             match baseType with
             | BaseType.Boolean -> handler1 (typeof<bool>) (fun o -> o :?> bool |> Value.Boolean)
             | BaseType.Byte -> handler1 (typeof<byte>) (fun o -> o :?> byte |> Value.Byte)
@@ -229,57 +254,139 @@ module Types =
             | BaseType.DateTime -> handler1 (typeof<DateTime>) (fun o -> o :?> DateTime |> Value.DateTime)
             | BaseType.Guid -> handler1 (typeof<Guid>) (fun o -> o :?> Guid |> Value.Guid)
             | BaseType.Option t ->
-                
-                let toOption v = v |> Some |> Value.Option 
+
+                let toOption v = v |> Some |> Value.Option
 
                 match TypeHelpers.isOption (value.GetType().FullName), value with
                 | false, _ ->
-                    match value.GetType().FullName = TypeHelpers.stringName && String.IsNullOrWhiteSpace(value.ToString()) with
+                    match
+                        value.GetType().FullName = TypeHelpers.stringName
+                        && String.IsNullOrWhiteSpace(value.ToString())
+                    with
                     | true ->
                         // NOTE - Special handling for when a value is passed in as a string and it is  null or whitespace
                         // In this cases it will be treated as none.
                         Value.Option None |> CoercionResult.Success
                     | false ->
-                        // `value` is not an options, so it can be passed straight back into `CoerceValueToType`  
+                        // `value` is not an options, so it can be passed straight back into `CoerceValueToType`
                         match Value.CoerceValueToType(value, t) with
                         | CoercionResult.Success fv -> fv |> toOption |> CoercionResult.Success
-                        | CoercionResult.Failure e -> CoercionResult.Failure $"Could not get optional value. Error: '{e}'"
+                        | CoercionResult.Failure e ->
+                            CoercionResult.Failure $"Could not get optional value. Error: '{e}'"
                         | r -> r
-                | true, TypeHelpers.SomeObj(v1) ->
+                | true, TypeHelpers.SomeObj (v1) ->
                     match t with
                     | BaseType.Boolean -> handler v1 typeof<bool> (fun o -> o :?> bool |> Value.Boolean |> toOption)
                     | BaseType.Byte -> handler v1 typeof<byte> (fun o -> o :?> byte |> Value.Byte |> toOption)
                     | BaseType.Char -> handler v1 typeof<char> (fun o -> o :?> char |> Value.Char |> toOption)
-                    | BaseType.Decimal -> handler v1 typeof<decimal> (fun o -> o :?> decimal |> Value.Decimal |> toOption)
+                    | BaseType.Decimal ->
+                        handler v1 typeof<decimal> (fun o -> o :?> decimal |> Value.Decimal |> toOption)
                     | BaseType.Double -> handler v1 typeof<double> (fun o -> o :?> double |> Value.Double |> toOption)
                     | BaseType.Float -> handler v1 typeof<float> (fun o -> o :?> float |> Value.Float |> toOption)
                     | BaseType.Int -> handler v1 typeof<int> (fun o -> o :?> int |> Value.Int |> toOption)
                     | BaseType.Short -> handler v1 typeof<int16> (fun o -> o :?> int16 |> Value.Short |> toOption)
                     | BaseType.Long -> handler v1 typeof<int64> (fun o -> o :?> int64 |> Value.Long |> toOption)
                     | BaseType.String -> handler v1 typeof<string> (fun o -> o :?> string |> Value.String |> toOption)
-                    | BaseType.DateTime -> handler v1 typeof<DateTime> (fun o -> o :?> DateTime |> Value.DateTime |> toOption)
+                    | BaseType.DateTime ->
+                        handler v1 typeof<DateTime> (fun o -> o :?> DateTime |> Value.DateTime |> toOption)
                     | BaseType.Guid -> handler v1 typeof<Guid> (fun o -> o :?> Guid |> Value.Guid |> toOption)
                     | BaseType.Option _ -> CoercionResult.Failure "Nested option types not currently supported."
                 | _ -> CoercionResult.Failure "Could not get option value from object."
+
         static member CoerceValue<'T>(value: 'T) =
-            
+
             let convert (target: Type) =
                 try
                     Convert.ChangeType(value, target) |> Ok
-                with
-                | ex -> Error ex.Message
-                
+                with ex ->
+                    Error ex.Message
+
             let handler (target: Type) (successHandler: obj -> Value) =
                 convert target
                 |> fun v ->
                     match v with
                     | Ok fv -> successHandler fv |> CoercionResult.Success
                     | Error e -> CoercionResult.Failure e
-            
+
             match BaseType.TryFromType typeof<'T> with
             | Ok bt -> Value.CoerceValueToType(value, bt)
             | Error e -> CoercionResult.Failure $"Could not get base type. Error '{e}'"
-            
+
+        static member FromJsonValue(json: JsonElement, baseType: BaseType) =
+            let handleTypeError (jvk: JsonValueKind) (bt: BaseType) =
+                CoercionResult.IncompatibleType $"Json value kind `{jvk}` can not be coerced to type `{bt}`"
+
+            let rec handler (el: JsonElement, bt: BaseType) =
+                match baseType with
+                | BaseType.Boolean ->
+                    match el.ValueKind with
+                    | JsonValueKind.True -> Value.Boolean true |> CoercionResult.Success
+                    | JsonValueKind.False -> Value.Boolean false |> CoercionResult.Success
+                    | jvk -> handleTypeError jvk bt
+                | BaseType.Byte ->
+                    match el.ValueKind with
+                    | JsonValueKind.Number -> json.GetByte() |> Value.Byte |> CoercionResult.Success
+                    | jvk -> handleTypeError jvk bt
+                | BaseType.Char ->
+                    match el.ValueKind with
+                    | JsonValueKind.String -> el.GetString().[0] |> Value.Char |> CoercionResult.Success
+                    | jvk -> handleTypeError jvk bt
+                | BaseType.Decimal ->
+                    match el.ValueKind with
+                    | JsonValueKind.Number -> json.GetDecimal() |> Value.Decimal |> CoercionResult.Success
+                    | jvk -> handleTypeError jvk bt
+                | BaseType.Double ->
+                    match el.ValueKind with
+                    | JsonValueKind.Number -> json.GetDouble() |> Value.Double |> CoercionResult.Success
+                    | jvk -> handleTypeError jvk bt
+                | BaseType.Float ->
+                    match el.ValueKind with
+                    | JsonValueKind.Number -> json.GetDouble() |> Value.Float |> CoercionResult.Success
+                    | jvk -> handleTypeError jvk bt
+                | BaseType.Int ->
+                    match el.ValueKind with
+                    | JsonValueKind.Number -> json.GetInt32() |> Value.Int |> CoercionResult.Success
+                    | jvk -> handleTypeError jvk bt
+                | BaseType.Short ->
+                    match el.ValueKind with
+                    | JsonValueKind.Number -> json.GetInt16() |> Value.Short |> CoercionResult.Success
+                    | jvk -> handleTypeError jvk bt
+                | BaseType.Long ->
+                    match el.ValueKind with
+                    | JsonValueKind.Number -> json.GetInt16() |> Value.Short |> CoercionResult.Success
+                    | jvk -> handleTypeError jvk bt
+                | BaseType.String ->
+                    match el.ValueKind with
+                    | JsonValueKind.String -> json.GetString() |> Value.String |> CoercionResult.Success
+                    | jvk -> handleTypeError jvk bt
+                | BaseType.DateTime ->
+                    match el.ValueKind with
+                    | JsonValueKind.String -> json.GetDateTime() |> Value.DateTime |> CoercionResult.Success
+                    | jvk -> handleTypeError jvk bt
+                | BaseType.Guid ->
+                    match el.ValueKind with
+                    | JsonValueKind.String -> json.GetGuid() |> Value.Guid |> CoercionResult.Success
+                    | jvk -> handleTypeError jvk bt
+                | BaseType.Option sbt ->
+                    match el.ValueKind with
+                    | JsonValueKind.Null
+                    | JsonValueKind.Undefined -> Value.Option None |> CoercionResult.Success
+                    | _ -> handler (el, sbt) |> CoercionResult.map (fun v -> Some v |> Value.Option)
+
+            match baseType, json.ValueKind with
+            | BaseType.Option _, JsonValueKind.Null
+            | BaseType.Option _, JsonValueKind.Undefined -> Value.Option None |> CoercionResult.Success
+            | bt, JsonValueKind.Null
+            | bt, JsonValueKind.Undefined ->
+                CoercionResult.NullValue $"The type `{bt}` does not accept null or undefined values."
+            | _, JsonValueKind.Object
+            | _, JsonValueKind.Array -> CoercionResult.NonScalarValue "The json value must be scalar."
+            | _, _ ->
+                try
+                    handler (json, baseType)
+                with exn ->
+                    CoercionResult.Failure $"Unhandled exception: {exn.Message}"
+
         member fv.Box() =
             let rec handler (value: Value) =
                 match value with
@@ -299,8 +406,9 @@ module Types =
                     match v with
                     | Some v -> handler v
                     | None -> None |> box
+
             handler fv
-            
+
         member fv.GetString() =
             let rec handler (value: Value) =
                 match value with
@@ -320,8 +428,9 @@ module Types =
                     match v with
                     | Some v -> handler v
                     | None -> ""
+
             handler fv
-            
+
         member fv.GetDecimal() =
             let rec handler (value: Value) =
                 match value with
@@ -329,7 +438,7 @@ module Types =
                 | Byte v -> decimal v
                 | Char _ -> 0m
                 | Decimal v -> v
-                | Double v -> decimal v 
+                | Double v -> decimal v
                 | Float v -> decimal v
                 | Int v -> decimal v
                 | Short v -> decimal v
@@ -341,8 +450,9 @@ module Types =
                     match v with
                     | Some v -> handler v
                     | None -> 0m
+
             handler fv
-        
+
         member v.IsMatch(value: Value) =
             let rec handler (v: Value) (v2: Value) =
                 match v, v2 with
@@ -364,9 +474,8 @@ module Types =
                     | None, None -> true
                     | _ -> false
                 | _ -> false
-            
-            handler v value        
+
+            handler v value
 
         member v.IsStringMatch(value: Value, comparison) =
             String.Equals(v.GetString(), value.GetString(), comparison)
-
