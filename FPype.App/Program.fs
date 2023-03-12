@@ -2,6 +2,7 @@
 open System.Text.Json
 open FPype
 open FPype.Configuration
+open FPype.Core
 open FPype.Core.JPath
 open FPype.Core.Types
 open FPype.Data
@@ -103,6 +104,8 @@ module PathTest =
     let unwrap (r: Result<'a, 'b>) = match r with | Ok v -> v | Error _ -> failwith "Error"
 
     let run () =
+        
+        let expr = Expressions.Parsing.parse "@.price<10"
         
         // BUG - fails to parse filter expression - from token needed
         let p = JPath.Compile("$.store.books[?(@.price<10)].face")

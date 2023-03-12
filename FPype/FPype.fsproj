@@ -8,6 +8,8 @@
     <ItemGroup>
         <Compile Include="Core\Common.fs" />
         <Compile Include="Core\Types.fs" />
+        <Compile Include="Core\Parsing.fs" />
+        <Compile Include="Core\Expressions.fs" />
         <Compile Include="Core\Paths.fs" />
         <Compile Include="Core\JPath.fs" />
         <Compile Include="Core\Queries.fs" />
