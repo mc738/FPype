@@ -17,7 +17,7 @@ type PathTests() =
                 ArraySelector = None } ]
 
         let path = "$.foo.bar"
-        let result = parse path
+        let result = parse path '$'
 
         match result with
         | ParserResult.Success actual -> Assert.AreEqual(expected, actual)
@@ -34,7 +34,7 @@ type PathTests() =
                 ArraySelector = None } ]
 
         let path = "$.foo[2:4].bar"
-        let result = parse path
+        let result = parse path '$'
 
         match result with
         | ParserResult.Success actual -> Assert.AreEqual(expected, actual)
@@ -51,7 +51,7 @@ type PathTests() =
                 ArraySelector = None } ]
 
         let path = "$.foo[?(@.bar =~ '^TEST%')].bar"
-        let result = parse path
+        let result = parse path '$'
 
         match result with
         | ParserResult.Success actual -> Assert.AreEqual(expected, actual)
@@ -71,7 +71,7 @@ type PathTests() =
                 ArraySelector = None } ]
 
         let path = "$.foo[?(@.bar =~ '^TEST%')].bar[1:4].baz"
-        let result = parse path
+        let result = parse path '$'
 
         match result with
         | ParserResult.Success actual -> Assert.AreEqual(expected, actual)
@@ -91,7 +91,7 @@ type PathTests() =
                 ArraySelector = None } ]
 
         let path = "$.foo[?(@.bar =~ '^TEST)]%')].bar[1:4].baz"
-        let result = parse path
+        let result = parse path '$'
 
         match result with
         | ParserResult.Success actual -> Assert.AreEqual(expected, actual)
@@ -108,7 +108,7 @@ type PathTests() =
                 ArraySelector = None } ]
 
         let path = "$.'foo.baz'.bar"
-        let result = parse path
+        let result = parse path '$'
 
         match result with
         | ParserResult.Success actual -> Assert.AreEqual(expected, actual)
@@ -130,7 +130,7 @@ type PathTests() =
                 ArraySelector = None } ]
 
         let path = "$.store.f.book"
-        let result = parse path
+        let result = parse path '$'
 
         match result with
         | ParserResult.Success actual -> Assert.AreEqual(expected, actual)
@@ -152,7 +152,7 @@ type PathTests() =
                 ArraySelector = None } ]
 
         let path = "$.store.books.f"
-        let result = parse path
+        let result = parse path '$'
 
         match result with
         | ParserResult.Success actual -> Assert.AreEqual(expected, actual)
@@ -174,7 +174,7 @@ type PathTests() =
                 ArraySelector = None } ]
 
         let path = "$.store.f[?(@.price<10)].book"
-        let result = parse path
+        let result = parse path '$'
 
         match result with
         | ParserResult.Success actual -> Assert.AreEqual(expected, actual)

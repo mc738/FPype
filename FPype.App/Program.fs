@@ -3,7 +3,9 @@ open System.Text.Json
 open FPype
 open FPype.Configuration
 open FPype.Core
+open FPype.Core.Expressions.Parsing
 open FPype.Core.JPath
+open FPype.Core.Paths
 open FPype.Core.Types
 open FPype.Data
 open Microsoft.FSharp.Core
@@ -105,7 +107,13 @@ module PathTest =
 
     let run () =
         
-        let expr = Expressions.Parsing.parse "@.price<10"
+        let expr =
+            match Expressions.Parsing.parse "@.price<10 && @.i == 100 && @.i <= 90 && @.i >= 10" with
+            | ExpressionStatementParseResult.Success r -> FilterExpression.FromToken r
+            | _ -> failwith "Error"
+            
+        
+        let expr2 = Expressions.Parsing.parse "@.price =~ '^s$'"
         
         // BUG - fails to parse filter expression - from token needed
         let p = JPath.Compile("$.store.books[?(@.price<10)].face")

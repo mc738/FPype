@@ -110,33 +110,33 @@ module JPath =
                 | _, Error e -> Error e
 
             match jpfo.FilterOperator with
-            | Exists fv -> EvaluationResult.NotImplemented
-            | Equal (fv1, fv2) -> EvaluationResult.NotImplemented
-            | NotEqual (fv1, fv2) -> EvaluationResult.NotImplemented
-            | LessThan (fv1, fv2) ->
+            | FilterOperator.Exists fv -> EvaluationResult.NotImplemented
+            | FilterOperator.Equal (fv1, fv2) -> EvaluationResult.NotImplemented
+            | FilterOperator.NotEqual (fv1, fv2) -> EvaluationResult.NotImplemented
+            | FilterOperator.LessThan (fv1, fv2) ->
                 match numericOperator fv1 fv2 with
                 | Ok (v1, v2) -> v1 < v2 |> boolToResult
                 | Error e -> e
-            | LessThanOrEqual (fv1, fv2) ->
+            | FilterOperator.LessThanOrEqual (fv1, fv2) ->
                 match numericOperator fv1 fv2 with
                 | Ok (v1, v2) -> v1 <= v2 |> boolToResult
                 | Error e -> e
-            | GreaterThan (fv1, fv2) ->
+            | FilterOperator.GreaterThan (fv1, fv2) ->
                 match numericOperator fv1 fv2 with
                 | Ok (v1, v2) -> v1 > v2 |> boolToResult
                 | Error e -> e
-            | GreaterThanOrEqual (fv1, fv2) ->
+            | FilterOperator.GreaterThanOrEqual (fv1, fv2) ->
                 match numericOperator fv1 fv2 with
                 | Ok (v1, v2) -> v1 >= v2 |> boolToResult
                 | Error e -> e
-            | RegexMatch (fv, pattern) -> EvaluationResult.NotImplemented
-            | In (fv, fvSet) -> EvaluationResult.NotImplemented
-            | NotIn (fv, fvSet) -> EvaluationResult.NotImplemented
-            | SubsetOf (fv, fvSet) -> EvaluationResult.NotImplemented
-            | AnyOf (fv, fvSet) -> EvaluationResult.NotImplemented
-            | NoneOf (fv, fvSet) -> EvaluationResult.NotImplemented
-            | Size (fv1, fv2) -> EvaluationResult.NotImplemented
-            | Empty fv ->
+            | FilterOperator.RegexMatch (fv, pattern) -> EvaluationResult.NotImplemented
+            | FilterOperator.In (fv, fvSet) -> EvaluationResult.NotImplemented
+            | FilterOperator.NotIn (fv, fvSet) -> EvaluationResult.NotImplemented
+            | FilterOperator.SubsetOf (fv, fvSet) -> EvaluationResult.NotImplemented
+            | FilterOperator.AnyOf (fv, fvSet) -> EvaluationResult.NotImplemented
+            | FilterOperator.NoneOf (fv, fvSet) -> EvaluationResult.NotImplemented
+            | FilterOperator.Size (fv1, fv2) -> EvaluationResult.NotImplemented
+            | FilterOperator.Empty fv ->
 
                 EvaluationResult.NotImplemented
 

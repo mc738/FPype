@@ -1,5 +1,8 @@
 ﻿namespace FPype.Core
 
+open System
+open FPype.Core.Expressions
+
 module Paths =
 
     open System
@@ -220,7 +223,7 @@ module Paths =
             | MissingToken of int
             | NotImplemented of string
 
-        let parse (input: string) =
+        let parse (input: string) (rootChar: Char) =
 
             let rec handler (state: ParserState) =
 
@@ -236,7 +239,7 @@ module Paths =
                     match state.Phase with
                     | Root ->
                         match state.CurrentChar with
-                        | '$' -> handler (state.ToSelectorPhase(true))
+                        | c when c = rootChar -> handler (state.ToSelectorPhase(true))
                         | _ -> ParserResult.MissingRoot
                     | Selector ->
                         match state.CurrentChar with
@@ -365,6 +368,21 @@ module Paths =
         | CurrentNode of Path
         | RootNode of Path
 
+        static member Parse(str: string) =
+
+            match str.Trim() |> Seq.tryHead with
+            | Some '$' -> Path.Compile(str) |> Result.map FilterValue.RootNode
+            | Some '@' -> Path.Compile(str, '@') |> Result.map FilterValue.CurrentNode
+            | Some '\''
+            | Some '"' -> str.Substring(1, str.Length - 2) |> FilterValue.String |> Ok
+            | Some c when Char.IsNumber(c) || c = '-' ->
+                // Number
+                match Decimal.TryParse str with
+                | true, v -> FilterValue.Numeric v |> Ok
+                | false, _ -> Error "NaN"
+            | Some c -> Error $"Unknown character `{c}`"
+            | None -> Error "Out of bounds"
+
         static member AreEqual(fv1: FilterValue, fv2: FilterValue) = ()
 
         member fv.GetNumericValue() =
@@ -384,7 +402,7 @@ module Paths =
             | CurrentNode p -> Error EvaluationResult.NotImplemented
             | RootNode p -> Error EvaluationResult.NotImplemented
 
-    and FilterOperator =
+    and [<RequireQualifiedAccess>] FilterOperator =
         | Exists of FilterValue
         | Equal of FilterValue * FilterValue
         | NotEqual of FilterValue * FilterValue
@@ -392,29 +410,100 @@ module Paths =
         | LessThanOrEqual of FilterValue * FilterValue
         | GreaterThan of FilterValue * FilterValue
         | GreaterThanOrEqual of FilterValue * FilterValue
-        | RegexMatch of FilterValue * string
+        | RegexMatch of FilterValue * FilterValue
         | In of FilterValue * FilterValue list
         | NotIn of FilterValue * FilterValue list
         | SubsetOf of FilterValue * FilterValue list
         | AnyOf of FilterValue * FilterValue list
-        | NoneOf of FilterValue * FilterValue
+        | NoneOf of FilterValue * FilterValue list
         | Size of FilterValue * FilterValue
         | Empty of FilterValue
 
-    and FilterExpression =
+        static member FromToken(token: ExpressionOperatorToken) =
+            match token with
+            | ExpressionOperatorToken.Exists v -> FilterValue.Parse v |> Result.map FilterOperator.Exists
+            | ExpressionOperatorToken.Equal (v1, v2) ->
+                match FilterValue.Parse v1, FilterValue.Parse v2 with
+                | Ok pv1, Ok pv2 -> FilterOperator.Equal(pv1, pv2) |> Ok
+                | Error e, _ -> Error e
+                | _, Error e -> Error e
+            | ExpressionOperatorToken.NotEqual (v1, v2) ->
+                match FilterValue.Parse v1, FilterValue.Parse v2 with
+                | Ok pv1, Ok pv2 -> FilterOperator.NotEqual(pv1, pv2) |> Ok
+                | Error e, _ -> Error e
+                | _, Error e -> Error e
+            | ExpressionOperatorToken.LessThan (v1, v2) ->
+                match FilterValue.Parse v1, FilterValue.Parse v2 with
+                | Ok pv1, Ok pv2 -> FilterOperator.LessThan(pv1, pv2) |> Ok
+                | Error e, _ -> Error e
+                | _, Error e -> Error e
+            | ExpressionOperatorToken.LessThanOrEqual (v1, v2) ->
+                match FilterValue.Parse v1, FilterValue.Parse v2 with
+                | Ok pv1, Ok pv2 -> FilterOperator.LessThanOrEqual(pv1, pv2) |> Ok
+                | Error e, _ -> Error e
+                | _, Error e -> Error e
+            | ExpressionOperatorToken.GreaterThan (v1, v2) ->
+                match FilterValue.Parse v1, FilterValue.Parse v2 with
+                | Ok pv1, Ok pv2 -> FilterOperator.GreaterThan(pv1, pv2) |> Ok
+                | Error e, _ -> Error e
+                | _, Error e -> Error e
+            | ExpressionOperatorToken.GreaterThanOrEqual (v1, v2) ->
+                match FilterValue.Parse v1, FilterValue.Parse v2 with
+                | Ok pv1, Ok pv2 -> FilterOperator.GreaterThanOrEqual(pv1, pv2) |> Ok
+                | Error e, _ -> Error e
+                | _, Error e -> Error e
+            | ExpressionOperatorToken.RegexMatch (v1, v2) ->
+                match FilterValue.Parse v1, FilterValue.Parse v2 with
+                | Ok pv1, Ok pv2 -> FilterOperator.RegexMatch(pv1, pv2) |> Ok
+                | Error e, _ -> Error e
+                | _, Error e -> Error e
+            | ExpressionOperatorToken.In (v1, vs) ->
+                match FilterValue.Parse v1, vs |> List.map FilterValue.Parse |> flattenResultList with
+                | Ok pv1, Ok pvs -> FilterOperator.In(pv1, pvs) |> Ok
+                | Error e, _ -> Error e
+                | _, Error e -> Error e
+            | ExpressionOperatorToken.NotIn (v1, vs) ->
+                match FilterValue.Parse v1, vs |> List.map FilterValue.Parse |> flattenResultList with
+                | Ok pv1, Ok pvs -> FilterOperator.NotIn(pv1, pvs) |> Ok
+                | Error e, _ -> Error e
+                | _, Error e -> Error e
+            | ExpressionOperatorToken.SubsetOf (v1, vs) ->
+                match FilterValue.Parse v1, vs |> List.map FilterValue.Parse |> flattenResultList with
+                | Ok pv1, Ok pvs -> FilterOperator.SubsetOf(pv1, pvs) |> Ok
+                | Error e, _ -> Error e
+                | _, Error e -> Error e
+            | ExpressionOperatorToken.AnyOf (v1, vs) ->
+                match FilterValue.Parse v1, vs |> List.map FilterValue.Parse |> flattenResultList with
+                | Ok pv1, Ok pvs -> FilterOperator.AnyOf(pv1, pvs) |> Ok
+                | Error e, _ -> Error e
+                | _, Error e -> Error e
+            | ExpressionOperatorToken.NoneOf (v1, vs) ->
+                match FilterValue.Parse v1, vs |> List.map FilterValue.Parse |> flattenResultList with
+                | Ok pv1, Ok pvs -> FilterOperator.NoneOf(pv1, pvs) |> Ok
+                | Error e, _ -> Error e
+                | _, Error e -> Error e
+            | ExpressionOperatorToken.Size (v1, v2) ->
+                match FilterValue.Parse v1, FilterValue.Parse v2 with
+                | Ok pv1, Ok pv2 -> FilterOperator.Size(pv1, pv2) |> Ok
+                | Error e, _ -> Error e
+                | _, Error e -> Error e
+            | ExpressionOperatorToken.Empty v -> FilterValue.Parse v |> Result.map FilterOperator.Exists
+
+
+    and [<RequireQualifiedAccess>] FilterExpression =
         | Operator of FilterOperator
-        | And of FilterOperator * FilterOperator
-        | Or of FilterOperator * FilterOperator
-        | All of FilterOperator list
-        | Any of FilterOperator list
-        
-        static member FromToken(token: string option) =
+        | And of FilterExpression * FilterExpression
+        | Or of FilterExpression * FilterExpression
+        | All of FilterExpression list
+        | Any of FilterExpression list
+
+        static member FromToken(statement: ExpressionStatement) =
             // How this can be split?
-            
+
             // 1. Brackets (top level)
             // 2. And/Or/All/Any
             // 3. Individual bits
-            
+
             // Precedence
             // L to R grouping
             // expr1 && expr2 || expr3
@@ -428,11 +517,31 @@ module Paths =
             // will be
             //
             // (expr1 && expr2 && expr3) || expr4
-            
-            
-            
-            
-            ()
+
+
+            match statement with
+            | ExpressionStatement.Operator op -> FilterOperator.FromToken op |> Result.map Operator
+            | ExpressionStatement.And (s1, s2) ->
+                match FilterExpression.FromToken s1, FilterExpression.FromToken s2 with
+                | Ok exp1, Ok exp2 -> FilterExpression.And(exp1, exp2) |> Ok
+                | Error e, _ -> Error e
+                | _, Error e -> Error e
+            | ExpressionStatement.Or (s1, s2) ->
+                match FilterExpression.FromToken s1, FilterExpression.FromToken s2 with
+                | Ok exp1, Ok exp2 -> FilterExpression.Or(exp1, exp2) |> Ok
+                | Error e, _ -> Error e
+                | _, Error e -> Error e
+            | ExpressionStatement.Any ss ->
+                ss
+                |> List.map FilterExpression.FromToken
+                |> flattenResultList
+                |> Result.map FilterExpression.Any
+            | ExpressionStatement.All ss ->
+                ss
+                |> List.map FilterExpression.FromToken
+                |> flattenResultList
+                |> Result.map FilterExpression.Any
+
 
     and ArraySelector =
         | Index of int
@@ -482,8 +591,8 @@ module Paths =
 
         static member Create(sections: PathSection list) = { Sections = sections }
 
-        static member Compile(path: string) =
-            match Parsing.parse path with
+        static member Compile(path: string, ?rootChar) =
+            match Parsing.parse path (defaultArg rootChar '$') with
             | Parsing.ParserResult.Success tokens ->
                 tokens
                 |> List.map (fun t ->
