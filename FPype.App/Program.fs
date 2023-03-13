@@ -114,13 +114,12 @@ module PathTest =
         
         let expr2 = Expressions.Parsing.parse "@.price =~ '^s$'"
         
-        // BUG - fails to parse filter expression - from token needed
-        let p = JPath.Compile("$.store.books[?(@.price<10)].face")
-        let p2 = JPath.Compile("$.store.books.face")
-        let p3 = JPath.Compile("$.store.books[?(@.price<10)]")
-        let p4 = JPath.Compile("$.store.books.f")
-        let p5 = JPath.Compile("$.store.f.book")
-        let p6 = JPath.Compile("$.store.f[?(@.price<10)].book")
+        //let p = JPath.Compile("$.store.books[?(@.price<10)].face")
+        //let p2 = JPath.Compile("$.store.books.face")
+        //let p3 = JPath.Compile("$.store.books[?(@.price<10)]")
+        //let p4 = JPath.Compile("$.store.books.f")
+        //let p5 = JPath.Compile("$.store.f.book")
+        //let p6 = JPath.Compile("$.store.f[?(@.price<10)].book")
         
         let json =
             (File.ReadAllText "C:\\ProjectData\\Fpype\\example_data\\example.json"
@@ -129,7 +128,11 @@ module PathTest =
 
         let topLevel = JPath.Compile("$.id") |> Result.map (fun jp -> jp.Run(json)) |> unwrap
         
-        let itemsSelector = JPath.Compile("$.items") |> Result.map (fun jp -> jp.Run(json)) |> unwrap
+        let path =  JPath.Compile("$.items[?(@.type =~ '^type1$')]") |> unwrap
+        
+        let itemsSelector = path.Run(json)
+        
+        let here = ()
         
         let r =
             itemsSelector |> List.map (fun el ->

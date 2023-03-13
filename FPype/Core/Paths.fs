@@ -2,6 +2,7 @@
 
 open System
 open FPype.Core.Expressions
+open FPype.Core.Expressions.Parsing
 
 module Paths =
 
@@ -597,7 +598,15 @@ module Paths =
                 tokens
                 |> List.map (fun t ->
                     { Selector = Selector.FromToken t.Selector
-                      FilterExpression = None // TODO implement filter from token
+                      FilterExpression =
+                        t.Filter
+                        |> Option.bind (fun fx ->
+                            match Expressions.Parsing.parse fx with
+                            | ExpressionStatementParseResult.Success r ->
+                                match FilterExpression.FromToken r with
+                                | Ok fe -> Some fe
+                                | Error e -> None
+                            | _ -> None) //None   // TODO implement filter from token
                       ArraySelector = ArraySelector.FromToken t.ArraySelector })
                 |> Path.Create
                 |> Ok
