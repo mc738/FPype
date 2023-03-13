@@ -111,7 +111,6 @@ module PathTest =
             match Expressions.Parsing.parse "@.price<10 && @.i == 100 && @.i <= 90 && @.i >= 10" with
             | ExpressionStatementParseResult.Success r -> FilterExpression.FromToken r
             | _ -> failwith "Error"
-            
         
         let expr2 = Expressions.Parsing.parse "@.price =~ '^s$'"
         

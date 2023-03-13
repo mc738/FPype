@@ -65,13 +65,38 @@ module Actions =
                 | _, None, _ -> Error "Missing name property"
                 | _, _, None -> Error "Missing size property"
 
+        module ``http-get`` =
+            let deserialize (json: JsonElement) =
+                match Json.tryGetStringProperty "url" json, Json.tryGetStringProperty "name" json with
+                | Some url, Some name ->
+                    let additionalHeaders =
+                        Json.tryGetArrayProperty "additionalHeaders" json
+                        |> Option.map (fun ahs ->
+                            ahs
+                            |> List.choose (fun ah ->
+                                match Json.tryGetStringProperty "key" ah, Json.tryGetStringProperty "value" ah with
+                                | Some k, Some v -> Some(k, v)
+                                | None, _
+                                | _, None -> None)
+                            |> Map.ofList)
+                        |> Option.defaultValue Map.empty
 
+                    ({ Url = url
+                       AdditionHeaders = additionalHeaders
+                       Name = name
+                       ResponseType = Json.tryGetStringProperty "responseType" json
+                       Collection = Json.tryGetStringProperty "collection" json }: Import.``http-get``.Parameters)
+                    |> Import.``http-get``.createAction
+                    |> Ok
+                | None, _ -> Error "Missing url property"
+                | _, None -> Error "Missing name property"
 
-        let names = [ Import.``import-file``.name; Import.``chunk-file``.name ]
+        let names = [ Import.``import-file``.name; Import.``chunk-file``.name; Import.``http-get``.name ]
 
         let all =
             [ Import.``import-file``.name, ``import-file``.deserialize
-              Import.``chunk-file``.name, ``chunk-file``.deserialize ]
+              Import.``chunk-file``.name, ``chunk-file``.deserialize
+              Import.``http-get``.name, ``http-get``.deserialize ]
 
     module Extract =
 
@@ -376,7 +401,6 @@ module Actions =
 
     let getAllTypes (ctx: SqliteContext) =
         Operations.selectActionTypeRecords ctx [] []
-        
+
     let addType (ctx: SqliteContext) (name: string) =
-        ({ Name = name }: Parameters.NewActionType)
-        |> Operations.insertActionType ctx
+        ({ Name = name }: Parameters.NewActionType) |> Operations.insertActionType ctx

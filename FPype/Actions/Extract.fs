@@ -1,6 +1,7 @@
 ﻿namespace FPype.Actions
 
 open System
+open Google.Protobuf.WellKnownTypes
 
 
 [<RequireQualifiedAccess>]
@@ -119,10 +120,10 @@ module Extract =
                         | _ -> Error("Coerce failure.", lineNo, colNo))
                 |> List.fold
                     (fun (s, f) r ->
-                        // PERFORMANCE this used append and then rev because it performs better. 
+                        // PERFORMANCE this used append and then rev because it performs better.
                         match r with
                         | Ok fv -> fv :: s, f
-                        | Error (m, l, c) -> s, (m, l, c) ::  f)
+                        | Error (m, l, c) -> s, (m, l, c) :: f)
                     ([], [])
                 |> fun (s, f) -> s |> List.rev, f |> List.rev
                 |> fun (s, f) ->
@@ -144,7 +145,9 @@ module Extract =
                     | ParseResult.Warning tr -> tr :: s, f
                     | ParseResult.Failure em -> s, em :: f)
                 ([], [])
-            |> (fun (s, e) -> { Rows = s |> List.rev; Errors = e |> List.rev })
+            |> (fun (s, e) ->
+                { Rows = s |> List.rev
+                  Errors = e |> List.rev })
 
     [<RequireQualifiedAccess>]
     module ``parse-csv`` =
@@ -155,16 +158,7 @@ module Extract =
               Table: TableModel }
 
         let run (parameters: Parameters) (store: PipelineStore) =
-            store.GetDataSource parameters.DataSource
-            |> Option.map (fun ds ->
-                match ds.Type with
-                | "file" ->
-                    try
-                        File.ReadAllLines ds.Uri |> Ok
-                    with exn ->
-                        Error $"Could not load file `{ds.Uri}`: {exn.Message}"
-                | _ -> Error $"Unsupported source type: `{ds.Type}`")
-            |> Option.defaultWith (fun _ -> Error $"Data source `{name}` not found.")
+            getDataSourceAsLinesByName store parameters.DataSource
             |> Result.map (Internal.createRows parameters.Table.Columns)
             |> Result.bind (fun r ->
                 match r.Errors |> List.isEmpty |> not with
@@ -197,13 +191,7 @@ module Extract =
         let run (parameters: Parameters) (store: PipelineStore) =
             store.GetSourcesByCollection parameters.CollectionName
             |> List.map (fun ds ->
-                match ds.Type with
-                | "file" ->
-                    try
-                        File.ReadAllLines ds.Uri |> Ok
-                    with exn ->
-                        Error $"Could not load file `{ds.Uri}`: {exn.Message}"
-                | _ -> Error $"Unsupported source type: `{ds.Type}`"
+                getDataSourceAsLines store ds
                 |> Result.map (Internal.createRows parameters.Table.Columns)
                 |> Result.bind (fun r ->
                     match r.Errors |> List.isEmpty |> not with
@@ -246,7 +234,7 @@ module Extract =
 
         type Parameters =
             { DataSource: string
-              Table: TableModel 
+              Table: TableModel
               GrokString: string
               ExtraPatterns: (string * string) list }
 

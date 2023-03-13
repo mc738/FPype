@@ -370,15 +370,15 @@ module Store =
         member ps.GetStateValue(key) =
             getStateValue ctx key |> Option.map (fun sv -> sv.Value)
 
-        member ps.AddDataSource(name, sourceType, uri, collectionName) =
+        member ps.AddDataSource(name, sourceType: DataSourceType, uri, collectionName) =
             ({ Name = name
-               Type = sourceType
+               Type = sourceType.Serialize()
                Uri = uri
                CollectionName = collectionName }: DataSource)
             |> addDataSource ctx
 
         member ps.GetDataSource(name) = getDataSource ctx name
-
+                
         member ps.GetSourcesByCollection(collectionName) =
             getDataSourcesByCollectionName ctx collectionName
 
