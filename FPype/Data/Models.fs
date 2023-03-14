@@ -2,11 +2,13 @@
 
 open System
 open System.Text.Json
+open FPype.Core
+open FPype.Core.JPath
 open FPype.Core.Types
 open FsToolbox.Core
 
 module Models =
-    
+
     type TableModel =
         { Name: string
           Columns: TableColumn list
@@ -53,36 +55,28 @@ module Models =
             tvm.OriginalY <- y
             tvm
         *)
-        
+
         member tm.PrependColumns(columns: TableColumn list) =
             { tm with Columns = columns @ tm.Columns }
-        
+
         member tm.AppendColumns(columns: TableColumn list) =
             { tm with Columns = tm.Columns @ columns }
-            
-        member tm.SetRows(rows: TableRow list) =
-            { tm with Rows = rows }
-            
-        member tm.PrependRows(rows: TableRow list) =
-            { tm with Rows = tm.Rows @ rows }
-            
-        member tm.AppendRows(rows: TableRow list) =
-            { tm with Rows = rows @ tm.Rows  }
-            
+
+        member tm.SetRows(rows: TableRow list) = { tm with Rows = rows }
+
+        member tm.PrependRows(rows: TableRow list) = { tm with Rows = tm.Rows @ rows }
+
+        member tm.AppendRows(rows: TableRow list) = { tm with Rows = rows @ tm.Rows }
+
         member tm.Max(columnIndex: int) =
-            tm.Rows
-            |> List.maxBy (fun tr -> tr.Values |> List.item columnIndex)
+            tm.Rows |> List.maxBy (fun tr -> tr.Values |> List.item columnIndex)
 
         member tm.ColumnToCollection(columnIndex: int) =
-            tm.Rows
-            |> List.map (fun tr -> tr.Values |> List.item columnIndex)
+            tm.Rows |> List.map (fun tr -> tr.Values |> List.item columnIndex)
 
         member tm.ColumnToDecimalCollection(columnIndex: int) =
             tm.Rows
-            |> List.map (fun tr ->
-                tr.Values
-                |> List.item columnIndex
-                |> fun c -> c.GetDecimal())
+            |> List.map (fun tr -> tr.Values |> List.item columnIndex |> (fun c -> c.GetDecimal()))
 
         /// Join with another table and drop set columns.
         /// Any matches not found in the second table will be replaced with `Value.Option None`
@@ -120,9 +114,7 @@ module Models =
                         |> fun v -> { Values = v }
                     )
 
-                ({ Values =
-                    dropValues tr dropColumnsA
-                    @ dropValues t2r dropColumnsB }: TableRow))
+                ({ Values = dropValues tr dropColumnsA @ dropValues t2r dropColumnsB }: TableRow))
             |> fun r ->
                 ({ Name = newName
                    Columns =
@@ -169,11 +161,10 @@ module Models =
                             | bt -> { tc with Type = BaseType.Option bt })
                     | false -> r
 
-            handler c1 dropColumnsA c1Optional
-            @ handler c2 dropColumnsB c2Optional
+            handler c1 dropColumnsA c1Optional @ handler c2 dropColumnsB c2Optional
 
 
-        (*
+    (*
         member tc.ToField(index: int) =
             let f = Field()
             f.Name <- tc.Name
@@ -189,7 +180,8 @@ module Models =
         static member FromValues(values: Value list) = { Values = values }
 
         member tr.Box() =
-            tr.Values |> List.map (fun v ->
+            tr.Values
+            |> List.map (fun v ->
                 match v with
                 | Value.Option iv ->
                     match iv with
@@ -223,8 +215,7 @@ module Models =
           Properties: PropertyMap list }
 
     and PropertyMap =
-        { Name: string
-          Source: PropertySource }
+        { Name: string; Source: PropertySource }
 
     and PropertySource =
         | TableColumn of int
@@ -244,8 +235,7 @@ module Models =
         member om.ToJson(writer: Utf8JsonWriter) =
             writer.WriteStartObject()
 
-            om.Properties
-            |> List.iter (fun op -> op.ToJson writer)
+            om.Properties |> List.iter (fun op -> op.ToJson writer)
 
             writer.WriteEndObject()
 
@@ -293,3 +283,32 @@ module Models =
         | Object of ObjectModel
         | Array of ObjectModel list
 
+    type ObjectTableMap =
+        { Table: TableModel
+          RootScope: ObjectTableMapScope }
+
+    and ObjectTableMapScope =
+        { Selector: JPath
+          Columns: ObjectTableMapColumns list
+          InnerScopes: ObjectTableMapScope list }
+
+    and ObjectTableMapColumns =
+        { Name: string
+          Type: ObjectTableMapColumnType }
+
+    and ObjectTableMapColumnType =
+        | Selector of JPath
+        | Constant of string
+
+        static member FromJson(element: JsonElement) =
+            match Json.tryGetStringProperty "type" element with
+            | Some "selector" ->
+                Json.tryGetStringProperty "selector" element
+                |> Option.map (fun s -> JPath.Compile(s) |> Result.map Selector)
+                |> Option.defaultWith (fun _ -> Error "Missing selector property")
+            | Some "constant" ->
+                Json.tryGetStringProperty "value" element
+                |> Option.map (Constant >> Ok)
+                |> Option.defaultWith (fun _ -> Error "Missing value property")
+            | Some t -> Error $"Unknown column type: `{t}`"
+            | None -> Error $"Missing type property"
