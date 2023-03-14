@@ -99,3 +99,26 @@ type JPathTests() =
             Assert.AreEqual(expected, actual)
         | Error e -> Assert.Fail($"Could not compile path. Error: '{e}'")
 
+    [<TestMethod>]
+    member this.``Attempt to get slice from non-array property`` () =
+        let path = "$.store[0]"
+        let root = JsonDocument.Parse JPathResources.jpathJson
+        let expected: List<JsonElement> = List.empty
+        match JPath.Compile(path) with
+        | Ok p ->
+            let results = p.Run(root.RootElement)
+            let actual = results
+            Assert.AreEqual(expected, actual)
+        | Error e -> Assert.Fail($"Could not compile path. Error: '{e}'")
+
+    [<TestMethod>]
+    member _.``Get reference book prices`` () =
+        let path = "$.store.book[?(@.category =~ '^reference$')].price"
+        let root = JsonDocument.Parse JPathResources.jpathJson
+        let expected = [ 8.95m ]
+        match JPath.Compile(path) with
+        | Ok p ->
+            let results = p.Run(root.RootElement)
+            let actual = results |> List.map (fun r -> r.GetDecimal())
+            Assert.AreEqual(expected, actual)
+        | Error e -> Assert.Fail($"Could not compile path. Error: '{e}'")

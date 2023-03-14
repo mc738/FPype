@@ -130,7 +130,12 @@ module PathTest =
         
         let path =  JPath.Compile("$.items[?(@.type =~ '^type1$')]") |> unwrap
         
+        let path =  JPath.Compile("$.items[?(@.type =~ '^type1$')].subId") |> unwrap
+        
+        let p2 = JPath.Compile("$.id[0]") |> unwrap
+        
         let itemsSelector = path.Run(json)
+        let itemsSelector2 = p2.Run(json)
         
         let here = ()
         

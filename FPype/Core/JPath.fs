@@ -225,7 +225,6 @@ module JPath =
 
                 EvaluationResult.NotImplemented
 
-
     and [<RequireQualifiedAccess>] JPathFilterExpression =
         | Operator of JPathFilterOperator
         | And of JPathFilterExpression * JPathFilterExpression
@@ -266,7 +265,15 @@ module JPath =
                 |> List.exists (fun r -> r = true)
 
         member jfe.Handle(nodes: JsonElement list, rootNode: JsonElement) =
-            nodes |> List.filter (fun el -> jfe.Evaluate(el, rootNode))
+            nodes
+            |> List.collect (fun el ->
+                match el.ValueKind with
+                | JsonValueKind.Array ->
+                    el.EnumerateArray()
+                    |> List.ofSeq
+                    |> List.filter (fun el -> jfe.Evaluate(el, rootNode))
+                | _ -> [])
+
 
     and JPathArraySelector =
         { ArraySelector: ArraySelector }
@@ -274,35 +281,38 @@ module JPath =
         static member Create(selector: ArraySelector) = { ArraySelector = selector }
 
         member jpas.Run(array: JsonElement) =
-            let nodes = array.EnumerateArray() |> List.ofSeq
+            match array.ValueKind with
+            | JsonValueKind.Array ->
+                let nodes = array.EnumerateArray() |> List.ofSeq
 
-            match jpas.ArraySelector with
-            | Index i ->
-                match nodes.Length > i with
-                | true -> [ nodes.[i] ]
-                | false -> []
-            | Indexes indexes ->
-                nodes
-                |> List.mapi (fun i n ->
-                    match List.contains i indexes with
-                    | true -> Some n
-                    | false -> None)
-                |> List.choose id
-            | Slice (s, e) ->
-                match s, e with
-                | Some i1, Some i2 ->
-                    match nodes.Length > i1, nodes.Length > i2 with
-                    | true, true -> nodes.[i1..i2]
-                    | _ -> []
-                | Some i, None ->
+                match jpas.ArraySelector with
+                | Index i ->
                     match nodes.Length > i with
-                    | true -> nodes.[i..]
+                    | true -> [ nodes.[i] ]
                     | false -> []
-                | None, Some i ->
-                    match nodes.Length > i with
-                    | true -> nodes.[..i]
-                    | false -> []
-                | None, None -> nodes
+                | Indexes indexes ->
+                    nodes
+                    |> List.mapi (fun i n ->
+                        match List.contains i indexes with
+                        | true -> Some n
+                        | false -> None)
+                    |> List.choose id
+                | Slice (s, e) ->
+                    match s, e with
+                    | Some i1, Some i2 ->
+                        match nodes.Length > i1, nodes.Length > i2 with
+                        | true, true -> nodes.[i1..i2]
+                        | _ -> []
+                    | Some i, None ->
+                        match nodes.Length > i with
+                        | true -> nodes.[i..]
+                        | false -> []
+                    | None, Some i ->
+                        match nodes.Length > i with
+                        | true -> nodes.[..i]
+                        | false -> []
+                    | None, None -> nodes
+            | _ -> []
 
         member s.Handle(nodes: JsonElement list) = nodes |> List.collect s.Run
 
@@ -337,18 +347,8 @@ module JPath =
                         | Some arrs -> arrs.Handle r
                         | None -> r
                     |> fun r ->
-                        // NOTE - how should this work?
-                        // It needs to check children elements.
-                        // But this will return the whole element unless
-                        // it is changes the results to array like this.
                         match s.FilterExpression with
-                        | Some expr ->
-                            r
-                            |> List.collect (fun el ->
-                                match el.ValueKind with
-                                | JsonValueKind.Array ->
-                                    expr.Handle(el.EnumerateArray() |> List.ofSeq, root)
-                                | _ -> [])
+                        | Some expr -> expr.Handle(r, root)
                         | None -> r)
                 [ root ]
 
