@@ -292,9 +292,40 @@ module Models =
           Columns: ObjectTableMapColumns list
           InnerScopes: ObjectTableMapScope list }
 
-    and ObjectTableMapColumns =
+        static member FromJson(element: JsonElement) =
+            match Json.tryGetStringProperty "selector" element with
+            | Some selector ->
+                let columns =
+                    Json.tryGetArrayProperty "columns" element
+                    |> Option.map (fun cs -> cs |> List.map ObjectTableMapColumn.FromJson |> flattenResultList)
+                    |> Option.defaultValue (Ok [])
+
+                let innerScopes =
+                    Json.tryGetArrayProperty "innerScopes" element
+                    |> Option.map (fun iss -> iss |> List.map ObjectTableMapScope.FromJson |> flattenResultList)
+                    |> Option.defaultValue (Ok [])
+
+                match JPath.Compile(selector), columns, innerScopes with
+                | Ok s, Ok c, Ok is ->
+                    { Selector = s
+                      Columns = c
+                      InnerScopes = is }
+                    |> Ok
+                | Error e, _, _ -> Error e
+                | _, Error e, _ -> Error e
+                | _, _, Error e -> Error e
+            | None -> Error "Missing selector property"
+
+    and ObjectTableMapColumn =
         { Name: string
           Type: ObjectTableMapColumnType }
+
+        static member FromJson(element: JsonElement) =
+            match Json.tryGetStringProperty "name" element with
+            | Some name ->
+                ObjectTableMapColumnType.FromJson element
+                |> Result.map (fun ct -> { Name = name; Type = ct })
+            | None -> Error "Missing name property"
 
     and ObjectTableMapColumnType =
         | Selector of JPath
