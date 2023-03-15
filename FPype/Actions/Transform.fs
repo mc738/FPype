@@ -1,6 +1,8 @@
 ﻿namespace FPype.Actions
 
+open FPype.Core.Types
 open FPype.Data.Models
+open FPype.Data.Store
 
 
 [<RequireQualifiedAccess>]
@@ -8,6 +10,7 @@ module Transform =
 
     open System.IO
     open System.Text.Json
+    open FPype.Core
     open FPype.Core.Types
     open FPype.Data.Models
     open FPype.Data.Store
@@ -195,6 +198,44 @@ module Transform =
 
         let createAction (mapper: TableObjectMap) = run mapper |> createAction name
 
+    [<RequireQualifiedAccess>]
+    module ``map-object-to-table`` =
+
+        module private Internal =
+
+
+            type MapperState =
+                { ColumnValues: ColumnValue list }
+
+                member ms.AppendValue(value: ColumnValue) = ms.AppendValues([ value ])
+
+                member ms.AppendValues(values: ColumnValue list) =
+                    { ms with ColumnValues = ms.ColumnValues @ values }
+
+                member ms.CreateRow(table: TableModel) =
+                    table.Columns
+                    |> List.map (fun c ->
+                        match ms.ColumnValues |> List.tryFind (fun cv -> cv.Column.Name = c.Name) with
+                        | Some cv -> Ok cv.Value
+                        | None ->
+                            match c.Type with
+                            | BaseType.Option _ -> Value.Option None |> Ok
+                            | _ -> Error $"Missing value for column `{c.Name}`")
+                    |> flattenResultList
+                    |> Result.map TableRow.FromValues
+
+            and ColumnValue =
+                { Column: TableColumn
+                  Value: Value }
+
+                static member Create(column: TableColumn, value: Value) = { Column = column; Value = value }
+
+
+        let name = "map_object_to_table"
+
+        let run (mapper: ObjectTableMap) (store: PipelineStore) =
+
+            ()
 
     [<RequireQualifiedAccess>]
     module ``merge-results`` =
@@ -220,5 +261,5 @@ module Transform =
 
     [<RequireQualifiedAccess>]
     module ``map-to-table`` =
-    
+
         ()
