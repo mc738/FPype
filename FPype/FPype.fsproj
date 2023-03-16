@@ -20,6 +20,7 @@
         <Compile Include="Data\Store.fs" />
         <Compile Include="Data\Grouping.fs" />
         <Compile Include="Data\Statistics.fs" />
+        <Compile Include="Data\Mapping.fs" />
         <Compile Include="Actions\Common.fs" />
         <Compile Include="Actions\Import.fs" />
         <Compile Include="Actions\Extract.fs" />
