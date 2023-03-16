@@ -6,7 +6,6 @@ module Import =
     open System.Text.Json
     open Freql.Sqlite
     open FsToolbox.Core
-    open Google.Protobuf.WellKnownTypes
     open Microsoft.FSharp.Core
     open FPype.Core
     open FPype.Core.Logging

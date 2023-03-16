@@ -2,6 +2,7 @@
 
 open System
 open System.IO
+open System.Text.Json
 open FPype.Data.Store
 open FsToolbox.Extensions
 open FPype.Data
@@ -65,3 +66,9 @@ module Common =
         store.GetDataSource sourceName
         |> Option.map (getDataSourceAsLines store)
         |> Option.defaultWith (fun _ -> Error $"Data source `{sourceName}` not found.")
+        
+    let toJsonElement (str: string) =
+        try
+            (JsonDocument.Parse str).RootElement |> Ok
+        with
+        | exn -> Error $"Failed to deserialize json element. Error: {exn.Message}"

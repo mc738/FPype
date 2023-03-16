@@ -289,7 +289,7 @@ module Models =
 
     and ObjectTableMapScope =
         { Selector: JPath
-          Columns: ObjectTableMapColumns list
+          Columns: ObjectTableMapColumn list
           InnerScopes: ObjectTableMapScope list }
 
         static member FromJson(element: JsonElement) =
@@ -316,6 +316,8 @@ module Models =
                 | _, _, Error e -> Error e
             | None -> Error "Missing selector property"
 
+        member otm.IsBaseScope() = otm.InnerScopes.IsEmpty 
+    
     and ObjectTableMapColumn =
         { Name: string
           Type: ObjectTableMapColumnType }

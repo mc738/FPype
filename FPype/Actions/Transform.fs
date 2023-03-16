@@ -3,6 +3,7 @@
 open FPype.Core.Types
 open FPype.Data.Models
 open FPype.Data.Store
+open Microsoft.FSharp.Core
 
 
 [<RequireQualifiedAccess>]
@@ -201,11 +202,13 @@ module Transform =
     [<RequireQualifiedAccess>]
     module ``map-object-to-table`` =
 
+        [<AutoOpen>]
         module private Internal =
-
 
             type MapperState =
                 { ColumnValues: ColumnValue list }
+
+                static member Initialize() = { ColumnValues = [] }
 
                 member ms.AppendValue(value: ColumnValue) = ms.AppendValues([ value ])
 
@@ -230,12 +233,71 @@ module Transform =
 
                 static member Create(column: TableColumn, value: Value) = { Column = column; Value = value }
 
-
         let name = "map_object_to_table"
 
         let run (mapper: ObjectTableMap) (store: PipelineStore) =
 
-            ()
+            let rec handler (state: MapperState) (element: JsonElement) (scope: ObjectTableMapScope) =
+
+                let values =
+                    scope.Columns
+                    |> List.choose (fun otc ->
+                        mapper.Table.Columns
+                        |> List.tryFind (fun tc -> tc.Name = otc.Name)
+                        |> Option.bind (fun c ->
+                            match otc.Type with
+                            | ObjectTableMapColumnType.Selector p ->
+                                p.RunScalar(element)
+                                |> Option.bind (fun el ->
+                                    match Value.FromJsonValue(el, c.Type) with
+                                    | CoercionResult.Success v -> Some v
+                                    | _ -> None)
+                                |> Option.map (fun v -> { Column = c; Value = v })
+
+                            | ObjectTableMapColumnType.Constant v ->
+                                Value.FromString(v, c.Type) |> Option.map (fun v -> { Column = c; Value = v })))
+
+                let newState = state.AppendValues(values)
+
+                match scope.IsBaseScope() with
+                | true ->
+                    // Base scope - so append any values and make the rows
+                    [ newState.CreateRow(mapper.Table) ]
+
+                | false ->
+                    scope.InnerScopes
+                    |> List.collect (fun is ->
+
+                        is.Selector.Run(element) |> List.collect (fun el -> handler newState el is))
+
+            let initialState = ()
+
+            match getDataSourceAsStringByName store "" |> Result.bind toJsonElement with
+            | Ok json ->
+                let rows =
+                    handler (MapperState.Initialize()) json mapper.RootScope
+                    |> List.fold
+                        (fun (acc) r ->
+                            match r with
+                            | Ok row -> row :: acc
+                            | Error e ->
+                                store.LogError(name, $"Error creating row: {e}")
+                                acc)
+                        ([])
+                    |> List.rev
+
+                store.CreateTable(mapper.Table)
+                |> fun m -> m.SetRows rows
+                |> store.InsertRows
+                |> Result.map (fun r ->
+                    store.Log(
+                        name,
+                        $"Imported {r.Length} row(s) from object `{ds.Name}` to table `{mapper.Table.Name}`."
+                    )
+
+                    store)
+            | Error e -> Error e
+
 
     [<RequireQualifiedAccess>]
     module ``merge-results`` =

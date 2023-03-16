@@ -1,6 +1,7 @@
 ﻿namespace FPype.Core
 
 open System
+open System.Globalization
 open System.Text.Json
 open System.Text.RegularExpressions
 
@@ -386,6 +387,80 @@ module Types =
                     handler (json, baseType)
                 with exn ->
                     CoercionResult.Failure $"Unhandled exception: {exn.Message}"
+
+        static member FromString(str: string, baseType: BaseType, ?format: string) =
+            let rec handler (bt: BaseType) =
+                match baseType with
+                | BaseType.Boolean ->
+                    match [ "yes"; "true"; "ok"; "1" ] |> List.contains (str.ToLower()) with
+                    | true -> Value.Boolean true |> Some
+                    | false -> None
+                | BaseType.Byte ->
+                    match Byte.TryParse str with
+                    | true, v -> Value.Byte v |> Some
+                    | false, _ -> None
+                | BaseType.Char ->
+                    match String.IsNullOrEmpty(str) with
+                    | true -> None
+                    | false -> Value.Char str.[0] |> Some
+                | BaseType.Decimal ->
+                    match Decimal.TryParse str with
+                    | true, v -> Value.Decimal v |> Some
+                    | false, _ -> None
+                | BaseType.Double ->
+                    match Double.TryParse str with
+                    | true, v -> Value.Double v |> Some
+                    | false, _ -> None
+                | BaseType.Float ->
+                    match Double.TryParse str with
+                    | true, v -> Value.Float v |> Some
+                    | false, _ -> None
+                | BaseType.Int ->
+                    match Int32.TryParse str with
+                    | true, v -> Value.Int v |> Some
+                    | false, _ -> None
+                | BaseType.Short ->
+                    match Int16.TryParse str with
+                    | true, v -> Value.Short v |> Some
+                    | false, _ -> None
+                | BaseType.Long ->
+                    match Int64.TryParse str with
+                    | true, v -> Value.Long v |> Some
+                    | false, _ -> None
+                | BaseType.String ->
+                    match str = null with
+                    | true -> None
+                    | false -> Value.String str |> Some
+                | BaseType.DateTime ->
+                    match format with
+                    | Some f ->
+                        match
+                            DateTime.TryParseExact(
+                                str,
+                                f,
+                                CultureInfo.InvariantCulture,
+                                DateTimeStyles.AdjustToUniversal
+                            )
+                        with
+                        | true, v -> Value.DateTime v |> Some
+                        | false, _ -> None
+                    | None ->
+                        match DateTime.TryParse str with
+                        | true, v -> Value.DateTime v |> Some
+                        | false, _ -> None
+                | BaseType.Guid ->
+                    match format with
+                    | Some f ->
+                        match Guid.TryParseExact(str, f) with
+                        | true, v -> Value.Guid v |> Some
+                        | false, _ -> None
+                    | None ->
+                        match Guid.TryParse str with
+                        | true, v -> Value.Guid v |> Some
+                        | false, _ -> None
+                | BaseType.Option ibt -> handler ibt
+
+            handler baseType
 
         member fv.Box() =
             let rec handler (value: Value) =
