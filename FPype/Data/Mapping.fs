@@ -48,6 +48,7 @@ module Mapping =
                         mapper.Table.Columns
                         |> List.tryFind (fun tc -> tc.Name = otc.Name)
                         |> Option.bind (fun c ->
+                            // TODO use import handler??
                             match otc.Type with
                             | ObjectTableMapColumnType.Selector p ->
                                 p.RunScalar(element)

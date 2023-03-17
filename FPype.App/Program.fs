@@ -8,6 +8,7 @@ open FPype.Core.JPath
 open FPype.Core.Paths
 open FPype.Core.Types
 open FPype.Data
+open FPype.Data.Models
 open Microsoft.FSharp.Core
 
 module Maths =
@@ -92,6 +93,57 @@ module ServerReport =
             printfn $"Error: {e}"
 
 
+module ObjectTableMapperTest =
+
+    let unwrap (r: Result<'a, 'b>) =
+        match r with
+        | Ok v -> v
+        | Error _ -> failwith "Error"
+
+    let run _ =
+
+        let json =
+            File.ReadAllText "C:\\ProjectData\\Fpype\\example_data\\example.json"
+            |> toJson
+        
+        let scope =
+            File.ReadAllText "C:\\ProjectData\\Fpype\\.prototype\\object_table_mapper.json"
+            |> toJson
+            |> ObjectTableMapScope.FromJson
+            |> unwrap
+
+        let table =
+            ({ Name = "Test"
+               Columns =
+                 [ { Name = "item_id"
+                     Type = BaseType.String
+                     ImportHandler = None }
+                   { Name = "name"
+                     Type = BaseType.String
+                     ImportHandler = None }
+                   { Name = "sub_id"
+                     Type = BaseType.String
+                     ImportHandler = None }
+                   { Name = "type"
+                     Type = BaseType.String
+                     ImportHandler = None }
+                   { Name = "inner_name"
+                     Type = BaseType.String
+                     ImportHandler = None }
+                   { Name = "inner_value"
+                     Type = BaseType.String
+                     ImportHandler = None } ]
+               Rows = [] }: TableModel)
+
+
+        let map = ({ Table = table; RootScope = scope }: ObjectTableMap)
+
+        let r = Mapping.ObjectTable.run map json
+
+
+
+        ()
+
 module PathTest =
 
 
@@ -101,86 +153,103 @@ module PathTest =
     // Move down a level and fetch more
     // Continue until lowest level
     // Build rows
-    
-    
-    let unwrap (r: Result<'a, 'b>) = match r with | Ok v -> v | Error _ -> failwith "Error"
+
+
+    let unwrap (r: Result<'a, 'b>) =
+        match r with
+        | Ok v -> v
+        | Error _ -> failwith "Error"
 
     let run () =
-        
+
         let expr =
             match Expressions.Parsing.parse "@.price<10 && @.i == 100 && @.i <= 90 && @.i >= 10" with
             | ExpressionStatementParseResult.Success r -> FilterExpression.FromToken r
             | _ -> failwith "Error"
-        
+
         let expr2 = Expressions.Parsing.parse "@.price =~ '^s$'"
-        
+
         //let p = JPath.Compile("$.store.books[?(@.price<10)].face")
         //let p2 = JPath.Compile("$.store.books.face")
         //let p3 = JPath.Compile("$.store.books[?(@.price<10)]")
         //let p4 = JPath.Compile("$.store.books.f")
         //let p5 = JPath.Compile("$.store.f.book")
         //let p6 = JPath.Compile("$.store.f[?(@.price<10)].book")
-        
+
         let json =
             (File.ReadAllText "C:\\ProjectData\\Fpype\\example_data\\example.json"
              |> JsonDocument.Parse)
                 .RootElement
 
-        let topLevel = JPath.Compile("$.id") |> Result.map (fun jp -> jp.Run(json)) |> unwrap
-        
-        let path =  JPath.Compile("$.items[?(@.type =~ '^type1$')]") |> unwrap
-        
-        let path =  JPath.Compile("$.items[?(@.type =~ '^type1$')].subId") |> unwrap
-        
+        let topLevel =
+            JPath.Compile("$.id") |> Result.map (fun jp -> jp.Run(json)) |> unwrap
+
+        let path = JPath.Compile("$.items[?(@.type =~ '^type1$')]") |> unwrap
+
+        let path = JPath.Compile("$.items[?(@.type =~ '^type1$')].subId") |> unwrap
+
         let p2 = JPath.Compile("$.id[0]") |> unwrap
-        
+
         let itemsSelector = path.Run(json)
         let itemsSelector2 = p2.Run(json)
-        
+
         let here = ()
-        
+
         let r =
-            itemsSelector |> List.map (fun el ->
+            itemsSelector
+            |> List.map (fun el ->
                 let sl1 = JPath.Compile("$.type") |> Result.map (fun jp -> jp.Run(el)) |> unwrap
                 let sl2 = JPath.Compile("$.subId") |> Result.map (fun jp -> jp.Run(el)) |> unwrap
                 let tls = JPath.Compile("$.values") |> Result.map (fun jp -> jp.Run(el)) |> unwrap
-                
+
                 tls
                 |> List.map (fun el2 ->
                     let tl1 = JPath.Compile("$.name") |> Result.map (fun jp -> jp.Run(el2)) |> unwrap
                     let tl2 = JPath.Compile("$.value") |> Result.map (fun jp -> jp.Run(el2)) |> unwrap
-                    
+
                     // Zip the bottom level elements to create all rows
-                    
+
                     let r =
-                        [
-                            topLevel |> List.tryHead
-                            sl1 |> List.tryHead
-                            sl2 |> List.tryHead
-                            tl1 |> List.tryHead
-                            tl2 |> List.tryHead
-                        ]
-                    
-                    
+                        [ topLevel |> List.tryHead
+                          sl1 |> List.tryHead
+                          sl2 |> List.tryHead
+                          tl1 |> List.tryHead
+                          tl2 |> List.tryHead ]
+
+
                     ()))
-        
-        
-        let secondLevel1 = JPath.Compile("$.items.type") |> Result.map (fun jp -> jp.Run(json)) |> unwrap
-        let secondLevel2 = JPath.Compile("$.items.subId") |> Result.map (fun jp -> jp.Run(json)) |> unwrap
-        
-        
-        let thirdLevel1 = JPath.Compile("$.items.values.name") |> Result.map (fun jp -> jp.Run(json)) |> unwrap
-        let thirdLevel2 = JPath.Compile("$.items.values.value") |> Result.map (fun jp -> jp.Run(json)) |> unwrap
-        
-        
-        let name = topLevel |> List.tryHead |> Option.map (fun v -> Value.FromJsonValue(v, BaseType.String)) 
-        
-        
+
+
+        let secondLevel1 =
+            JPath.Compile("$.items.type") |> Result.map (fun jp -> jp.Run(json)) |> unwrap
+
+        let secondLevel2 =
+            JPath.Compile("$.items.subId") |> Result.map (fun jp -> jp.Run(json)) |> unwrap
+
+
+        let thirdLevel1 =
+            JPath.Compile("$.items.values.name")
+            |> Result.map (fun jp -> jp.Run(json))
+            |> unwrap
+
+        let thirdLevel2 =
+            JPath.Compile("$.items.values.value")
+            |> Result.map (fun jp -> jp.Run(json))
+            |> unwrap
+
+
+        let name =
+            topLevel
+            |> List.tryHead
+            |> Option.map (fun v -> Value.FromJsonValue(v, BaseType.String))
+
+
         let p1 = JPath.Compile("$.items") |> Result.map (fun jp -> jp.Run(json))
-        
+
 
         ()
 
+ObjectTableMapperTest.run ()
 PathTest.run ()
 Maths.t ()
 
