@@ -3,7 +3,6 @@
 [<AutoOpen>]
 module Common =
 
-
     type PipelineArg =
         { Name: string
           Required: bool

@@ -11,6 +11,7 @@
         <Compile Include="Core\Expressions.fs" />
         <Compile Include="Core\Paths.fs" />
         <Compile Include="Core\JPath.fs" />
+        <Compile Include="Core\Mapping.fs" />
         <Compile Include="Tests.fs" />
         <Compile Include="Program.fs" />
     </ItemGroup>

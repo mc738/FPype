@@ -140,8 +140,6 @@ module ObjectTableMapperTest =
 
         let r = Mapping.ObjectTable.run map json
 
-
-
         ()
 
 module PathTest =
