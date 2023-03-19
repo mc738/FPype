@@ -192,6 +192,54 @@ module Models =
         member tr.GetDecimal(i) = tr.Values.[i]
 
         member tr.MatchValue(v: Value, index: int) = tr.Values.[index].IsMatch(v)
+        
+        member tr.ToCsv(settings: CsvExportSettings) =
+            let wrapString (v: string) = v.Replace("\"", "\"\"\"") |> fun v -> $"\"{v}\""
+            
+            
+            
+            let rec handler (v: Value) =
+                match v with
+                | Value.Boolean b -> 
+                    match settings.BoolToWord, b with
+                    | true, true ->
+                        match settings.WrapAllValues, settings.WrapBools with
+                        | true, _
+                        | _, true -> "true" |> wrapString
+                        | false, false -> "true"
+                    | true, false ->
+                        match settings.WrapAllValues, settings.WrapBools with
+                        | true, _
+                        | _, true -> "false" |> wrapString
+                        | false, false -> "false"
+                    | false, true ->
+                        match settings.WrapAllValues, settings.WrapBools with
+                        | true, _
+                        | _, true -> "1" |> wrapString
+                        | false, false -> "1"
+                    | false, false ->
+                        match settings.WrapAllValues, settings.WrapBools with
+                        | true, _
+                        | _, true -> "0" |> wrapString
+                        | false, false -> "0"
+                | Value.Byte b -> ""
+                | Value.Char c -> ""
+                | Value.DateTime d -> ""
+                | Value.Decimal d -> ""
+                | Value.Double d -> ""
+                | Value.Float f -> ""
+                | Value.Guid g -> ""
+                | Value.Int i -> ""
+                | Value.Long l -> ""
+                | Value.Short s -> ""
+                | Value.String s -> ""
+                | Value.Option ov ->
+                    match ov with
+                    | Some iv -> handler iv
+                    | None -> ""
+            
+            
+            ()
 
     type ObjectDefinition =
         { Name: string
