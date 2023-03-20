@@ -120,9 +120,12 @@ type PipelineContext =
             let id = Guid.NewGuid().ToString("n")
             let dir = Path.Combine(basePath, id)
             let importDir = Path.Combine(dir, "imports")
+            let exportDir = Path.Combine(dir, "exports")
+            
 
             Directory.CreateDirectory(dir) |> ignore
             Directory.CreateDirectory(importDir) |> ignore
+            Directory.CreateDirectory(exportDir) |> ignore
 
             let storePath = Path.Combine(dir, "store.db")
 
@@ -135,6 +138,7 @@ type PipelineContext =
             store.AddStateValue("__user_name", Environment.UserName)
             store.AddStateValue("__base_path", dir)
             store.AddStateValue("__imports_path", importDir)
+            store.AddStateValue("__exports_path", exportDir)
 
             { Id = id
               Directory = dir
