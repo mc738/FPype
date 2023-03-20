@@ -505,7 +505,7 @@ module Types =
                     | None -> ""
 
             handler fv
-
+        
         member fv.GetDecimal() =
             let rec handler (value: Value) =
                 match value with

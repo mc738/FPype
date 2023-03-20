@@ -32,6 +32,7 @@ module Common =
           WrapDateTimes: bool
           WrapGuids: bool
           WrapBools: bool
+          WrapNumbers: bool
           WrapAllValues: bool
           BoolToWord: bool
           DefaultDateTimeFormation: string option
@@ -43,6 +44,7 @@ module Common =
               WrapGuids = true
               WrapDateTimes = true
               WrapBools = true
+              WrapNumbers = false
               WrapAllValues = false
               BoolToWord = true
               DefaultDateTimeFormation = None

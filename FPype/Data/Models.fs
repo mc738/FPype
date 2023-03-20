@@ -121,6 +121,13 @@ module Models =
                      TableColumn.JoinColumns(tm.Columns, table2.Columns, dropColumnsA, dropColumnsB, false, true)
                    Rows = r }: TableModel)
 
+        member tm.ToCsv(settings: CsvExportSettings) =
+            [ match settings.IncludeHeader with
+              | true -> tm.Columns |> List.map (fun c -> c.Name) |> String.concat ","
+              | false -> ()
+
+              yield! tm.Rows |> List.map (fun tr -> tr.ToCsv(settings)) ]
+
     and TableColumn =
         { Name: string
           Type: BaseType
@@ -192,15 +199,14 @@ module Models =
         member tr.GetDecimal(i) = tr.Values.[i]
 
         member tr.MatchValue(v: Value, index: int) = tr.Values.[index].IsMatch(v)
-        
+
         member tr.ToCsv(settings: CsvExportSettings) =
-            let wrapString (v: string) = v.Replace("\"", "\"\"\"") |> fun v -> $"\"{v}\""
-            
-            
-            
+            let wrapString (v: string) =
+                v.Replace("\"", "\"\"\"") |> fun v -> $"\"{v}\""
+
             let rec handler (v: Value) =
                 match v with
-                | Value.Boolean b -> 
+                | Value.Boolean b ->
                     match settings.BoolToWord, b with
                     | true, true ->
                         match settings.WrapAllValues, settings.WrapBools with
@@ -222,24 +228,81 @@ module Models =
                         | true, _
                         | _, true -> "0" |> wrapString
                         | false, false -> "0"
-                | Value.Byte b -> ""
-                | Value.Char c -> ""
-                | Value.DateTime d -> ""
-                | Value.Decimal d -> ""
-                | Value.Double d -> ""
-                | Value.Float f -> ""
-                | Value.Guid g -> ""
-                | Value.Int i -> ""
-                | Value.Long l -> ""
-                | Value.Short s -> ""
-                | Value.String s -> ""
+                | Value.Byte b ->
+                    match settings.WrapNumbers, settings.WrapAllValues with
+                    | true, _
+                    | _, true -> string b |> wrapString
+                    | false, false -> string b
+                | Value.Char c ->
+                    match settings.WrapStrings, settings.WrapAllValues with
+                    | true, _
+                    | _, true -> string c |> wrapString
+                    | false, false -> string c
+                | Value.DateTime d ->
+                    match settings.WrapNumbers, settings.WrapAllValues with
+                    | true, _
+                    | _, true ->
+                        match settings.DefaultDateTimeFormation with
+                        | Some f -> d.ToString(f)
+                        | None -> d.ToString()
+                        |> wrapString
+                    | false, false ->
+                        match settings.DefaultDateTimeFormation with
+                        | Some f -> d.ToString(f)
+                        | None -> d.ToString()
+                | Value.Decimal d ->
+                    match settings.WrapNumbers, settings.WrapAllValues with
+                    | true, _
+                    | _, true -> string d |> wrapString
+                    | false, false -> string d
+                | Value.Double d ->
+                    match settings.WrapNumbers, settings.WrapAllValues with
+                    | true, _
+                    | _, true -> string d |> wrapString
+                    | false, false -> string d
+                | Value.Float f ->
+                    match settings.WrapNumbers, settings.WrapAllValues with
+                    | true, _
+                    | _, true -> string f |> wrapString
+                    | false, false -> string f
+                | Value.Guid g ->
+                    match settings.WrapGuids, settings.WrapAllValues with
+                    | true, _
+                    | _, true ->
+                        match settings.DefaultGuidFormat with
+                        | Some f -> g.ToString(f)
+                        | None -> g.ToString()
+                        |> wrapString
+                    | false, false ->
+                        match settings.DefaultGuidFormat with
+                        | Some f -> g.ToString(f)
+                        | None -> g.ToString()
+                | Value.Int i ->
+                    match settings.WrapNumbers, settings.WrapAllValues with
+                    | true, _
+                    | _, true -> string i |> wrapString
+                    | false, false -> string i
+                | Value.Long l ->
+                    match settings.WrapNumbers, settings.WrapAllValues with
+                    | true, _
+                    | _, true -> string l |> wrapString
+                    | false, false -> string l
+                | Value.Short s ->
+                    match settings.WrapNumbers, settings.WrapAllValues with
+                    | true, _
+                    | _, true -> string s |> wrapString
+                    | false, false -> string s
+                | Value.String s ->
+                    match settings.WrapStrings, settings.WrapAllValues with
+                    | true, _
+                    | _, true -> string s |> wrapString
+                    | false, false -> string s
                 | Value.Option ov ->
                     match ov with
                     | Some iv -> handler iv
                     | None -> ""
-            
-            
-            ()
+
+            tr.Values |> List.map handler |> String.concat ","
 
     type ObjectDefinition =
         { Name: string
@@ -364,8 +427,8 @@ module Models =
                 | _, _, Error e -> Error e
             | None -> Error "Missing selector property"
 
-        member otm.IsBaseScope() = otm.InnerScopes.IsEmpty 
-    
+        member otm.IsBaseScope() = otm.InnerScopes.IsEmpty
+
     and ObjectTableMapColumn =
         { Name: string
           Type: ObjectTableMapColumnType }
