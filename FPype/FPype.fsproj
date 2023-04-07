@@ -19,6 +19,8 @@
         <Compile Include="Data\Models.fs" />
         <Compile Include="Data\Store.fs" />
         <Compile Include="Data\Grouping.fs" />
+        <Compile Include="ML\Common.fs" />
+        <Compile Include="ML\BinaryClassification.fs" />
         <Compile Include="Data\Statistics.fs" />
         <Compile Include="Data\Mapping.fs" />
         <Compile Include="Actions\Common.fs" />
@@ -45,6 +47,7 @@
       <PackageReference Include="freql.mysql" Version="0.9.0" />
       <PackageReference Include="Freql.Sqlite" Version="0.9.0" />
       <PackageReference Include="FsToolbox" Version="0.1.1" />
+      <PackageReference Include="Microsoft.ML" Version="2.0.1" />
     </ItemGroup>
 
 </Project>

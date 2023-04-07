@@ -9,7 +9,9 @@ open FPype.Core.Paths
 open FPype.Core.Types
 open FPype.Data
 open FPype.Data.Models
+open FPype.ML
 open Microsoft.FSharp.Core
+open Microsoft.ML
 
 module Maths =
 
@@ -103,9 +105,8 @@ module ObjectTableMapperTest =
     let run _ =
 
         let json =
-            File.ReadAllText "C:\\ProjectData\\Fpype\\example_data\\example.json"
-            |> toJson
-        
+            File.ReadAllText "C:\\ProjectData\\Fpype\\example_data\\example.json" |> toJson
+
         let scope =
             File.ReadAllText "C:\\ProjectData\\Fpype\\.prototype\\object_table_mapper.json"
             |> toJson
@@ -246,6 +247,71 @@ module PathTest =
 
 
         ()
+
+module MLTest =
+
+    
+    let unwrap (r: Result<'a, 'b>) =
+        match r with
+        | Ok v -> v
+        | Error _ -> failwith "Error"
+    
+    let dataPath = "D:\\DataSets\\ML_dot_net_test_data\\binary_classification\\wikiDetoxAnnotated40kRows.tsv"
+
+    let modelPath = "D:\\DataSets\\ML_dot_net_test_data\\binary_classification\\model\\prediction.zip"
+
+    let createCtx (seed: int option) = MLContext(seed |> Option.toNullable)
+
+    let train _ =
+        let mlCtx = createCtx (Some 1)
+
+        let settings =
+            ({ DataPath = dataPath
+               DataSource =
+                 { Type = "file"
+                   Uri = dataPath
+                   Name = "Training data"
+                   CollectionName = "misc" }
+               ModelSavePath = modelPath
+               HasHeaders = true
+               Separators = [| '\t' |]
+               TrainingTestSplit = 0.2
+               ClassificationType = BinaryClassification.ClassificationType.Text
+               FeatureColumnIndex = 2
+               LabelColumnName = "Label"
+               LabelColumnIndex = 0 }: BinaryClassification.TrainingSettings)
+
+        let metrics = BinaryClassification.train mlCtx settings |> unwrap
+
+        printfn "Model metrics"
+        printfn $"Accuracy: {metrics.Accuracy}"
+        printfn $"Entropy: {metrics.Entropy}"
+        printfn $"Entropy: {metrics.Entropy}"
+        printfn $"Confusion matrix: {metrics.ConfusionMatrix}"
+        printfn $"F1 score: {metrics.F1Score}"
+        printfn $"Log loss: {metrics.LogLoss}"
+        printfn $"Negative precision: {metrics.NegativePrecision}"
+        printfn $"Negative recall: {metrics.NegativeRecall}"
+        printfn $"Positive precision: {metrics.PositivePrecision}"
+        printfn $"Positive recall: {metrics.PositiveRecall}"
+        printfn $"Log loss reduction: {metrics.LogLossReduction}"
+        printfn $"Area under roc curve: {metrics.AreaUnderRocCurve}"
+        printfn $"Area under precision recall curve: {metrics.AreaUnderPrecisionRecallCurve}"
+        
+    let run _ =
+
+        let mlCtx = createCtx (Some 1)
+        let engine = BinaryClassification.load mlCtx modelPath |> unwrap
+        
+        let r = BinaryClassification.predict engine "I love this movie!"
+
+        
+        
+        ()
+
+
+//MLTest.train ()
+MLTest.run ()
 
 ObjectTableMapperTest.run ()
 PathTest.run ()
