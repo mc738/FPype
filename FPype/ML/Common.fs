@@ -15,7 +15,7 @@ module Common =
     /// <summary>
     /// This is used because ML.net required generic types for prediction engines.
     /// This will create a dynamic class type that can be used.
-    /// Based on https://stackoverflow.com/questions/66893993/ml-net-create-prediction-engine-using-dynamic-class
+    /// Based on https://stackoverflow.com/questions/66893993/ml-net-create-prediction-engine-using-dynamic-class/66913705#66913705
     /// </summary>
     [<RequireQualifiedAccess>]
     module ClassFactory =
@@ -128,11 +128,7 @@ module Common =
             r
         
         let createObjectFromType (runTimeType: Type) (properties: Map<string, Value>) =
-            //let assemblyName = AssemblyName("DynamicInput")
 
-            //let dynamicType = createTypeBuilder assemblyName
-            //createConstructor dynamicType |> ignore
-            
             let r = Activator.CreateInstance(runTimeType)
             
             runTimeType.GetProperties()
