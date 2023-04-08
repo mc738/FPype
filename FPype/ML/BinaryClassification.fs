@@ -1,14 +1,14 @@
 ﻿namespace FPype.ML
 
-open FPype.Core.Types
-open FPype.Data
-open FPype.Data.Store
-open Microsoft.ML
-open Microsoft.ML.Data
-
 [<RequireQualifiedAccess>]
 module BinaryClassification =
-
+    
+    open FPype.Core.Types
+    open FPype.Data
+    open FPype.Data.Store
+    open Microsoft.ML
+    open Microsoft.ML.Data
+    
     type TextClassificationItem = { Text: string; Label: bool }
 
     and [<CLIMutable>] TextPredictionItem =

@@ -216,6 +216,11 @@ module Common =
 
             handler bt
 
+    type TrainingContext =
+        { TrainingData: IDataView
+          TestData: IDataView
+          Pipeline: IEstimator<ITransformer> }
+
     [<RequireQualifiedAccess>]
     type TransformationType =
         | CopyColumns of OutputColumnName: string * InputColumnName: string
@@ -234,6 +239,16 @@ module Common =
         { ColumnName: string
           Minimum: float option
           Maximum: float option }
+
+    type GeneralTrainingSettings =
+        { DataSource: DataSource
+          ModelSavePath: string
+          HasHeaders: bool
+          Separators: char array
+          TrainingTestSplit: float
+          Columns: DataColumn list
+          RowFilters: RowFilter list
+          Transformations: TransformationType list }
 
     let createCtx (seed: int option) = MLContext(seed |> Option.toNullable)
 
@@ -297,3 +312,20 @@ module Common =
                     acc.Append(mlCtx.Transforms.CopyColumns(outputColumnName, inputColumnName))
                     |> Internal.downcastPipeline)
             (EstimatorChain() |> Internal.downcastPipeline)
+
+    let createTrainingContext (mlCtx: MLContext) (settings: GeneralTrainingSettings) (dataUri: string) =
+
+        let loader =
+            createTextLoader mlCtx settings.HasHeaders settings.Separators settings.Columns
+
+        let dataView = loader.Load([| dataUri |])
+
+        let trainTestSplit = mlCtx.Data.TrainTestSplit(dataView, settings.TrainingTestSplit)
+
+        let trainingData = filterRows mlCtx trainTestSplit.TrainSet settings.RowFilters
+
+        let dataProcessPipeline = runTransformations mlCtx settings.Transformations
+
+        { TrainingData = trainingData
+          TestData = trainTestSplit.TestSet
+          Pipeline = dataProcessPipeline }

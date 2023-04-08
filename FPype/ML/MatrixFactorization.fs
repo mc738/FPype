@@ -1,27 +1,43 @@
 ﻿namespace FPype.ML
 
+
 [<RequireQualifiedAccess>]
-module Regression =
+module MatrixFactorization =
 
     open FPype.Core.Types
-    open FPype.Data.Store
     open Microsoft.FSharp.Core
     open Microsoft.ML
-    
-    type TrainingSettings =
-        { General: GeneralTrainingSettings }
+    open Microsoft.ML.Trainers
+    open FPype.Data.Store
 
-    and [<CLIMutable>] PredictionItem = { Score: float32 }
+    type TrainingSettings = {
+        MatrixColumnIndexColumnName: string
+        MatrixRowIndexColumnName: string
+        LabelColumnName: string
+        NumberOfIterations: int
+        ApproximationRank: int
+        General: GeneralTrainingSettings
+    }
+
+    [<CLIMutable>]
+    type PredictionItem = { Label: float32; Score: float32 }
 
     let train (mlCtx: MLContext) (settings: TrainingSettings) =
         getDataSourceUri settings.General.DataSource
         |> Result.bind (fun uri ->
             try
                 let trainingCtx = createTrainingContext mlCtx settings.General uri
-                
-                // TODO set strings are settings
-                let trainer =
-                    mlCtx.Regression.Trainers.Sdca(labelColumnName = "Label", featureColumnName = "Feature")
+
+                let options = MatrixFactorizationTrainer.Options()
+
+                options.MatrixColumnIndexColumnName <- settings.MatrixColumnIndexColumnName
+                options.MatrixRowIndexColumnName <- settings.MatrixRowIndexColumnName
+                options.LabelColumnName <- settings.LabelColumnName
+                options.NumberOfIterations <- settings.NumberOfIterations
+                options.ApproximationRank <- settings.ApproximationRank
+
+                let trainer = mlCtx.Recommendation().Trainers.MatrixFactorization(options)
+
 
                 let trainingPipeline = trainingCtx.Pipeline.Append(trainer)
 
@@ -31,8 +47,9 @@ module Regression =
 
                 let predictions = trainedModel.Transform(trainingCtx.TestData)
 
-                // TODO set strings are settings
-                mlCtx.Regression.Evaluate(predictions, labelColumnName = "Label", scoreColumnName = "Score")
+                mlCtx
+                    .Recommendation()
+                    .Evaluate(predictions, labelColumnName = "Label", scoreColumnName = "Score")
                 |> Ok
 
             with ex ->

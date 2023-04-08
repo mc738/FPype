@@ -312,8 +312,8 @@ module MLTest =
 
     module MulticlassClassification =
 
-
-        let dataPath = "D:\\DataSets\\ML_dot_net_test_data\\multiclass_classification\\github_issues.tsv"
+        let dataPath =
+            "D:\\DataSets\\ML_dot_net_test_data\\multiclass_classification\\github_issues.tsv"
 
         let modelPath =
             "D:\\DataSets\\ML_dot_net_test_data\\multiclass_classification\\model\\prediction.zip"
@@ -322,34 +322,35 @@ module MLTest =
             let mlCtx = createCtx (Some 0)
 
             let settings =
-                ({ DataSource =
-                    { Type = "file"
-                      Uri = dataPath
-                      Name = "Training data"
-                      CollectionName = "misc" }
-                   ModelSavePath = modelPath
-                   HasHeaders = true
-                   Separators = [| '\t' |]
-                   TrainingTestSplit = 0.2
-                   Columns =
-                     [ { Index = 0
-                         Name = "ID"
-                         DataKind = DataKind.String }
-                       { Index = 1
-                         Name = "Area"
-                         DataKind = DataKind.String }
-                       { Index = 2
-                         Name = "Title"
-                         DataKind = DataKind.String }
-                       { Index = 3
-                         Name = "Description"
-                         DataKind = DataKind.String } ]
-                   RowFilters = []
-                   Transformations =
-                     [ TransformationType.MapValueToKey("Label", "Area")
-                       TransformationType.FeaturizeText("TitleFeaturized", "Title")
-                       TransformationType.FeaturizeText("DescriptionFeaturized", "Description")
-                       TransformationType.Concatenate("Features", [ "TitleFeaturized"; "DescriptionFeaturized" ]) ] }: MulticlassClassification.TrainingSettings)
+                ({ General =
+                    { DataSource =
+                        { Type = "file"
+                          Uri = dataPath
+                          Name = "Training data"
+                          CollectionName = "misc" }
+                      ModelSavePath = modelPath
+                      HasHeaders = true
+                      Separators = [| '\t' |]
+                      TrainingTestSplit = 0.2
+                      Columns =
+                        [ { Index = 0
+                            Name = "ID"
+                            DataKind = DataKind.String }
+                          { Index = 1
+                            Name = "Area"
+                            DataKind = DataKind.String }
+                          { Index = 2
+                            Name = "Title"
+                            DataKind = DataKind.String }
+                          { Index = 3
+                            Name = "Description"
+                            DataKind = DataKind.String } ]
+                      RowFilters = []
+                      Transformations =
+                        [ TransformationType.MapValueToKey("Label", "Area")
+                          TransformationType.FeaturizeText("TitleFeaturized", "Title")
+                          TransformationType.FeaturizeText("DescriptionFeaturized", "Description")
+                          TransformationType.Concatenate("Features", [ "TitleFeaturized"; "DescriptionFeaturized" ]) ] } }: MulticlassClassification.TrainingSettings)
 
             let metrics = MulticlassClassification.train mlCtx settings |> unwrap
 
@@ -372,7 +373,9 @@ module MLTest =
                 [ "Id", Value.String ""
                   "Area", Value.String ""
                   "Title", Value.String "WebSockets communication is slow in my machine"
-                  "Description", Value.String "The WebSockets communication used under the covers by SignalR looks like is going slow in my development machine.." ]
+                  "Description",
+                  Value.String
+                      "The WebSockets communication used under the covers by SignalR looks like is going slow in my development machine.." ]
                 |> Map.ofList
 
             let (t, dvs) = MulticlassClassification.load mlCtx modelPath |> unwrap
@@ -392,58 +395,59 @@ module MLTest =
             let mlCtx = createCtx (Some 0)
 
             let settings =
-                ({ DataSource =
-                    { Type = "file"
-                      Uri = dataPath
-                      Name = "Training data"
-                      CollectionName = "misc" }
-                   ModelSavePath = modelPath
-                   HasHeaders = true
-                   Separators = [| ',' |]
-                   TrainingTestSplit = 0.2
-                   Columns =
-                     [ { Index = 0
-                         Name = "VendorId"
-                         DataKind = DataKind.String }
-                       { Index = 1
-                         Name = "RateCode"
-                         DataKind = DataKind.String }
-                       { Index = 2
-                         Name = "PassengerCount"
-                         DataKind = DataKind.Single }
-                       { Index = 3
-                         Name = "TripTime"
-                         DataKind = DataKind.Single }
-                       { Index = 4
-                         Name = "TripDistance"
-                         DataKind = DataKind.Single }
-                       { Index = 5
-                         Name = "PaymentType"
-                         DataKind = DataKind.String }
-                       { Index = 6
-                         Name = "FareAmount"
-                         DataKind = DataKind.Single } ]
-                   RowFilters =
-                     [ { ColumnName = "FareAmount"
-                         Minimum = Some 1
-                         Maximum = Some 150 } ]
-                   Transformations =
-                     [ TransformationType.CopyColumns("Label", "FareAmount")
-                       TransformationType.OneHotEncoding("VendorIdEncoded", "VendorId")
-                       TransformationType.OneHotEncoding("RateCodeEncoded", "RateCode")
-                       TransformationType.OneHotEncoding("PaymentTypeEncoded", "PaymentType")
-                       TransformationType.NormalizeMeanVariance "PassengerCount"
-                       TransformationType.NormalizeMeanVariance "TripTime"
-                       TransformationType.NormalizeMeanVariance "TripDistance"
-                       TransformationType.Concatenate(
-                           "Feature",
-                           [ "VendorIdEncoded"
-                             "RateCodeEncoded"
-                             "PaymentTypeEncoded"
-                             "PassengerCount"
-                             "TripTime"
-                             "TripDistance" ]
-                       ) ] }: Regression.TrainingSettings)
+                ({ General =
+                    { DataSource =
+                        { Type = "file"
+                          Uri = dataPath
+                          Name = "Training data"
+                          CollectionName = "misc" }
+                      ModelSavePath = modelPath
+                      HasHeaders = true
+                      Separators = [| ',' |]
+                      TrainingTestSplit = 0.2
+                      Columns =
+                        [ { Index = 0
+                            Name = "VendorId"
+                            DataKind = DataKind.String }
+                          { Index = 1
+                            Name = "RateCode"
+                            DataKind = DataKind.String }
+                          { Index = 2
+                            Name = "PassengerCount"
+                            DataKind = DataKind.Single }
+                          { Index = 3
+                            Name = "TripTime"
+                            DataKind = DataKind.Single }
+                          { Index = 4
+                            Name = "TripDistance"
+                            DataKind = DataKind.Single }
+                          { Index = 5
+                            Name = "PaymentType"
+                            DataKind = DataKind.String }
+                          { Index = 6
+                            Name = "FareAmount"
+                            DataKind = DataKind.Single } ]
+                      RowFilters =
+                        [ { ColumnName = "FareAmount"
+                            Minimum = Some 1
+                            Maximum = Some 150 } ]
+                      Transformations =
+                        [ TransformationType.CopyColumns("Label", "FareAmount")
+                          TransformationType.OneHotEncoding("VendorIdEncoded", "VendorId")
+                          TransformationType.OneHotEncoding("RateCodeEncoded", "RateCode")
+                          TransformationType.OneHotEncoding("PaymentTypeEncoded", "PaymentType")
+                          TransformationType.NormalizeMeanVariance "PassengerCount"
+                          TransformationType.NormalizeMeanVariance "TripTime"
+                          TransformationType.NormalizeMeanVariance "TripDistance"
+                          TransformationType.Concatenate(
+                              "Feature",
+                              [ "VendorIdEncoded"
+                                "RateCodeEncoded"
+                                "PaymentTypeEncoded"
+                                "PassengerCount"
+                                "TripTime"
+                                "TripDistance" ]
+                          ) ] } }: Regression.TrainingSettings)
 
             let metrics = Regression.train mlCtx settings |> unwrap
 
@@ -474,6 +478,73 @@ module MLTest =
 
             ()
 
+    module MatrixFactorization =
+
+        let dataPath =
+            "D:\\DataSets\\ML_dot_net_test_data\\matrix_factorization\\movie_recommendations.csv"
+
+        let modelPath =
+            "D:\\DataSets\\ML_dot_net_test_data\\matrix_factorization\\model\\prediction.zip"
+
+        let train _ =
+            let mlCtx = createCtx (Some 0)
+
+            let settings =
+                ({ MatrixColumnIndexColumnName = "UserIdEncoded"
+                   MatrixRowIndexColumnName = "MovieIdEncoded"
+                   LabelColumnName = "Label"
+                   NumberOfIterations = 20
+                   ApproximationRank = 100
+                   General =
+                     { DataSource =
+                         { Type = "file"
+                           Uri = dataPath
+                           Name = "Training data"
+                           CollectionName = "misc" }
+                       ModelSavePath = modelPath
+                       HasHeaders = true
+                       Separators = [| ',' |]
+                       TrainingTestSplit = 0.01
+                       Columns =
+                         [ { Index = 0
+                             Name = "UserId"
+                             DataKind = DataKind.Single }
+                           { Index = 1
+                             Name = "MovieId"
+                             DataKind = DataKind.Single }
+                           { Index = 2
+                             Name = "Label"
+                             DataKind = DataKind.Single } ]
+                       RowFilters = []
+                       Transformations =
+                         [ TransformationType.MapValueToKey("UserIdEncoded", "UserId")
+                           TransformationType.MapValueToKey("MovieIdEncoded", "MovieId") ] } }: MatrixFactorization.TrainingSettings)
+
+            let metrics = MatrixFactorization.train mlCtx settings |> unwrap
+
+            printfn "Model metrics"
+            printfn $"Loss function: {metrics.LossFunction}"
+            printfn $"R squared: {metrics.RSquared}"
+            printfn $"Mean absolute error: {metrics.MeanAbsoluteError}"
+            printfn $"Mean squared error: {metrics.MeanSquaredError}"
+            printfn $"Root mean squared error: {metrics.RootMeanSquaredError}"
+
+
+        let run _ =
+            let mlCtx = createCtx (Some 0)
+            
+            let value =
+                [ "UserId", Value.Float 6f
+                  "MovieId", Value.Float 10f
+                  "Label", Value.Float 0f ]
+                |> Map.ofList
+
+            let (t, dvs) = MatrixFactorization.load mlCtx modelPath |> unwrap
+
+            let r = MatrixFactorization.predict mlCtx t dvs value
+            
+            ()
+
 module MiscTest =
 
     let createDynamicObj _ =
@@ -488,6 +559,8 @@ module MiscTest =
 //MiscTest.createDynamicObj ()
 //MLTest.train ()
 //MLTest.run ()
+MLTest.MatrixFactorization.train ()
+MLTest.MatrixFactorization.run ()
 MLTest.MulticlassClassification.train ()
 MLTest.MulticlassClassification.run ()
 MLTest.Regression.train ()
