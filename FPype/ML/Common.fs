@@ -79,21 +79,21 @@ module Common =
                     null,
                     [| propertyType |]
                 )
-            
+
             let setIl = setPropMthdBldr.GetILGenerator()
-            
+
             let modifyProperty = setIl.DefineLabel()
             let exitSet = setIl.DefineLabel()
-            
+
             setIl.MarkLabel(modifyProperty)
             setIl.Emit(OpCodes.Ldarg_0)
             setIl.Emit(OpCodes.Ldarg_1)
             setIl.Emit(OpCodes.Stfld, fieldBuilder)
-            
+
             setIl.Emit(OpCodes.Nop)
             setIl.MarkLabel(exitSet)
             setIl.Emit(OpCodes.Ret)
-            
+
             propertyBuilder.SetGetMethod(getPropMthdBldr)
             propertyBuilder.SetSetMethod(setPropMthdBldr)
 
@@ -104,7 +104,7 @@ module Common =
             //let
             createConstructor dynamicType |> ignore
             schema |> Seq.iter (fun i -> createProperty dynamicType i.Name i.Type.RawType)
-            
+
             dynamicType.CreateType()
 
         let createObject (properties: Map<string, Value>) =
@@ -112,38 +112,39 @@ module Common =
 
             let dynamicType = createTypeBuilder assemblyName
             createConstructor dynamicType |> ignore
-            
-            properties |> Map.iter (fun k v -> v.GetBaseType().ToType() |> createProperty dynamicType k)
-            
+
+            properties
+            |> Map.iter (fun k v -> v.GetBaseType().ToType() |> createProperty dynamicType k)
+
             let t = dynamicType.CreateType()
-            
+
             let r = Activator.CreateInstance(t)
-            
+
             dynamicType.GetProperties()
             |> Seq.iter (fun p ->
                 match properties.TryFind p.Name with
                 | Some v -> p.SetValue(r, v.Box())
                 | None -> ())
-            
+
             r
-        
+
         let createObjectFromType (runTimeType: Type) (properties: Map<string, Value>) =
 
             let r = Activator.CreateInstance(runTimeType)
-            
+
             runTimeType.GetProperties()
             |> Seq.iter (fun p ->
                 match properties.TryFind p.Name with
                 | Some v -> p.SetValue(r, v.Box(stringToReadOnlyMemory = true))
                 | None -> ())
-            
+
             r
-    
-    
+
+
     module Internal =
-        
+
         let createRunTimeType (schema: DataViewSchema) = ClassFactory.createType schema
-        
+
         /// <summary>
         /// Get a dynamic prediction engine.
         /// This is used to work around the compile-time generics usually needed for ML.net.
@@ -155,12 +156,24 @@ module Common =
         /// <param name="runTimeType">The runtime type.</param>
         /// <param name="schema"></param>
         /// <param name="model"></param>
-        let getDynamicPredictionEngine<'TOut> (mlCtx: MLContext) (runTimeType: Type) (schema: DataViewSchema) (model: ITransformer) =
-            
-            let genericPredictionMethod = mlCtx.Model.GetType().GetMethod("CreatePredictionEngine", [| typeof<ITransformer>; typeof<DataViewSchema> |])
-            let predictionMethod = genericPredictionMethod.MakeGenericMethod(runTimeType, typeof<'TOut>)
+        let getDynamicPredictionEngine<'TOut>
+            (mlCtx: MLContext)
+            (runTimeType: Type)
+            (schema: DataViewSchema)
+            (model: ITransformer)
+            =
+
+            let genericPredictionMethod =
+                mlCtx
+                    .Model
+                    .GetType()
+                    .GetMethod("CreatePredictionEngine", [| typeof<ITransformer>; typeof<DataViewSchema> |])
+
+            let predictionMethod =
+                genericPredictionMethod.MakeGenericMethod(runTimeType, typeof<'TOut>)
+
             predictionMethod.Invoke(mlCtx.Model, [| model; schema |])
-            
+
         /// <summary>
         /// Run a dynamic prediction engine, represented as a obj.
         /// This is used to work around the compile-time generics usually needed for ML.net.
@@ -171,12 +184,17 @@ module Common =
         /// <param name="runTimeType"></param>
         /// <param name="engine"></param>
         /// <param name="inputObj"></param>
-        let runDynamicPredictionEngine<'TOut> (runTimeType: Type) (engine: obj)  (inputObj: obj) =
+        let runDynamicPredictionEngine<'TOut> (runTimeType: Type) (engine: obj) (inputObj: obj) =
             let ms = engine.GetType().GetMethods()
             let predictMethod = engine.GetType().GetMethod("Predict", [| runTimeType |])
             predictMethod.Invoke(engine, [| inputObj |]) :?> 'TOut
-            
-    
+
+        let downcastPipeline (x: IEstimator<_>) =
+            match x with
+            | :? IEstimator<ITransformer> as y -> y
+            | _ -> failwith "downcastPipeline: expecting a IEstimator<ITransformer>"
+
+
     type BaseType with
 
         member bt.ToDataKind() =
@@ -198,8 +216,27 @@ module Common =
 
             handler bt
 
+    [<RequireQualifiedAccess>]
+    type TransformationType =
+        | CopyColumns of OutputColumnName: string * InputColumnName: string
+        | OneHotEncoding of OutputColumnName: string * InputColumnName: string
+        | NormalizeMeanVariance of OutputColumnName: string
+        | FeaturizeText of OutputColumnName: string * InputColumnName: string
+        | MapValueToKey of OutputColumnName: string * InputColumnName: string
+        | Concatenate of OutputColumnName: string * Columns: string list
+
+    type DataColumn =
+        { Index: int
+          Name: string
+          DataKind: DataKind }
+
+    type RowFilter =
+        { ColumnName: string
+          Minimum: float option
+          Maximum: float option }
+
     let createCtx (seed: int option) = MLContext(seed |> Option.toNullable)
-    
+
     let getDataSourceUri (source: DataSource) =
         match DataSourceType.Deserialize source.Type with
         | Some DataSourceType.File -> source.Uri |> Ok
@@ -210,4 +247,53 @@ module Common =
 
     let loadFromTable () =
         DatabaseSource(SqliteFactory.Instance, "", "")
-       
+
+    let createTextLoader (mlCtx: MLContext) (hasHeaders: bool) (separators: char array) (columns: DataColumn list) =
+        let options = TextLoader.Options()
+
+        options.HasHeader <- hasHeaders
+        options.Separators <- separators
+
+        options.Columns <-
+            columns
+            |> List.map (fun c -> TextLoader.Column(c.Name, c.DataKind, c.Index))
+            |> Array.ofList
+
+        mlCtx.Data.CreateTextLoader(options = options)
+
+    let filterRows (mlCtx: MLContext) (data: IDataView) (filters: RowFilter list) =
+        filters
+        |> List.fold
+            (fun dv rf ->
+                match rf.Minimum, rf.Maximum with
+                | Some min, Some max ->
+                    mlCtx.Data.FilterRowsByColumn(dv, rf.ColumnName, lowerBound = min, upperBound = max)
+                | Some min, None -> mlCtx.Data.FilterRowsByColumn(dv, rf.ColumnName, lowerBound = min)
+                | None, Some max -> mlCtx.Data.FilterRowsByColumn(dv, rf.ColumnName, upperBound = max)
+                | None, None -> dv)
+            data
+
+    let runTransformations (mlCtx: MLContext) (transformations: TransformationType list) =
+        transformations
+        |> List.fold
+            (fun (acc: IEstimator<ITransformer>) t ->
+                match t with
+                | TransformationType.Concatenate (outputColumnName, columns) ->
+                    acc.Append(mlCtx.Transforms.Concatenate(outputColumnName, columns |> Array.ofList))
+                    |> Internal.downcastPipeline
+                | TransformationType.OneHotEncoding (outputColumnName, inputColumnName) ->
+                    acc.Append(mlCtx.Transforms.Categorical.OneHotEncoding(outputColumnName, inputColumnName))
+                    |> Internal.downcastPipeline
+                | TransformationType.NormalizeMeanVariance outputColumnName ->
+                    acc.Append(mlCtx.Transforms.NormalizeMeanVariance(outputColumnName))
+                    |> Internal.downcastPipeline
+                | TransformationType.FeaturizeText (outputColumnName, inputColumnName) ->
+                    acc.Append(mlCtx.Transforms.Text.FeaturizeText(outputColumnName, inputColumnName))
+                    |> Internal.downcastPipeline
+                | TransformationType.MapValueToKey (outputColumnName, inputColumnName) ->
+                    acc.Append(mlCtx.Transforms.Conversion.MapValueToKey(outputColumnName, inputColumnName))
+                    |> Internal.downcastPipeline
+                | TransformationType.CopyColumns (outputColumnName, inputColumnName) ->
+                    acc.Append(mlCtx.Transforms.CopyColumns(outputColumnName, inputColumnName))
+                    |> Internal.downcastPipeline)
+            (EstimatorChain() |> Internal.downcastPipeline)

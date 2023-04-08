@@ -310,6 +310,77 @@ module MLTest =
 
             ()
 
+    module MulticlassClassification =
+
+
+        let dataPath = "D:\\DataSets\\ML_dot_net_test_data\\multiclass_classification\\github_issues.tsv"
+
+        let modelPath =
+            "D:\\DataSets\\ML_dot_net_test_data\\multiclass_classification\\model\\prediction.zip"
+
+        let train _ =
+            let mlCtx = createCtx (Some 0)
+
+            let settings =
+                ({ DataSource =
+                    { Type = "file"
+                      Uri = dataPath
+                      Name = "Training data"
+                      CollectionName = "misc" }
+                   ModelSavePath = modelPath
+                   HasHeaders = true
+                   Separators = [| '\t' |]
+                   TrainingTestSplit = 0.2
+                   Columns =
+                     [ { Index = 0
+                         Name = "ID"
+                         DataKind = DataKind.String }
+                       { Index = 1
+                         Name = "Area"
+                         DataKind = DataKind.String }
+                       { Index = 2
+                         Name = "Title"
+                         DataKind = DataKind.String }
+                       { Index = 3
+                         Name = "Description"
+                         DataKind = DataKind.String } ]
+                   RowFilters = []
+                   Transformations =
+                     [ TransformationType.MapValueToKey("Label", "Area")
+                       TransformationType.FeaturizeText("TitleFeaturized", "Title")
+                       TransformationType.FeaturizeText("DescriptionFeaturized", "Description")
+                       TransformationType.Concatenate("Features", [ "TitleFeaturized"; "DescriptionFeaturized" ]) ] }: MulticlassClassification.TrainingSettings)
+
+            let metrics = MulticlassClassification.train mlCtx settings |> unwrap
+
+            printfn "Model metrics"
+            printfn $"Confusion matrix: {metrics.ConfusionMatrix}"
+            printfn $"Log loss: {metrics.LogLoss}"
+            printfn $"Macro accuracy: {metrics.MacroAccuracy}"
+            printfn $"Micro accuracy: {metrics.MicroAccuracy}"
+            printfn $"Log loss reduction: {metrics.LogLossReduction}"
+            printfn $"Top K accuracy: {metrics.TopKAccuracy}"
+            printfn $"Per class log loss: {metrics.PerClassLogLoss}"
+            printfn $"Top K prediction count: {metrics.TopKPredictionCount}"
+            printfn $"Top K accuracy for all K: {metrics.TopKAccuracyForAllK}"
+
+
+        let run _ =
+            let mlCtx = createCtx (Some 0)
+
+            let value =
+                [ "Id", Value.String ""
+                  "Area", Value.String ""
+                  "Title", Value.String "WebSockets communication is slow in my machine"
+                  "Description", Value.String "The WebSockets communication used under the covers by SignalR looks like is going slow in my development machine.." ]
+                |> Map.ofList
+
+            let (t, dvs) = MulticlassClassification.load mlCtx modelPath |> unwrap
+
+            let r = MulticlassClassification.predict mlCtx t dvs value
+
+            ()
+
     module Regression =
 
         let dataPath = "D:\\DataSets\\ML_dot_net_test_data\\regression\\taxi-fare-full.csv"
@@ -357,14 +428,14 @@ module MLTest =
                          Minimum = Some 1
                          Maximum = Some 150 } ]
                    Transformations =
-                     [ Regression.TransformationType.CopyColumns("Label", "FareAmount")
-                       Regression.TransformationType.OneHotEncoding("VendorIdEncoded", "VendorId")
-                       Regression.TransformationType.OneHotEncoding("RateCodeEncoded", "RateCode")
-                       Regression.TransformationType.OneHotEncoding("PaymentTypeEncoded", "PaymentType")
-                       Regression.TransformationType.NormalizeMeanVariance "PassengerCount"
-                       Regression.TransformationType.NormalizeMeanVariance "TripTime"
-                       Regression.TransformationType.NormalizeMeanVariance "TripDistance"
-                       Regression.TransformationType.Concatenate(
+                     [ TransformationType.CopyColumns("Label", "FareAmount")
+                       TransformationType.OneHotEncoding("VendorIdEncoded", "VendorId")
+                       TransformationType.OneHotEncoding("RateCodeEncoded", "RateCode")
+                       TransformationType.OneHotEncoding("PaymentTypeEncoded", "PaymentType")
+                       TransformationType.NormalizeMeanVariance "PassengerCount"
+                       TransformationType.NormalizeMeanVariance "TripTime"
+                       TransformationType.NormalizeMeanVariance "TripDistance"
+                       TransformationType.Concatenate(
                            "Feature",
                            [ "VendorIdEncoded"
                              "RateCodeEncoded"
@@ -417,6 +488,8 @@ module MiscTest =
 //MiscTest.createDynamicObj ()
 //MLTest.train ()
 //MLTest.run ()
+MLTest.MulticlassClassification.train ()
+MLTest.MulticlassClassification.run ()
 MLTest.Regression.train ()
 MLTest.Regression.run ()
 

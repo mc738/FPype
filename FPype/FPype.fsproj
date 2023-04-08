@@ -21,6 +21,7 @@
         <Compile Include="Data\Grouping.fs" />
         <Compile Include="ML\Common.fs" />
         <Compile Include="ML\BinaryClassification.fs" />
+        <Compile Include="ML\MulticlassClassification.fs" />
         <Compile Include="ML\Regression.fs" />
         <Compile Include="Data\Statistics.fs" />
         <Compile Include="Data\Mapping.fs" />

@@ -1,13 +1,14 @@
 ﻿namespace FPype.ML
 
 open FPype.Core.Types
-open FPype.Data.Store
 open Microsoft.FSharp.Core
 open Microsoft.ML
 open Microsoft.ML.Data
 
 [<RequireQualifiedAccess>]
-module Regression =
+module MulticlassClassification =
+
+    open FPype.Data.Store
 
     type TrainingSettings =
         { DataSource: DataSource
@@ -19,12 +20,16 @@ module Regression =
           RowFilters: RowFilter list
           Transformations: TransformationType list }
 
-    and [<CLIMutable>] PredictionItem = { Score: float32 }
+    [<CLIMutable>]
+    type PredictionItem =
+        { [<ColumnName("PredictedLabel")>]
+          PredictedLabel: string }
 
     let train (mlCtx: MLContext) (settings: TrainingSettings) =
         getDataSourceUri settings.DataSource
         |> Result.bind (fun uri ->
             try
+                // Create text loader
                 let loader =
                     createTextLoader mlCtx settings.HasHeaders settings.Separators settings.Columns
 
@@ -38,19 +43,22 @@ module Regression =
 
                 // TODO set strings are settings
                 let trainer =
-                    mlCtx.Regression.Trainers.Sdca(labelColumnName = "Label", featureColumnName = "Feature")
+                    mlCtx.MulticlassClassification.Trainers.SdcaMaximumEntropy("Label", "Features")
 
-                let trainingPipeline = dataProcessPipeline.Append(trainer)
+                // TODO set string are settings
+                let trainingPipeline =
+                    dataProcessPipeline
+                        .AppendCacheCheckpoint(mlCtx)
+                        .Append(trainer)
+                        .Append(mlCtx.Transforms.Conversion.MapKeyToValue("PredictedLabel"))
 
                 let trainedModel = trainingPipeline.Fit(trainingData)
 
-                mlCtx.Model.Save(trainedModel, dataView.Schema, settings.ModelSavePath)
+                mlCtx.Model.Save(trainedModel, trainingData.Schema, settings.ModelSavePath)
 
                 let predictions = trainedModel.Transform(trainTestSplit.TestSet)
 
-                // TODO set strings are settings
-                mlCtx.Regression.Evaluate(predictions, labelColumnName = "Label", scoreColumnName = "Score")
-                |> Ok
+                mlCtx.MulticlassClassification.Evaluate(predictions) |> Ok
 
             with ex ->
                 Error $"Error training model - {ex.Message}")
