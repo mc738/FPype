@@ -106,30 +106,38 @@ module Regression =
                             )
                         (EstimatorChain() |> downcastPipeline)
 
-                let trainer = mlCtx.Regression.Trainers.Sdca(labelColumnName = "Label", featureColumnName = "Feature")
-                
+                let trainer =
+                    mlCtx.Regression.Trainers.Sdca(labelColumnName = "Label", featureColumnName = "Feature")
+
                 let trainingPipeline = dataProcessPipeline.Append(trainer)
 
                 let trainedModel = trainingPipeline.Fit(trainTestSplit.TrainSet)
-                
+
                 mlCtx.Model.Save(trainedModel, dataView.Schema, settings.ModelSavePath)
-                
+
                 let predictions = trainedModel.Transform(trainTestSplit.TestSet)
-                
-                mlCtx.Regression.Evaluate(predictions, labelColumnName = "Label", scoreColumnName = "Score") |> Ok
-                
+
+                mlCtx.Regression.Evaluate(predictions, labelColumnName = "Label", scoreColumnName = "Score")
+                |> Ok
+
             with ex ->
                 Error $"Error training model - {ex.Message}")
 
     let load (mlCtx: MLContext) (path: string) =
         try
             match mlCtx.Model.Load(path) with
-            | (m, t) -> Ok (m, t)
+            | (m, t) -> Ok(m, t)
         with ex ->
             Error ex.Message
 
     let predict (mlCtx: MLContext) (model: ITransformer) (schema: DataViewSchema) (value: Map<string, Value>) =
+        // NOTE - this uses internal use code, which forgoes various checks.
         let runTimeType = Common.Internal.createRunTimeType schema
-        let engine = Common.Internal.getDynamicPredictionEngine<PredictionItem> mlCtx runTimeType schema model
-        
-        Common.Internal.runDynamicPredictionEngine<PredictionItem> runTimeType engine (Common.ClassFactory.createObjectFromType runTimeType value)
+
+        let engine =
+            Common.Internal.getDynamicPredictionEngine<PredictionItem> mlCtx runTimeType schema model
+
+        Common.Internal.runDynamicPredictionEngine<PredictionItem>
+            runTimeType
+            engine
+            (Common.ClassFactory.createObjectFromType runTimeType value)

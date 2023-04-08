@@ -483,7 +483,14 @@ module Types =
 
             handler baseType
 
-        member fv.Box(?stringToReadOnlySpan: bool) =
+        /// <summary>
+        /// Box a value to an obj. This is mainly used for internal use.
+        /// </summary>
+        /// <param name="stringToReadOnlyMemory">
+        /// Special handling for strings that coverts them to ReadOnlyMemory and then boxes them.
+        /// This is mainly used for created dynamic runtime objects and often won't be needed in other cases.
+        /// </param>
+        member fv.Box(?stringToReadOnlyMemory: bool) =
             let rec handler (value: Value) =
                 match value with
                 | Boolean v -> v |> box
@@ -496,7 +503,7 @@ module Types =
                 | Short v -> v |> box
                 | Long v -> v |> box
                 | String v ->
-                    match stringToReadOnlySpan with
+                    match stringToReadOnlyMemory with
                     | Some true -> ReadOnlyMemory<Char>(v |> Seq.toArray) |> box
                     | Some false
                     | None -> v |> box

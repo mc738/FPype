@@ -138,7 +138,7 @@ module Common =
             runTimeType.GetProperties()
             |> Seq.iter (fun p ->
                 match properties.TryFind p.Name with
-                | Some v -> p.SetValue(r, v.Box(stringToReadOnlySpan = true))
+                | Some v -> p.SetValue(r, v.Box(stringToReadOnlyMemory = true))
                 | None -> ())
             
             r
@@ -148,12 +148,33 @@ module Common =
         
         let createRunTimeType (schema: DataViewSchema) = ClassFactory.createType schema
         
+        /// <summary>
+        /// Get a dynamic prediction engine.
+        /// This is used to work around the compile-time generics usually needed for ML.net.
+        /// This function foregoes a lot of checks and should be used for internal use only.
+        /// It is important to create the run time type separately in and pass it in,
+        /// because creating the same runtime type twice will show as different types and cause issues.
+        /// </summary>
+        /// <param name="mlCtx"></param>
+        /// <param name="runTimeType">The runtime type.</param>
+        /// <param name="schema"></param>
+        /// <param name="model"></param>
         let getDynamicPredictionEngine<'TOut> (mlCtx: MLContext) (runTimeType: Type) (schema: DataViewSchema) (model: ITransformer) =
             
             let genericPredictionMethod = mlCtx.Model.GetType().GetMethod("CreatePredictionEngine", [| typeof<ITransformer>; typeof<DataViewSchema> |])
             let predictionMethod = genericPredictionMethod.MakeGenericMethod(runTimeType, typeof<'TOut>)
             predictionMethod.Invoke(mlCtx.Model, [| model; schema |])
             
+        /// <summary>
+        /// Run a dynamic prediction engine, represented as a obj.
+        /// This is used to work around the compile-time generics usually needed for ML.net.
+        /// This function foregoes a lot of checks and should be used for internal use only.
+        /// It is important to create the run time type separately in and pass it in,
+        /// because creating the same runtime type twice will show as different types and cause issues.
+        /// </summary>
+        /// <param name="runTimeType"></param>
+        /// <param name="engine"></param>
+        /// <param name="inputObj"></param>
         let runDynamicPredictionEngine<'TOut> (runTimeType: Type) (engine: obj)  (inputObj: obj) =
             let ms = engine.GetType().GetMethods()
             let predictMethod = engine.GetType().GetMethod("Predict", [| runTimeType |])
