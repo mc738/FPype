@@ -314,7 +314,7 @@ module Store =
             | BaseType.Char -> reader.GetChar i |> Value.Char
             | BaseType.Decimal -> reader.GetDecimal i |> Value.Decimal
             | BaseType.Double -> reader.GetDouble i |> Value.Double
-            | BaseType.Float -> reader.GetDouble i |> Value.Float
+            | BaseType.Float -> reader.GetFloat i |> Value.Float
             | BaseType.Int -> reader.GetInt32 i |> Value.Int
             | BaseType.Short -> reader.GetInt16 i |> Value.Short
             | BaseType.Long -> reader.GetInt64 i |> Value.Long

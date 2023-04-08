@@ -197,6 +197,27 @@ module Types =
             match bt with
             | BaseType.Option _ -> true
             | _ -> false
+            
+        member bt.ToType() =
+            let rec handler baseType =
+                match baseType with
+                | Boolean -> typeof<bool>
+                | Byte -> typeof<byte>
+                | Char -> typeof<char>
+                | Decimal -> typeof<decimal>
+                | Double -> typeof<double>
+                | Float -> typeof<float>
+                | Int -> typeof<int>
+                | Short -> typeof<int16>
+                | Long -> typeof<int64>
+                | String -> typeof<string>
+                | DateTime -> typeof<DateTime>
+                | Guid -> typeof<Guid>
+                | Option ibt ->
+                    // TODO implement this.
+                    failwith "To implement"
+
+            handler bt
 
     [<RequireQualifiedAccess>]
     type CoercionResult =
@@ -222,7 +243,7 @@ module Types =
         | Char of char
         | Decimal of decimal
         | Double of double
-        | Float of float
+        | Float of float32
         | Int of int
         | Short of int16
         | Long of int64
@@ -247,7 +268,7 @@ module Types =
             | BaseType.Char -> handler1 (typeof<char>) (fun o -> o :?> char |> Value.Char)
             | BaseType.Decimal -> handler1 (typeof<decimal>) (fun o -> o :?> decimal |> Value.Decimal)
             | BaseType.Double -> handler1 (typeof<double>) (fun o -> o :?> double |> Value.Double)
-            | BaseType.Float -> handler1 (typeof<float>) (fun o -> o :?> float |> Value.Float)
+            | BaseType.Float -> handler1 (typeof<float>) (fun o -> o :?> float32 |> Value.Float)
             | BaseType.Int -> handler1 (typeof<int>) (fun o -> o :?> int |> Value.Int)
             | BaseType.Short -> handler1 (typeof<int16>) (fun o -> o :?> int16 |> Value.Short)
             | BaseType.Long -> handler1 (typeof<int64>) (fun o -> o :?> int64 |> Value.Long)
@@ -283,7 +304,7 @@ module Types =
                     | BaseType.Decimal ->
                         handler v1 typeof<decimal> (fun o -> o :?> decimal |> Value.Decimal |> toOption)
                     | BaseType.Double -> handler v1 typeof<double> (fun o -> o :?> double |> Value.Double |> toOption)
-                    | BaseType.Float -> handler v1 typeof<float> (fun o -> o :?> float |> Value.Float |> toOption)
+                    | BaseType.Float -> handler v1 typeof<float> (fun o -> o :?> float32 |> Value.Float |> toOption)
                     | BaseType.Int -> handler v1 typeof<int> (fun o -> o :?> int |> Value.Int |> toOption)
                     | BaseType.Short -> handler v1 typeof<int16> (fun o -> o :?> int16 |> Value.Short |> toOption)
                     | BaseType.Long -> handler v1 typeof<int64> (fun o -> o :?> int64 |> Value.Long |> toOption)
@@ -342,7 +363,7 @@ module Types =
                     | jvk -> handleTypeError jvk bt
                 | BaseType.Float ->
                     match el.ValueKind with
-                    | JsonValueKind.Number -> json.GetDouble() |> Value.Float |> CoercionResult.Success
+                    | JsonValueKind.Number -> json.GetSingle() |> Value.Float |> CoercionResult.Success
                     | jvk -> handleTypeError jvk bt
                 | BaseType.Int ->
                     match el.ValueKind with
@@ -412,7 +433,7 @@ module Types =
                     | true, v -> Value.Double v |> Some
                     | false, _ -> None
                 | BaseType.Float ->
-                    match Double.TryParse str with
+                    match Single.TryParse str with
                     | true, v -> Value.Float v |> Some
                     | false, _ -> None
                 | BaseType.Int ->
@@ -462,7 +483,7 @@ module Types =
 
             handler baseType
 
-        member fv.Box() =
+        member fv.Box(?stringToReadOnlySpan: bool) =
             let rec handler (value: Value) =
                 match value with
                 | Boolean v -> v |> box
@@ -474,7 +495,11 @@ module Types =
                 | Int v -> v |> box
                 | Short v -> v |> box
                 | Long v -> v |> box
-                | String v -> v |> box
+                | String v ->
+                    match stringToReadOnlySpan with
+                    | Some true -> ReadOnlyMemory<Char>(v |> Seq.toArray) |> box
+                    | Some false
+                    | None -> v |> box
                 | DateTime v -> v |> box
                 | Guid v -> v |> box
                 | Option v ->
@@ -554,3 +579,24 @@ module Types =
 
         member v.IsStringMatch(value: Value, comparison) =
             String.Equals(v.GetString(), value.GetString(), comparison)
+            
+        member v.GetBaseType() =
+            let rec handler (value: Value) =
+                match value with
+                | Boolean _ -> BaseType.Boolean
+                | Byte _ -> BaseType.Byte
+                | Char _ -> BaseType.Char
+                | Decimal _ -> BaseType.Decimal
+                | Double _ -> BaseType.Double
+                | Float _ -> BaseType.Float
+                | Int _ -> BaseType.Int
+                | Short _ -> BaseType.Short
+                | Long _ -> BaseType.Long
+                | String _ -> BaseType.String
+                | DateTime _ -> BaseType.DateTime
+                | Guid _ -> BaseType.Guid
+                | Option iv -> failwith "TODO - implement"
+                    
+                    //handler iv |> BaseType.Option
+            
+            handler v

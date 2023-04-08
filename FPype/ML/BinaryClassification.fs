@@ -20,8 +20,7 @@ module BinaryClassification =
     and [<RequireQualifiedAccess>] ClassificationType = | Text
 
     and TrainingSettings =
-        { DataPath: string
-          DataSource: DataSource
+        { DataSource: DataSource
           ModelSavePath: string
           HasHeaders: bool
           Separators: char array
@@ -31,61 +30,59 @@ module BinaryClassification =
           LabelColumnName: string
           LabelColumnIndex: int }
 
-    type DataModel = { Label: bool }
-
     let train (mlCtx: MLContext) (settings: TrainingSettings) =
-        match DataSourceType.Deserialize settings.DataSource.Type with
-        | Some DataSourceType.File ->
-            // NOTE would mlCtx.Data.CreateTextLoader be better?
-            //let loader = mlCtx.Data.CreateTextLoader(
-            //    separatorChar ='\t',
-            //    hasHeader = true,
-            //    (*dataSample = ,*)
-            //    allowQuoting = true,
-            //    trimWhitespace = true,
-            //    allowSparse = true)
-            //let dataView = loader.Load([| "path/to/data" |])
+        getDataSourceUri settings.DataSource
+        |> Result.bind (fun uri ->
+            try
+                let options = TextLoader.Options()
 
-            let options = TextLoader.Options()
+                options.HasHeader <- settings.HasHeaders
+                options.Separators <- settings.Separators
 
-            options.HasHeader <- settings.HasHeaders
-            options.Separators <- settings.Separators
+                let (featureColName, featureColType) =
+                    match settings.ClassificationType with
+                    | ClassificationType.Text -> "Text", DataKind.String
 
-            let (featureColName, featureColType) =
-                match settings.ClassificationType with
-                | ClassificationType.Text -> "Text", DataKind.String
+                options.Columns <-
+                    [| TextLoader.Column(featureColName, featureColType, settings.FeatureColumnIndex)
+                       TextLoader.Column(settings.LabelColumnName, DataKind.Boolean, settings.LabelColumnIndex) |]
 
-            options.Columns <-
-                [| TextLoader.Column(featureColName, featureColType, settings.FeatureColumnIndex)
-                   TextLoader.Column(settings.LabelColumnName, DataKind.Boolean, settings.LabelColumnIndex) |]
+                let loader = mlCtx.Data.CreateTextLoader(options = options)
 
-            let loader = mlCtx.Data.CreateTextLoader(options = options)
+                let dataView = loader.Load([| uri |])
 
-            let dataView = loader.Load([| settings.DataSource.Uri |])
+                let trainTestSplit = mlCtx.Data.TrainTestSplit(dataView, settings.TrainingTestSplit)
 
-            let trainTestSplit = mlCtx.Data.TrainTestSplit(dataView, settings.TrainingTestSplit)
+                let dataProcessPipeline =
+                    match settings.ClassificationType with
+                    | ClassificationType.Text ->
+                        mlCtx.Transforms.Text.FeaturizeText(
+                            outputColumnName = "Features",
+                            inputColumnName = featureColName
+                        )
 
-            // Is this always needed?
-            let dataProcessPipeline =
-                mlCtx.Transforms.Text.FeaturizeText(outputColumnName = "Features", inputColumnName = featureColName)
+                let trainer =
+                    mlCtx.BinaryClassification.Trainers.SdcaLogisticRegression(
+                        labelColumnName = settings.LabelColumnName,
+                        featureColumnName = "Features"
+                    )
 
-            let trainer =
-                mlCtx.BinaryClassification.Trainers.SdcaLogisticRegression(
-                    labelColumnName = settings.LabelColumnName,
-                    featureColumnName = "Features"
+                let trainingPipeline = dataProcessPipeline.Append(trainer)
+
+                let trainedModel = trainingPipeline.Fit(trainTestSplit.TrainSet)
+
+                mlCtx.Model.Save(trainedModel, dataView.Schema, settings.ModelSavePath)
+
+                let predictions = trainedModel.Transform(trainTestSplit.TestSet)
+
+                mlCtx.BinaryClassification.Evaluate(
+                    data = predictions,
+                    labelColumnName = "Label",
+                    scoreColumnName = "Score"
                 )
-
-            let trainingPipeline = dataProcessPipeline.Append(trainer)
-
-            let trainedModel = trainingPipeline.Fit(trainTestSplit.TrainSet)
-
-            mlCtx.Model.Save(trainedModel, dataView.Schema, settings.ModelSavePath)
-            
-            let predictions = trainedModel.Transform(trainTestSplit.TestSet)
-            mlCtx.BinaryClassification.Evaluate(data = predictions, labelColumnName = "Label", scoreColumnName = "Score") |> Ok
-
-        | Some DataSourceType.Artifact -> Error "Artifact data sources to be implemented"
-        | None -> Error "Unknown data source type"
+                |> Ok
+            with ex ->
+                Error $"Error training model - {ex.Message}")
 
     let load (mlCtx: MLContext) (path: string) =
         try
@@ -96,5 +93,5 @@ module BinaryClassification =
         with ex ->
             Error ex.Message
 
-    let rec predict (engine: PredictionEngine<TextClassificationItem, TextPredictionItem>) (text: string) =
+    let predict (engine: PredictionEngine<TextClassificationItem, TextPredictionItem>) (text: string) =
         engine.Predict({ Text = text; Label = true })

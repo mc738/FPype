@@ -12,6 +12,7 @@ open FPype.Data.Models
 open FPype.ML
 open Microsoft.FSharp.Core
 open Microsoft.ML
+open Microsoft.ML.Data
 
 module Maths =
 
@@ -250,68 +251,175 @@ module PathTest =
 
 module MLTest =
 
-    
     let unwrap (r: Result<'a, 'b>) =
         match r with
         | Ok v -> v
         | Error _ -> failwith "Error"
-    
-    let dataPath = "D:\\DataSets\\ML_dot_net_test_data\\binary_classification\\wikiDetoxAnnotated40kRows.tsv"
 
-    let modelPath = "D:\\DataSets\\ML_dot_net_test_data\\binary_classification\\model\\prediction.zip"
+    module BinaryClassification =
 
-    let createCtx (seed: int option) = MLContext(seed |> Option.toNullable)
+        let dataPath =
+            "D:\\DataSets\\ML_dot_net_test_data\\binary_classification\\wikiDetoxAnnotated40kRows.tsv"
 
-    let train _ =
-        let mlCtx = createCtx (Some 1)
+        let modelPath =
+            "D:\\DataSets\\ML_dot_net_test_data\\binary_classification\\model\\prediction.zip"
 
-        let settings =
-            ({ DataPath = dataPath
-               DataSource =
-                 { Type = "file"
-                   Uri = dataPath
-                   Name = "Training data"
-                   CollectionName = "misc" }
-               ModelSavePath = modelPath
-               HasHeaders = true
-               Separators = [| '\t' |]
-               TrainingTestSplit = 0.2
-               ClassificationType = BinaryClassification.ClassificationType.Text
-               FeatureColumnIndex = 2
-               LabelColumnName = "Label"
-               LabelColumnIndex = 0 }: BinaryClassification.TrainingSettings)
+        let train _ =
+            let mlCtx = createCtx (Some 1)
 
-        let metrics = BinaryClassification.train mlCtx settings |> unwrap
+            let settings =
+                ({ DataSource =
+                    { Type = "file"
+                      Uri = dataPath
+                      Name = "Training data"
+                      CollectionName = "misc" }
+                   ModelSavePath = modelPath
+                   HasHeaders = true
+                   Separators = [| '\t' |]
+                   TrainingTestSplit = 0.2
+                   ClassificationType = BinaryClassification.ClassificationType.Text
+                   FeatureColumnIndex = 2
+                   LabelColumnName = "Label"
+                   LabelColumnIndex = 0 }: BinaryClassification.TrainingSettings)
 
-        printfn "Model metrics"
-        printfn $"Accuracy: {metrics.Accuracy}"
-        printfn $"Entropy: {metrics.Entropy}"
-        printfn $"Entropy: {metrics.Entropy}"
-        printfn $"Confusion matrix: {metrics.ConfusionMatrix}"
-        printfn $"F1 score: {metrics.F1Score}"
-        printfn $"Log loss: {metrics.LogLoss}"
-        printfn $"Negative precision: {metrics.NegativePrecision}"
-        printfn $"Negative recall: {metrics.NegativeRecall}"
-        printfn $"Positive precision: {metrics.PositivePrecision}"
-        printfn $"Positive recall: {metrics.PositiveRecall}"
-        printfn $"Log loss reduction: {metrics.LogLossReduction}"
-        printfn $"Area under roc curve: {metrics.AreaUnderRocCurve}"
-        printfn $"Area under precision recall curve: {metrics.AreaUnderPrecisionRecallCurve}"
-        
-    let run _ =
+            let metrics = BinaryClassification.train mlCtx settings |> unwrap
 
-        let mlCtx = createCtx (Some 1)
-        let engine = BinaryClassification.load mlCtx modelPath |> unwrap
-        
-        let r = BinaryClassification.predict engine "I love this movie!"
+            printfn "Model metrics"
+            printfn $"Accuracy: {metrics.Accuracy}"
+            printfn $"Entropy: {metrics.Entropy}"
+            printfn $"Entropy: {metrics.Entropy}"
+            printfn $"Confusion matrix: {metrics.ConfusionMatrix}"
+            printfn $"F1 score: {metrics.F1Score}"
+            printfn $"Log loss: {metrics.LogLoss}"
+            printfn $"Negative precision: {metrics.NegativePrecision}"
+            printfn $"Negative recall: {metrics.NegativeRecall}"
+            printfn $"Positive precision: {metrics.PositivePrecision}"
+            printfn $"Positive recall: {metrics.PositiveRecall}"
+            printfn $"Log loss reduction: {metrics.LogLossReduction}"
+            printfn $"Area under roc curve: {metrics.AreaUnderRocCurve}"
+            printfn $"Area under precision recall curve: {metrics.AreaUnderPrecisionRecallCurve}"
 
-        
-        
+        let run _ =
+
+            let mlCtx = createCtx (Some 1)
+            let engine = BinaryClassification.load mlCtx modelPath |> unwrap
+
+            let r = BinaryClassification.predict engine "I love this movie!"
+
+
+
+            ()
+
+    module Regression =
+
+        let dataPath = "D:\\DataSets\\ML_dot_net_test_data\\regression\\taxi-fare-full.csv"
+
+        let modelPath =
+            "D:\\DataSets\\ML_dot_net_test_data\\regression\\\\model\\prediction.zip"
+
+        let train _ =
+            let mlCtx = createCtx (Some 0)
+
+            let settings =
+                ({ DataSource =
+                    { Type = "file"
+                      Uri = dataPath
+                      Name = "Training data"
+                      CollectionName = "misc" }
+                   ModelSavePath = modelPath
+                   HasHeaders = true
+                   Separators = [| ',' |]
+                   TrainingTestSplit = 0.2
+                   Columns =
+                     [ { Index = 0
+                         Name = "VendorId"
+                         DataKind = DataKind.String }
+                       { Index = 1
+                         Name = "RateCode"
+                         DataKind = DataKind.String }
+                       { Index = 2
+                         Name = "PassengerCount"
+                         DataKind = DataKind.Single }
+                       { Index = 3
+                         Name = "TripTime"
+                         DataKind = DataKind.Single }
+                       { Index = 4
+                         Name = "TripDistance"
+                         DataKind = DataKind.Single }
+                       { Index = 5
+                         Name = "PaymentType"
+                         DataKind = DataKind.String }
+                       { Index = 6
+                         Name = "FareAmount"
+                         DataKind = DataKind.Single } ]
+                   RowFilters =
+                     [ { ColumnName = "FareAmount"
+                         Minimum = Some 1
+                         Maximum = Some 150 } ]
+                   Transformations =
+                     [ Regression.TransformationType.CopyColumns("Label", "FareAmount")
+                       Regression.TransformationType.OneHotEncoding("VendorIdEncoded", "VendorId")
+                       Regression.TransformationType.OneHotEncoding("RateCodeEncoded", "RateCode")
+                       Regression.TransformationType.OneHotEncoding("PaymentTypeEncoded", "PaymentType")
+                       Regression.TransformationType.NormalizeMeanVariance "PassengerCount"
+                       Regression.TransformationType.NormalizeMeanVariance "TripTime"
+                       Regression.TransformationType.NormalizeMeanVariance "TripDistance"
+                       Regression.TransformationType.Concatenate(
+                           "Feature",
+                           [ "VendorIdEncoded"
+                             "RateCodeEncoded"
+                             "PaymentTypeEncoded"
+                             "PassengerCount"
+                             "TripTime"
+                             "TripDistance" ]
+                       ) ] }: Regression.TrainingSettings)
+
+            let metrics = Regression.train mlCtx settings |> unwrap
+
+            printfn "Model metrics"
+            printfn $"Loss function: {metrics.LossFunction}"
+            printfn $"R squared: {metrics.RSquared}"
+            printfn $"Mean absolute error: {metrics.MeanAbsoluteError}"
+            printfn $"Mean squared error: {metrics.MeanSquaredError}"
+            printfn $"Root mean squared error: {metrics.RootMeanSquaredError}"
+
+
+        let run _ =
+            let mlCtx = createCtx (Some 0)
+
+            let value =
+                [ "VendorId", Value.String "VTS"
+                  "RateCode", Value.String "1"
+                  "PassengerCount", Value.Float 1f
+                  "TripTime", Value.Float 1140f
+                  "TripDistance", Value.Float 3.75f
+                  "PaymentType", Value.String "CRD"
+                  "FareAmount", Value.Float 0f ]
+                |> Map.ofList
+
+            let (t, dvs) = Regression.load mlCtx modelPath |> unwrap
+
+            let r = Regression.predict mlCtx t dvs value
+
+            ()
+
+module MiscTest =
+
+    let createDynamicObj _ =
+
+        let properties =
+            [ "Field1", Value.Int 42; "Field2", Value.String "Hello, World!" ] |> Map.ofList
+
+        let r = FPype.ML.Common.ClassFactory.createObject properties
+
         ()
 
-
+//MiscTest.createDynamicObj ()
 //MLTest.train ()
-MLTest.run ()
+//MLTest.run ()
+MLTest.Regression.train ()
+MLTest.Regression.run ()
+
 
 ObjectTableMapperTest.run ()
 PathTest.run ()
