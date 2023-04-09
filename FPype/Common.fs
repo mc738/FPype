@@ -107,8 +107,6 @@ module Serialization =
 
 type PipelineContext =
     { Id: string
-      Directory: string
-      ImportsPath: string
       StorePath: string
       Store: PipelineStore
       LogToConsole: bool
@@ -118,32 +116,34 @@ type PipelineContext =
         match Directory.Exists basePath with
         | true ->
             let id = Guid.NewGuid().ToString("n")
-            let dir = Path.Combine(basePath, id)
-            let importDir = Path.Combine(dir, "imports")
-            let exportDir = Path.Combine(dir, "exports")
+            //let dir = Path.Combine(basePath, id)
+            //let importDir = Path.Combine(dir, "imports")
+            //let exportDir = Path.Combine(dir, "exports")
+            //let tmpDir = Path.Combine(dir, "tmp")
             
 
-            Directory.CreateDirectory(dir) |> ignore
-            Directory.CreateDirectory(importDir) |> ignore
-            Directory.CreateDirectory(exportDir) |> ignore
-
-            let storePath = Path.Combine(dir, "store.db")
-
-            let store = PipelineStore.Create(storePath)
+            //Directory.CreateDirectory(dir) |> ignore
+            //Directory.CreateDirectory(importDir) |> ignore
+            //Directory.CreateDirectory(exportDir) |> ignore
+            //Directory.CreateDirectory(tmpDir) |> ignore
+            
+            let store = PipelineStore.Initialize(basePath, id)
 
             // Add some basic values for use in later steps (if needed).
             // TODO make a separate context table for these?
-            store.AddStateValue("__id", id)
-            store.AddStateValue("__computer_name", Environment.MachineName)
-            store.AddStateValue("__user_name", Environment.UserName)
-            store.AddStateValue("__base_path", dir)
-            store.AddStateValue("__imports_path", importDir)
-            store.AddStateValue("__exports_path", exportDir)
+            //store.SetId(id)
+            //store.SetComputerName()
+            
+            //store.AddStateValue("__id", id)
+            //store.AddStateValue("__computer_name", Environment.MachineName)
+            //store.AddStateValue("__user_name", Environment.UserName)
+            //store.AddStateValue("__base_path", dir)
+            //store.AddStateValue("__imports_path", importDir)
+            //store.AddStateValue("__exports_path", exportDir)
+            //store.AddStateValue("__tmp_value", tmpDir)
 
             { Id = id
-              Directory = dir
-              ImportsPath = importDir
-              StorePath = storePath
+              StorePath = store.StorePath
               Store = store
               LogToConsole = logToConsole
               Actions = actions }

@@ -21,7 +21,7 @@ module Import =
         type Parameters = { Path: string; Name: string }
 
         let run (parameters: Parameters) (store: PipelineStore) =
-            match File.Exists parameters.Path, store.GetStateValue "__imports_path" with
+            match File.Exists parameters.Path, store.GetImportsPath() with
             | true, Some importsPath ->
                 //store.GetState()
                 //let fi = FileInfo(path)
@@ -44,7 +44,7 @@ module Import =
               ChunkSize: int }
 
         let run (parameters: Parameters) (store: PipelineStore) =
-            match File.Exists parameters.Path, store.GetStateValue "__imports_path" with
+            match File.Exists parameters.Path, store.GetImportsPath() with
             | true, Some importsPath ->
                 let fileName = Path.GetFileNameWithoutExtension(parameters.Path)
                 let ext = Path.GetExtension(parameters.Path)
@@ -67,7 +67,6 @@ module Import =
     module ``unzip-files`` =
 
         let name = "unzip_files"
-
 
 
         let run () (store: PipelineStore) =

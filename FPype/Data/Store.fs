@@ -102,6 +102,28 @@ module Store =
         );
         """
 
+    [<RequireQualifiedAccess>]
+    module StateNames =
+
+        let id = "__id"
+
+        let computerName = "__computer_name"
+
+        let userName = "__user_name"
+
+        let basePath = "__base_path"
+
+        let importsPath = "__imports_path"
+
+        let exportsPath = "__exports_path"
+
+        let tmpPath = "__tmp_value"
+
+        let storePath = "__store_path"
+
+
+
+
 
     (*
         let contextTableSql =
@@ -174,7 +196,7 @@ module Store =
     type StateValue = { Name: string; Value: string }
 
     let updateStateValue (ctx: SqliteContext) (name: string) (newValue: string) =
-        ctx.ExecuteVerbatimNonQueryAnon("UPDATE  SET value = @0 WHERE name = @1;", [ box newValue; box name ])
+        ctx.ExecuteVerbatimNonQueryAnon("UPDATE SET value = @0 WHERE name = @1;", [ box newValue; box name ])
 
     let addStateValue (ctx: SqliteContext) (value: StateValue) = ctx.Insert("__state", value)
 
@@ -350,15 +372,46 @@ module Store =
     let bespokeSelect (ctx: SqliteContext) (model: TableModel) (sql: string) (parameters: obj list) =
         ctx.Bespoke<TableRow>(sql, parameters, mapper model.Columns)
 
-    type PipelineStore(ctx: SqliteContext) =
+    type PipelineStore(ctx: SqliteContext, basePath: string) =
 
         static member Open(path) =
-            SqliteContext.Open(path) |> PipelineStore
+            let storePath = Path.Combine(path, "store.db")
+
+            SqliteContext.Open(storePath) |> (fun ctx -> PipelineStore(ctx, path))
 
         static member Create(path) =
-            let ctx = SqliteContext.Create path
+            let storePath = Path.Combine(path, "store.db")
+
+            let ctx = SqliteContext.Create storePath
             initialize ctx
-            PipelineStore ctx
+            PipelineStore(ctx, path)
+
+
+        static member Initialize(basePath: string, id: string) =
+
+            let dir = Path.Combine(basePath, id)
+
+            let store = PipelineStore.Create(dir)
+
+            store.SetId(id)
+            store.SetComputerName()
+            store.SetUserName()
+            store.CreateBaseDirectory(dir)
+            store.CreateImportDirectory()
+            store.CreateExportDirectory()
+            store.CreateTmpDirectory()
+
+            store
+
+        member ps.BasePath = basePath
+
+        member ps.StorePath = Path.Combine(basePath, "store.db")
+
+        member ps.DefaultImportsPath = Path.Combine(basePath, "imports")
+
+        member ps.DefaultExportPath = Path.Combine(basePath, "exports")
+
+        member ps.DefaultTmpPath = Path.Combine(basePath, "tmp")
 
         member ps.AddStateValue(name, value) =
             addStateValue ctx { Name = name; Value = value }
@@ -370,6 +423,113 @@ module Store =
         member ps.GetStateValue(key) =
             getStateValue ctx key |> Option.map (fun sv -> sv.Value)
 
+        member ps.GetId() = ps.GetStateValue(StateNames.id)
+
+        member ps.SetId(id, ?allowOverride: bool) =
+            match ps.GetId(), allowOverride |> Option.defaultValue false with
+            | Some _, true -> ps.UpdateStateValue(StateNames.id, id) |> ignore
+            | Some _, false -> ()
+            | None, _ -> ps.AddStateValue(StateNames.id, id)
+
+        member ps.GetComputerName() =
+            ps.GetStateValue(StateNames.computerName)
+
+        member ps.SetComputerName(computerName, ?allowOverride: bool) =
+            match ps.GetComputerName(), allowOverride |> Option.defaultValue false with
+            | Some _, true -> ps.UpdateStateValue(StateNames.computerName, computerName) |> ignore
+            | Some _, false -> ()
+            | None, _ -> ps.AddStateValue(StateNames.computerName, computerName)
+
+        member ps.SetComputerName() =
+            ps.SetComputerName(Environment.MachineName)
+
+        member ps.GetUserName() = ps.GetStateValue(StateNames.userName)
+
+        member ps.SetUserName(userName, ?allowOverride: bool) =
+            match ps.GetUserName(), allowOverride |> Option.defaultValue false with
+            | Some _, true -> ps.UpdateStateValue(StateNames.userName, userName) |> ignore
+            | Some _, false -> ()
+            | None, _ -> ps.AddStateValue(StateNames.userName, userName)
+
+        member ps.SetUserName() =
+            ps.SetComputerName(Environment.UserName)
+
+        member ps.GetBasePath() = ps.GetStateValue(StateNames.basePath)
+
+        member ps.SetBasePath(basePath, ?allowOverride: bool) =
+            match ps.GetBasePath(), allowOverride |> Option.defaultValue false with
+            | Some _, true -> ps.UpdateStateValue(StateNames.basePath, basePath) |> ignore
+            | Some _, false -> ()
+            | None, _ -> ps.AddStateValue(StateNames.basePath, basePath)
+
+        member ps.GetImportsPath() =
+            ps.GetStateValue(StateNames.importsPath)
+
+        member ps.SetImportsPath(importsPath, ?allowOverride: bool) =
+            match ps.GetImportsPath(), allowOverride |> Option.defaultValue false with
+            | Some _, true -> ps.UpdateStateValue(StateNames.importsPath, importsPath) |> ignore
+            | Some _, false -> ()
+            | None, _ -> ps.AddStateValue(StateNames.importsPath, importsPath)
+
+        member ps.GetExportsPath() =
+            ps.GetStateValue(StateNames.exportsPath)
+
+        member ps.SetExportsPath(exportsPath, ?allowOverride: bool) =
+            match ps.GetExportsPath(), allowOverride |> Option.defaultValue false with
+            | Some _, true -> ps.UpdateStateValue(StateNames.exportsPath, exportsPath) |> ignore
+            | Some _, false -> ()
+            | None, _ -> ps.AddStateValue(StateNames.exportsPath, exportsPath)
+
+        member ps.GetTmpPath() = ps.GetStateValue(StateNames.tmpPath)
+
+        member ps.SetTmpPath(tmpPath, ?allowOverride: bool) =
+            match ps.GetTmpPath(), allowOverride |> Option.defaultValue false with
+            | Some _, true -> ps.UpdateStateValue(StateNames.tmpPath, tmpPath) |> ignore
+            | Some _, false -> ()
+            | None, _ -> ps.AddStateValue(StateNames.tmpPath, tmpPath)
+
+
+        /// <summary>
+        /// This is not really needed. ps.StorePath returns a non option version (the value should exist).
+        /// However this does indicate if the store has been initialized.
+        /// </summary>
+        member ps.GetStorePath() = ps.GetStateValue(StateNames.storePath)
+
+        member ps.SetStorePath(storePath) =
+            match ps.GetStorePath() with
+            | Some _ ->
+                // NOTE - the store path can only be set once (normally in initialization). There is no override allowed.
+                ()
+            | None -> ps.AddStateValue(StateNames.storePath, storePath)
+
+        member ps.CreateDirectory(name: string, ?relative: bool) =
+            match relative |> Option.defaultValue true with
+            | true -> ps.GetBasePath() |> Option.map (fun bp -> Path.Combine(bp, name))
+            | false -> Some name
+            |> Option.map (fun p ->
+                match Directory.Exists p with
+                | true -> ()
+                | false -> Directory.CreateDirectory(p) |> ignore
+
+                p)
+
+        member ps.CreateBaseDirectory(path: string) =
+            ps.CreateDirectory(path, false) |> Option.iter ps.SetBasePath
+
+        member ps.CreateImportDirectory() =
+            ps.CreateDirectory("imports") |> Option.iter ps.SetImportsPath
+
+        member ps.CreateExportDirectory() =
+            ps.CreateDirectory("exports") |> Option.iter ps.SetExportsPath
+
+        member ps.CreateTmpDirectory() =
+            ps.CreateDirectory("tmp") |> Option.iter ps.SetTmpPath
+
+        member ps.ClearTmp() =
+            match ps.GetTmpPath() with
+            | Some p -> Directory.GetFiles(p) |> Seq.iter File.Delete
+            | None -> ()
+
         member ps.AddDataSource(name, sourceType: DataSourceType, uri, collectionName) =
             ({ Name = name
                Type = sourceType.Serialize()
@@ -378,7 +538,7 @@ module Store =
             |> addDataSource ctx
 
         member ps.GetDataSource(name) = getDataSource ctx name
-                
+
         member ps.GetSourcesByCollection(collectionName) =
             getDataSourcesByCollectionName ctx collectionName
 
@@ -432,12 +592,10 @@ module Store =
 
         member ps.InsertRows(table: TableModel) = insert ctx table
 
-        member ps.SelectRawRows(table: TableModel) =
-            select ctx table
-        
-        member ps.SelectAndAppendRows(table: TableModel) =
-            select ctx table |> table.AppendRows
-        
+        member ps.SelectRawRows(table: TableModel) = select ctx table
+
+        member ps.SelectAndAppendRows(table: TableModel) = select ctx table |> table.AppendRows
+
         member ps.SelectRows(table: TableModel) =
             select ctx table |> fun r -> { table with Rows = r }
 
@@ -451,7 +609,6 @@ module Store =
         member ps.BespokeSelectAndAppendRows(table: TableModel, sql, parameters) =
             bespokeSelect ctx table sql parameters |> table.AppendRows
 
-        
         member ps.Log(step, message) =
             ({ Step = step
                Message = message
