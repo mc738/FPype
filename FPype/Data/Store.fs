@@ -1,7 +1,10 @@
 ﻿namespace FPype.Data
 
+open System
+open System.Globalization
 open System.IO
 open System.Reflection.Metadata
+open FPype.Core.Types
 open FPype.Data.Models
 
 module Store =
@@ -121,6 +124,7 @@ module Store =
 
         let storePath = "__store_path"
 
+        let initilialzedTimestamp = "__initialized_timestamp"
 
 
 
@@ -372,44 +376,60 @@ module Store =
     let bespokeSelect (ctx: SqliteContext) (model: TableModel) (sql: string) (parameters: obj list) =
         ctx.Bespoke<TableRow>(sql, parameters, mapper model.Columns)
 
-    type PipelineStore(ctx: SqliteContext, basePath: string) =
+    type PipelineStore(ctx: SqliteContext, basePath: string, id: string) =
 
-        static member Open(path) =
-            let storePath = Path.Combine(path, "store.db")
+        static member Open(basePath: string, id: string) =
+            let storePath = Path.Combine(basePath, id, "store.db")
 
-            SqliteContext.Open(storePath) |> (fun ctx -> PipelineStore(ctx, path))
+            SqliteContext.Open(storePath) |> (fun ctx -> PipelineStore(ctx, basePath, id))
 
-        static member Create(path) =
+        static member Create(basePath, id) =
+            let path = Path.Combine(basePath, id)
+
+            match Directory.Exists path with
+            | true -> ()
+            | false -> Directory.CreateDirectory path |> ignore
+
             let storePath = Path.Combine(path, "store.db")
 
             let ctx = SqliteContext.Create storePath
             initialize ctx
-            PipelineStore(ctx, path)
+            let store = PipelineStore(ctx, path, id)
+            store.AddStateValue(StateNames.id, id)
+            store.SetBasePath(path)
+            store.SetStorePath(storePath)
+            store.SetComputerName()
+            store.SetUserName()
+            store
 
 
         static member Initialize(basePath: string, id: string) =
 
-            let dir = Path.Combine(basePath, id)
+            let store = PipelineStore.Create(basePath, id)
 
-            let store = PipelineStore.Create(dir)
+            // Should some of these not allow
 
-            store.SetId(id)
-            store.SetComputerName()
-            store.SetUserName()
-            store.CreateBaseDirectory(dir)
-            store.CreateImportDirectory()
-            store.CreateExportDirectory()
-            store.CreateTmpDirectory()
+            // Initialization chain, the last step should always be setting the initialized timestamp.
+            // This indicates it was completed successfully.
+            // Starts with Ok () just for looks rather than any practical purpose (but possibly this could change.
+            Ok ()
+            |> Result.bind (fun _ -> store.CreateImportDirectory())
+            |> Result.bind (fun _ -> store.CreateExportDirectory())
+            |> Result.bind (fun _ -> store.CreateTmpDirectory())
+            |> Result.map (fun _ ->
+                store.AddStateValue(StateNames.initilialzedTimestamp, DateTime.UtcNow.ToString())
 
-            store
+                store)
 
-        member ps.BasePath = basePath
+        member pd.Id = id
 
-        member ps.StorePath = Path.Combine(basePath, "store.db")
+        member ps.BasePath = Path.Combine(basePath, id)
 
-        member ps.DefaultImportsPath = Path.Combine(basePath, "imports")
+        member ps.StorePath = Path.Combine(ps.BasePath, "store.db")
 
-        member ps.DefaultExportPath = Path.Combine(basePath, "exports")
+        member ps.DefaultImportsPath = Path.Combine(ps.BasePath, "imports")
+
+        member ps.DefaultExportPath = Path.Combine(ps.BasePath, "exports")
 
         member ps.DefaultTmpPath = Path.Combine(basePath, "tmp")
 
@@ -423,13 +443,83 @@ module Store =
         member ps.GetStateValue(key) =
             getStateValue ctx key |> Option.map (fun sv -> sv.Value)
 
-        member ps.GetId() = ps.GetStateValue(StateNames.id)
+        member ps.StateValueExists(key) =
+            match ps.GetStateValue key with
+            | Some _ -> true
+            | None -> false
+        
+        member ps.GetStateValueAsValue(key, baseType: BaseType, ?format: string) =
+            ps.GetStateValue key
+            |> Option.bind (fun str ->
+                match format with
+                | Some f -> Value.FromString(str, baseType, f)
+                | None -> Value.FromString(str, baseType))
 
-        member ps.SetId(id, ?allowOverride: bool) =
-            match ps.GetId(), allowOverride |> Option.defaultValue false with
-            | Some _, true -> ps.UpdateStateValue(StateNames.id, id) |> ignore
-            | Some _, false -> ()
-            | None, _ -> ps.AddStateValue(StateNames.id, id)
+        member ps.GetStateValueAsDateTime(key, ?format: string) =
+            ps.GetStateValue key
+            |> Option.bind (fun str ->
+                match format with
+                | Some f ->
+                    match
+                        DateTime.TryParseExact(str, f, CultureInfo.InvariantCulture, DateTimeStyles.AdjustToUniversal)
+                    with
+                    | true, v -> Some v
+                    | false, _ -> None
+                | None ->
+                    match DateTime.TryParse(str) with
+                    | true, v -> Some v
+                    | false, _ -> None)
+
+        member ps.GetStateValueAsGuid(key, ?format: string) =
+            ps.GetStateValue key
+            |> Option.bind (fun str ->
+                match format with
+                | Some f ->
+                    match Guid.TryParseExact(str, f) with
+                    | true, v -> Some v
+                    | false, _ -> None
+                | None ->
+                    match Guid.TryParse(str) with
+                    | true, v -> Some v
+                    | false, _ -> None)
+
+        member ps.GetStateValueAsBool(key) =
+            ps.GetStateValue key
+            |> Option.map (fun str -> [ "true"; "1"; "yes"; "ok" ] |> List.contains (str.ToLower()))
+
+        member ps.GetStateValueAsInt(key) =
+            ps.GetStateValue key
+            |> Option.bind (fun str ->
+                match Int32.TryParse(str) with
+                | true, v -> Some v
+                | false, _ -> None)
+
+        member ps.GetStateValueAsDouble(key) =
+            ps.GetStateValue key
+            |> Option.bind (fun str ->
+                match Double.TryParse(str) with
+                | true, v -> Some v
+                | false, _ -> None)
+
+        member ps.GetStateValueAsSingle(key) =
+            ps.GetStateValue key
+            |> Option.bind (fun str ->
+                match Single.TryParse(str) with
+                | true, v -> Some v
+                | false, _ -> None)
+
+        member ps.GetStateValueAsDecimal(key) =
+            ps.GetStateValue key
+            |> Option.bind (fun str ->
+                match Decimal.TryParse(str) with
+                | true, v -> Some v
+                | false, _ -> None)
+
+        /// <summary>
+        /// This returns an optional string. Use ps.Id to get a non-optional version.
+        /// This is useful to check the id that is stored (such as for consistency checks).
+        /// </summary>
+        member ps.GetId() = ps.GetStateValue(StateNames.id)
 
         member ps.GetComputerName() =
             ps.GetStateValue(StateNames.computerName)
@@ -488,7 +578,6 @@ module Store =
             | Some _, false -> ()
             | None, _ -> ps.AddStateValue(StateNames.tmpPath, tmpPath)
 
-
         /// <summary>
         /// This is not really needed. ps.StorePath returns a non option version (the value should exist).
         /// However this does indicate if the store has been initialized.
@@ -513,22 +602,34 @@ module Store =
 
                 p)
 
-        member ps.CreateBaseDirectory(path: string) =
-            ps.CreateDirectory(path, false) |> Option.iter ps.SetBasePath
-
         member ps.CreateImportDirectory() =
-            ps.CreateDirectory("imports") |> Option.iter ps.SetImportsPath
+            try
+                ps.CreateDirectory("imports") |> Option.iter ps.SetImportsPath |> Ok
+            with ex ->
+                Error $"Failed to create imports directory. Error - {ex.Message}"
+
 
         member ps.CreateExportDirectory() =
-            ps.CreateDirectory("exports") |> Option.iter ps.SetExportsPath
+            try
+                ps.CreateDirectory("exports") |> Option.iter ps.SetExportsPath |> Ok
+            with ex ->
+                Error $"Failed to create exports directory. Error - {ex.Message}"
 
         member ps.CreateTmpDirectory() =
-            ps.CreateDirectory("tmp") |> Option.iter ps.SetTmpPath
+            try
+                ps.CreateDirectory("tmp") |> Option.iter ps.SetTmpPath |> Ok
+            with ex ->
+                Error $"Failed to create tmp directory. Error - {ex.Message}"
 
         member ps.ClearTmp() =
             match ps.GetTmpPath() with
             | Some p -> Directory.GetFiles(p) |> Seq.iter File.Delete
             | None -> ()
+
+        member ps.IsInitialized() =
+            match ps.GetStateValue(StateNames.initilialzedTimestamp) with
+            | Some _ -> true
+            | None -> false
 
         member ps.AddDataSource(name, sourceType: DataSourceType, uri, collectionName) =
             ({ Name = name

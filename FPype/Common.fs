@@ -120,34 +120,33 @@ type PipelineContext =
             //let importDir = Path.Combine(dir, "imports")
             //let exportDir = Path.Combine(dir, "exports")
             //let tmpDir = Path.Combine(dir, "tmp")
-            
+
 
             //Directory.CreateDirectory(dir) |> ignore
             //Directory.CreateDirectory(importDir) |> ignore
             //Directory.CreateDirectory(exportDir) |> ignore
             //Directory.CreateDirectory(tmpDir) |> ignore
-            
-            let store = PipelineStore.Initialize(basePath, id)
 
-            // Add some basic values for use in later steps (if needed).
-            // TODO make a separate context table for these?
-            //store.SetId(id)
-            //store.SetComputerName()
-            
-            //store.AddStateValue("__id", id)
-            //store.AddStateValue("__computer_name", Environment.MachineName)
-            //store.AddStateValue("__user_name", Environment.UserName)
-            //store.AddStateValue("__base_path", dir)
-            //store.AddStateValue("__imports_path", importDir)
-            //store.AddStateValue("__exports_path", exportDir)
-            //store.AddStateValue("__tmp_value", tmpDir)
+            PipelineStore.Initialize(basePath, id)
+            |> Result.map (fun store ->
+                { Id = id
+                  StorePath = store.StorePath
+                  Store = store
+                  LogToConsole = logToConsole
+                  Actions = actions })
 
-            { Id = id
-              StorePath = store.StorePath
-              Store = store
-              LogToConsole = logToConsole
-              Actions = actions }
-            |> Ok
+        // Add some basic values for use in later steps (if needed).
+        // TODO make a separate context table for these?
+        //store.SetId(id)
+        //store.SetComputerName()
+
+        //store.AddStateValue("__id", id)
+        //store.AddStateValue("__computer_name", Environment.MachineName)
+        //store.AddStateValue("__user_name", Environment.UserName)
+        //store.AddStateValue("__base_path", dir)
+        //store.AddStateValue("__imports_path", importDir)
+        //store.AddStateValue("__exports_path", exportDir)
+        //store.AddStateValue("__tmp_value", tmpDir)
 
         | false -> Error $"Base directory `{basePath}` does not exist."
 

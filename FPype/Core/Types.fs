@@ -236,7 +236,7 @@ module Types =
             match cr with
             | Success v -> fn v |> CoercionResult.Success
             | _ -> cr
-
+            
     and [<RequireQualifiedAccess>] Value =
         | Boolean of bool
         | Byte of byte
