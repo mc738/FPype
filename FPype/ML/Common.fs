@@ -2,9 +2,11 @@
 
 open System
 open System.Reflection
+open System.Text.Json
 open FPype.Core.Types
 open FPype.Data
 open FPype.Data.Store
+open FsToolbox.Core
 open Microsoft.Data.Sqlite
 open Microsoft.ML
 open Microsoft.ML.Data
@@ -234,6 +236,32 @@ module Common =
         { Index: int
           Name: string
           DataKind: DataKind }
+        
+        static member FromJson(element: JsonElement) =
+            let toDataKind (str: string) =
+                match str.ToLower() with
+                | "bool" -> Some DataKind.Boolean
+                | "byte" -> Some DataKind.Byte
+                | "double" -> Some DataKind.Double
+                | "int16"
+                | "short" -> Some DataKind.Int16
+                | "int32"
+                | "int" -> Some DataKind.Int32
+                | "int64"
+                | "long" -> Some DataKind.Int64
+                | "single"
+                | "float" -> Some DataKind.Single
+                | "datetime" -> Some DataKind.DateTime 
+                | "sbyte" -> Some DataKind.SByte
+                | "timespan" -> Some DataKind.TimeSpan
+                | "uint16" -> Some DataKind.UInt16
+                | "uint32" -> Some DataKind.UInt32
+                | "uint64" -> Some DataKind.UInt64
+                | "datetimeoffset" -> Some DataKind.DateTimeOffset
+                | _ -> None
+            
+            ()
+            
 
     type RowFilter =
         { ColumnName: string
@@ -245,10 +273,38 @@ module Common =
           ModelSavePath: string
           HasHeaders: bool
           Separators: char array
+          AllowQuoting: bool
+          ReadMultilines: bool
           TrainingTestSplit: float
           Columns: DataColumn list
           RowFilters: RowFilter list
           Transformations: TransformationType list }
+
+        static member FromJson(element: JsonElement, store: PipelineStore) =
+            match
+                Json.tryGetStringProperty "source" element |> Option.bind store.GetDataSource,
+                Json.tryGetStringProperty "modelSavePath" element,
+                Json.tryGetProperty "separators" element
+                |> Option.bind Json.tryGetStringArray
+                |> Option.map (fun sl -> sl |> List.choose (fun s -> s |> Seq.tryHead) |> Array.ofList),
+                Json.tryGetArrayProperty "columns" element
+            with
+            | Some ds, Some msp, Some s, Some c ->
+                { DataSource = ds
+                  ModelSavePath = msp
+                  HasHeaders = Json.tryGetBoolProperty "hasHeaders" element |> Option.defaultValue false
+                  Separators = s
+                  AllowQuoting = Json.tryGetBoolProperty "allowQuoting" element |> Option.defaultValue false
+                  ReadMultilines = Json.tryGetBoolProperty "readMultilines" element |> Option.defaultValue false
+                  TrainingTestSplit = Json.tryGetDoubleProperty "trainingTestSplit" element |> Option.defaultValue 0.1
+                  Columns = []
+                  RowFilters = []
+                  Transformations = [] }
+                |> Ok
+            | None, _, _, _ -> Error "Missing `source` property or unknown data source"
+            | _, None, _, _ -> Error "Missing `modelSavePath` property"
+            | _, _, None, _ -> Error "Missing `separators` property"
+            | _, _, _, None -> Error "Missing `columns` property"
 
     let createCtx (seed: int option) = MLContext(seed |> Option.toNullable)
 
@@ -268,6 +324,10 @@ module Common =
 
         options.HasHeader <- hasHeaders
         options.Separators <- separators
+
+        // Add to settings.
+        options.AllowQuoting <- options.AllowQuoting
+        options.ReadMultilines <- options.ReadMultilines
 
         options.Columns <-
             columns

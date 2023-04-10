@@ -331,6 +331,8 @@ module MLTest =
                       ModelSavePath = modelPath
                       HasHeaders = true
                       Separators = [| '\t' |]
+                      AllowQuoting = false
+                      ReadMultilines = false
                       TrainingTestSplit = 0.2
                       Columns =
                         [ { Index = 0
@@ -404,6 +406,8 @@ module MLTest =
                       ModelSavePath = modelPath
                       HasHeaders = true
                       Separators = [| ',' |]
+                      AllowQuoting = false
+                      ReadMultilines = false
                       TrainingTestSplit = 0.2
                       Columns =
                         [ { Index = 0
@@ -504,6 +508,8 @@ module MLTest =
                        ModelSavePath = modelPath
                        HasHeaders = true
                        Separators = [| ',' |]
+                       AllowQuoting = false
+                       ReadMultilines = false
                        TrainingTestSplit = 0.01
                        Columns =
                          [ { Index = 0
@@ -532,7 +538,7 @@ module MLTest =
 
         let run _ =
             let mlCtx = createCtx (Some 0)
-            
+
             let value =
                 [ "UserId", Value.Float 6f
                   "MovieId", Value.Float 10f
@@ -542,8 +548,97 @@ module MLTest =
             let (t, dvs) = MatrixFactorization.load mlCtx modelPath |> unwrap
 
             let r = MatrixFactorization.predict mlCtx t dvs value
-            
+
             ()
+
+module FakeNewsTest =
+
+    let unwrap (r: Result<'a, 'b>) =
+        match r with
+        | Ok v -> v
+        | Error _ -> failwith "Error"
+
+    let dataPath = "D:\\DataSets\\fake_news\\fake_news_dataset.csv"
+
+    let modelPath = "D:\\DataSets\\fake_news\\model\\model.zip"
+
+    let train _ =
+        let mlCtx = createCtx (Some 0)
+
+        let settings =
+            ({ General =
+                { DataSource =
+                    { Type = "file"
+                      Uri = dataPath
+                      Name = "Training data"
+                      CollectionName = "misc" }
+                  ModelSavePath = modelPath
+                  HasHeaders = true
+                  Separators = [| ',' |]
+                  AllowQuoting = true
+                  ReadMultilines = true
+                  TrainingTestSplit = 0.2
+                  Columns =
+                    [ { Index = 0
+                        Name = "Author"
+                        DataKind = DataKind.String }
+                      { Index = 9
+                        Name = "Title"
+                        DataKind = DataKind.String }
+                      //{ Index = 10
+                      //  Name = "Text"
+                      //  DataKind = DataKind.String }
+                      { Index = 11
+                        Name = "SiteUrl"
+                        DataKind = DataKind.String }
+                      //{ Index = 7
+                      //  Name = "Type"
+                      //  DataKind = DataKind.String }
+                      { Index = 8
+                        Name = "Fake"
+                        DataKind = DataKind.String } ]
+                  RowFilters = []
+                  Transformations =
+                    [ TransformationType.MapValueToKey("Label", "Fake")
+                      TransformationType.FeaturizeText("TitleFeaturized", "Title")
+                      //TransformationType.FeaturizeText("TextFeaturized", "Text")
+                      TransformationType.OneHotEncoding("AuthorEncoded", "Author")
+                      TransformationType.OneHotEncoding("SiteUrlEncoded", "SiteUrl")
+                      TransformationType.Concatenate("Features", [ "TitleFeaturized"; (*"TextFeaturized";*) "AuthorEncoded"; "SiteUrlEncoded" ]) ] } }: MulticlassClassification.TrainingSettings)
+
+        let metrics = MulticlassClassification.train mlCtx settings |> unwrap
+
+        printfn "Model metrics"
+        printfn $"Confusion matrix: {metrics.ConfusionMatrix}"
+        printfn $"Log loss: {metrics.LogLoss}"
+        printfn $"Macro accuracy: {metrics.MacroAccuracy}"
+        printfn $"Micro accuracy: {metrics.MicroAccuracy}"
+        printfn $"Log loss reduction: {metrics.LogLossReduction}"
+        printfn $"Top K accuracy: {metrics.TopKAccuracy}"
+        printfn $"Per class log loss: {metrics.PerClassLogLoss}"
+        printfn $"Top K prediction count: {metrics.TopKPredictionCount}"
+        printfn $"Top K accuracy for all K: {metrics.TopKAccuracyForAllK}"
+
+
+    let run _ =
+        
+        let mlCtx = createCtx (Some 0)
+
+        let value =
+            [ "Author", Value.String "Fed Up"
+              "Title", Value.String "hilary angry at protestor"
+              "SiteUrl", Value.String "100percentfedup.com"
+              "Fake",
+              Value.String "" ]
+            |> Map.ofList
+
+        let (t, dvs) = MulticlassClassification.load mlCtx modelPath |> unwrap
+
+        let r = MulticlassClassification.predict mlCtx t dvs value
+
+        ()
+
+
 
 module MiscTest =
 
@@ -559,6 +654,9 @@ module MiscTest =
 //MiscTest.createDynamicObj ()
 //MLTest.train ()
 //MLTest.run ()
+//FakeNewsTest.train ()
+FakeNewsTest.run ()
+
 MLTest.MatrixFactorization.train ()
 MLTest.MatrixFactorization.run ()
 MLTest.MulticlassClassification.train ()

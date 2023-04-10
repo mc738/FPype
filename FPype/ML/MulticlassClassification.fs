@@ -15,7 +15,9 @@ module MulticlassClassification =
     [<CLIMutable>]
     type PredictionItem =
         { [<ColumnName("PredictedLabel")>]
-          PredictedLabel: string }
+          PredictedLabel: string
+          
+          Score: float32 array }
 
     let train (mlCtx: MLContext) (settings: TrainingSettings) =
         getDataSourceUri settings.General.DataSource
