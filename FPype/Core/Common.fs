@@ -2,7 +2,7 @@
 
 [<AutoOpen>]
 module Common =
-    
+
     let flattenResultList (r: Result<'a, string> list) =
         r
         |> List.fold
@@ -16,3 +16,13 @@ module Common =
             | true -> Ok values
             | false -> Error <| String.concat ", " errors
 
+
+    let chooseResults (r: Result<'a, 'b> list) =
+        r
+        |> List.fold
+            (fun acc r ->
+                match r with
+                | Ok v -> v :: acc
+                | Error _ -> acc)
+            []
+        |> List.rev

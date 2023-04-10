@@ -3,6 +3,7 @@
 open System
 open System.Reflection
 open System.Text.Json
+open FPype.Core
 open FPype.Core.Types
 open FPype.Data
 open FPype.Data.Store
@@ -236,7 +237,7 @@ module Common =
         { Index: int
           Name: string
           DataKind: DataKind }
-        
+
         static member FromJson(element: JsonElement) =
             let toDataKind (str: string) =
                 match str.ToLower() with
@@ -251,7 +252,7 @@ module Common =
                 | "long" -> Some DataKind.Int64
                 | "single"
                 | "float" -> Some DataKind.Single
-                | "datetime" -> Some DataKind.DateTime 
+                | "datetime" -> Some DataKind.DateTime
                 | "sbyte" -> Some DataKind.SByte
                 | "timespan" -> Some DataKind.TimeSpan
                 | "uint16" -> Some DataKind.UInt16
@@ -259,14 +260,30 @@ module Common =
                 | "uint64" -> Some DataKind.UInt64
                 | "datetimeoffset" -> Some DataKind.DateTimeOffset
                 | _ -> None
-            
-            ()
-            
+
+            match
+                Json.tryGetIntProperty "index" element,
+                Json.tryGetStringProperty "name" element,
+                Json.tryGetStringProperty "dataKind" element |> Option.bind toDataKind
+            with
+            | Some i, Some n, Some dk -> { Index = i; Name = n; DataKind = dk } |> Ok
+            | None, _, _ -> Error "Missing `index` property"
+            | _, None, _ -> Error "Missing `name` property"
+            | _, _, None -> Error "Missing `dataKind` property or unknown data kind"
 
     type RowFilter =
         { ColumnName: string
           Minimum: float option
           Maximum: float option }
+
+        static member FromJson(element: JsonElement) =
+            match Json.tryGetStringProperty "columnName" element with
+            | Some cn ->
+                { ColumnName = cn
+                  Minimum = Json.tryGetDoubleProperty "min" element
+                  Maximum = Json.tryGetDoubleProperty "max" element }
+                |> Ok
+            | None -> Error "Missing `columnName` property"
 
     type GeneralTrainingSettings =
         { DataSource: DataSource
@@ -288,6 +305,7 @@ module Common =
                 |> Option.bind Json.tryGetStringArray
                 |> Option.map (fun sl -> sl |> List.choose (fun s -> s |> Seq.tryHead) |> Array.ofList),
                 Json.tryGetArrayProperty "columns" element
+                |> Option.map (fun ces -> ces |> List.map DataColumn.FromJson |> chooseResults)
             with
             | Some ds, Some msp, Some s, Some c ->
                 { DataSource = ds
@@ -297,7 +315,7 @@ module Common =
                   AllowQuoting = Json.tryGetBoolProperty "allowQuoting" element |> Option.defaultValue false
                   ReadMultilines = Json.tryGetBoolProperty "readMultilines" element |> Option.defaultValue false
                   TrainingTestSplit = Json.tryGetDoubleProperty "trainingTestSplit" element |> Option.defaultValue 0.1
-                  Columns = []
+                  Columns = c
                   RowFilters = []
                   Transformations = [] }
                 |> Ok
