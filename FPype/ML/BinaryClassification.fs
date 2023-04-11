@@ -1,15 +1,37 @@
 ﻿namespace FPype.ML
 
+open System.Text.Json
+open FsToolbox.Core
+
 [<RequireQualifiedAccess>]
 module BinaryClassification =
-    
+
     open FPype.Core.Types
     open FPype.Data
     open FPype.Data.Store
     open Microsoft.ML
     open Microsoft.ML.Data
-    
+
     type TextClassificationItem = { Text: string; Label: bool }
+
+    and [<RequireQualifiedAccess>] ClassificationType = | Text
+
+    and TrainingSettings =
+        { General: GeneralTrainingSettings
+          TrainerType: TrainerType }
+
+        static member FromJson(element: JsonElement, store: PipelineStore) =
+            match
+                Json.tryGetProperty "general" element
+                |> Option.map (fun el -> GeneralTrainingSettings.FromJson(el, store))
+                |> Option.defaultWith (fun _ -> Error "Missing `general` property"),
+                Json.tryGetProperty "trainer" element
+                |> Option.map TrainerType.FromJson
+                |> Option.defaultWith (fun _ -> Error "Missing `trainer` property")
+            with
+            | Ok gts, Ok ts -> { General = gts; TrainerType = ts } |> Ok
+            | Error e, _ -> Error e
+            | _, Error e -> Error e
 
     and [<CLIMutable>] TextPredictionItem =
         { [<ColumnName("PredictedLabel")>]
@@ -17,42 +39,57 @@ module BinaryClassification =
           Probability: float32
           Score: float32 }
 
-    and [<RequireQualifiedAccess>] ClassificationType = | Text
+    and [<RequireQualifiedAccess>] TrainerType =
+        | SdcaLogisticRegression of SdcaLogisticRegressionSettings
 
-    and TrainingSettings =
-        { DataSource: DataSource
-          ModelSavePath: string
-          HasHeaders: bool
-          Separators: char array
-          TrainingTestSplit: float
-          ClassificationType: ClassificationType
-          FeatureColumnIndex: int
-          LabelColumnName: string
-          LabelColumnIndex: int }
+        static member FromJson(element: JsonElement) =
+            match Json.tryGetStringProperty "type" element with
+            | Some "sdca-logistic-regression" ->
+                SdcaLogisticRegressionSettings.FromJson(element)
+                |> Result.map TrainerType.SdcaLogisticRegression
+            | Some t -> Error $"Unknown trainer type `{t}`"
+            | None -> Error "Missing property `type`"
+
+    and SdcaLogisticRegressionSettings =
+        { LabelColumnName: string
+          FeatureColumnName: string
+          ExampleWeightColumnName: string option
+          L2Regularization: float32 option
+          L1Regularization: float32 option
+          MaximumNumberOfIterations: int option }
+
+        static member Default() =
+            { LabelColumnName = "Label"
+              FeatureColumnName = "Features"
+              ExampleWeightColumnName = None
+              L2Regularization = None
+              L1Regularization = None
+              MaximumNumberOfIterations = None }
+
+        static member FromJson(element: JsonElement) =
+            match
+                Json.tryGetStringProperty "labelColumnName" element,
+                Json.tryGetStringProperty "featureColumnName" element
+            with
+            | Some lcn, Some fcn ->
+                { LabelColumnName = lcn
+                  FeatureColumnName = fcn
+                  ExampleWeightColumnName = Json.tryGetStringProperty "exampleWeightColumnName" element
+                  L2Regularization = Json.tryGetSingleProperty "l2Regularization" element
+                  L1Regularization = Json.tryGetSingleProperty "l1Regularization" element
+                  MaximumNumberOfIterations = Json.tryGetIntProperty "maximumNumberOfIterations" element }
+                |> Ok
+            | None, _ -> Error "Missing `labelColumnName` property"
+            | _, None -> Error "Missing `featureColumnName` property"
+
 
     let train (mlCtx: MLContext) (settings: TrainingSettings) =
-        getDataSourceUri settings.DataSource
+        getDataSourceUri settings.General.DataSource
         |> Result.bind (fun uri ->
             try
-                let options = TextLoader.Options()
+                let trainingCtx = createTrainingContext mlCtx settings.General uri
 
-                options.HasHeader <- settings.HasHeaders
-                options.Separators <- settings.Separators
-
-                let (featureColName, featureColType) =
-                    match settings.ClassificationType with
-                    | ClassificationType.Text -> "Text", DataKind.String
-
-                options.Columns <-
-                    [| TextLoader.Column(featureColName, featureColType, settings.FeatureColumnIndex)
-                       TextLoader.Column(settings.LabelColumnName, DataKind.Boolean, settings.LabelColumnIndex) |]
-
-                let loader = mlCtx.Data.CreateTextLoader(options = options)
-
-                let dataView = loader.Load([| uri |])
-
-                let trainTestSplit = mlCtx.Data.TrainTestSplit(dataView, settings.TrainingTestSplit)
-
+                (*
                 let dataProcessPipeline =
                     match settings.ClassificationType with
                     | ClassificationType.Text ->
@@ -60,20 +97,30 @@ module BinaryClassification =
                             outputColumnName = "Features",
                             inputColumnName = featureColName
                         )
+                *)
 
                 let trainer =
-                    mlCtx.BinaryClassification.Trainers.SdcaLogisticRegression(
-                        labelColumnName = settings.LabelColumnName,
-                        featureColumnName = "Features"
-                    )
+                    match settings.TrainerType with
+                    | TrainerType.SdcaLogisticRegression trainerSettings ->
+                        mlCtx.BinaryClassification.Trainers.SdcaLogisticRegression(
+                            labelColumnName = trainerSettings.LabelColumnName,
+                            featureColumnName = trainerSettings.FeatureColumnName,
+                            exampleWeightColumnName =
+                                (trainerSettings.ExampleWeightColumnName |> Option.defaultValue null),
+                            l2Regularization = (trainerSettings.L2Regularization |> Option.toNullable),
+                            l1Regularization = (trainerSettings.L1Regularization |> Option.toNullable),
+                            maximumNumberOfIterations = (trainerSettings.MaximumNumberOfIterations |> Option.toNullable)
+                        )
+                        |> Internal.downcastPipeline
 
-                let trainingPipeline = dataProcessPipeline.Append(trainer)
 
-                let trainedModel = trainingPipeline.Fit(trainTestSplit.TrainSet)
+                let trainingPipeline = trainingCtx.Pipeline.Append(trainer)
 
-                mlCtx.Model.Save(trainedModel, dataView.Schema, settings.ModelSavePath)
+                let trainedModel = trainingPipeline.Fit(trainingCtx.TrainingData)
 
-                let predictions = trainedModel.Transform(trainTestSplit.TestSet)
+                mlCtx.Model.Save(trainedModel, trainingCtx.TrainingData.Schema, settings.General.ModelSavePath)
+
+                let predictions = trainedModel.Transform(trainingCtx.TestData)
 
                 mlCtx.BinaryClassification.Evaluate(
                     data = predictions,

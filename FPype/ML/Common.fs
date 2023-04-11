@@ -233,6 +233,55 @@ module Common =
         | MapValueToKey of OutputColumnName: string * InputColumnName: string
         | Concatenate of OutputColumnName: string * Columns: string list
 
+        static member FromJson(element: JsonElement) =
+            match Json.tryGetStringProperty "type" element with
+            | Some "copy-columns" ->
+                match
+                    Json.tryGetStringProperty "outputColumnName" element,
+                    Json.tryGetStringProperty "inputColumnName" element
+                with
+                | Some ocn, Some icn -> TransformationType.CopyColumns(ocn, icn) |> Ok
+                | None, _ -> Error "Missing `outputColumnName` property"
+                | _, None -> Error "Missing `inputColumnName` property"
+            | Some "one-hot-encoding" ->
+                match
+                    Json.tryGetStringProperty "outputColumnName" element,
+                    Json.tryGetStringProperty "inputColumnName" element
+                with
+                | Some ocn, Some icn -> TransformationType.OneHotEncoding(ocn, icn) |> Ok
+                | None, _ -> Error "Missing `outputColumnName` property"
+                | _, None -> Error "Missing `inputColumnName` property"
+            | Some "normalize-mean-variance" ->
+                match Json.tryGetStringProperty "outputColumnName" element with
+                | Some ocn -> TransformationType.NormalizeMeanVariance ocn |> Ok
+                | None -> Error "Missing `outputColumnName` property"
+            | Some "featurize-text" ->
+                match
+                    Json.tryGetStringProperty "outputColumnName" element,
+                    Json.tryGetStringProperty "inputColumnName" element
+                with
+                | Some ocn, Some icn -> TransformationType.FeaturizeText(ocn, icn) |> Ok
+                | None, _ -> Error "Missing `outputColumnName` property"
+                | _, None -> Error "Missing `inputColumnName` property"
+            | Some "map-value-to-key" ->
+                match
+                    Json.tryGetStringProperty "outputColumnName" element,
+                    Json.tryGetStringProperty "inputColumnName" element
+                with
+                | Some ocn, Some icn -> TransformationType.FeaturizeText(ocn, icn) |> Ok
+                | None, _ -> Error "Missing `outputColumnName` property"
+                | _, None -> Error "Missing `inputColumnName` property"
+            | Some "concatenate" ->
+                match
+                    Json.tryGetStringProperty "outputColumnName" element,
+                    Json.tryGetProperty "columns" element |> Option.bind Json.tryGetStringArray
+                with
+                | Some ocn, Some c -> TransformationType.Concatenate(ocn, c) |> Ok
+                | None, _ -> Error "Missing `outputColumnName` property"
+                | _, None -> Error "Missing `columns` property"
+            | Some t -> Error $"Unknown transformation type `{t}`"
+            | None -> Error "Missing type property"
+
     type DataColumn =
         { Index: int
           Name: string
@@ -316,8 +365,14 @@ module Common =
                   ReadMultilines = Json.tryGetBoolProperty "readMultilines" element |> Option.defaultValue false
                   TrainingTestSplit = Json.tryGetDoubleProperty "trainingTestSplit" element |> Option.defaultValue 0.1
                   Columns = c
-                  RowFilters = []
-                  Transformations = [] }
+                  RowFilters =
+                    Json.tryGetArrayProperty "rowFilters" element
+                    |> Option.map (fun rfs -> rfs |> List.map RowFilter.FromJson |> chooseResults)
+                    |> Option.defaultValue []
+                  Transformations =
+                    Json.tryGetArrayProperty "transformations" element
+                    |> Option.map (fun ts -> ts |> List.map TransformationType.FromJson |> chooseResults)
+                    |> Option.defaultValue [] }
                 |> Ok
             | None, _, _, _ -> Error "Missing `source` property or unknown data source"
             | _, None, _, _ -> Error "Missing `modelSavePath` property"

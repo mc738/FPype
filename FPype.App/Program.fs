@@ -268,19 +268,31 @@ module MLTest =
             let mlCtx = createCtx (Some 1)
 
             let settings =
-                ({ DataSource =
-                    { Type = "file"
-                      Uri = dataPath
-                      Name = "Training data"
-                      CollectionName = "misc" }
-                   ModelSavePath = modelPath
-                   HasHeaders = true
-                   Separators = [| '\t' |]
-                   TrainingTestSplit = 0.2
-                   ClassificationType = BinaryClassification.ClassificationType.Text
-                   FeatureColumnIndex = 2
-                   LabelColumnName = "Label"
-                   LabelColumnIndex = 0 }: BinaryClassification.TrainingSettings)
+                ({ General =
+                    { DataSource =
+                        { Type = "file"
+                          Uri = dataPath
+                          Name = "Training data"
+                          CollectionName = "misc" }
+                      ModelSavePath = modelPath
+                      HasHeaders = true
+                      Separators = [| '\t' |]
+                      AllowQuoting = false
+                      ReadMultilines = false
+                      TrainingTestSplit = 0.2
+                      Columns =
+                        [ { Index = 0
+                            Name = "Label"
+                            DataKind = DataKind.Boolean }
+                          { Index = 2
+                            Name = "Text"
+                            DataKind = DataKind.String } ]
+                      RowFilters = []
+                      Transformations =
+                        [ TransformationType.FeaturizeText("Features", "Text") ] }
+                   TrainerType =
+                     BinaryClassification.SdcaLogisticRegressionSettings.Default()
+                     |> BinaryClassification.TrainerType.SdcaLogisticRegression }: BinaryClassification.TrainingSettings)
 
             let metrics = BinaryClassification.train mlCtx settings |> unwrap
 
@@ -304,8 +316,7 @@ module MLTest =
             let mlCtx = createCtx (Some 1)
             let engine = BinaryClassification.load mlCtx modelPath |> unwrap
 
-            let r = BinaryClassification.predict engine "I love this movie!"
-
+            let r = BinaryClassification.predict engine "I hate this movie, it's crap!"
 
 
             ()
@@ -352,7 +363,10 @@ module MLTest =
                         [ TransformationType.MapValueToKey("Label", "Area")
                           TransformationType.FeaturizeText("TitleFeaturized", "Title")
                           TransformationType.FeaturizeText("DescriptionFeaturized", "Description")
-                          TransformationType.Concatenate("Features", [ "TitleFeaturized"; "DescriptionFeaturized" ]) ] } }: MulticlassClassification.TrainingSettings)
+                          TransformationType.Concatenate("Features", [ "TitleFeaturized"; "DescriptionFeaturized" ]) ] }
+                   TrainerType =
+                     MulticlassClassification.SdcaMaximumEntropySettings.Default()
+                     |> MulticlassClassification.TrainerType.SdcaMaximumEntropy }: MulticlassClassification.TrainingSettings)
 
             let metrics = MulticlassClassification.train mlCtx settings |> unwrap
 
@@ -444,14 +458,15 @@ module MLTest =
                           TransformationType.NormalizeMeanVariance "TripTime"
                           TransformationType.NormalizeMeanVariance "TripDistance"
                           TransformationType.Concatenate(
-                              "Feature",
+                              "Features",
                               [ "VendorIdEncoded"
                                 "RateCodeEncoded"
                                 "PaymentTypeEncoded"
                                 "PassengerCount"
                                 "TripTime"
                                 "TripDistance" ]
-                          ) ] } }: Regression.TrainingSettings)
+                          ) ] }
+                   TrainerType = Regression.SdcaSettings.Default() |> Regression.TrainerType.Sdca }: Regression.TrainingSettings)
 
             let metrics = Regression.train mlCtx settings |> unwrap
 
@@ -604,7 +619,13 @@ module FakeNewsTest =
                       //TransformationType.FeaturizeText("TextFeaturized", "Text")
                       TransformationType.OneHotEncoding("AuthorEncoded", "Author")
                       TransformationType.OneHotEncoding("SiteUrlEncoded", "SiteUrl")
-                      TransformationType.Concatenate("Features", [ "TitleFeaturized"; (*"TextFeaturized";*) "AuthorEncoded"; "SiteUrlEncoded" ]) ] } }: MulticlassClassification.TrainingSettings)
+                      TransformationType.Concatenate(
+                          "Features",
+                          [ "TitleFeaturized" (*"TextFeaturized";*) ; "AuthorEncoded"; "SiteUrlEncoded" ]
+                      ) ] }
+               TrainerType =
+                 MulticlassClassification.SdcaMaximumEntropySettings.Default()
+                 |> MulticlassClassification.TrainerType.SdcaMaximumEntropy }: MulticlassClassification.TrainingSettings)
 
         let metrics = MulticlassClassification.train mlCtx settings |> unwrap
 
@@ -621,15 +642,14 @@ module FakeNewsTest =
 
 
     let run _ =
-        
+
         let mlCtx = createCtx (Some 0)
 
         let value =
             [ "Author", Value.String "Fed Up"
               "Title", Value.String "hilary angry at protestor"
               "SiteUrl", Value.String "100percentfedup.com"
-              "Fake",
-              Value.String "" ]
+              "Fake", Value.String "" ]
             |> Map.ofList
 
         let (t, dvs) = MulticlassClassification.load mlCtx modelPath |> unwrap
@@ -637,8 +657,6 @@ module FakeNewsTest =
         let r = MulticlassClassification.predict mlCtx t dvs value
 
         ()
-
-
 
 module MiscTest =
 
@@ -655,14 +673,16 @@ module MiscTest =
 //MLTest.train ()
 //MLTest.run ()
 //FakeNewsTest.train ()
-FakeNewsTest.run ()
+//FakeNewsTest.run ()
 
-MLTest.MatrixFactorization.train ()
-MLTest.MatrixFactorization.run ()
-MLTest.MulticlassClassification.train ()
-MLTest.MulticlassClassification.run ()
-MLTest.Regression.train ()
-MLTest.Regression.run ()
+//MLTest.MatrixFactorization.train ()
+//MLTest.MatrixFactorization.run ()
+//MLTest.MulticlassClassification.train ()
+//MLTest.MulticlassClassification.run ()
+//MLTest.Regression.train ()
+//MLTest.Regression.run ()
+//MLTest.BinaryClassification.train ()
+MLTest.BinaryClassification.run ()
 
 
 ObjectTableMapperTest.run ()
