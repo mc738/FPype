@@ -217,7 +217,6 @@ module Extract =
             |> flattenResultList
             |> Result.map (fun _ -> store)
 
-
         let createAction (parameters: Parameters) = run parameters |> createAction name
 
     /// Split a source into individual chucks for processing.

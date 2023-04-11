@@ -6,7 +6,6 @@ open FPype.Data.Store
 
 module Export =
 
-
     open System
     open FsToolbox.Extensions
     open FPype.Data
@@ -41,9 +40,7 @@ module Export =
         type Parameters =
             { ArtifactName: string
               OutputPath: string option
-              FileExtension: string option
-
-             }
+              FileExtension: string option }
 
         let run (parameters: Parameters) (store: PipelineStore) =
             // "__exports_path"
@@ -65,8 +62,6 @@ module Export =
                     store.LogError(name, $"Unhandled exception when exporting artifact: {exn.Message}")
             | None, _ -> store.LogError(name, "Export path not found.")
             | _, None -> store.LogError(name, $"Artifact `{parameters.ArtifactName}` not found.")
-
-
 
             store
 
