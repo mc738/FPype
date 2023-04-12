@@ -1,7 +1,10 @@
 ﻿namespace FPype.ML
 
+open System
 open System.Text.Json
+open FPype.Data.Models
 open FsToolbox.Core
+open Microsoft.ML.Data
 
 [<RequireQualifiedAccess>]
 module Regression =
@@ -10,11 +13,11 @@ module Regression =
     open FPype.Data.Store
     open Microsoft.FSharp.Core
     open Microsoft.ML
-    
+
     type TrainingSettings =
         { General: GeneralTrainingSettings
           TrainerType: TrainerType }
-        
+
         static member FromJson(element: JsonElement, store: PipelineStore) =
             match
                 Json.tryGetProperty "general" element
@@ -27,17 +30,19 @@ module Regression =
             | Ok gts, Ok ts -> { General = gts; TrainerType = ts } |> Ok
             | Error e, _ -> Error e
             | _, Error e -> Error e
-        
+
     and [<RequireQualifiedAccess>] TrainerType =
         | Sdca of SdcaSettings
 
         static member FromJson(element: JsonElement) =
             match Json.tryGetStringProperty "type" element with
-            | Some "sdca" ->
-                SdcaSettings.FromJson(element)
-                |> Result.map TrainerType.Sdca
+            | Some "sdca" -> SdcaSettings.FromJson(element) |> Result.map TrainerType.Sdca
             | Some t -> Error $"Unknown trainer type `{t}`"
             | None -> Error "Missing property `type`"
+
+        member tt.GetName() =
+            match tt with
+            | Sdca _ -> "Scda"
 
     and SdcaSettings =
         { LabelColumnName: string
@@ -73,12 +78,57 @@ module Regression =
 
     and [<CLIMutable>] PredictionItem = { Score: float32 }
 
+    let metricsToString (modelName: string) (trainerType: TrainerType) (metrics: RegressionMetrics) =
+        [ $"{modelName} metrics"
+          ""
+          "Model type: multiclass classification"
+          $"Loss function: {metrics.LossFunction}"
+          $"R squared: {metrics.RSquared}"
+          $"Mean absolute error: {metrics.MeanAbsoluteError}"
+          $"Mean squared error: {metrics.MeanSquaredError}"
+          $"Root mean squared error: {metrics.RootMeanSquaredError}" ]
+        |> String.concat Environment.NewLine
+
+    let metricsToTable (modelName: string) (trainerType: TrainerType) (metrics: RegressionMetrics) =
+        ({ Name = "__regression_metrics"
+           Columns =
+             [ { Name = "model"
+                 Type = BaseType.String
+                 ImportHandler = None }
+               { Name = "trainer_type"
+                 Type = BaseType.String
+                 ImportHandler = None }
+               { Name = "loss_function"
+                 Type = BaseType.Double
+                 ImportHandler = None }
+               { Name = "r_squared"
+                 Type = BaseType.Double
+                 ImportHandler = None }
+               { Name = "mean_absolute_error"
+                 Type = BaseType.Double
+                 ImportHandler = None }
+               { Name = "mean_squared_error"
+                 Type = BaseType.Double
+                 ImportHandler = None }
+               { Name = "root_mean_squared_error"
+                 Type = BaseType.Double
+                 ImportHandler = None } ]
+           Rows =
+             [ ({ Values =
+                   [ Value.String modelName
+                     Value.String <| trainerType.GetName()
+                     Value.Double metrics.LossFunction
+                     Value.Double metrics.RSquared
+                     Value.Double metrics.MeanAbsoluteError
+                     Value.Double metrics.MeanSquaredError
+                     Value.Double metrics.RootMeanSquaredError ] }: TableRow) ] }: TableModel)
+
     let train (mlCtx: MLContext) (settings: TrainingSettings) =
         getDataSourceUri settings.General.DataSource
         |> Result.bind (fun uri ->
             try
                 let trainingCtx = createTrainingContext mlCtx settings.General uri
-                
+
                 // TODO set strings are settings
                 let trainer =
                     match settings.TrainerType with
@@ -90,9 +140,10 @@ module Regression =
                                 (trainerSettings.ExampleWeightColumnName |> Option.defaultValue null),
                             l2Regularization = (trainerSettings.L2Regularization |> Option.toNullable),
                             l1Regularization = (trainerSettings.L1Regularization |> Option.toNullable),
-                            maximumNumberOfIterations = (trainerSettings.MaximumNumberOfIterations |> Option.toNullable))
+                            maximumNumberOfIterations = (trainerSettings.MaximumNumberOfIterations |> Option.toNullable)
+                        )
                         |> Internal.downcastPipeline
-                
+
                 let trainingPipeline = trainingCtx.Pipeline.Append(trainer)
 
                 let trainedModel = trainingPipeline.Fit(trainingCtx.TrainingData)

@@ -42,7 +42,7 @@ module MulticlassClassification =
                 |> Result.map TrainerType.SdcaMaximumEntropy
             | Some t -> Error $"Unknown trainer type `{t}`"
             | None -> Error "Missing property `type`"
-            
+
         member tt.GetName() =
             match tt with
             | SdcaMaximumEntropy _ -> "Sdca maximum entropy"
@@ -86,24 +86,19 @@ module MulticlassClassification =
 
           Score: float32 array }
 
-    
-    
-    let metricsToString
-        (modelName: string)
-        (trainerType: TrainerType)
-        (metrics: MulticlassClassificationMetrics)
-        =
+    let metricsToString (modelName: string) (trainerType: TrainerType) (metrics: MulticlassClassificationMetrics) =
         [ $"{modelName} metrics"
           ""
-          "Model type: binary classification"
-          $"Confusion matrix: {metrics.ConfusionMatrix.GetFormattedConfusionTable()}"            
-          $"Log loss: {metrics.LogLoss}"                            
-          $"Macro accuracy: {metrics.MacroAccuracy}"                
-          $"Micro accuracy: {metrics.MicroAccuracy}"                
-          $"Log loss reduction: {metrics.LogLossReduction}"         
-          $"Top K accuracy: {metrics.TopKAccuracy}"                 
-          $"Per class log loss: {floatSeqToString metrics.PerClassLogLoss}"          
-          $"Top K prediction count: {metrics.TopKPredictionCount}"  
+          "Model type: multiclass classification"
+          $"Trainer type: {trainerType.GetName()}"
+          $"Confusion matrix: {metrics.ConfusionMatrix.GetFormattedConfusionTable()}"
+          $"Log loss: {metrics.LogLoss}"
+          $"Macro accuracy: {metrics.MacroAccuracy}"
+          $"Micro accuracy: {metrics.MicroAccuracy}"
+          $"Log loss reduction: {metrics.LogLossReduction}"
+          $"Top K accuracy: {metrics.TopKAccuracy}"
+          $"Per class log loss: {floatSeqToString metrics.PerClassLogLoss}"
+          $"Top K prediction count: {metrics.TopKPredictionCount}"
           $"Top K accuracy for all K: {floatSeqToString metrics.TopKAccuracyForAllK}" ]
         |> String.concat Environment.NewLine
 
@@ -153,7 +148,6 @@ module MulticlassClassification =
                      Value.String <| floatSeqToString metrics.PerClassLogLoss
                      Value.Int metrics.TopKPredictionCount
                      Value.String <| floatSeqToString metrics.TopKAccuracyForAllK ] }: TableRow) ] }: TableModel)
-
 
     let train (mlCtx: MLContext) (settings: TrainingSettings) =
         getDataSourceUri settings.General.DataSource
