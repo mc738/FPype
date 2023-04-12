@@ -300,7 +300,7 @@ module MLTest =
             printfn $"Accuracy: {metrics.Accuracy}"
             printfn $"Entropy: {metrics.Entropy}"
             printfn $"Entropy: {metrics.Entropy}"
-            printfn $"Confusion matrix: {metrics.ConfusionMatrix}"
+            printfn $"Confusion matrix: {metrics.ConfusionMatrix.GetFormattedConfusionTable()}"
             printfn $"F1 score: {metrics.F1Score}"
             printfn $"Log loss: {metrics.LogLoss}"
             printfn $"Negative precision: {metrics.NegativePrecision}"

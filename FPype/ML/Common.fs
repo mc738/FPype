@@ -462,3 +462,6 @@ module Common =
         { TrainingData = trainingData
           TestData = trainTestSplit.TestSet
           Pipeline = dataProcessPipeline }
+
+    let floatSeqToString (v: float seq) =
+        v |> Seq.map string |> String.concat ","

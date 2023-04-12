@@ -1,6 +1,8 @@
 ﻿namespace FPype.ML
 
+open System
 open System.Text.Json
+open FPype.Data.Models
 open FPype.Data.Store
 open FsToolbox.Core
 
@@ -40,6 +42,10 @@ module MulticlassClassification =
                 |> Result.map TrainerType.SdcaMaximumEntropy
             | Some t -> Error $"Unknown trainer type `{t}`"
             | None -> Error "Missing property `type`"
+            
+        member tt.GetName() =
+            match tt with
+            | SdcaMaximumEntropy _ -> "Sdca maximum entropy"
 
     and SdcaMaximumEntropySettings =
         { LabelColumnName: string
@@ -79,6 +85,75 @@ module MulticlassClassification =
           PredictedLabel: string
 
           Score: float32 array }
+
+    
+    
+    let metricsToString
+        (modelName: string)
+        (trainerType: TrainerType)
+        (metrics: MulticlassClassificationMetrics)
+        =
+        [ $"{modelName} metrics"
+          ""
+          "Model type: binary classification"
+          $"Confusion matrix: {metrics.ConfusionMatrix.GetFormattedConfusionTable()}"            
+          $"Log loss: {metrics.LogLoss}"                            
+          $"Macro accuracy: {metrics.MacroAccuracy}"                
+          $"Micro accuracy: {metrics.MicroAccuracy}"                
+          $"Log loss reduction: {metrics.LogLossReduction}"         
+          $"Top K accuracy: {metrics.TopKAccuracy}"                 
+          $"Per class log loss: {floatSeqToString metrics.PerClassLogLoss}"          
+          $"Top K prediction count: {metrics.TopKPredictionCount}"  
+          $"Top K accuracy for all K: {floatSeqToString metrics.TopKAccuracyForAllK}" ]
+        |> String.concat Environment.NewLine
+
+    let metricsToTable (modelName: string) (trainerType: TrainerType) (metrics: MulticlassClassificationMetrics) =
+        ({ Name = "__multiclass_classification_metrics"
+           Columns =
+             [ { Name = "model"
+                 Type = BaseType.String
+                 ImportHandler = None }
+               { Name = "trainer_type"
+                 Type = BaseType.String
+                 ImportHandler = None }
+               { Name = "confusion_matrix"
+                 Type = BaseType.String
+                 ImportHandler = None }
+               { Name = "log_loss"
+                 Type = BaseType.Double
+                 ImportHandler = None }
+               { Name = "macro_accuracy"
+                 Type = BaseType.Double
+                 ImportHandler = None }
+               { Name = "micro_accuracy"
+                 Type = BaseType.Double
+                 ImportHandler = None }
+               { Name = "top_k_accuracy"
+                 Type = BaseType.Double
+                 ImportHandler = None }
+               { Name = "per_class_log_loss"
+                 Type = BaseType.String
+                 ImportHandler = None }
+               { Name = "top_k_prediction_count"
+                 Type = BaseType.Int
+                 ImportHandler = None }
+               { Name = "top_k_accuracy_for_all_k"
+                 Type = BaseType.String
+                 ImportHandler = None } ]
+           Rows =
+             [ ({ Values =
+                   [ Value.String modelName
+                     Value.String <| trainerType.GetName()
+                     Value.String <| metrics.ConfusionMatrix.GetFormattedConfusionTable()
+                     Value.Double metrics.LogLoss
+                     Value.Double metrics.MacroAccuracy
+                     Value.Double metrics.MicroAccuracy
+                     Value.Double metrics.LogLossReduction
+                     Value.Double metrics.TopKAccuracy
+                     Value.String <| floatSeqToString metrics.PerClassLogLoss
+                     Value.Int metrics.TopKPredictionCount
+                     Value.String <| floatSeqToString metrics.TopKAccuracyForAllK ] }: TableRow) ] }: TableModel)
+
 
     let train (mlCtx: MLContext) (settings: TrainingSettings) =
         getDataSourceUri settings.General.DataSource
