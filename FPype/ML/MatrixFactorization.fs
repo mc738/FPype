@@ -1,7 +1,9 @@
 ﻿namespace FPype.ML
 
 open System
+open System.Text.Json
 open FPype.Data.Models
+open FsToolbox.Core
 open Microsoft.ML.Data
 open Microsoft.ML.Trainers
 
@@ -25,8 +27,29 @@ module MatrixFactorization =
           General: GeneralTrainingSettings
           TrainerType: TrainerType }
 
+        static member FromJson(element: JsonElement, store: PipelineStore) =
+            match
+                Json.tryGetProperty "general" element
+                |> Option.map (fun el -> GeneralTrainingSettings.FromJson(el, store))
+                |> Option.defaultWith (fun _ -> Error "Missing `general` property"),
+                Json.tryGetProperty "trainer" element
+                |> Option.map TrainerType.FromJson
+                |> Option.defaultWith (fun _ -> Error "Missing `trainer` property")
+            with
+            | Ok gts, Ok ts -> { General = gts; TrainerType = ts } |> Ok
+            | Error e, _ -> Error e
+            | _, Error e -> Error e
+
     and [<RequireQualifiedAccess>] TrainerType =
         | MatrixFactorization of MatrixFactorizationSettings
+
+        static member FromJson(element: JsonElement) =
+            match Json.tryGetStringProperty "type" element with
+            | Some "matrix-factorization" ->
+                MatrixFactorizationSettings.FromJson(element)
+                |> Result.map TrainerType.MatrixFactorization
+            | Some t -> Error $"Unknown trainer type `{t}`"
+            | None -> Error "Missing property `type`"
 
         member tt.GetName() =
             match tt with
@@ -38,15 +61,44 @@ module MatrixFactorization =
           Lambda: float option
           ApproximationRank: int option
           LearningRate: float option
-          // Loss function
+          LossFunction: MatrixFactorizationTrainer.LossFunctionType option
           NonNegative: bool option
           LabelColumnName: string
           NumberOfIterations: int option
           NumberOfThreads: int option
           MatrixColumnIndexColumnName: string
-          MatrixRowIndexColumnName: string
+          MatrixRowIndexColumnName: string }
 
-         }
+        static member FromJson(element: JsonElement) =
+            match
+                Json.tryGetStringProperty "labelColumnName" element,
+                Json.tryGetStringProperty "matrixColumnIndexColumnName" element,
+                Json.tryGetStringProperty "matrixRowIndexColumnName" element
+            with
+            | Some lc, Some cin, Some rin ->
+                { Alpha = Json.tryGetDoubleProperty "alpha" element
+                  C = Json.tryGetDoubleProperty "c" element
+                  Lambda = Json.tryGetDoubleProperty "lambda" element
+                  ApproximationRank = Json.tryGetIntProperty "approximationRank" element
+                  LearningRate = Json.tryGetDoubleProperty "learningRate" element
+                  LossFunction =
+                    Json.tryGetStringProperty "lossFunction" element
+                    |> Option.bind (fun lf ->
+                        match lf with
+                        | "square-loss-regression" ->
+                            Some MatrixFactorizationTrainer.LossFunctionType.SquareLossRegression
+                        | "square-loss-one-class" -> Some MatrixFactorizationTrainer.LossFunctionType.SquareLossOneClass
+                        | _ -> None)
+                  NonNegative = Json.tryGetBoolProperty "nonNegative" element
+                  LabelColumnName = lc
+                  NumberOfIterations = Json.tryGetIntProperty "numberOfIterations" element
+                  NumberOfThreads = Json.tryGetIntProperty "numberOfThreads" element
+                  MatrixColumnIndexColumnName = cin
+                  MatrixRowIndexColumnName = rin }
+                |> Ok
+            | None, _, _ -> Error "Missing `labelColumnName` property"
+            | _, None, _ -> Error "Missing `matrixColumnIndexColumnName` property"
+            | _, _, None -> Error "Missing `matrixRowIndexColumnName` property"
 
     [<CLIMutable>]
     type PredictionItem = { Label: float32; Score: float32 }
@@ -102,10 +154,6 @@ module MatrixFactorization =
             try
                 let trainingCtx = createTrainingContext mlCtx settings.General uri
 
-
-
-
-
                 (*
                 options.MatrixColumnIndexColumnName <- settings.MatrixColumnIndexColumnName
                 options.MatrixRowIndexColumnName <- settings.MatrixRowIndexColumnName
@@ -131,6 +179,7 @@ module MatrixFactorization =
                         |> Option.iter (fun v -> options.ApproximationRank <- v)
 
                         trainerSettings.LearningRate |> Option.iter (fun v -> options.LearningRate <- v)
+                        trainerSettings.LossFunction |> Option.iter (fun v -> options.LossFunction <- v)
                         trainerSettings.NonNegative |> Option.iter (fun v -> options.NonNegative <- v)
 
                         trainerSettings.NumberOfIterations
