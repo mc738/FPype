@@ -288,8 +288,7 @@ module MLTest =
                             Name = "Text"
                             DataKind = DataKind.String } ]
                       RowFilters = []
-                      Transformations =
-                        [ TransformationType.FeaturizeText("Features", "Text") ] }
+                      Transformations = [ TransformationType.FeaturizeText("Features", "Text") ] }
                    TrainerType =
                      BinaryClassification.SdcaLogisticRegressionSettings.Default()
                      |> BinaryClassification.TrainerType.SdcaLogisticRegression }: BinaryClassification.TrainingSettings)
@@ -509,37 +508,46 @@ module MLTest =
             let mlCtx = createCtx (Some 0)
 
             let settings =
-                ({ MatrixColumnIndexColumnName = "UserIdEncoded"
-                   MatrixRowIndexColumnName = "MovieIdEncoded"
-                   LabelColumnName = "Label"
-                   NumberOfIterations = 20
-                   ApproximationRank = 100
-                   General =
-                     { DataSource =
-                         { Type = "file"
-                           Uri = dataPath
-                           Name = "Training data"
-                           CollectionName = "misc" }
-                       ModelSavePath = modelPath
-                       HasHeaders = true
-                       Separators = [| ',' |]
-                       AllowQuoting = false
-                       ReadMultilines = false
-                       TrainingTestSplit = 0.01
-                       Columns =
-                         [ { Index = 0
-                             Name = "UserId"
-                             DataKind = DataKind.Single }
-                           { Index = 1
-                             Name = "MovieId"
-                             DataKind = DataKind.Single }
-                           { Index = 2
-                             Name = "Label"
-                             DataKind = DataKind.Single } ]
-                       RowFilters = []
-                       Transformations =
-                         [ TransformationType.MapValueToKey("UserIdEncoded", "UserId")
-                           TransformationType.MapValueToKey("MovieIdEncoded", "MovieId") ] } }: MatrixFactorization.TrainingSettings)
+                ({ General =
+                    { DataSource =
+                        { Type = "file"
+                          Uri = dataPath
+                          Name = "Training data"
+                          CollectionName = "misc" }
+                      ModelSavePath = modelPath
+                      HasHeaders = true
+                      Separators = [| ',' |]
+                      AllowQuoting = false
+                      ReadMultilines = false
+                      TrainingTestSplit = 0.01
+                      Columns =
+                        [ { Index = 0
+                            Name = "UserId"
+                            DataKind = DataKind.Single }
+                          { Index = 1
+                            Name = "MovieId"
+                            DataKind = DataKind.Single }
+                          { Index = 2
+                            Name = "Label"
+                            DataKind = DataKind.Single } ]
+                      RowFilters = []
+                      Transformations =
+                        [ TransformationType.MapValueToKey("UserIdEncoded", "UserId")
+                          TransformationType.MapValueToKey("MovieIdEncoded", "MovieId") ] }
+                   TrainerType =
+                     ({ Alpha = None
+                        C = None
+                        Lambda = None
+                        ApproximationRank = Some 100
+                        LearningRate = None
+                        LossFunction = None
+                        NonNegative = None
+                        LabelColumnName = "Label"
+                        NumberOfIterations = Some 20
+                        NumberOfThreads = None
+                        MatrixColumnIndexColumnName = "UserIdEncoded"
+                        MatrixRowIndexColumnName = "MovieIdEncoded" }: MatrixFactorization.MatrixFactorizationSettings)
+                     |> MatrixFactorization.TrainerType.MatrixFactorization }: MatrixFactorization.TrainingSettings)
 
             let metrics = MatrixFactorization.train mlCtx settings |> unwrap
 
