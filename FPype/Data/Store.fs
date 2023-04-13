@@ -1,22 +1,19 @@
 ﻿namespace FPype.Data
 
-open System
-open System.Globalization
-open System.IO
-open System.Reflection.Metadata
-open FPype.Core.Types
-open FPype.Data.Models
 
 module Store =
 
+    
     open System
+    open System.Globalization
     open System.IO
     open Microsoft.Data.Sqlite
     open Freql.Sqlite
     open Freql.Core.Common.Types
     open FsToolbox.Extensions
+    open FPype.Core
     open FPype.Core.Types
-    open Models
+    open FPype.Data.Models
 
     module Internal =
 
@@ -683,6 +680,20 @@ module Store =
                Value = value }: ImportError)
             |> addImportError ctx
 
+        member ps.ExpandPath(path: string, ?otherReplacements: (string * string) list) =
+            [
+                "%IMPORTS%", ps.GetImportsPath() |> Option.defaultValue ps.DefaultImportsPath
+                "%EXPORTS%", ps.GetExportsPath() |> Option.defaultValue ps.DefaultExportPath
+                "%TMP%", ps.GetTmpPath() |> Option.defaultValue ps.DefaultTmpPath
+                match otherReplacements with
+                | Some orv -> yield! orv
+                | None -> ()
+            ]
+            |> path.ReplaceMultiple
+            
+            
+            
+        
         member ps.CreateTable(name, columns) =
             createTable ctx name columns
             |> fun c -> ({ Name = name; Columns = c; Rows = [] }: TableModel)

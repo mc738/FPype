@@ -3,6 +3,8 @@
 [<AutoOpen>]
 module Common =
 
+    open System
+
     let flattenResultList (r: Result<'a, string> list) =
         r
         |> List.fold
@@ -26,3 +28,12 @@ module Common =
                 | Error _ -> acc)
             []
         |> List.rev
+
+
+    [<AutoOpen>]
+    module Extensions =
+
+        type String with
+
+            member str.ReplaceMultiple(replacements: (string * string) list) =
+                replacements |> List.fold (fun (s:string) -> s.Replace) str

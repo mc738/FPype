@@ -1,5 +1,7 @@
 ﻿namespace FPype.Configuration
 
+open FPype.Actions.ML
+
 module Actions =
 
     open System.IO
@@ -91,7 +93,10 @@ module Actions =
                 | None, _ -> Error "Missing url property"
                 | _, None -> Error "Missing name property"
 
-        let names = [ Import.``import-file``.name; Import.``chunk-file``.name; Import.``http-get``.name ]
+        let names =
+            [ Import.``import-file``.name
+              Import.``chunk-file``.name
+              Import.``http-get``.name ]
 
         let all =
             [ Import.``import-file``.name, ``import-file``.deserialize
@@ -254,19 +259,105 @@ module Actions =
 
         let all (ctx: SqliteContext) = []
 
+    module ML =
+
+
+        module ``train-binary-classification-model`` =
+            let deserialize (ctx: SqliteContext) (json: JsonElement) =
+                match
+                    Json.tryGetProperty "trainingSettings" json
+                    |> Option.map FPype.ML.BinaryClassification.TrainingSettings.FromJson
+                    |> Option.defaultWith (fun _ -> Error "Missing `trainingSettings` property"),
+                    Json.tryGetStringProperty "modelName" json
+                with
+                | Ok ts, Some mn ->
+                    ({ TrainingSettings = ts
+                       ModelName = mn
+                       ContextSeed = Json.tryGetIntProperty "contextSeed" json }: ML.``train-binary-classification-model``.Parameters)
+                    |> ML.``train-binary-classification-model``.createAction
+                    |> Ok
+                | Error e, _ -> Error e
+                | _, None -> Error "Missing `modelName` property"
+
+        module ``train-multiclass-classification-model`` =
+            let deserialize (ctx: SqliteContext) (json: JsonElement) =
+                match
+                    Json.tryGetProperty "trainingSettings" json
+                    |> Option.map FPype.ML.MulticlassClassification.TrainingSettings.FromJson
+                    |> Option.defaultWith (fun _ -> Error "Missing `trainingSettings` property"),
+                    Json.tryGetStringProperty "modelName" json
+                with
+                | Ok ts, Some mn ->
+                    ({ TrainingSettings = ts
+                       ModelName = mn
+                       ContextSeed = Json.tryGetIntProperty "contextSeed" json }: ML.``train-multiclass-classification-model``.Parameters)
+                    |> ML.``train-multiclass-classification-model``.createAction
+                    |> Ok
+                | Error e, _ -> Error e
+                | _, None -> Error "Missing `modelName` property"
+
+        module ``train-regression-model`` =
+            let deserialize (ctx: SqliteContext) (json: JsonElement) =
+                match
+                    Json.tryGetProperty "trainingSettings" json
+                    |> Option.map FPype.ML.Regression.TrainingSettings.FromJson
+                    |> Option.defaultWith (fun _ -> Error "Missing `trainingSettings` property"),
+                    Json.tryGetStringProperty "modelName" json
+                with
+                | Ok ts, Some mn ->
+                    ({ TrainingSettings = ts
+                       ModelName = mn
+                       ContextSeed = Json.tryGetIntProperty "contextSeed" json }: ML.``train-regression-model``.Parameters)
+                    |> ML.``train-regression-model``.createAction
+                    |> Ok
+                | Error e, _ -> Error e
+                | _, None -> Error "Missing `modelName` property"
+
+        module ``train-matrix-factorization-model`` =
+            let deserialize (ctx: SqliteContext) (json: JsonElement) =
+                match
+                    Json.tryGetProperty "trainingSettings" json
+                    |> Option.map FPype.ML.MatrixFactorization.TrainingSettings.FromJson
+                    |> Option.defaultWith (fun _ -> Error "Missing `trainingSettings` property"),
+                    Json.tryGetStringProperty "modelName" json
+                with
+                | Ok ts, Some mn ->
+                    ({ TrainingSettings = ts
+                       ModelName = mn
+                       ContextSeed = Json.tryGetIntProperty "contextSeed" json }: ML.``train-matrix-factorization-model``.Parameters)
+                    |> ML.``train-matrix-factorization-model``.createAction
+                    |> Ok
+                | Error e, _ -> Error e
+                | _, None -> Error "Missing `modelName` property"
+
+        let names =
+            [ ML.``train-binary-classification-model``.name
+              ML.``train-multiclass-classification-model``.name
+              ML.``train-regression-model``.name
+              ML.``train-matrix-factorization-model``.name ]
+
+        let all (ctx: SqliteContext) =
+            [ ML.``train-binary-classification-model``.name, ``train-binary-classification-model``.deserialize ctx
+              ML.``train-multiclass-classification-model``.name,
+              ``train-multiclass-classification-model``.deserialize ctx
+              ML.``train-regression-model``.name, ``train-regression-model``.deserialize ctx
+              ML.``train-matrix-factorization-model``.name, ``train-matrix-factorization-model``.deserialize ctx ]
+
     let names =
         [ yield! Import.names
           yield! Extract.names
           yield! Transform.names
           yield! Load.names
-          yield! Export.names ]
+          yield! Export.names
+          yield! ML.names ]
 
     let all (ctx: SqliteContext) =
         [ yield! Import.all
           yield! Extract.all ctx
           yield! Transform.all ctx
           yield! Load.all ctx
-          yield! Export.all ctx ]
+          yield! Export.all ctx
+          yield! ML.all ctx ]
 
     let createAction
         (actionsMap: Map<string, JsonElement -> Result<PipelineAction, string>>)

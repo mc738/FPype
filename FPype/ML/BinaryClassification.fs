@@ -3,6 +3,7 @@
 open System
 open System.Text.Json
 open FPype.Data.Models
+open FPype.Data.Store
 open FsToolbox.Core
 
 [<RequireQualifiedAccess>]
@@ -22,10 +23,10 @@ module BinaryClassification =
         { General: GeneralTrainingSettings
           TrainerType: TrainerType }
 
-        static member FromJson(element: JsonElement, store: PipelineStore) =
+        static member FromJson(element: JsonElement) =
             match
                 Json.tryGetProperty "general" element
-                |> Option.map (fun el -> GeneralTrainingSettings.FromJson(el, store))
+                |> Option.map GeneralTrainingSettings.FromJson
                 |> Option.defaultWith (fun _ -> Error "Missing `general` property"),
                 Json.tryGetProperty "trainer" element
                 |> Option.map TrainerType.FromJson
@@ -54,7 +55,7 @@ module BinaryClassification =
 
         member tt.GetName() =
             match tt with
-            | SdcaLogisticRegressionSettings -> "Sdca logistic regression"
+            | SdcaLogisticRegression _ -> "Sdca logistic regression"
 
     and SdcaLogisticRegressionSettings =
         { LabelColumnName: string
@@ -175,9 +176,8 @@ module BinaryClassification =
                      Value.Double metrics.AreaUnderRocCurve
                      Value.Double metrics.AreaUnderPrecisionRecallCurve ] }: TableRow) ] }: TableModel)
 
-
-    let train (mlCtx: MLContext) (settings: TrainingSettings) =
-        getDataSourceUri settings.General.DataSource
+    let train (mlCtx: MLContext) (store: PipelineStore) (settings: TrainingSettings) =
+        getDataSourceUri store settings.General.DataSource
         |> Result.bind (fun uri ->
             try
                 let trainingCtx = createTrainingContext mlCtx settings.General uri
@@ -211,7 +211,7 @@ module BinaryClassification =
 
                 let trainedModel = trainingPipeline.Fit(trainingCtx.TrainingData)
 
-                mlCtx.Model.Save(trainedModel, trainingCtx.TrainingData.Schema, settings.General.ModelSavePath)
+                mlCtx.Model.Save(trainedModel, trainingCtx.TrainingData.Schema, store.ExpandPath settings.General.ModelSavePath)
 
                 let predictions = trainedModel.Transform(trainingCtx.TestData)
 
@@ -224,9 +224,9 @@ module BinaryClassification =
             with ex ->
                 Error $"Error training model - {ex.Message}")
 
-    let load (mlCtx: MLContext) (path: string) =
+    let load (mlCtx: MLContext) (store: PipelineStore) (path: string) =
         try
-            match mlCtx.Model.Load(path) with
+            match mlCtx.Model.Load(store.ExpandPath path) with
             | (m, _) ->
                 mlCtx.Model.CreatePredictionEngine<TextClassificationItem, TextPredictionItem>(m)
                 |> Ok

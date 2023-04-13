@@ -19,10 +19,10 @@ module MulticlassClassification =
         { General: GeneralTrainingSettings
           TrainerType: TrainerType }
 
-        static member FromJson(element: JsonElement, store: PipelineStore) =
+        static member FromJson(element: JsonElement) =
             match
                 Json.tryGetProperty "general" element
-                |> Option.map (fun el -> GeneralTrainingSettings.FromJson(el, store))
+                |> Option.map GeneralTrainingSettings.FromJson
                 |> Option.defaultWith (fun _ -> Error "Missing `general` property"),
                 Json.tryGetProperty "trainer" element
                 |> Option.map TrainerType.FromJson
@@ -149,8 +149,8 @@ module MulticlassClassification =
                      Value.Int metrics.TopKPredictionCount
                      Value.String <| floatSeqToString metrics.TopKAccuracyForAllK ] }: TableRow) ] }: TableModel)
 
-    let train (mlCtx: MLContext) (settings: TrainingSettings) =
-        getDataSourceUri settings.General.DataSource
+    let train (mlCtx: MLContext) (store: PipelineStore) (settings: TrainingSettings) =
+        getDataSourceUri store settings.General.DataSource
         |> Result.bind (fun uri ->
             try
                 let trainingCtx = createTrainingContext mlCtx settings.General uri
@@ -179,7 +179,7 @@ module MulticlassClassification =
 
                 let trainedModel = trainingPipeline.Fit(trainingCtx.TrainingData)
 
-                mlCtx.Model.Save(trainedModel, trainingCtx.TrainingData.Schema, settings.General.ModelSavePath)
+                mlCtx.Model.Save(trainedModel, trainingCtx.TrainingData.Schema, store.ExpandPath settings.General.ModelSavePath)
 
                 let predictions = trainedModel.Transform(trainingCtx.TestData)
 
@@ -188,9 +188,9 @@ module MulticlassClassification =
             with ex ->
                 Error $"Error training model - {ex.Message}")
 
-    let load (mlCtx: MLContext) (path: string) =
+    let load (mlCtx: MLContext) (store: PipelineStore) (path: string) =
         try
-            match mlCtx.Model.Load(path) with
+            match mlCtx.Model.Load(store.ExpandPath path) with
             | (m, t) -> Ok(m, t)
         with ex ->
             Error ex.Message

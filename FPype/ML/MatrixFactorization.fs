@@ -18,19 +18,13 @@ module MatrixFactorization =
     open FPype.Data.Store
 
     type TrainingSettings =
-        {
-          //MatrixColumnIndexColumnName: string
-          //MatrixRowIndexColumnName: string
-          //LabelColumnName: string
-          //NumberOfIterations: int
-          //ApproximationRank: int
-          General: GeneralTrainingSettings
+        { General: GeneralTrainingSettings
           TrainerType: TrainerType }
 
-        static member FromJson(element: JsonElement, store: PipelineStore) =
+        static member FromJson(element: JsonElement) =
             match
                 Json.tryGetProperty "general" element
-                |> Option.map (fun el -> GeneralTrainingSettings.FromJson(el, store))
+                |> Option.map GeneralTrainingSettings.FromJson
                 |> Option.defaultWith (fun _ -> Error "Missing `general` property"),
                 Json.tryGetProperty "trainer" element
                 |> Option.map TrainerType.FromJson
@@ -148,20 +142,11 @@ module MatrixFactorization =
                      Value.Double metrics.MeanSquaredError
                      Value.Double metrics.RootMeanSquaredError ] }: TableRow) ] }: TableModel)
 
-    let train (mlCtx: MLContext) (settings: TrainingSettings) =
-        getDataSourceUri settings.General.DataSource
+    let train (mlCtx: MLContext) (store: PipelineStore) (settings: TrainingSettings) =
+        getDataSourceUri store settings.General.DataSource
         |> Result.bind (fun uri ->
             try
                 let trainingCtx = createTrainingContext mlCtx settings.General uri
-
-                (*
-                options.MatrixColumnIndexColumnName <- settings.MatrixColumnIndexColumnName
-                options.MatrixRowIndexColumnName <- settings.MatrixRowIndexColumnName
-                options.LabelColumnName <- settings.LabelColumnName
-                options.NumberOfIterations <- settings.NumberOfIterations
-                options.ApproximationRank <- settings.ApproximationRank
-                *)
-
 
                 let trainer =
                     match settings.TrainerType with
@@ -196,7 +181,7 @@ module MatrixFactorization =
 
                 let trainedModel = trainingPipeline.Fit(trainingCtx.TrainingData)
 
-                mlCtx.Model.Save(trainedModel, trainingCtx.TrainingData.Schema, settings.General.ModelSavePath)
+                mlCtx.Model.Save(trainedModel, trainingCtx.TrainingData.Schema, store.ExpandPath settings.General.ModelSavePath)
 
                 let predictions = trainedModel.Transform(trainingCtx.TestData)
 
@@ -208,9 +193,9 @@ module MatrixFactorization =
             with ex ->
                 Error $"Error training model - {ex.Message}")
 
-    let load (mlCtx: MLContext) (path: string) =
+    let load (mlCtx: MLContext) (store: PipelineStore) (path: string) =
         try
-            match mlCtx.Model.Load(path) with
+            match mlCtx.Model.Load(store.ExpandPath path) with
             | (m, t) -> Ok(m, t)
         with ex ->
             Error ex.Message

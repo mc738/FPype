@@ -23,7 +23,7 @@ module ML =
         let run (parameters: Parameters) (store: PipelineStore) =
             let mlCtx = createCtx parameters.ContextSeed
 
-            BinaryClassification.train mlCtx parameters.TrainingSettings
+            BinaryClassification.train mlCtx store parameters.TrainingSettings
             |> Result.map (fun metrics ->
 
                 match
@@ -52,7 +52,7 @@ module ML =
         let run (parameters: Parameters) (store: PipelineStore) =
             let mlCtx = createCtx parameters.ContextSeed
 
-            MulticlassClassification.train mlCtx parameters.TrainingSettings
+            MulticlassClassification.train mlCtx store parameters.TrainingSettings
             |> Result.map (fun metrics ->
                 match
                     MulticlassClassification.metricsToTable
@@ -74,14 +74,25 @@ module ML =
 
         type Parameters =
             { TrainingSettings: Regression.TrainingSettings
+              ModelName: string
               ContextSeed: int option }
 
         let run (parameters: Parameters) (store: PipelineStore) =
             let mlCtx = createCtx parameters.ContextSeed
 
-            Regression.train mlCtx parameters.TrainingSettings
+            Regression.train mlCtx store parameters.TrainingSettings
             |> Result.map (fun metrics ->
-                // TODO do something with metrics
+                match
+                    Regression.metricsToTable
+                        parameters.ModelName
+                        parameters.TrainingSettings.TrainerType
+                        metrics
+                    |> store.CreateTable
+                    |> store.InsertRows
+                with
+                | Ok _ -> store.Log(name, $"Model `{parameters.ModelName}` metrics saved.")
+                | Error e -> store.LogError(name, $"Error saving metrics: {e}")
+                
                 store)
 
         let createAction (parameters: Parameters) = run parameters |> createAction name
@@ -91,14 +102,25 @@ module ML =
 
         type Parameters =
             { TrainingSettings: MatrixFactorization.TrainingSettings
+              ModelName: string
               ContextSeed: int option }
 
         let run (parameters: Parameters) (store: PipelineStore) =
             let mlCtx = createCtx parameters.ContextSeed
 
-            MatrixFactorization.train mlCtx parameters.TrainingSettings
+            MatrixFactorization.train mlCtx store parameters.TrainingSettings
             |> Result.map (fun metrics ->
-                // TODO do something with metrics
+                match
+                   MatrixFactorization.metricsToTable
+                        parameters.ModelName
+                        parameters.TrainingSettings.TrainerType
+                        metrics
+                    |> store.CreateTable
+                    |> store.InsertRows
+                with
+                | Ok _ -> store.Log(name, $"Model `{parameters.ModelName}` metrics saved.")
+                | Error e -> store.LogError(name, $"Error saving metrics: {e}")
+                
                 store)
 
         let createAction (parameters: Parameters) = run parameters |> createAction name

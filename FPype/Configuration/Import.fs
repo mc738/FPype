@@ -135,7 +135,6 @@ module Import =
     let pipelines (ctx: SqliteContext) (transaction: bool) (json: JsonElement list) =
         json |> List.map (pipeline ctx transaction)
 
-
     let pipelineArg (ctx: SqliteContext) (transaction: bool) (json: JsonElement) =
         match getName json, getPipeline json with
         | Some n, Some p ->

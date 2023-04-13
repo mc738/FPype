@@ -335,7 +335,7 @@ module Common =
             | None -> Error "Missing `columnName` property"
 
     type GeneralTrainingSettings =
-        { DataSource: DataSource
+        { DataSource: string
           ModelSavePath: string
           HasHeaders: bool
           Separators: char array
@@ -346,9 +346,9 @@ module Common =
           RowFilters: RowFilter list
           Transformations: TransformationType list }
 
-        static member FromJson(element: JsonElement, store: PipelineStore) =
+        static member FromJson(element: JsonElement) =
             match
-                Json.tryGetStringProperty "source" element |> Option.bind store.GetDataSource,
+                Json.tryGetStringProperty "source" element,
                 Json.tryGetStringProperty "modelSavePath" element,
                 Json.tryGetProperty "separators" element
                 |> Option.bind Json.tryGetStringArray
@@ -381,14 +381,17 @@ module Common =
 
     let createCtx (seed: int option) = MLContext(seed |> Option.toNullable)
 
-    let getDataSourceUri (source: DataSource) =
-        match DataSourceType.Deserialize source.Type with
-        | Some DataSourceType.File -> source.Uri |> Ok
-        | Some DataSourceType.Artifact ->
-            // NOTE when not a file create a temporary file to hold it or load from another source?
-            Error "Artifact data sources to be implemented"
-        | None -> Error "Unknown data source type"
-
+    let getDataSourceUri (store: PipelineStore) (name: string) =
+        store.GetDataSource name
+        |> Option.map (fun ds ->
+            match DataSourceType.Deserialize  ds.Type with
+            | Some DataSourceType.File -> ds.Uri |> Ok
+            | Some DataSourceType.Artifact ->
+                // NOTE when not a file create a temporary file to hold it or load from another source?
+                Error "Artifact data sources to be implemented"
+            | None -> Error "Unknown data source type")
+        |> Option.defaultWith (fun _ -> Error $"Data source `{name}` not found")
+        
     let loadFromTable () =
         DatabaseSource(SqliteFactory.Instance, "", "")
 
