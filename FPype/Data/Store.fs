@@ -3,7 +3,7 @@
 
 module Store =
 
-    
+
     open System
     open System.Globalization
     open System.IO
@@ -409,7 +409,7 @@ module Store =
             // Initialization chain, the last step should always be setting the initialized timestamp.
             // This indicates it was completed successfully.
             // Starts with Ok () just for looks rather than any practical purpose (but possibly this could change.
-            Ok ()
+            Ok()
             |> Result.bind (fun _ -> store.CreateImportDirectory())
             |> Result.bind (fun _ -> store.CreateExportDirectory())
             |> Result.bind (fun _ -> store.CreateTmpDirectory())
@@ -444,7 +444,7 @@ module Store =
             match ps.GetStateValue key with
             | Some _ -> true
             | None -> false
-        
+
         member ps.GetStateValueAsValue(key, baseType: BaseType, ?format: string) =
             ps.GetStateValue key
             |> Option.bind (fun str ->
@@ -680,20 +680,32 @@ module Store =
                Value = value }: ImportError)
             |> addImportError ctx
 
-        member ps.ExpandPath(path: string, ?otherReplacements: (string * string) list) =
-            [
-                "%IMPORTS%", ps.GetImportsPath() |> Option.defaultValue ps.DefaultImportsPath
-                "%EXPORTS%", ps.GetExportsPath() |> Option.defaultValue ps.DefaultExportPath
-                "%TMP%", ps.GetTmpPath() |> Option.defaultValue ps.DefaultTmpPath
-                match otherReplacements with
-                | Some orv -> yield! orv
-                | None -> ()
-            ]
-            |> path.ReplaceMultiple
-            
-            
-            
+        member ps.AddVariable(name: string, value: string, ?allowOverride: bool) =
+            let n = $"%%{name}%%"
+
+            match ps.GetStateValue n, allowOverride |> Option.defaultValue false with
+            | Some v, true when v <> value -> ps.UpdateStateValue(n, value) |> ignore
+            | Some _, true
+            | Some _, false -> ()
+            | None, _ -> ps.AddStateValue(n, value)
         
+        member ps.ExpandPath(path: string, ?otherReplacements: (string * string) list) =
+            [ "%IMPORTS%", ps.GetImportsPath() |> Option.defaultValue ps.DefaultImportsPath
+              "%EXPORTS%", ps.GetExportsPath() |> Option.defaultValue ps.DefaultExportPath
+              "%TMP%", ps.GetTmpPath() |> Option.defaultValue ps.DefaultTmpPath
+              // Variables can be stored as state values (with names starting with %).
+              // These are used for expanding paths too
+              yield!
+                  ps.GetState()
+                  |> List.choose (fun sv ->
+                      match sv.Name.StartsWith('%') with
+                      | true -> Some(sv.Name, sv.Value)
+                      | false -> None)
+              match otherReplacements with
+              | Some orv -> yield! orv
+              | None -> () ]
+            |> path.ReplaceMultiple
+
         member ps.CreateTable(name, columns) =
             createTable ctx name columns
             |> fun c -> ({ Name = name; Columns = c; Rows = [] }: TableModel)

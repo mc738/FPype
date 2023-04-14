@@ -37,6 +37,22 @@ module Actions =
                 Error
                     $"Error creating query: query `{queryVersion.Name}` (version `{queryVersion.Version.ToLabel()}`) not found")
 
+    module Utils =
+        module ``create-directory`` =
+            let deserialize (json: JsonElement) =
+                match Json.tryGetStringProperty "path" json, Json.tryGetStringProperty "name" json with
+                | Some path, Some name ->
+                    ({ Path = path; Name = name }: Utils.``create-directory``.Parameters)
+                    |> Utils.``create-directory``.createAction
+                    |> Ok
+                | None, _ -> Error "Missing path property"
+                | _, None -> Error "Missing name property"
+                
+        let names =
+            [ Utils.``create-directory``.name ]
+
+        let all =
+            [ Utils.``create-directory``.name, ``create-directory``.deserialize ]
     module Import =
 
         module ``import-file`` =
@@ -368,7 +384,8 @@ module Actions =
               ML.``train-matrix-factorization-model``.name, ``train-matrix-factorization-model``.deserialize ctx ]
 
     let names =
-        [ yield! Import.names
+        [ yield! Utils.names
+          yield! Import.names
           yield! Extract.names
           yield! Transform.names
           yield! Load.names
@@ -376,7 +393,8 @@ module Actions =
           yield! ML.names ]
 
     let all (ctx: SqliteContext) =
-        [ yield! Import.all
+        [ yield! Utils.all
+          yield! Import.all
           yield! Extract.all ctx
           yield! Transform.all ctx
           yield! Load.all ctx
