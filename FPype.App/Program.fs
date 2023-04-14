@@ -269,13 +269,7 @@ module MLTest =
 
             let settings =
                 ({ General =
-                    { DataSource =
-                        { Type = "file"
-                          Uri = dataPath
-                          Name = "Training data"
-                          CollectionName = "misc" }
-                      ModelSavePath = modelPath
-                      HasHeaders = true
+                    { HasHeaders = true
                       Separators = [| '\t' |]
                       AllowQuoting = false
                       ReadMultilines = false
@@ -293,7 +287,7 @@ module MLTest =
                      BinaryClassification.SdcaLogisticRegressionSettings.Default()
                      |> BinaryClassification.TrainerType.SdcaLogisticRegression }: BinaryClassification.TrainingSettings)
 
-            let metrics = BinaryClassification.train mlCtx settings |> unwrap
+            let metrics = BinaryClassification.train mlCtx modelPath settings dataPath  |> unwrap
 
             printfn "Model metrics"
             printfn $"Accuracy: {metrics.Accuracy}"
@@ -333,13 +327,7 @@ module MLTest =
 
             let settings =
                 ({ General =
-                    { DataSource =
-                        { Type = "file"
-                          Uri = dataPath
-                          Name = "Training data"
-                          CollectionName = "misc" }
-                      ModelSavePath = modelPath
-                      HasHeaders = true
+                    { HasHeaders = true
                       Separators = [| '\t' |]
                       AllowQuoting = false
                       ReadMultilines = false
@@ -367,7 +355,7 @@ module MLTest =
                      MulticlassClassification.SdcaMaximumEntropySettings.Default()
                      |> MulticlassClassification.TrainerType.SdcaMaximumEntropy }: MulticlassClassification.TrainingSettings)
 
-            let metrics = MulticlassClassification.train mlCtx settings |> unwrap
+            let metrics = MulticlassClassification.train mlCtx modelPath settings dataPath |> unwrap
 
             printfn "Model metrics"
             printfn $"Confusion matrix: {metrics.ConfusionMatrix}"
@@ -411,13 +399,7 @@ module MLTest =
 
             let settings =
                 ({ General =
-                    { DataSource =
-                        { Type = "file"
-                          Uri = dataPath
-                          Name = "Training data"
-                          CollectionName = "misc" }
-                      ModelSavePath = modelPath
-                      HasHeaders = true
+                    { HasHeaders = true
                       Separators = [| ',' |]
                       AllowQuoting = false
                       ReadMultilines = false
@@ -467,7 +449,7 @@ module MLTest =
                           ) ] }
                    TrainerType = Regression.SdcaSettings.Default() |> Regression.TrainerType.Sdca }: Regression.TrainingSettings)
 
-            let metrics = Regression.train mlCtx settings |> unwrap
+            let metrics = Regression.train mlCtx modelPath settings dataPath |> unwrap
 
             printfn "Model metrics"
             printfn $"Loss function: {metrics.LossFunction}"
@@ -509,13 +491,7 @@ module MLTest =
 
             let settings =
                 ({ General =
-                    { DataSource =
-                        { Type = "file"
-                          Uri = dataPath
-                          Name = "Training data"
-                          CollectionName = "misc" }
-                      ModelSavePath = modelPath
-                      HasHeaders = true
+                    { HasHeaders = true
                       Separators = [| ',' |]
                       AllowQuoting = false
                       ReadMultilines = false
@@ -549,7 +525,7 @@ module MLTest =
                         MatrixRowIndexColumnName = "MovieIdEncoded" }: MatrixFactorization.MatrixFactorizationSettings)
                      |> MatrixFactorization.TrainerType.MatrixFactorization }: MatrixFactorization.TrainingSettings)
 
-            let metrics = MatrixFactorization.train mlCtx settings |> unwrap
+            let metrics = MatrixFactorization.train mlCtx modelPath settings dataPath |> unwrap
 
             printfn "Model metrics"
             printfn $"Loss function: {metrics.LossFunction}"
@@ -590,13 +566,7 @@ module FakeNewsTest =
 
         let settings =
             ({ General =
-                { DataSource =
-                    { Type = "file"
-                      Uri = dataPath
-                      Name = "Training data"
-                      CollectionName = "misc" }
-                  ModelSavePath = modelPath
-                  HasHeaders = true
+                { HasHeaders = true
                   Separators = [| ',' |]
                   AllowQuoting = true
                   ReadMultilines = true
@@ -635,7 +605,7 @@ module FakeNewsTest =
                  MulticlassClassification.SdcaMaximumEntropySettings.Default()
                  |> MulticlassClassification.TrainerType.SdcaMaximumEntropy }: MulticlassClassification.TrainingSettings)
 
-        let metrics = MulticlassClassification.train mlCtx settings |> unwrap
+        let metrics = MulticlassClassification.train mlCtx modelPath settings dataPath |> unwrap
 
         printfn "Model metrics"
         printfn $"Confusion matrix: {metrics.ConfusionMatrix}"
