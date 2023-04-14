@@ -335,9 +335,7 @@ module Common =
             | None -> Error "Missing `columnName` property"
 
     type GeneralTrainingSettings =
-        { DataSource: string
-          ModelSavePath: string
-          HasHeaders: bool
+        { HasHeaders: bool
           Separators: char array
           AllowQuoting: bool
           ReadMultilines: bool
@@ -348,17 +346,17 @@ module Common =
 
         static member FromJson(element: JsonElement) =
             match
-                Json.tryGetStringProperty "source" element,
-                Json.tryGetStringProperty "modelSavePath" element,
+                //Json.tryGetStringProperty "source" element,
+                //Json.tryGetStringProperty "modelSavePath" element,
                 Json.tryGetProperty "separators" element
                 |> Option.bind Json.tryGetStringArray
                 |> Option.map (fun sl -> sl |> List.choose (fun s -> s |> Seq.tryHead) |> Array.ofList),
                 Json.tryGetArrayProperty "columns" element
                 |> Option.map (fun ces -> ces |> List.map DataColumn.FromJson |> chooseResults)
             with
-            | Some ds, Some msp, Some s, Some c ->
-                { DataSource = ds
-                  ModelSavePath = msp
+            | Some s, Some c ->
+                { //DataSource = ds
+                  //ModelSavePath = msp
                   HasHeaders = Json.tryGetBoolProperty "hasHeaders" element |> Option.defaultValue false
                   Separators = s
                   AllowQuoting = Json.tryGetBoolProperty "allowQuoting" element |> Option.defaultValue false
@@ -374,13 +372,12 @@ module Common =
                     |> Option.map (fun ts -> ts |> List.map TransformationType.FromJson |> chooseResults)
                     |> Option.defaultValue [] }
                 |> Ok
-            | None, _, _, _ -> Error "Missing `source` property or unknown data source"
-            | _, None, _, _ -> Error "Missing `modelSavePath` property"
-            | _, _, None, _ -> Error "Missing `separators` property"
-            | _, _, _, None -> Error "Missing `columns` property"
+            | None, _ -> Error "Missing `separators` property"
+            | _, None -> Error "Missing `columns` property"
 
     let createCtx (seed: int option) = MLContext(seed |> Option.toNullable)
 
+    [<Obsolete("Use Actions.Common version instead")>]
     let getDataSourceUri (store: PipelineStore) (name: string) =
         store.GetDataSource name
         |> Option.map (fun ds ->

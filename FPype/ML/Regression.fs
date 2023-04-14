@@ -1,18 +1,17 @@
 ﻿namespace FPype.ML
 
-open System
-open System.Text.Json
-open FPype.Data.Models
-open FsToolbox.Core
-open Microsoft.ML.Data
-
 [<RequireQualifiedAccess>]
 module Regression =
 
-    open FPype.Core.Types
-    open FPype.Data.Store
+    open System
+    open System.Text.Json
     open Microsoft.FSharp.Core
     open Microsoft.ML
+    open Microsoft.ML.Data
+    open FsToolbox.Core
+    open FPype.Data.Models
+    open FPype.Core.Types
+    open FPype.Data.Store
 
     type TrainingSettings =
         { General: GeneralTrainingSettings
@@ -82,6 +81,7 @@ module Regression =
         [ $"{modelName} metrics"
           ""
           "Model type: multiclass classification"
+          $"Trainer type: {trainerType.GetName()}"
           $"Loss function: {metrics.LossFunction}"
           $"R squared: {metrics.RSquared}"
           $"Mean absolute error: {metrics.MeanAbsoluteError}"
@@ -123,45 +123,41 @@ module Regression =
                      Value.Double metrics.MeanSquaredError
                      Value.Double metrics.RootMeanSquaredError ] }: TableRow) ] }: TableModel)
 
-    let train (mlCtx: MLContext) (store: PipelineStore) (settings: TrainingSettings) =
-        getDataSourceUri store settings.General.DataSource
-        |> Result.bind (fun uri ->
-            try
-                let trainingCtx = createTrainingContext mlCtx settings.General uri
-
-                // TODO set strings are settings
-                let trainer =
-                    match settings.TrainerType with
-                    | TrainerType.Sdca trainerSettings ->
-                        mlCtx.Regression.Trainers.Sdca(
-                            labelColumnName = trainerSettings.LabelColumnName,
-                            featureColumnName = trainerSettings.FeatureColumnName,
-                            exampleWeightColumnName =
-                                (trainerSettings.ExampleWeightColumnName |> Option.defaultValue null),
-                            l2Regularization = (trainerSettings.L2Regularization |> Option.toNullable),
-                            l1Regularization = (trainerSettings.L1Regularization |> Option.toNullable),
-                            maximumNumberOfIterations = (trainerSettings.MaximumNumberOfIterations |> Option.toNullable)
-                        )
-                        |> Internal.downcastPipeline
-
-                let trainingPipeline = trainingCtx.Pipeline.Append(trainer)
-
-                let trainedModel = trainingPipeline.Fit(trainingCtx.TrainingData)
-
-                mlCtx.Model.Save(trainedModel, trainingCtx.TrainingData.Schema, store.ExpandPath settings.General.ModelSavePath)
-
-                let predictions = trainedModel.Transform(trainingCtx.TestData)
-
-                // TODO set strings are settings
-                mlCtx.Regression.Evaluate(predictions, labelColumnName = "Label", scoreColumnName = "Score")
-                |> Ok
-
-            with ex ->
-                Error $"Error training model - {ex.Message}")
-
-    let load (mlCtx: MLContext) (store: PipelineStore) (path: string) =
+    let train (mlCtx: MLContext) (modelSavePath: string) (settings: TrainingSettings) (dataUri: string) =
         try
-            match mlCtx.Model.Load(store.ExpandPath path) with
+            let trainingCtx = createTrainingContext mlCtx settings.General dataUri
+
+            let trainer =
+                match settings.TrainerType with
+                | TrainerType.Sdca trainerSettings ->
+                    mlCtx.Regression.Trainers.Sdca(
+                        labelColumnName = trainerSettings.LabelColumnName,
+                        featureColumnName = trainerSettings.FeatureColumnName,
+                        exampleWeightColumnName = (trainerSettings.ExampleWeightColumnName |> Option.defaultValue null),
+                        l2Regularization = (trainerSettings.L2Regularization |> Option.toNullable),
+                        l1Regularization = (trainerSettings.L1Regularization |> Option.toNullable),
+                        maximumNumberOfIterations = (trainerSettings.MaximumNumberOfIterations |> Option.toNullable)
+                    )
+                    |> Internal.downcastPipeline
+
+            let trainingPipeline = trainingCtx.Pipeline.Append(trainer)
+
+            let trainedModel = trainingPipeline.Fit(trainingCtx.TrainingData)
+
+            mlCtx.Model.Save(trainedModel, trainingCtx.TrainingData.Schema, modelSavePath)
+
+            let predictions = trainedModel.Transform(trainingCtx.TestData)
+
+            // TODO set strings are settings
+            mlCtx.Regression.Evaluate(predictions, labelColumnName = "Label", scoreColumnName = "Score")
+            |> Ok
+
+        with ex ->
+            Error $"Error training model - {ex.Message}"
+
+    let load (mlCtx: MLContext) (path: string) =
+        try
+            match mlCtx.Model.Load(path) with
             | (m, t) -> Ok(m, t)
         with ex ->
             Error ex.Message

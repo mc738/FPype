@@ -1,19 +1,16 @@
 ﻿namespace FPype.ML
 
-open System
-open System.Text.Json
-open FPype.Data.Models
-open FPype.Data.Store
-open FsToolbox.Core
-
 [<RequireQualifiedAccess>]
 module BinaryClassification =
 
-    open FPype.Core.Types
-    open FPype.Data
-    open FPype.Data.Store
+    open System
+    open System.Text.Json
+    open FsToolbox.Core
     open Microsoft.ML
     open Microsoft.ML.Data
+    open FPype.Data.Models
+    open FPype.Data.Store
+    open FPype.Core.Types
 
     type TextClassificationItem = { Text: string; Label: bool }
 
@@ -176,57 +173,44 @@ module BinaryClassification =
                      Value.Double metrics.AreaUnderRocCurve
                      Value.Double metrics.AreaUnderPrecisionRecallCurve ] }: TableRow) ] }: TableModel)
 
-    let train (mlCtx: MLContext) (store: PipelineStore) (settings: TrainingSettings) =
-        getDataSourceUri store settings.General.DataSource
-        |> Result.bind (fun uri ->
-            try
-                let trainingCtx = createTrainingContext mlCtx settings.General uri
-
-                (*
-                let dataProcessPipeline =
-                    match settings.ClassificationType with
-                    | ClassificationType.Text ->
-                        mlCtx.Transforms.Text.FeaturizeText(
-                            outputColumnName = "Features",
-                            inputColumnName = featureColName
-                        )
-                *)
-
-                let trainer =
-                    match settings.TrainerType with
-                    | TrainerType.SdcaLogisticRegression trainerSettings ->
-                        mlCtx.BinaryClassification.Trainers.SdcaLogisticRegression(
-                            labelColumnName = trainerSettings.LabelColumnName,
-                            featureColumnName = trainerSettings.FeatureColumnName,
-                            exampleWeightColumnName =
-                                (trainerSettings.ExampleWeightColumnName |> Option.defaultValue null),
-                            l2Regularization = (trainerSettings.L2Regularization |> Option.toNullable),
-                            l1Regularization = (trainerSettings.L1Regularization |> Option.toNullable),
-                            maximumNumberOfIterations = (trainerSettings.MaximumNumberOfIterations |> Option.toNullable)
-                        )
-                        |> Internal.downcastPipeline
-
-
-                let trainingPipeline = trainingCtx.Pipeline.Append(trainer)
-
-                let trainedModel = trainingPipeline.Fit(trainingCtx.TrainingData)
-
-                mlCtx.Model.Save(trainedModel, trainingCtx.TrainingData.Schema, store.ExpandPath settings.General.ModelSavePath)
-
-                let predictions = trainedModel.Transform(trainingCtx.TestData)
-
-                mlCtx.BinaryClassification.Evaluate(
-                    data = predictions,
-                    labelColumnName = "Label",
-                    scoreColumnName = "Score"
-                )
-                |> Ok
-            with ex ->
-                Error $"Error training model - {ex.Message}")
-
-    let load (mlCtx: MLContext) (store: PipelineStore) (path: string) =
+    let train (mlCtx: MLContext) (modelSavePath: string) (settings: TrainingSettings) (dataUri: string) =
         try
-            match mlCtx.Model.Load(store.ExpandPath path) with
+            let trainingCtx = createTrainingContext mlCtx settings.General dataUri
+
+            let trainer =
+                match settings.TrainerType with
+                | TrainerType.SdcaLogisticRegression trainerSettings ->
+                    mlCtx.BinaryClassification.Trainers.SdcaLogisticRegression(
+                        labelColumnName = trainerSettings.LabelColumnName,
+                        featureColumnName = trainerSettings.FeatureColumnName,
+                        exampleWeightColumnName = (trainerSettings.ExampleWeightColumnName |> Option.defaultValue null),
+                        l2Regularization = (trainerSettings.L2Regularization |> Option.toNullable),
+                        l1Regularization = (trainerSettings.L1Regularization |> Option.toNullable),
+                        maximumNumberOfIterations = (trainerSettings.MaximumNumberOfIterations |> Option.toNullable)
+                    )
+                    |> Internal.downcastPipeline
+
+
+            let trainingPipeline = trainingCtx.Pipeline.Append(trainer)
+
+            let trainedModel = trainingPipeline.Fit(trainingCtx.TrainingData)
+
+            mlCtx.Model.Save(trainedModel, trainingCtx.TrainingData.Schema, modelSavePath)
+
+            let predictions = trainedModel.Transform(trainingCtx.TestData)
+
+            mlCtx.BinaryClassification.Evaluate(
+                data = predictions,
+                labelColumnName = "Label",
+                scoreColumnName = "Score"
+            )
+            |> Ok
+        with ex ->
+            Error $"Error training model - {ex.Message}"
+
+    let load (mlCtx: MLContext) (path: string) =
+        try
+            match mlCtx.Model.Load(path) with
             | (m, _) ->
                 mlCtx.Model.CreatePredictionEngine<TextClassificationItem, TextPredictionItem>(m)
                 |> Ok

@@ -268,16 +268,22 @@ module Actions =
                     Json.tryGetProperty "trainingSettings" json
                     |> Option.map FPype.ML.BinaryClassification.TrainingSettings.FromJson
                     |> Option.defaultWith (fun _ -> Error "Missing `trainingSettings` property"),
-                    Json.tryGetStringProperty "modelName" json
+                    Json.tryGetStringProperty "modelName" json,
+                    Json.tryGetStringProperty "source" json,
+                    Json.tryGetStringProperty "modelSavePath" json
                 with
-                | Ok ts, Some mn ->
+                | Ok ts, Some mn, Some ds, Some msp ->
                     ({ TrainingSettings = ts
                        ModelName = mn
+                       DataSource = ds
+                       ModelSavePath = msp
                        ContextSeed = Json.tryGetIntProperty "contextSeed" json }: ML.``train-binary-classification-model``.Parameters)
                     |> ML.``train-binary-classification-model``.createAction
                     |> Ok
-                | Error e, _ -> Error e
-                | _, None -> Error "Missing `modelName` property"
+                | Error e, _, _, _ -> Error e
+                | _, None, _, _ -> Error "Missing `modelName` property"
+                | _, _, None, _ -> Error "Missing `source` property"
+                | _, _, _, None -> Error "Missing `modelSavePath` property"
 
         module ``train-multiclass-classification-model`` =
             let deserialize (ctx: SqliteContext) (json: JsonElement) =
@@ -285,16 +291,22 @@ module Actions =
                     Json.tryGetProperty "trainingSettings" json
                     |> Option.map FPype.ML.MulticlassClassification.TrainingSettings.FromJson
                     |> Option.defaultWith (fun _ -> Error "Missing `trainingSettings` property"),
-                    Json.tryGetStringProperty "modelName" json
+                    Json.tryGetStringProperty "modelName" json,
+                    Json.tryGetStringProperty "source" json,
+                    Json.tryGetStringProperty "modelSavePath" json
                 with
-                | Ok ts, Some mn ->
+                | Ok ts, Some mn, Some ds, Some msp ->
                     ({ TrainingSettings = ts
                        ModelName = mn
+                       DataSource = ds
+                       ModelSavePath = msp
                        ContextSeed = Json.tryGetIntProperty "contextSeed" json }: ML.``train-multiclass-classification-model``.Parameters)
                     |> ML.``train-multiclass-classification-model``.createAction
                     |> Ok
-                | Error e, _ -> Error e
-                | _, None -> Error "Missing `modelName` property"
+                | Error e, _, _, _ -> Error e
+                | _, None, _, _ -> Error "Missing `modelName` property"
+                | _, _, None, _ -> Error "Missing `source` property"
+                | _, _, _, None -> Error "Missing `modelSavePath` property"
 
         module ``train-regression-model`` =
             let deserialize (ctx: SqliteContext) (json: JsonElement) =
@@ -302,16 +314,22 @@ module Actions =
                     Json.tryGetProperty "trainingSettings" json
                     |> Option.map FPype.ML.Regression.TrainingSettings.FromJson
                     |> Option.defaultWith (fun _ -> Error "Missing `trainingSettings` property"),
-                    Json.tryGetStringProperty "modelName" json
+                    Json.tryGetStringProperty "modelName" json,
+                    Json.tryGetStringProperty "source" json,
+                    Json.tryGetStringProperty "modelSavePath" json
                 with
-                | Ok ts, Some mn ->
+                | Ok ts, Some mn, Some ds, Some msp ->
                     ({ TrainingSettings = ts
                        ModelName = mn
+                       DataSource = ds
+                       ModelSavePath = msp
                        ContextSeed = Json.tryGetIntProperty "contextSeed" json }: ML.``train-regression-model``.Parameters)
                     |> ML.``train-regression-model``.createAction
                     |> Ok
-                | Error e, _ -> Error e
-                | _, None -> Error "Missing `modelName` property"
+                | Error e, _, _, _ -> Error e
+                | _, None, _, _ -> Error "Missing `modelName` property"
+                | _, _, None, _ -> Error "Missing `source` property"
+                | _, _, _, None -> Error "Missing `modelSavePath` property"
 
         module ``train-matrix-factorization-model`` =
             let deserialize (ctx: SqliteContext) (json: JsonElement) =
@@ -319,16 +337,22 @@ module Actions =
                     Json.tryGetProperty "trainingSettings" json
                     |> Option.map FPype.ML.MatrixFactorization.TrainingSettings.FromJson
                     |> Option.defaultWith (fun _ -> Error "Missing `trainingSettings` property"),
-                    Json.tryGetStringProperty "modelName" json
+                    Json.tryGetStringProperty "modelName" json,
+                    Json.tryGetStringProperty "source" json,
+                    Json.tryGetStringProperty "modelSavePath" json
                 with
-                | Ok ts, Some mn ->
+                | Ok ts, Some mn, Some ds, Some msp ->
                     ({ TrainingSettings = ts
                        ModelName = mn
+                       DataSource = ds
+                       ModelSavePath = msp
                        ContextSeed = Json.tryGetIntProperty "contextSeed" json }: ML.``train-matrix-factorization-model``.Parameters)
                     |> ML.``train-matrix-factorization-model``.createAction
                     |> Ok
-                | Error e, _ -> Error e
-                | _, None -> Error "Missing `modelName` property"
+                | Error e, _, _, _ -> Error e
+                | _, None, _, _ -> Error "Missing `modelName` property"
+                | _, _, None, _ -> Error "Missing `source` property"
+                | _, _, _, None -> Error "Missing `modelSavePath` property"
 
         let names =
             [ ML.``train-binary-classification-model``.name

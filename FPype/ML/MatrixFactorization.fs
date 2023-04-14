@@ -1,20 +1,17 @@
 ﻿namespace FPype.ML
 
-open System
-open System.Text.Json
-open FPype.Data.Models
-open FsToolbox.Core
-open Microsoft.ML.Data
-open Microsoft.ML.Trainers
-
-
 [<RequireQualifiedAccess>]
 module MatrixFactorization =
 
-    open FPype.Core.Types
+    open System
+    open System.Text.Json
     open Microsoft.FSharp.Core
     open Microsoft.ML
     open Microsoft.ML.Trainers
+    open Microsoft.ML.Data
+    open FsToolbox.Core
+    open FPype.Core.Types
+    open FPype.Data.Models
     open FPype.Data.Store
 
     type TrainingSettings =
@@ -142,60 +139,58 @@ module MatrixFactorization =
                      Value.Double metrics.MeanSquaredError
                      Value.Double metrics.RootMeanSquaredError ] }: TableRow) ] }: TableModel)
 
-    let train (mlCtx: MLContext) (store: PipelineStore) (settings: TrainingSettings) =
-        getDataSourceUri store settings.General.DataSource
-        |> Result.bind (fun uri ->
-            try
-                let trainingCtx = createTrainingContext mlCtx settings.General uri
-
-                let trainer =
-                    match settings.TrainerType with
-                    | TrainerType.MatrixFactorization trainerSettings ->
-                        let options = MatrixFactorizationTrainer.Options()
-
-                        options.LabelColumnName <- trainerSettings.LabelColumnName
-                        options.MatrixColumnIndexColumnName <- trainerSettings.MatrixColumnIndexColumnName
-                        options.MatrixRowIndexColumnName <- trainerSettings.MatrixRowIndexColumnName
-                        trainerSettings.Alpha |> Option.iter (fun v -> options.Alpha <- v)
-                        trainerSettings.C |> Option.iter (fun v -> options.C <- v)
-                        trainerSettings.Lambda |> Option.iter (fun v -> options.Lambda <- v)
-
-                        trainerSettings.ApproximationRank
-                        |> Option.iter (fun v -> options.ApproximationRank <- v)
-
-                        trainerSettings.LearningRate |> Option.iter (fun v -> options.LearningRate <- v)
-                        trainerSettings.LossFunction |> Option.iter (fun v -> options.LossFunction <- v)
-                        trainerSettings.NonNegative |> Option.iter (fun v -> options.NonNegative <- v)
-
-                        trainerSettings.NumberOfIterations
-                        |> Option.iter (fun v -> options.NumberOfIterations <- v)
-
-                        trainerSettings.NumberOfThreads
-                        |> Option.toNullable
-                        |> (fun v -> options.NumberOfThreads <- v)
-
-                        mlCtx.Recommendation().Trainers.MatrixFactorization(options)
-                        |> Internal.downcastPipeline
-
-                let trainingPipeline = trainingCtx.Pipeline.Append(trainer)
-
-                let trainedModel = trainingPipeline.Fit(trainingCtx.TrainingData)
-
-                mlCtx.Model.Save(trainedModel, trainingCtx.TrainingData.Schema, store.ExpandPath settings.General.ModelSavePath)
-
-                let predictions = trainedModel.Transform(trainingCtx.TestData)
-
-                mlCtx
-                    .Recommendation()
-                    .Evaluate(predictions, labelColumnName = "Label", scoreColumnName = "Score")
-                |> Ok
-
-            with ex ->
-                Error $"Error training model - {ex.Message}")
-
-    let load (mlCtx: MLContext) (store: PipelineStore) (path: string) =
+    let train (mlCtx: MLContext) (modelSavePath: string) (settings: TrainingSettings) (dataUri: string) =
         try
-            match mlCtx.Model.Load(store.ExpandPath path) with
+            let trainingCtx = createTrainingContext mlCtx settings.General dataUri
+
+            let trainer =
+                match settings.TrainerType with
+                | TrainerType.MatrixFactorization trainerSettings ->
+                    let options = MatrixFactorizationTrainer.Options()
+
+                    options.LabelColumnName <- trainerSettings.LabelColumnName
+                    options.MatrixColumnIndexColumnName <- trainerSettings.MatrixColumnIndexColumnName
+                    options.MatrixRowIndexColumnName <- trainerSettings.MatrixRowIndexColumnName
+                    trainerSettings.Alpha |> Option.iter (fun v -> options.Alpha <- v)
+                    trainerSettings.C |> Option.iter (fun v -> options.C <- v)
+                    trainerSettings.Lambda |> Option.iter (fun v -> options.Lambda <- v)
+
+                    trainerSettings.ApproximationRank
+                    |> Option.iter (fun v -> options.ApproximationRank <- v)
+
+                    trainerSettings.LearningRate |> Option.iter (fun v -> options.LearningRate <- v)
+                    trainerSettings.LossFunction |> Option.iter (fun v -> options.LossFunction <- v)
+                    trainerSettings.NonNegative |> Option.iter (fun v -> options.NonNegative <- v)
+
+                    trainerSettings.NumberOfIterations
+                    |> Option.iter (fun v -> options.NumberOfIterations <- v)
+
+                    trainerSettings.NumberOfThreads
+                    |> Option.toNullable
+                    |> (fun v -> options.NumberOfThreads <- v)
+
+                    mlCtx.Recommendation().Trainers.MatrixFactorization(options)
+                    |> Internal.downcastPipeline
+
+            let trainingPipeline = trainingCtx.Pipeline.Append(trainer)
+
+            let trainedModel = trainingPipeline.Fit(trainingCtx.TrainingData)
+
+            mlCtx.Model.Save(trainedModel, trainingCtx.TrainingData.Schema, modelSavePath)
+
+            let predictions = trainedModel.Transform(trainingCtx.TestData)
+
+            mlCtx
+                .Recommendation()
+                .Evaluate(predictions, labelColumnName = "Label", scoreColumnName = "Score")
+            |> Ok
+
+        with ex ->
+            Error $"Error training model - {ex.Message}"
+
+    let load (mlCtx: MLContext) (path: string) =
+        try
+            match mlCtx.Model.Load(path) with
             | (m, t) -> Ok(m, t)
         with ex ->
             Error ex.Message

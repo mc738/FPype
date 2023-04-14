@@ -1,20 +1,18 @@
 ﻿namespace FPype.ML
 
-open System
-open System.Text.Json
-open FPype.Data.Models
-open FPype.Data.Store
-open FsToolbox.Core
-
 [<RequireQualifiedAccess>]
 module MulticlassClassification =
 
-    open FPype.Core.Types
+    open System
+    open System.Text.Json
     open Microsoft.FSharp.Core
     open Microsoft.ML
     open Microsoft.ML.Data
+    open FsToolbox.Core
+    open FPype.Data.Models
     open FPype.Data.Store
-
+    open FPype.Core.Types
+    
     type TrainingSettings =
         { General: GeneralTrainingSettings
           TrainerType: TrainerType }
@@ -149,48 +147,45 @@ module MulticlassClassification =
                      Value.Int metrics.TopKPredictionCount
                      Value.String <| floatSeqToString metrics.TopKAccuracyForAllK ] }: TableRow) ] }: TableModel)
 
-    let train (mlCtx: MLContext) (store: PipelineStore) (settings: TrainingSettings) =
-        getDataSourceUri store settings.General.DataSource
-        |> Result.bind (fun uri ->
-            try
-                let trainingCtx = createTrainingContext mlCtx settings.General uri
-
-                let trainer =
-                    match settings.TrainerType with
-                    | TrainerType.SdcaMaximumEntropy trainerSettings ->
-                        mlCtx.MulticlassClassification.Trainers.SdcaMaximumEntropy(
-                            labelColumnName = trainerSettings.LabelColumnName,
-                            featureColumnName = trainerSettings.FeatureColumnName,
-                            exampleWeightColumnName =
-                                (trainerSettings.ExampleWeightColumnName |> Option.defaultValue null),
-                            l2Regularization = (trainerSettings.L2Regularization |> Option.toNullable),
-                            l1Regularization = (trainerSettings.L1Regularization |> Option.toNullable),
-                            maximumNumberOfIterations = (trainerSettings.MaximumNumberOfIterations |> Option.toNullable)
-                        )
-                        |> Internal.downcastPipeline
-
-                // TODO set string are settings
-                let trainingPipeline =
-                    trainingCtx
-                        .Pipeline
-                        .AppendCacheCheckpoint(mlCtx)
-                        .Append(trainer)
-                        .Append(mlCtx.Transforms.Conversion.MapKeyToValue("PredictedLabel"))
-
-                let trainedModel = trainingPipeline.Fit(trainingCtx.TrainingData)
-
-                mlCtx.Model.Save(trainedModel, trainingCtx.TrainingData.Schema, store.ExpandPath settings.General.ModelSavePath)
-
-                let predictions = trainedModel.Transform(trainingCtx.TestData)
-
-                mlCtx.MulticlassClassification.Evaluate(predictions) |> Ok
-
-            with ex ->
-                Error $"Error training model - {ex.Message}")
-
-    let load (mlCtx: MLContext) (store: PipelineStore) (path: string) =
+    let train (mlCtx: MLContext) (modelSavePath: string) (settings: TrainingSettings) (dataUri: string) =
         try
-            match mlCtx.Model.Load(store.ExpandPath path) with
+            let trainingCtx = createTrainingContext mlCtx settings.General dataUri
+
+            let trainer =
+                match settings.TrainerType with
+                | TrainerType.SdcaMaximumEntropy trainerSettings ->
+                    mlCtx.MulticlassClassification.Trainers.SdcaMaximumEntropy(
+                        labelColumnName = trainerSettings.LabelColumnName,
+                        featureColumnName = trainerSettings.FeatureColumnName,
+                        exampleWeightColumnName = (trainerSettings.ExampleWeightColumnName |> Option.defaultValue null),
+                        l2Regularization = (trainerSettings.L2Regularization |> Option.toNullable),
+                        l1Regularization = (trainerSettings.L1Regularization |> Option.toNullable),
+                        maximumNumberOfIterations = (trainerSettings.MaximumNumberOfIterations |> Option.toNullable)
+                    )
+                    |> Internal.downcastPipeline
+
+            // TODO set string are settings
+            let trainingPipeline =
+                trainingCtx
+                    .Pipeline
+                    .AppendCacheCheckpoint(mlCtx)
+                    .Append(trainer)
+                    .Append(mlCtx.Transforms.Conversion.MapKeyToValue("PredictedLabel"))
+
+            let trainedModel = trainingPipeline.Fit(trainingCtx.TrainingData)
+
+            mlCtx.Model.Save(trainedModel, trainingCtx.TrainingData.Schema, modelSavePath)
+
+            let predictions = trainedModel.Transform(trainingCtx.TestData)
+
+            mlCtx.MulticlassClassification.Evaluate(predictions) |> Ok
+
+        with ex ->
+            Error $"Error training model - {ex.Message}"
+
+    let load (mlCtx: MLContext) (path: string) =
+        try
+            match mlCtx.Model.Load(path) with
             | (m, t) -> Ok(m, t)
         with ex ->
             Error ex.Message

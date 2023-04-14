@@ -67,6 +67,18 @@ module Common =
         |> Option.map (getDataSourceAsLines store)
         |> Option.defaultWith (fun _ -> Error $"Data source `{sourceName}` not found.")
         
+    let getDataSourceAsFileUri (store: PipelineStore) (sourceName: string) =
+        store.GetDataSource sourceName
+        |> Option.map (fun ds ->
+            match DataSourceType.Deserialize  ds.Type with
+            | Some DataSourceType.File -> ds.Uri |> Ok
+            | Some DataSourceType.Artifact ->
+                // NOTE when not a file create a temporary file to hold it or load from another source?
+                Error "Artifact data sources to be implemented"
+            | None -> Error "Unknown data source type")
+        |> Option.defaultWith (fun _ -> Error $"Data source `{sourceName}` not found")
+        
+        
     let toJsonElement (str: string) =
         try
             (JsonDocument.Parse str).RootElement |> Ok
