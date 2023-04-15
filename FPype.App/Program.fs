@@ -1,4 +1,5 @@
-﻿open System.IO
+﻿open System
+open System.IO
 open System.Text.Json
 open FPype
 open FPype.Configuration
@@ -10,6 +11,7 @@ open FPype.Core.Types
 open FPype.Data
 open FPype.Data.Models
 open FPype.ML
+open FPype.Scripting.Core
 open Microsoft.FSharp.Core
 open Microsoft.ML
 open Microsoft.ML.Data
@@ -287,7 +289,7 @@ module MLTest =
                      BinaryClassification.SdcaLogisticRegressionSettings.Default()
                      |> BinaryClassification.TrainerType.SdcaLogisticRegression }: BinaryClassification.TrainingSettings)
 
-            let metrics = BinaryClassification.train mlCtx modelPath settings dataPath  |> unwrap
+            let metrics = BinaryClassification.train mlCtx modelPath settings dataPath |> unwrap
 
             printfn "Model metrics"
             printfn $"Accuracy: {metrics.Accuracy}"
@@ -355,7 +357,8 @@ module MLTest =
                      MulticlassClassification.SdcaMaximumEntropySettings.Default()
                      |> MulticlassClassification.TrainerType.SdcaMaximumEntropy }: MulticlassClassification.TrainingSettings)
 
-            let metrics = MulticlassClassification.train mlCtx modelPath settings dataPath |> unwrap
+            let metrics =
+                MulticlassClassification.train mlCtx modelPath settings dataPath |> unwrap
 
             printfn "Model metrics"
             printfn $"Confusion matrix: {metrics.ConfusionMatrix}"
@@ -605,7 +608,8 @@ module FakeNewsTest =
                  MulticlassClassification.SdcaMaximumEntropySettings.Default()
                  |> MulticlassClassification.TrainerType.SdcaMaximumEntropy }: MulticlassClassification.TrainingSettings)
 
-        let metrics = MulticlassClassification.train mlCtx modelPath settings dataPath |> unwrap
+        let metrics =
+            MulticlassClassification.train mlCtx modelPath settings dataPath |> unwrap
 
         printfn "Model metrics"
         printfn $"Confusion matrix: {metrics.ConfusionMatrix}"
@@ -646,6 +650,76 @@ module MiscTest =
         let r = FPype.ML.Common.ClassFactory.createObject properties
 
         ()
+
+module CommsTest =
+
+    open System.IO
+    open System.IO.Pipes
+
+    let testClient _ =
+        async {
+
+            let client = new NamedPipeClientStream("testpipe")
+            client.Connect()
+
+            for i in [ 0..10 ] do
+                client.Write(
+                    Scripting
+                        .Core
+                        .IPC
+                        .Message
+                        .Create($"Hello server. Time is {DateTime.UtcNow}")
+                        .Serialize()
+                )
+
+                // Simulate reading a respone.
+
+                let headerBuffer: byte array = Array.zeroCreate 8
+
+                client.Read(headerBuffer) |> ignore
+
+                match Scripting.Core.IPC.Header.TryDeserialize headerBuffer with
+                | Ok h ->
+
+                    let buffer: byte array = Array.zeroCreate h.Length
+
+                    client.Read(buffer) |> ignore
+
+                    let message = Scripting.Core.IPC.Message.Create(h, buffer)
+
+                    printfn $"Message: {message.BodyAsUtf8String()}"
+
+                    ()
+                | Error e -> printfn $"Error reading response: {e}"
+
+                do! Async.Sleep 1000
+
+
+            client.Close()
+            printfn "Client complete."
+            return true
+        }
+
+    let run _ =
+
+        //let h = Scripting.Core.IPC.Header.Create(12, 1uy, 2uy)
+
+        //let r = Scripting.Core.IPC.Header.TryDeserialize(h.Serialize())
+
+
+        let server = async { return Scripting.Core.IPC.startServer "testpipe" }
+
+        let _ = testClient () |> Async.Ignore |> Async.Start
+
+
+        let r = server |> Async.RunSynchronously
+
+        printfn "Complete"
+
+        ()
+
+
+CommsTest.run ()
 
 //MiscTest.createDynamicObj ()
 //MLTest.train ()

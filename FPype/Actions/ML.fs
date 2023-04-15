@@ -27,7 +27,7 @@ module ML =
 
             getDataSourceAsFileUri store parameters.ModelName
             |> Result.bind (
-                BinaryClassification.train mlCtx (store.ExpandPath parameters.ModelSavePath) parameters.TrainingSettings
+                BinaryClassification.train mlCtx (store.SubstituteValues parameters.ModelSavePath) parameters.TrainingSettings
             )
             |> Result.map (fun metrics ->
 
@@ -63,7 +63,7 @@ module ML =
             |> Result.bind (
                 MulticlassClassification.train
                     mlCtx
-                    (store.ExpandPath parameters.ModelSavePath)
+                    (store.SubstituteValues parameters.ModelSavePath)
                     parameters.TrainingSettings
             )
             |> Result.map (fun metrics ->
@@ -97,7 +97,7 @@ module ML =
 
             getDataSourceAsFileUri store parameters.ModelName
             |> Result.bind (
-                Regression.train mlCtx (store.ExpandPath parameters.ModelSavePath) parameters.TrainingSettings
+                Regression.train mlCtx (store.SubstituteValues parameters.ModelSavePath) parameters.TrainingSettings
             )
             |> Result.map (fun metrics ->
                 match
@@ -127,7 +127,7 @@ module ML =
 
             getDataSourceAsFileUri store parameters.ModelName
             |> Result.bind (
-                MatrixFactorization.train mlCtx (store.ExpandPath parameters.ModelSavePath) parameters.TrainingSettings
+                MatrixFactorization.train mlCtx (store.SubstituteValues parameters.ModelSavePath) parameters.TrainingSettings
             )
             |> Result.map (fun metrics ->
                 match

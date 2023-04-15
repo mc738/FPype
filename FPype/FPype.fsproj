@@ -26,6 +26,8 @@
         <Compile Include="ML\MatrixFactorization.fs" />
         <Compile Include="Data\Statistics.fs" />
         <Compile Include="Data\Mapping.fs" />
+        <Compile Include="Scripting\Core.fs" />
+        <Compile Include="Scripting\FSharp.fs" />
         <Compile Include="Actions\Common.fs" />
         <Compile Include="Actions\Utils.fs" />
         <Compile Include="Actions\Import.fs" />

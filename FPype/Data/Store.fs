@@ -688,18 +688,31 @@ module Store =
             | Some _, true
             | Some _, false -> ()
             | None, _ -> ps.AddStateValue(n, value)
-        
-        member ps.ExpandPath(path: string, ?otherReplacements: (string * string) list) =
-            [ "%IMPORTS%", ps.GetImportsPath() |> Option.defaultValue ps.DefaultImportsPath
-              "%EXPORTS%", ps.GetExportsPath() |> Option.defaultValue ps.DefaultExportPath
-              "%TMP%", ps.GetTmpPath() |> Option.defaultValue ps.DefaultTmpPath
+
+        member ps.SubstituteValues(path: string, ?otherReplacements: (string * string) list) =
+            // Get the state values as a map to cut down on database calls.
+            let stateMap = ps.GetState() |> List.map (fun sv -> sv.Name, sv.Value) |> Map.ofList
+
+            [ "%IMPORTS%",
+              stateMap.TryFind StateNames.importsPath
+              |> Option.defaultValue ps.DefaultImportsPath
+              "%EXPORTS%",
+              stateMap.TryFind StateNames.exportsPath
+              |> Option.defaultValue ps.DefaultExportPath
+              "%TMP%", stateMap.TryFind StateNames.tmpPath |> Option.defaultValue ps.DefaultTmpPath
+              "%ID%", stateMap.TryFind StateNames.id |> Option.defaultValue ps.Id
+              "%COMPUTER_NAME%",
+              stateMap.TryFind StateNames.computerName
+              |> Option.defaultValue Environment.MachineName
+              "%USER_NAME%", stateMap.TryFind StateNames.userName |> Option.defaultValue Environment.UserName
               // Variables can be stored as state values (with names starting with %).
               // These are used for expanding paths too
               yield!
-                  ps.GetState()
-                  |> List.choose (fun sv ->
-                      match sv.Name.StartsWith('%') with
-                      | true -> Some(sv.Name, sv.Value)
+                  stateMap
+                  |> Map.toList
+                  |> List.choose (fun (k, v) ->
+                      match k.StartsWith('%') with
+                      | true -> Some(k, v)
                       | false -> None)
               match otherReplacements with
               | Some orv -> yield! orv

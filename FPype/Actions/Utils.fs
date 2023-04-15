@@ -12,7 +12,7 @@ module Utils =
         type Parameters = { Path: string; Name: string }
 
         let run (parameters: Parameters) (store: PipelineStore) =
-            let fullPath = store.ExpandPath parameters.Path
+            let fullPath = store.SubstituteValues parameters.Path
 
             try
                 match Directory.Exists fullPath with
@@ -26,3 +26,15 @@ module Utils =
                 Error $"Failed to create directory `{fullPath}` - {ex.Message}"
         
         let createAction parameters = run parameters |> createAction name
+
+    module ``set-variable`` =
+        
+        let name = "set_variable"
+        
+        type Parameters = { Name: string; AllowOverride: bool }
+        
+        type VariableType =
+            | Literal of string
+            | CurrentTimestamp
+            | Id
+            
