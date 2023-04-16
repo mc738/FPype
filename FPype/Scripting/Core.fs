@@ -115,6 +115,12 @@ module Core =
             // 1. Create the message ctxs
             // 2. start server (perferrable in back ground)
             // 3. handle receiving requests and passing them to ctx
+            //
+            // How should this work?
+            // - blocking function that accepts store
+            // - internally it can response to requests
+            // - once script is complete it returns (like action)
+            // - all logic, data etc is internal
             
             let stream = new NamedPipeServerStream(pipeName, PipeDirection.InOut)
 
