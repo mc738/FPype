@@ -15,6 +15,8 @@ Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "FPype.Tests", "FPype.Tests\
 EndProject
 Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "FPype.Scripts", "FPype.Scripts\FPype.Scripts.fsproj", "{EE5F5B8D-08B4-49BB-A01C-D9F4CB25B1A2}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "_external", "_external", "{23F03A24-5616-41EF-AFB2-B5BEDD79743D}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU

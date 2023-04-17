@@ -137,7 +137,8 @@ module ObjectTableMapperTest =
                    { Name = "inner_value"
                      Type = BaseType.String
                      ImportHandler = None } ]
-               Rows = [] }: TableModel)
+               Rows = [] }
+            : TableModel)
 
 
         let map = ({ Table = table; RootScope = scope }: ObjectTableMap)
@@ -287,7 +288,8 @@ module MLTest =
                       Transformations = [ TransformationType.FeaturizeText("Features", "Text") ] }
                    TrainerType =
                      BinaryClassification.SdcaLogisticRegressionSettings.Default()
-                     |> BinaryClassification.TrainerType.SdcaLogisticRegression }: BinaryClassification.TrainingSettings)
+                     |> BinaryClassification.TrainerType.SdcaLogisticRegression }
+                : BinaryClassification.TrainingSettings)
 
             let metrics = BinaryClassification.train mlCtx modelPath settings dataPath |> unwrap
 
@@ -355,7 +357,8 @@ module MLTest =
                           TransformationType.Concatenate("Features", [ "TitleFeaturized"; "DescriptionFeaturized" ]) ] }
                    TrainerType =
                      MulticlassClassification.SdcaMaximumEntropySettings.Default()
-                     |> MulticlassClassification.TrainerType.SdcaMaximumEntropy }: MulticlassClassification.TrainingSettings)
+                     |> MulticlassClassification.TrainerType.SdcaMaximumEntropy }
+                : MulticlassClassification.TrainingSettings)
 
             let metrics =
                 MulticlassClassification.train mlCtx modelPath settings dataPath |> unwrap
@@ -450,7 +453,8 @@ module MLTest =
                                 "TripTime"
                                 "TripDistance" ]
                           ) ] }
-                   TrainerType = Regression.SdcaSettings.Default() |> Regression.TrainerType.Sdca }: Regression.TrainingSettings)
+                   TrainerType = Regression.SdcaSettings.Default() |> Regression.TrainerType.Sdca }
+                : Regression.TrainingSettings)
 
             let metrics = Regression.train mlCtx modelPath settings dataPath |> unwrap
 
@@ -525,8 +529,10 @@ module MLTest =
                         NumberOfIterations = Some 20
                         NumberOfThreads = None
                         MatrixColumnIndexColumnName = "UserIdEncoded"
-                        MatrixRowIndexColumnName = "MovieIdEncoded" }: MatrixFactorization.MatrixFactorizationSettings)
-                     |> MatrixFactorization.TrainerType.MatrixFactorization }: MatrixFactorization.TrainingSettings)
+                        MatrixRowIndexColumnName = "MovieIdEncoded" }
+                     : MatrixFactorization.MatrixFactorizationSettings)
+                     |> MatrixFactorization.TrainerType.MatrixFactorization }
+                : MatrixFactorization.TrainingSettings)
 
             let metrics = MatrixFactorization.train mlCtx modelPath settings dataPath |> unwrap
 
@@ -606,7 +612,8 @@ module FakeNewsTest =
                       ) ] }
                TrainerType =
                  MulticlassClassification.SdcaMaximumEntropySettings.Default()
-                 |> MulticlassClassification.TrainerType.SdcaMaximumEntropy }: MulticlassClassification.TrainingSettings)
+                 |> MulticlassClassification.TrainerType.SdcaMaximumEntropy }
+            : MulticlassClassification.TrainingSettings)
 
         let metrics =
             MulticlassClassification.train mlCtx modelPath settings dataPath |> unwrap
@@ -659,43 +666,20 @@ module CommsTest =
     let testClient _ =
         async {
 
-            let client = new NamedPipeClientStream("testpipe")
-            client.Connect()
+            use ctx = new ScriptContext("testpipe")
+
+            //let ctx = Client.start "testpipe"
 
             for i in [ 0..10 ] do
-                client.Write(
-                    Scripting
-                        .Core
-                        .IPC
-                        .Message
-                        .Create($"Hello server. Time is {DateTime.UtcNow}")
-                        .Serialize()
-                )
-
-                // Simulate reading a respone.
-
-                let headerBuffer: byte array = Array.zeroCreate 8
-
-                client.Read(headerBuffer) |> ignore
-
-                match Scripting.Core.IPC.Header.TryDeserialize headerBuffer with
-                | Ok h ->
-
-                    let buffer: byte array = Array.zeroCreate h.Length
-
-                    client.Read(buffer) |> ignore
-
-                    let message = Scripting.Core.IPC.Message.Create(h, buffer)
-
-                    printfn $"Message: {message.BodyAsUtf8String()}"
-
-                    ()
-                | Error e -> printfn $"Error reading response: {e}"
+                match ctx.SendRequest(IPC.RequestMessage.RawMessage $"Hello server. Time is {DateTime.UtcNow}") with
+                | Ok res ->
+                    match res with
+                    | IPC.ResponseMessage.RawMessage b -> printfn $"[CLIENT] {b}"
+                    | IPC.ResponseMessage.Close -> ()
+                | Error e -> printfn $"ERROR - {e}"
 
                 do! Async.Sleep 1000
 
-
-            client.Close()
             printfn "Client complete."
             return true
         }
@@ -706,11 +690,20 @@ module CommsTest =
 
         //let r = Scripting.Core.IPC.Header.TryDeserialize(h.Serialize())
 
+        let handler (req: IPC.RequestMessage) =
+            match req with
+            | IPC.RequestMessage.RawMessage b ->
+                printfn $"[SERVER] {b}"
+                IPC.ResponseMessage.RawMessage $"Hello from server - {DateTime.UtcNow}" |> Some
+            | IPC.RequestMessage.Close ->
+                printfn $"[SERVER] Close request received."
+                None
 
-        let server = async { return Scripting.Core.IPC.startServer "testpipe" }
+
+
+        let server = async { return Server.start handler "testpipe" }
 
         let _ = testClient () |> Async.Ignore |> Async.Start
-
 
         let r = server |> Async.RunSynchronously
 

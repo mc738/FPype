@@ -2,6 +2,7 @@
 
 open System
 open System.Globalization
+open System.Text
 open System.Text.Json
 open System.Text.RegularExpressions
 
@@ -60,19 +61,13 @@ module Types =
 
         let isOption (name: string) =
             Regex
-                .Match(
-                    name,
-                    "(?<=Microsoft.FSharp.Core.FSharpOption`1\[\[).+?(?=\,)"
-                )
+                .Match(name, "(?<=Microsoft.FSharp.Core.FSharpOption`1\[\[).+?(?=\,)")
                 .Success
 
         let getOptionType name =
             // Maybe a bit wasteful doing this twice.
             Regex
-                .Match(
-                    name,
-                    "(?<=Microsoft.FSharp.Core.FSharpOption`1\[\[).+?(?=\,)"
-                )
+                .Match(name, "(?<=Microsoft.FSharp.Core.FSharpOption`1\[\[).+?(?=\,)")
                 .Value
 
 
@@ -197,7 +192,7 @@ module Types =
             match bt with
             | BaseType.Option _ -> true
             | _ -> false
-            
+
         member bt.ToType() =
             let rec handler baseType =
                 match baseType with
@@ -236,7 +231,7 @@ module Types =
             match cr with
             | Success v -> fn v |> CoercionResult.Success
             | _ -> cr
-            
+
     and [<RequireQualifiedAccess>] Value =
         | Boolean of bool
         | Byte of byte
@@ -251,6 +246,84 @@ module Types =
         | DateTime of DateTime
         | Guid of Guid
         | Option of Value option
+        
+        static member TryDeserialize(data: byte array) =
+            match data |> Array.tryHead with
+            | Some 1uy ->
+                // len 1
+                // bool
+                let t = data |> Array.tail
+                
+                match t.Length >= 1 with
+                | true ->
+                    let (b, r) = t |> Array.splitAt 1
+                    
+                    (BitConverter.ToBoolean(b) |> Value.Boolean, r) |> Ok
+                | false -> Error "Data is too short"
+                
+                
+                ()
+            | Some 2uy ->
+                // len 1
+                // byte
+                
+                ()
+            | Some 3uy ->
+                // len 2
+                // char
+                
+                ()
+            | Some 4uy ->
+                // len 16
+                // dec
+                
+                ()
+            | Some 5uy ->
+                // len 8
+                // dou
+                ()
+            | Some 6uy ->
+                // len 4
+                // float
+                ()
+            | Some 7uy ->
+                // len 4
+                // int
+                
+                
+                ()
+            | Some 8uy ->
+                // len 2
+                // short
+                
+                ()
+            | Some 9uy ->
+                // len 8
+                // long
+                ()
+            | Some 10uy ->
+                // len 4 + that value
+                // str
+                ()
+            | Some 11uy ->
+                // len 8
+                // dt
+                ()
+            | Some 12uy ->
+                // len 16
+                // guid
+                ()
+            | Some 13uy ->
+                // ?? rec
+                ()
+            | Some 14uy ->
+                // len 0
+                ()
+            | _ -> ()
+            
+            
+            
+            
 
         static member CoerceValueToType<'T>(value: 'T, baseType: BaseType) =
             let handler value (target: Type) (successHandler: obj -> Value) =
@@ -296,7 +369,7 @@ module Types =
                         | CoercionResult.Failure e ->
                             CoercionResult.Failure $"Could not get optional value. Error: '{e}'"
                         | r -> r
-                | true, TypeHelpers.SomeObj (v1) ->
+                | true, TypeHelpers.SomeObj(v1) ->
                     match t with
                     | BaseType.Boolean -> handler v1 typeof<bool> (fun o -> o :?> bool |> Value.Boolean |> toOption)
                     | BaseType.Byte -> handler v1 typeof<byte> (fun o -> o :?> byte |> Value.Byte |> toOption)
@@ -537,7 +610,7 @@ module Types =
                     | None -> ""
 
             handler fv
-        
+
         member fv.GetDecimal() =
             let rec handler (value: Value) =
                 match value with
@@ -586,7 +659,7 @@ module Types =
 
         member v.IsStringMatch(value: Value, comparison) =
             String.Equals(v.GetString(), value.GetString(), comparison)
-            
+
         member v.GetBaseType() =
             let rec handler (value: Value) =
                 match value with
@@ -603,7 +676,41 @@ module Types =
                 | DateTime _ -> BaseType.DateTime
                 | Guid _ -> BaseType.Guid
                 | Option iv -> failwith "TODO - implement"
-                    
-                    //handler iv |> BaseType.Option
-            
+
+            //handler iv |> BaseType.Option
+
+            handler v
+
+        member v.Serialize() =
+            let rec handler (value: Value) =
+                match value with
+                | Boolean v -> [| 1uy; yield! BitConverter.GetBytes(v) |]
+                | Byte v -> [| 2uy; v |]
+                | Char v -> [| 3uy; yield! BitConverter.GetBytes(v) |]
+                | Decimal v ->
+                    // See - https://learn.microsoft.com/en-us/dotnet/api/system.decimal.getbits
+                    // First break the bytes down into parts.
+                    // Then convert parts to bytes.
+                    let parts = Decimal.GetBits(v) |> Array.collect BitConverter.GetBytes
+
+                    [| 4uy; yield! parts |]
+                | Double v -> [| 5uy; yield! BitConverter.GetBytes(v) |]
+                | Float v -> [| 6uy; yield! BitConverter.GetBytes v |]
+                | Int v -> [| 7uy; yield! BitConverter.GetBytes v |]
+                | Short v -> [| 8uy; yield! BitConverter.GetBytes v |]
+                | Long v -> [| 9uy; yield! BitConverter.GetBytes v |]
+                | String v ->
+                    let bytes = Encoding.UTF8.GetBytes v
+                    // Note - special handling. The length is stored after the type.
+                    [| 10uy; yield! BitConverter.GetBytes bytes.Length; yield! bytes |]
+                | DateTime v -> [| 12uy; yield! v.ToBinary() |> BitConverter.GetBytes |]
+                | Guid v -> [| 12uy; yield! v.ToByteArray() |]
+                | Option iv ->
+                    match iv with
+                    | Some v -> [| 13uy; yield! handler v |]
+                    | None ->
+                        [|
+                           // Special value to represent option - none?
+                           14uy |]
+
             handler v
