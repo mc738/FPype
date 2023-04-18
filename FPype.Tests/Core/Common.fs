@@ -35,7 +35,7 @@ type ValueTests() =
         
         Assert.AreEqual(expected, actual)
         
-    //[<TestMethod>]
+    [<TestMethod>]
     member _.``Serialize and deserialize decimal``() =
         
         let actual = (Value.Decimal 100m).Serialize() |> Value.TryDeserialize
@@ -91,7 +91,7 @@ type ValueTests() =
         Assert.AreEqual(expected, actual)
         
     
-    //[<TestMethod>]
+    [<TestMethod>]
     member _.``Serialize and deserialize string``() =
         
         let actual = (Value.String "Hello, World!").Serialize() |> Value.TryDeserialize
