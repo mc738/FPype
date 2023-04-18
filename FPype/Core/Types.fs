@@ -260,66 +260,138 @@ module Types =
                     
                     (BitConverter.ToBoolean(b) |> Value.Boolean, r) |> Ok
                 | false -> Error "Data is too short"
-                
-                
-                ()
             | Some 2uy ->
                 // len 1
                 // byte
+                let t = data |> Array.tail
                 
-                ()
+                match t.Length >= 1 with
+                | true ->
+                    let (b, r) = t |> Array.splitAt 1
+                    
+                    // NOTE - b should always be 1 long so this should be fine.
+                    (b[0] |> Value.Byte, r) |> Ok
+                | false -> Error "Data is too short"
             | Some 3uy ->
                 // len 2
                 // char
+                let t = data |> Array.tail
                 
-                ()
+                match t.Length >= 2 with
+                | true ->
+                    let (b, r) = t |> Array.splitAt 2
+                    
+                    (BitConverter.ToChar(b) |> Value.Char, r) |> Ok
+                | false -> Error "Data is too short"
             | Some 4uy ->
                 // len 16
                 // dec
                 
                 ()
+                failwith "TODO"
             | Some 5uy ->
                 // len 8
                 // dou
-                ()
+                let t = data |> Array.tail
+                
+                match t.Length >= 8 with
+                | true ->
+                    let (b, r) = t |> Array.splitAt 8
+                    
+                    (BitConverter.ToDouble(b) |> Value.Double, r) |> Ok
+                | false -> Error "Data is too short"
+                
             | Some 6uy ->
                 // len 4
                 // float
-                ()
+                let t = data |> Array.tail
+                
+                match t.Length >= 4 with
+                | true ->
+                    let (b, r) = t |> Array.splitAt 4
+                    
+                    (BitConverter.ToSingle(b) |> Value.Float, r) |> Ok
+                | false -> Error "Data is too short"
+                
             | Some 7uy ->
                 // len 4
                 // int
+                let t = data |> Array.tail
                 
+                match t.Length >= 4 with
+                | true ->
+                    let (b, r) = t |> Array.splitAt 4
+                    
+                    (BitConverter.ToInt32(b) |> Value.Int, r) |> Ok
+                | false -> Error "Data is too short"
                 
-                ()
             | Some 8uy ->
                 // len 2
                 // short
                 
-                ()
+                let t = data |> Array.tail
+                
+                match t.Length >= 2 with
+                | true ->
+                    let (b, r) = t |> Array.splitAt 2
+                    
+                    (BitConverter.ToInt16(b) |> Value.Short, r) |> Ok
+                | false -> Error "Data is too short"
+                
             | Some 9uy ->
                 // len 8
                 // long
-                ()
+                let t = data |> Array.tail
+                
+                match t.Length >= 8 with
+                | true ->
+                    let (b, r) = t |> Array.splitAt 8
+                    
+                    (BitConverter.ToInt64(b) |> Value.Long, r) |> Ok
+                | false -> Error "Data is too short"
+                
             | Some 10uy ->
                 // len 4 + that value
                 // str
                 ()
+                failwith "TODO"
             | Some 11uy ->
                 // len 8
                 // dt
-                ()
+                let t = data |> Array.tail
+                
+                match t.Length >= 8 with
+                | true ->
+                    let (b, r) = t |> Array.splitAt 8
+                    
+                    (BitConverter.ToInt64(b) |> DateTime.FromBinary |> Value.DateTime, r) |> Ok
+                | false -> Error "Data is too short"
+                
             | Some 12uy ->
                 // len 16
                 // guid
-                ()
+                let t = data |> Array.tail
+                
+                match t.Length >= 16 with
+                | true ->
+                    let (b, r) = t |> Array.splitAt 16
+                    
+                    (System.Guid(b) |> Value.Guid, r) |> Ok
+                | false -> Error "Data is too short"
+                
             | Some 13uy ->
                 // ?? rec
+                
                 ()
+                failwith "TODO"
             | Some 14uy ->
                 // len 0
-                ()
-            | _ -> ()
+                (Value.Option None, data |> Array.tail) |> Ok
+            | Some v ->
+                Error $"Unknown type ({v})"
+            | None ->
+                Error "Missing value type byte"
+                
             
             
             
