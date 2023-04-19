@@ -252,7 +252,6 @@ module Types =
                 match data |> Array.tryHead with
                 | Some 1uy ->
                     // len 1
-                    // bool
                     let t = data |> Array.tail
 
                     match t.Length >= 1 with
@@ -263,7 +262,6 @@ module Types =
                     | false -> Error "Data is too short"
                 | Some 2uy ->
                     // len 1
-                    // byte
                     let t = data |> Array.tail
 
                     match t.Length >= 1 with
@@ -275,7 +273,6 @@ module Types =
                     | false -> Error "Data is too short"
                 | Some 3uy ->
                     // len 2
-                    // char
                     let t = data |> Array.tail
 
                     match t.Length >= 2 with
@@ -286,11 +283,8 @@ module Types =
                     | false -> Error "Data is too short"
                 | Some 4uy ->
                     // len 16
-                    // dec
                     let t = data |> Array.tail
-
-
-
+                    
                     match t.Length >= 16 with
                     | true ->
                         let (b, r) = t |> Array.splitAt 16
@@ -303,7 +297,6 @@ module Types =
                     | false -> Error "Data is too short"
                 | Some 5uy ->
                     // len 8
-                    // dou
                     let t = data |> Array.tail
 
                     match t.Length >= 8 with
@@ -315,7 +308,6 @@ module Types =
 
                 | Some 6uy ->
                     // len 4
-                    // float
                     let t = data |> Array.tail
 
                     match t.Length >= 4 with
@@ -327,7 +319,6 @@ module Types =
 
                 | Some 7uy ->
                     // len 4
-                    // int
                     let t = data |> Array.tail
 
                     match t.Length >= 4 with
@@ -339,8 +330,6 @@ module Types =
 
                 | Some 8uy ->
                     // len 2
-                    // short
-
                     let t = data |> Array.tail
 
                     match t.Length >= 2 with
@@ -352,7 +341,6 @@ module Types =
 
                 | Some 9uy ->
                     // len 8
-                    // long
                     let t = data |> Array.tail
 
                     match t.Length >= 8 with
@@ -364,7 +352,6 @@ module Types =
 
                 | Some 10uy ->
                     // len 4 + that value
-                    // str
                     let t = data |> Array.tail
 
                     match t.Length >= 8 with
@@ -382,7 +369,6 @@ module Types =
                     | false -> Error "Data is too short"
                 | Some 11uy ->
                     // len 8
-                    // dt
                     let t = data |> Array.tail
 
                     match t.Length >= 8 with
@@ -394,7 +380,6 @@ module Types =
 
                 | Some 12uy ->
                     // len 16
-                    // guid
                     let t = data |> Array.tail
 
                     match t.Length >= 16 with
@@ -405,8 +390,6 @@ module Types =
                     | false -> Error "Data is too short"
 
                 | Some 13uy ->
-                    // ?? rec
-
                     handler (data |> Array.tail)
                     |> Result.map (fun (b, r) -> Value.Option(Some b), r)
 
