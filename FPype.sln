@@ -17,6 +17,8 @@ Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "FPype.Scripts", "FPype.Scri
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "_external", "_external", "{23F03A24-5616-41EF-AFB2-B5BEDD79743D}"
 EndProject
+Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "FPype.Infrastructure", "FPype.Infrastructure\FPype.Infrastructure.fsproj", "{DDC77E4D-E240-4DA9-BDB8-B73CA351315C}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -39,6 +41,10 @@ Global
 		{EE5F5B8D-08B4-49BB-A01C-D9F4CB25B1A2}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{EE5F5B8D-08B4-49BB-A01C-D9F4CB25B1A2}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{EE5F5B8D-08B4-49BB-A01C-D9F4CB25B1A2}.Release|Any CPU.Build.0 = Release|Any CPU
+		{DDC77E4D-E240-4DA9-BDB8-B73CA351315C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{DDC77E4D-E240-4DA9-BDB8-B73CA351315C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{DDC77E4D-E240-4DA9-BDB8-B73CA351315C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{DDC77E4D-E240-4DA9-BDB8-B73CA351315C}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
 	EndGlobalSection
