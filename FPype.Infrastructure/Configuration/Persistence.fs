@@ -5,7 +5,7 @@ open System.Text.Json.Serialization
 open Freql.Core.Common
 open Freql.MySql
 
-/// Module generated on 22/04/2023 16:29:09 (utc) via Freql.Sqlite.Tools.
+/// Module generated on 22/04/2023 16:51:13 (utc) via Freql.Sqlite.Tools.
 [<RequireQualifiedAccess>]
 module Records =
     /// A record representing a row in the table `cfg_action_types`.
@@ -770,8 +770,45 @@ module Records =
     
         static member TableName() = "subscriptions"
     
+    /// A record representing a row in the table `users`.
+    type User =
+        { [<JsonPropertyName("id")>] Id: int
+          [<JsonPropertyName("reference")>] Reference: string
+          [<JsonPropertyName("subscriptionId")>] SubscriptionId: int
+          [<JsonPropertyName("username")>] Username: string }
+    
+        static member Blank() =
+            { Id = 0
+              Reference = String.Empty
+              SubscriptionId = 0
+              Username = String.Empty }
+    
+        static member CreateTableSql() = """
+        CREATE TABLE `users` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `reference` varchar(100) NOT NULL,
+  `subscription_id` int NOT NULL,
+  `username` varchar(100) NOT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `users_UN` (`reference`),
+  UNIQUE KEY `users_UN_1` (`subscription_id`,`username`),
+  CONSTRAINT `users_FK` FOREIGN KEY (`subscription_id`) REFERENCES `subscriptions` (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci
+        """
+    
+        static member SelectSql() = """
+        SELECT
+              users.`id`,
+              users.`reference`,
+              users.`subscription_id`,
+              users.`username`
+        FROM users
+        """
+    
+        static member TableName() = "users"
+    
 
-/// Module generated on 22/04/2023 16:29:09 (utc) via Freql.Tools.
+/// Module generated on 22/04/2023 16:51:13 (utc) via Freql.Tools.
 [<RequireQualifiedAccess>]
 module Parameters =
     /// A record representing a new row in the table `cfg_action_types`.
@@ -813,7 +850,6 @@ module Parameters =
               SubscriptionId = 0
               Name = String.Empty }
     
-    
     /// A record representing a new row in the table `cfg_pipeline_actions`.
     type NewPipelineActions =
         { [<JsonPropertyName("reference")>] Reference: string
@@ -832,7 +868,6 @@ module Parameters =
               ActionJson = String.Empty
               Hash = String.Empty
               Step = 0 }
-    
     
     /// A record representing a new row in the table `cfg_pipeline_args`.
     type NewPipelineArg =
@@ -1038,7 +1073,19 @@ module Parameters =
             { Reference = String.Empty }
     
     
-/// Module generated on 22/04/2023 16:29:09 (utc) via Freql.Tools.
+    /// A record representing a new row in the table `users`.
+    type NewUser =
+        { [<JsonPropertyName("reference")>] Reference: string
+          [<JsonPropertyName("subscriptionId")>] SubscriptionId: int
+          [<JsonPropertyName("username")>] Username: string }
+    
+        static member Blank() =
+            { Reference = String.Empty
+              SubscriptionId = 0
+              Username = String.Empty }
+    
+    
+/// Module generated on 22/04/2023 16:51:13 (utc) via Freql.Tools.
 [<RequireQualifiedAccess>]
 module Operations =
 
@@ -1475,4 +1522,28 @@ module Operations =
     
     let insertSubscription (context: MySqlContext) (parameters: Parameters.NewSubscription) =
         context.Insert("subscriptions", parameters)
+    
+    /// Select a `Records.User` from the table `users`.
+    /// Internally this calls `context.SelectSingleAnon<Records.User>` and uses Records.User.SelectSql().
+    /// The caller can provide extra string lines to create a query and boxed parameters.
+    /// It is up to the caller to verify the sql and parameters are correct,
+    /// this should be considered an internal function (not exposed in public APIs).
+    /// Parameters are assigned names based on their order in 0 indexed array. For example: @0,@1,@2...
+    /// Example: selectUserRecord ctx "WHERE `field` = @0" [ box `value` ]
+    let selectUserRecord (context: MySqlContext) (query: string list) (parameters: obj list) =
+        let sql = [ Records.User.SelectSql() ] @ query |> buildSql
+        context.SelectSingleAnon<Records.User>(sql, parameters)
+    
+    /// Internally this calls `context.SelectAnon<Records.User>` and uses Records.User.SelectSql().
+    /// The caller can provide extra string lines to create a query and boxed parameters.
+    /// It is up to the caller to verify the sql and parameters are correct,
+    /// this should be considered an internal function (not exposed in public APIs).
+    /// Parameters are assigned names based on their order in 0 indexed array. For example: @0,@1,@2...
+    /// Example: selectUserRecords ctx "WHERE `field` = @0" [ box `value` ]
+    let selectUserRecords (context: MySqlContext) (query: string list) (parameters: obj list) =
+        let sql = [ Records.User.SelectSql() ] @ query |> buildSql
+        context.SelectAnon<Records.User>(sql, parameters)
+    
+    let insertUser (context: MySqlContext) (parameters: Parameters.NewUser) =
+        context.Insert("users", parameters)
     

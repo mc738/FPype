@@ -6,12 +6,17 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <Compile Include="Library.fs" />
+        <Compile Include="Core\Common.fs" />
+        <Compile Include="Core\Verification.fs" />
         <Compile Include="Configuration\Persistence.fs" />
+        <Compile Include="Configuration\Verification.fs" />
+        <Compile Include="Configuration\Pipelines.fs" />
+        <Compile Include="Configuration\Common.fs" />
     </ItemGroup>
 
     <ItemGroup>
       <PackageReference Include="freql.mysql" Version="0.9.0" />
+      <PackageReference Include="fstoolbox" Version="0.2.0" />
     </ItemGroup>
 
     <ItemGroup>
