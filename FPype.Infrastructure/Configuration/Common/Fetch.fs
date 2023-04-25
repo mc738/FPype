@@ -1,13 +1,13 @@
-﻿namespace FPype.Infrastructure.Configuration
-
-open FPype.Infrastructure.Configuration.Persistence
-open Freql.MySql
-open FsToolbox.Core.Results
+﻿namespace FPype.Infrastructure.Configuration.Common
 
 [<RequireQualifiedAccess>]
-module Common =
-
-    let fetchSubscriptionById (ctx: MySqlContext) (id: int) =
+module Fetch =
+    
+    open FPype.Infrastructure.Core.Persistence
+    open Freql.MySql
+    open FsToolbox.Core.Results
+    
+    let subscriptionById (ctx: MySqlContext) (id: int) =
         try
             Operations.selectSubscriptionRecord ctx [ "WHERE id = @0" ] [ id ]
             |> Option.map FetchResult.Success
@@ -23,7 +23,7 @@ module Common =
                Exception = Some ex })
             |> FetchResult.Failure
 
-    let fetchUser (ctx: MySqlContext) (reference: string) =
+    let user (ctx: MySqlContext) (reference: string) =
         try
             Operations.selectUserRecord ctx [ "WHERE reference = @0;" ] [ reference ]
             |> Option.map FetchResult.Success
@@ -39,7 +39,7 @@ module Common =
                Exception = Some ex })
             |> FetchResult.Failure
 
-    let fetchPipeline (ctx: MySqlContext) (reference: string) =
+    let pipeline (ctx: MySqlContext) (reference: string) =
         try
             Operations.selectPipelineRecord ctx [ "WHERE reference = @0;" ] [ reference ]
             |> Option.map FetchResult.Success
@@ -55,7 +55,25 @@ module Common =
                Exception = Some ex })
             |> FetchResult.Failure
 
-    let fetchPipelineLatestVersion (ctx: MySqlContext) (pipelineId: int) =
+    
+    let pipelineById (ctx: MySqlContext) (id: int) =
+        try
+            Operations.selectPipelineRecord ctx [ "WHERE id = @0;" ] [ id ]
+            |> Option.map FetchResult.Success
+            |> Option.defaultWith (fun _ ->
+                ({ Message = $"Pipeline (id: {id}) not found."
+                   DisplayMessage = "Pipeline not found."
+                   Exception = None }
+                : FailureResult)
+                |> FetchResult.Failure)
+        with ex ->
+            ({ Message = "Unhandled exception while fetching pipeline"
+               DisplayMessage = "Error fetching pipeline"
+               Exception = Some ex })
+            |> FetchResult.Failure
+
+    
+    let pipelineLatestVersion (ctx: MySqlContext) (pipelineId: int) =
         try
             Operations.selectPipelineVersionRecord
                 ctx
@@ -74,7 +92,7 @@ module Common =
                Exception = Some ex })
             |> FetchResult.Failure
 
-    let fetchPipelineVersion (ctx: MySqlContext) (pipelineId: int) (version: int) =
+    let pipelineVersion (ctx: MySqlContext) (pipelineId: int) (version: int) =
         try
             Operations.selectPipelineVersionRecord
                 ctx
@@ -93,7 +111,7 @@ module Common =
                Exception = Some ex })
             |> FetchResult.Failure
 
-    let fetchPipelineVersionByReference (ctx: MySqlContext) (reference: string) =
+    let pipelineVersionByReference (ctx: MySqlContext) (reference: string) =
         try
             Operations.selectPipelineVersionRecord ctx [ "WHERE reference = @0" ] [ reference ]
             |> Option.map FetchResult.Success
@@ -109,9 +127,9 @@ module Common =
                Exception = Some ex })
             |> FetchResult.Failure
 
-    let fetchPipelineActions (ctx: MySqlContext) (pipelineVersionId: int) =
+    let pipelineActions (ctx: MySqlContext) (pipelineVersionId: int) =
         try
-            Operations.selectPipelineActionsRecords ctx [ "WHERE pipeline_version_id = @0" ] [ pipelineVersionId ]
+            Operations.selectPipelineActionRecords ctx [ "WHERE pipeline_version_id = @0" ] [ pipelineVersionId ]
             |> FetchResult.Success
         with ex ->
             ({ Message = "Unhandled exception while fetching pipeline actions"
@@ -120,7 +138,7 @@ module Common =
             |> FetchResult.Failure
 
     // Tables
-    let fetchTable (ctx: MySqlContext) (reference: string) =
+    let table (ctx: MySqlContext) (reference: string) =
         try
             Operations.selectTableModelRecord ctx [ "WHERE reference = @0" ] [ reference ]
             |> Option.map FetchResult.Success
@@ -136,7 +154,7 @@ module Common =
                Exception = Some ex })
             |> FetchResult.Failure
 
-    let fetchTableById (ctx: MySqlContext) (id: int) =
+    let tableById (ctx: MySqlContext) (id: int) =
         try
             Operations.selectTableModelRecord ctx [ "WHERE id = @0" ] [ id ]
             |> Option.map FetchResult.Success
@@ -152,7 +170,7 @@ module Common =
                Exception = Some ex })
             |> FetchResult.Failure
 
-    let fetchTableLatestVersion (ctx: MySqlContext) (tableId: int) =
+    let tableLatestVersion (ctx: MySqlContext) (tableId: int) =
         try
             Operations.selectTableModelVersionRecord
                 ctx
@@ -171,7 +189,7 @@ module Common =
                Exception = Some ex })
             |> FetchResult.Failure
 
-    let fetchTableVersion (ctx: MySqlContext) (tableId: int) (version: int) =
+    let tableVersion (ctx: MySqlContext) (tableId: int) (version: int) =
         try
             Operations.selectTableModelVersionRecord
                 ctx
@@ -190,7 +208,7 @@ module Common =
                Exception = Some ex })
             |> FetchResult.Failure
 
-    let fetchTableVersionByReference (ctx: MySqlContext) (reference: string) =
+    let tableVersionByReference (ctx: MySqlContext) (reference: string) =
         try
             Operations.selectTableModelVersionRecord
                 ctx
@@ -209,7 +227,7 @@ module Common =
                Exception = Some ex })
             |> FetchResult.Failure
             
-    let fetchTableColumns (ctx: MySqlContext) (tableVersionId: int) =
+    let tableColumns (ctx: MySqlContext) (tableVersionId: int) =
         try
             Operations.selectTableColumnRecords ctx [ "WHERE table_version_id = @0" ] [ tableVersionId ]
             |> FetchResult.Success
@@ -218,10 +236,5 @@ module Common =
                DisplayMessage = "Error fetching table columns"
                Exception = Some ex })
             |> FetchResult.Failure
-        
+    
 
-// Resources
-
-// Table object mappers
-
-// Object table mappers

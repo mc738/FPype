@@ -213,6 +213,26 @@ module Types =
                     failwith "To implement"
 
             handler bt
+            
+        member bt.Serialize() =
+            let rec handle (baseType: BaseType) =
+                match baseType with
+                | Boolean -> "bool"
+                | Byte -> "byte"
+                | BaseType.Char -> "char"
+                | BaseType.DateTime -> "datetime"
+                | BaseType.Decimal -> "decimal"
+                | BaseType.Double -> "double"
+                | BaseType.Float -> "float"
+                | BaseType.Int -> "int"
+                | BaseType.Short -> "short"
+                | BaseType.Long -> "long"
+                | BaseType.String -> "string"
+                | BaseType.Guid -> "uuid"
+                | BaseType.Option ibt ->
+                    handle ibt
+                    
+            handle bt
 
     [<RequireQualifiedAccess>]
     type CoercionResult =

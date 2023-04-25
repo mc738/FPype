@@ -12,6 +12,7 @@ module Common =
         | Success
         | MissingPermission of Name: string
         | WrongSubscription
+        | ItemInactive of ItemType: string
         | Failure of FailureResult
 
         member vr.ToResult() =
@@ -24,17 +25,18 @@ module Common =
                 : FailureResult)
                 |> Error
             | WrongSubscription ->
-                ({ Message = "Item's subscription is wrong."
-                   DisplayMessage = "Item's subscription is wrong."
+                ({ Message = "Item's subscription is wrong"
+                   DisplayMessage = "Item's subscription is wrong"
+                   Exception = None }
+                : FailureResult)
+                |> Error
+            | ItemInactive itemType ->
+                ({ Message = $"{itemType} is inactive"
+                   DisplayMessage = $"{itemType} is inactive"
                    Exception = None }
                 : FailureResult)
                 |> Error
             | Failure failure -> Error failure
-
-        member vr.IsSuccess() =
-            match vr with
-            | Success -> true
-            | _ -> false
 
     module VerificationResult =
 
