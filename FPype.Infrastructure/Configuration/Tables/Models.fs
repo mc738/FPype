@@ -22,7 +22,17 @@ module Models =
           ImportHandlerData: string option
           Index: int }
 
+    type TableVersionDetails =
+        { TableReference: string
+          Reference: string
+          Name: string
+          Version: int
+          Columns: TableColumnDetails list }
 
-
-
-    ()
+    and TableColumnDetails =
+        { Reference: string
+          Name: string
+          Type: BaseType
+          Optional: bool
+          ImportHandlerData: string option
+          Index: int }
