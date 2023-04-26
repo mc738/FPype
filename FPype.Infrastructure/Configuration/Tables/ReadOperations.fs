@@ -1,15 +1,15 @@
 ﻿namespace FPype.Infrastructure.Configuration.Tables
 
-open FPype.Core.Types
-open FPype.Infrastructure.Configuration.Common
-open FPype.Infrastructure.Core
-open FPype.Infrastructure.Core.Persistence
-open Freql.MySql
-open FsToolbox.Core.Results
-
 [<RequireQualifiedAccess>]
 module ReadOperations =
 
+    open FPype.Core.Types
+    open FPype.Infrastructure.Configuration.Common
+    open FPype.Infrastructure.Core
+    open FPype.Infrastructure.Core.Persistence
+    open Freql.MySql
+    open FsToolbox.Core.Results
+    
     let latestTableVersion (ctx: MySqlContext) (userReference: string) (tableReference: string) =
         Fetch.user ctx userReference
         |> FetchResult.merge (fun ur sr -> ur, sr) (fun ur -> Fetch.subscriptionById ctx ur.Id)
@@ -47,7 +47,7 @@ module ReadOperations =
                 : TableVersionDetails)
                 |> Some
             | FetchResult.Failure fr -> None)
-        |> optionalToFetchResult "Latest pipeline version"
+        |> optionalToFetchResult "Latest table version"
 
     let specificTableVersion (ctx: MySqlContext) (userReference: string) (tableReference: string) (version: int) =
         Fetch.user ctx userReference
@@ -86,4 +86,4 @@ module ReadOperations =
                 : TableVersionDetails)
                 |> Some
             | FetchResult.Failure fr -> None)
-        |> optionalToFetchResult "Latest pipeline version"
+        |> optionalToFetchResult "Specific table version"

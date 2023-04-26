@@ -99,4 +99,4 @@ module ReadOperations =
                 : PipelineVersionDetails)
                 |> Some
             | FetchResult.Failure fr -> None)
-        |> optionalToFetchResult "Latest pipeline version"
+        |> optionalToFetchResult "Specific pipeline version"

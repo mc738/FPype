@@ -2,11 +2,11 @@
 
 [<RequireQualifiedAccess>]
 module Fetch =
-    
+
     open FPype.Infrastructure.Core.Persistence
     open Freql.MySql
     open FsToolbox.Core.Results
-    
+
     let subscriptionById (ctx: MySqlContext) (id: int) =
         try
             Operations.selectSubscriptionRecord ctx [ "WHERE id = @0" ] [ id ]
@@ -55,7 +55,7 @@ module Fetch =
                Exception = Some ex })
             |> FetchResult.Failure
 
-    
+
     let pipelineById (ctx: MySqlContext) (id: int) =
         try
             Operations.selectPipelineRecord ctx [ "WHERE id = @0;" ] [ id ]
@@ -72,7 +72,7 @@ module Fetch =
                Exception = Some ex })
             |> FetchResult.Failure
 
-    
+
     let pipelineLatestVersion (ctx: MySqlContext) (pipelineId: int) =
         try
             Operations.selectPipelineVersionRecord
@@ -210,10 +210,7 @@ module Fetch =
 
     let tableVersionByReference (ctx: MySqlContext) (reference: string) =
         try
-            Operations.selectTableModelVersionRecord
-                ctx
-                [ "WHERE reference = @0 AND version = @1;" ]
-                [ reference ]
+            Operations.selectTableModelVersionRecord ctx [ "WHERE reference = @0;" ] [ reference ]
             |> Option.map FetchResult.Success
             |> Option.defaultWith (fun _ ->
                 ({ Message = $"Table version (ref: {reference}) not found"
@@ -226,7 +223,7 @@ module Fetch =
                DisplayMessage = "Error fetching table version"
                Exception = Some ex })
             |> FetchResult.Failure
-            
+
     let tableColumns (ctx: MySqlContext) (tableVersionId: int) =
         try
             Operations.selectTableColumnRecords ctx [ "WHERE table_version_id = @0" ] [ tableVersionId ]
@@ -236,5 +233,84 @@ module Fetch =
                DisplayMessage = "Error fetching table columns"
                Exception = Some ex })
             |> FetchResult.Failure
-    
 
+    // Queries
+    let query (ctx: MySqlContext) (reference: string) =
+        try
+            Operations.selectQueryRecord ctx [ "WHERE reference = @0" ] [ reference ]
+            |> Option.map FetchResult.Success
+            |> Option.defaultWith (fun _ ->
+                ({ Message = $"Query (ref: {ref}) not found"
+                   DisplayMessage = "Query not found"
+                   Exception = None }
+                : FailureResult)
+                |> FetchResult.Failure)
+        with ex ->
+            ({ Message = "Unhandled exception while fetching query"
+               DisplayMessage = "Error fetching query"
+               Exception = Some ex })
+            |> FetchResult.Failure
+
+    let queryById (ctx: MySqlContext) (id: int) =
+        try
+            Operations.selectQueryRecord ctx [ "WHERE id = @0" ] [ id ]
+            |> Option.map FetchResult.Success
+            |> Option.defaultWith (fun _ ->
+                ({ Message = $"Query (id: {ref}) not found"
+                   DisplayMessage = "Query not found"
+                   Exception = None }
+                : FailureResult)
+                |> FetchResult.Failure)
+        with ex ->
+            ({ Message = "Unhandled exception while fetching query"
+               DisplayMessage = "Error fetching query"
+               Exception = Some ex })
+            |> FetchResult.Failure
+
+    let queryLatestVersion (ctx: MySqlContext) (queryId: int) =
+        try
+            Operations.selectQueryVersionRecord ctx [ "WHERE query_id = @0 ORDER BY version DESC LIMIT 1;" ] [ queryId ]
+            |> Option.map FetchResult.Success
+            |> Option.defaultWith (fun _ ->
+                ({ Message = $"Latest version of query (id: {queryId}) not found"
+                   DisplayMessage = "Latest version of query not found"
+                   Exception = None }
+                : FailureResult)
+                |> FetchResult.Failure)
+        with ex ->
+            ({ Message = "Unhandled exception while fetching query latest version"
+               DisplayMessage = "Error fetching latest query version"
+               Exception = Some ex })
+            |> FetchResult.Failure
+
+    let queryVersion (ctx: MySqlContext) (queryId: int) (version: int) =
+        try
+            Operations.selectQueryVersionRecord ctx [ "WHERE query_id = @0 AND version = @1;" ] [ queryId; version ]
+            |> Option.map FetchResult.Success
+            |> Option.defaultWith (fun _ ->
+                ({ Message = $"Version {id} of query (id: {queryId}) not found"
+                   DisplayMessage = $"Version {id} of query not found"
+                   Exception = None }
+                : FailureResult)
+                |> FetchResult.Failure)
+        with ex ->
+            ({ Message = "Unhandled exception while fetching query version"
+               DisplayMessage = "Error fetching query version"
+               Exception = Some ex })
+            |> FetchResult.Failure
+
+    let queryVersionByReference (ctx: MySqlContext) (reference: string) =
+        try
+            Operations.selectQueryVersionRecord ctx [ "WHERE reference = @0;" ] [ reference ]
+            |> Option.map FetchResult.Success
+            |> Option.defaultWith (fun _ ->
+                ({ Message = $"Query version (ref: {reference}) not found"
+                   DisplayMessage = "Query version not found"
+                   Exception = None }
+                : FailureResult)
+                |> FetchResult.Failure)
+        with ex ->
+            ({ Message = "Unhandled exception while fetching query version"
+               DisplayMessage = "Error fetching query version"
+               Exception = Some ex })
+            |> FetchResult.Failure

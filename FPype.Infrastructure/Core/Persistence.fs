@@ -5,7 +5,7 @@ open System.Text.Json.Serialization
 open Freql.Core.Common
 open Freql.MySql
 
-/// Module generated on 25/04/2023 21:36:53 (utc) via Freql.Sqlite.Tools.
+/// Module generated on 26/04/2023 21:19:12 (utc) via Freql.Sqlite.Tools.
 [<RequireQualifiedAccess>]
 module Records =
     /// A record representing a row in the table `cfg_action_types`.
@@ -387,7 +387,7 @@ module Records =
         static member TableName() = "cfg_queries"
     
     /// A record representing a row in the table `cfg_query_versions`.
-    type CfgQueryVersion =
+    type QueryVersion =
         { [<JsonPropertyName("id")>] Id: int
           [<JsonPropertyName("reference")>] Reference: string
           [<JsonPropertyName("queryId")>] QueryId: int
@@ -816,7 +816,7 @@ module Records =
         static member TableName() = "users"
     
 
-/// Module generated on 25/04/2023 21:36:53 (utc) via Freql.Tools.
+/// Module generated on 26/04/2023 21:19:12 (utc) via Freql.Tools.
 [<RequireQualifiedAccess>]
 module Parameters =
     /// A record representing a new row in the table `cfg_action_types`.
@@ -948,7 +948,7 @@ module Parameters =
     
     
     /// A record representing a new row in the table `cfg_query_versions`.
-    type NewCfgQueryVersion =
+    type NewQueryVersion =
         { [<JsonPropertyName("reference")>] Reference: string
           [<JsonPropertyName("queryId")>] QueryId: int
           [<JsonPropertyName("version")>] Version: int
@@ -1097,7 +1097,7 @@ module Parameters =
               Active = false }
     
     
-/// Module generated on 25/04/2023 21:36:53 (utc) via Freql.Tools.
+/// Module generated on 26/04/2023 21:19:12 (utc) via Freql.Tools.
 [<RequireQualifiedAccess>]
 module Operations =
 
@@ -1319,28 +1319,28 @@ module Operations =
     let insertQuery (context: MySqlContext) (parameters: Parameters.NewQuery) =
         context.Insert("cfg_queries", parameters)
     
-    /// Select a `Records.CfgQueryVersion` from the table `cfg_query_versions`.
-    /// Internally this calls `context.SelectSingleAnon<Records.CfgQueryVersion>` and uses Records.CfgQueryVersion.SelectSql().
+    /// Select a `Records.QueryVersion` from the table `cfg_query_versions`.
+    /// Internally this calls `context.SelectSingleAnon<Records.QueryVersion>` and uses Records.QueryVersion.SelectSql().
     /// The caller can provide extra string lines to create a query and boxed parameters.
     /// It is up to the caller to verify the sql and parameters are correct,
     /// this should be considered an internal function (not exposed in public APIs).
     /// Parameters are assigned names based on their order in 0 indexed array. For example: @0,@1,@2...
-    /// Example: selectCfgQueryVersionRecord ctx "WHERE `field` = @0" [ box `value` ]
-    let selectCfgQueryVersionRecord (context: MySqlContext) (query: string list) (parameters: obj list) =
-        let sql = [ Records.CfgQueryVersion.SelectSql() ] @ query |> buildSql
-        context.SelectSingleAnon<Records.CfgQueryVersion>(sql, parameters)
+    /// Example: selectQueryVersionRecord ctx "WHERE `field` = @0" [ box `value` ]
+    let selectQueryVersionRecord (context: MySqlContext) (query: string list) (parameters: obj list) =
+        let sql = [ Records.QueryVersion.SelectSql() ] @ query |> buildSql
+        context.SelectSingleAnon<Records.QueryVersion>(sql, parameters)
     
-    /// Internally this calls `context.SelectAnon<Records.CfgQueryVersion>` and uses Records.CfgQueryVersion.SelectSql().
+    /// Internally this calls `context.SelectAnon<Records.QueryVersion>` and uses Records.QueryVersion.SelectSql().
     /// The caller can provide extra string lines to create a query and boxed parameters.
     /// It is up to the caller to verify the sql and parameters are correct,
     /// this should be considered an internal function (not exposed in public APIs).
     /// Parameters are assigned names based on their order in 0 indexed array. For example: @0,@1,@2...
-    /// Example: selectCfgQueryVersionRecords ctx "WHERE `field` = @0" [ box `value` ]
-    let selectCfgQueryVersionRecords (context: MySqlContext) (query: string list) (parameters: obj list) =
-        let sql = [ Records.CfgQueryVersion.SelectSql() ] @ query |> buildSql
-        context.SelectAnon<Records.CfgQueryVersion>(sql, parameters)
+    /// Example: selectQueryVersionRecords ctx "WHERE `field` = @0" [ box `value` ]
+    let selectQueryVersionRecords (context: MySqlContext) (query: string list) (parameters: obj list) =
+        let sql = [ Records.QueryVersion.SelectSql() ] @ query |> buildSql
+        context.SelectAnon<Records.QueryVersion>(sql, parameters)
     
-    let insertCfgQueryVersion (context: MySqlContext) (parameters: Parameters.NewCfgQueryVersion) =
+    let insertQueryVersion (context: MySqlContext) (parameters: Parameters.NewQueryVersion) =
         context.Insert("cfg_query_versions", parameters)
     
     /// Select a `Records.ResourceVersion` from the table `cfg_resource_versions`.
