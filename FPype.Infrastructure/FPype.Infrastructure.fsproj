@@ -21,9 +21,15 @@
         <Compile Include="Configuration\Queries\Models.fs" />
         <Compile Include="Configuration\Queries\CreateOperations.fs" />
         <Compile Include="Configuration\Queries\ReadOperations.fs" />
-        <Folder Include="Configuration\Resources\" />
-        <Folder Include="Configuration\TableObjectMappers\" />
-        <Folder Include="Configuration\ObjectTableMappers\" />
+        <Compile Include="Configuration\Resources\Models.fs" />
+        <Compile Include="Configuration\Resources\CreateOperations.fs" />
+        <Compile Include="Configuration\Resources\ReadOperations.fs" />
+        <Compile Include="Configuration\TableObjectMappers\Models.fs" />
+        <Compile Include="Configuration\TableObjectMappers\CreateOperations.fs" />
+        <Compile Include="Configuration\TableObjectMappers\ReadOperations.fs" />
+        <Compile Include="Configuration\ObjectTableMappers\Models.fs" />
+        <Compile Include="Configuration\ObjectTableMappers\CreateOperations.fs" />
+        <Compile Include="Configuration\ObjectTableMappers\ReadOperations.fs" />
     </ItemGroup>
 
     <ItemGroup>
