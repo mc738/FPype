@@ -35,7 +35,8 @@ module Transform =
                     st.Rows
                     |> List.map (fun sr ->
                         ({ Name = rots.Name
-                           Properties = rots.Properties |> List.map (createProperty sr store) }: ObjectModel))
+                           Properties = rots.Properties |> List.map (createProperty sr store) }
+                        : ObjectModel))
                     |> ObjectPropertyType.Array
 
             ({ Name = pm.Name; Value = v }: ObjectProperty)
@@ -49,7 +50,8 @@ module Transform =
                 let p = map.Properties |> List.map (createProperty r store)
 
                 ({ Name = map.ObjectName
-                   Properties = p }: ObjectModel))
+                   Properties = p }
+                : ObjectModel))
 
     [<RequireQualifiedAccess>]
     module ``aggregate`` =
@@ -240,7 +242,6 @@ module Transform =
                     store)
             | Error e -> Error e
 
-
     [<RequireQualifiedAccess>]
     module ``merge-results`` =
 
@@ -262,8 +263,106 @@ module Transform =
 
         let createAction (parameters: Parameters) = run parameters |> createAction name
 
-
     [<RequireQualifiedAccess>]
     module ``map-to-table`` =
+
+        ()
+
+    [<RequireQualifiedAccess>]
+    module ``pivot`` =
+
+        let name = "pivot"
+
+
+        let run () (store: PipelineStore) =
+            // Parameters
+            let bt =
+                ({ Name = "avg_vales"
+                   Columns =
+                     [ { Name = "avg_variance"
+                         Type = BaseType.Decimal
+                         ImportHandler = None }
+                       { Name = "entry_year"
+                         Type = BaseType.Int
+                         ImportHandler = None }
+                       { Name = "entry_month"
+                         Type = BaseType.Int
+                         ImportHandler = None }
+                       { Name = "entry_day"
+                         Type = BaseType.Int
+                         ImportHandler = None } ]
+                   Rows = [] })
+
+            let ct =
+                ({ Name = "categories_table"
+                   Columns =
+                     [ ({ Name = "category"
+                          Type = BaseType.String
+                          ImportHandler = None }
+                       : TableColumn) ]
+                   Rows = [] }
+                : TableModel)
+                
+            let bct =
+                ({ Name = "by_cat"
+                   Columns =
+                     [ { Name = "avg_variance"
+                         Type = BaseType.Decimal
+                         ImportHandler = None }
+                       { Name = "entry_year"
+                         Type = BaseType.Int
+                         ImportHandler = None }
+                       { Name = "entry_month"
+                         Type = BaseType.Int
+                         ImportHandler = None }
+                       { Name = "entry_day"
+                         Type = BaseType.Int
+                         ImportHandler = None } ]
+                   Rows = [] })
+
+            let q1 = "SELECT DISTINCT (gics_sector) FROM sp500_prices"
+            
+            let q2 = "SELECT avg_variance, entry_year, entry_month, entry_day FROM total GROUP BY GROUP BY entry_year, entry_month, entry_day"
+            
+            let q3 = "SELECT avg_variance FROM by_cat WHERE industry = @0 AND entry_year = @1 AND entry_month = @2 AND entry_day = @3;"
+
+            let catIndex = 0
+
+            let newTableName = ""
+
+            let catValueType = BaseType.Decimal
+
+            // 1. Query to get categories
+            let ctr = store.SelectRows(ct, q1, [])
+
+            let cats = ctr.Rows |> List.choose (fun tr -> tr.Values |> List.tryItem catIndex)
+
+            // Create new table
+
+            // Combine base table and category columns
+            let pt =
+                ({ Name = newTableName
+                   Columns =
+                     bt.Columns
+                     @ (cats
+                        |> List.map (fun c ->
+                            { Name = c.GetString()
+                              Type = catValueType
+                              ImportHandler = None }))
+                   Rows = [] })
+
+            // Add table here??
+            
+            // Build up rows
+            //store.sele
+
+
+
+
+            // 1.a. Get specific
+
+
+
+            ()
 
         ()

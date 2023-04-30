@@ -1,13 +1,10 @@
 ﻿namespace FPype.Actions
 
-open System
-open Google.Protobuf.WellKnownTypes
-
-
 [<RequireQualifiedAccess>]
 module Extract =
 
-
+    open System
+    open Freql.Sqlite
     open System.Text.Json
     open FPype.Core.Types
     open FPype.Data.Models
@@ -18,9 +15,6 @@ module Extract =
     open FPype.Core
     open System.IO
     open Freql.Csv
-    open FPype.Core.Types
-    open FPype.Data.Models
-    open FPype.Data.Store
 
     module Internal =
 
@@ -282,6 +276,50 @@ module Extract =
                 store)
 
         let createAction parameters = run parameters |> createAction name
+   
+   
+    module ``query-sqlite-database`` =
+        
+        let name = "query_sqlite-database"
+        
+        type Parameters =
+            {
+                Path: string
+                Table: TableModel
+                Sql: string
+                Parameters: obj list
+            }
+        
+        
+        let run (parameters: Parameters) (store: PipelineStore) =
+            use ctx = SqliteContext.Open parameters.Path
+            
+            
+            // Select to table
+            
+            //parameters.Table.
+            
+            // Save table and rows to store
+            
+            
+            store.CreateTable(parameters.Table)
+            |> store.InsertRows
+            |> Result.map (fun rs ->
+                
+                
+                ())
+            
+            
+            
+            
+            
+            
+        
+        
+        
+        ()
+        
+        
 
 (*
         let deserialize (element: JsonElement) =
