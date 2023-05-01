@@ -4,7 +4,6 @@
 module Extract =
 
     open System
-    open Freql.Sqlite
     open System.Text.Json
     open FPype.Core.Types
     open FPype.Data.Models
@@ -15,6 +14,7 @@ module Extract =
     open FPype.Core
     open System.IO
     open Freql.Csv
+    open FPype.Connectors
 
     module Internal =
 
@@ -56,7 +56,7 @@ module Extract =
                         (fun (s, f) r ->
                             match r with
                             | Ok fv -> s @ [ fv ], f
-                            | Error (m, l, c) -> s, f @ [ m, l, c ])
+                            | Error(m, l, c) -> s, f @ [ m, l, c ])
                         ([], [])
                     |> fun (s, f) ->
                         match f.Length = 0 with
@@ -117,7 +117,7 @@ module Extract =
                         // PERFORMANCE this used append and then rev because it performs better.
                         match r with
                         | Ok fv -> fv :: s, f
-                        | Error (m, l, c) -> s, (m, l, c) :: f)
+                        | Error(m, l, c) -> s, (m, l, c) :: f)
                     ([], [])
                 |> fun (s, f) -> s |> List.rev, f |> List.rev
                 |> fun (s, f) ->
@@ -190,7 +190,10 @@ module Extract =
                 |> Result.bind (fun r ->
                     match r.Errors |> List.isEmpty |> not with
                     | true ->
-                        store.LogWarning("parse_csv", $"Error parsing {r.Errors.Length} row(s) from source `{ds.Name}`")
+                        store.LogWarning(
+                            "parse_csv",
+                            $"Error parsing {r.Errors.Length} row(s) from source `{ds.Name}`"
+                        )
 
                         r.Errors
                         |> List.map (fun e ->
@@ -276,50 +279,32 @@ module Extract =
                 store)
 
         let createAction parameters = run parameters |> createAction name
-   
-   
+
+
     module ``query-sqlite-database`` =
-        
-        let name = "query_sqlite-database"
-        
+
+        let name = "query_sqlite_database"
+
         type Parameters =
-            {
-                Path: string
-                Table: TableModel
-                Sql: string
-                Parameters: obj list
-            }
-        
-        
+            { Path: string
+              Table: TableModel
+              Sql: string
+              Parameters: obj list }
+
+
         let run (parameters: Parameters) (store: PipelineStore) =
-            use ctx = SqliteContext.Open parameters.Path
-            
-            
-            // Select to table
-            
-            //parameters.Table.
-            
-            // Save table and rows to store
-            
-            
-            store.CreateTable(parameters.Table)
+            // Select rows from external database
+            Sqlite.selectBespoke parameters.Path parameters.Table parameters.Sql parameters.Parameters
+            // Set the rows in the model...
+            |> parameters.Table.SetRows
+            // and insert into the store.
             |> store.InsertRows
             |> Result.map (fun rs ->
-                
-                
-                ())
-            
-            
-            
-            
-            
-            
-        
-        
-        
-        ()
-        
-        
+                store.Log(name, $"{rs.Length} rows inserted from {parameters.Path}.")
+
+                store)
+
+
 
 (*
         let deserialize (element: JsonElement) =

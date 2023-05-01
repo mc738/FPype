@@ -1,8 +1,9 @@
 ﻿namespace FPype.Data
 
+open FPype.Data.Models
+
 
 module Store =
-
 
     open System
     open System.Globalization
@@ -14,6 +15,7 @@ module Store =
     open FPype.Core
     open FPype.Core.Types
     open FPype.Data.Models
+    open FPype.Data.ModelExtensions.Sqlite
 
     module Internal =
 
@@ -122,9 +124,6 @@ module Store =
         let storePath = "__store_path"
 
         let initilialzedTimestamp = "__initialized_timestamp"
-
-
-
 
     (*
         let contextTableSql =
@@ -235,7 +234,8 @@ module Store =
         ({ Name = name
            Type = resourceType
            Data = BlobField.FromBytes ms
-           Hash = hash }: Resource)
+           Hash = hash }
+        : Resource)
         |> fun r -> ctx.Insert("__resources", r)
 
     let getResource (ctx: SqliteContext) (name: string) =
@@ -286,6 +286,7 @@ module Store =
 
     let addLogItem (ctx: SqliteContext) (item: LogItem) = ctx.Insert("__log", item)
 
+    (*
     let rec typeName bt notNull =
         let nn = if notNull then " NOT NULL" else ""
 
@@ -372,6 +373,7 @@ module Store =
 
     let bespokeSelect (ctx: SqliteContext) (model: TableModel) (sql: string) (parameters: obj list) =
         ctx.Bespoke<TableRow>(sql, parameters, mapper model.Columns)
+    *)
 
     type PipelineStore(ctx: SqliteContext, basePath: string, id: string) =
 
@@ -632,7 +634,8 @@ module Store =
             ({ Name = name
                Type = sourceType.Serialize()
                Uri = uri
-               CollectionName = collectionName }: DataSource)
+               CollectionName = collectionName }
+            : DataSource)
             |> addDataSource ctx
 
         member ps.GetDataSource(name) = getDataSource ctx name
@@ -646,7 +649,8 @@ module Store =
             ({ Name = name
                Bucket = bucket
                Type = artifactType
-               Data = BlobField.FromStream ms }: Artifact)
+               Data = BlobField.FromStream ms }
+            : Artifact)
             |> addArtifact ctx
 
         member ps.GetArtifact(name) = getArtifact ctx name
@@ -671,13 +675,15 @@ module Store =
                Result = result
                StartUtc = startUtc
                EndUtc = endUtc
-               Serial = serial }: ActionResult)
+               Serial = serial }
+            : ActionResult)
             |> addResult ctx
 
         member ps.AddImportError(step, error, value) =
             ({ Step = step
                Error = error
-               Value = value }: ImportError)
+               Value = value }
+            : ImportError)
             |> addImportError ctx
 
         member ps.AddVariable(name: string, value: string, ?allowOverride: bool) =
@@ -720,38 +726,46 @@ module Store =
             |> path.ReplaceMultiple
 
         member ps.CreateTable(name, columns) =
-            createTable ctx name columns
-            |> fun c -> ({ Name = name; Columns = c; Rows = [] }: TableModel)
+            let model =
+                ({ Name = name
+                   Columns = columns
+                   Rows = [] }
+                : TableModel)
+
+            ps.CreateTable model
 
         member ps.CreateTable(model: TableModel) =
-            createTable ctx model.Name model.Columns |> ignore
+            model.SqliteCreateTable(ctx) |> ignore
             model
 
-        member ps.InsertRows(table: TableModel) = insert ctx table
+        member ps.InsertRows(table: TableModel) = table.SqliteInsert ctx
 
-        member ps.SelectRawRows(table: TableModel) = select ctx table
+        member ps.SelectRawRows(table: TableModel) = table.SqliteSelect ctx
 
-        member ps.SelectAndAppendRows(table: TableModel) = select ctx table |> table.AppendRows
+        member ps.SelectAndAppendRows(table: TableModel) =
+            ps.SelectRawRows table |> table.AppendRows
 
         member ps.SelectRows(table: TableModel) =
-            select ctx table |> fun r -> { table with Rows = r }
+            ps.SelectRawRows table |> fun r -> { table with Rows = r }
 
         member ps.SelectRows(table: TableModel, condition, parameters) =
-            conditionalSelect ctx table condition parameters
+            table.SqliteConditionalSelect(ctx, condition, parameters)
             |> fun r -> { table with Rows = r }
 
         member ps.BespokeSelectRows(table: TableModel, sql, parameters) =
-            bespokeSelect ctx table sql parameters |> fun r -> { table with Rows = r }
+            table.SqliteBespokeSelect(ctx, sql, parameters)
+            |> fun r -> { table with Rows = r }
 
         member ps.BespokeSelectAndAppendRows(table: TableModel, sql, parameters) =
-            bespokeSelect ctx table sql parameters |> table.AppendRows
+            table.SqliteBespokeSelect(ctx, sql, parameters) |> table.AppendRows
 
         member ps.Log(step, message) =
             ({ Step = step
                Message = message
                IsError = false
                IsWarning = false
-               TimestampUtc = DateTime.UtcNow }: LogItem)
+               TimestampUtc = DateTime.UtcNow }
+            : LogItem)
             |> addLogItem ctx
 
         member ps.LogError(step, message) =
@@ -759,7 +773,8 @@ module Store =
                Message = message
                IsError = true
                IsWarning = false
-               TimestampUtc = DateTime.UtcNow }: LogItem)
+               TimestampUtc = DateTime.UtcNow }
+            : LogItem)
             |> addLogItem ctx
 
         member ps.LogWarning(step, message) =
@@ -767,5 +782,6 @@ module Store =
                Message = message
                IsError = false
                IsWarning = true
-               TimestampUtc = DateTime.UtcNow }: LogItem)
+               TimestampUtc = DateTime.UtcNow }
+            : LogItem)
             |> addLogItem ctx
