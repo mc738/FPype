@@ -227,7 +227,6 @@ module Extract =
 
         let name = "grok"
 
-
         type Parameters =
             { DataSource: string
               Table: TableModel
@@ -280,7 +279,6 @@ module Extract =
 
         let createAction parameters = run parameters |> createAction name
 
-
     module ``query-sqlite-database`` =
 
         let name = "query_sqlite_database"
@@ -291,20 +289,21 @@ module Extract =
               Sql: string
               Parameters: obj list }
 
-
         let run (parameters: Parameters) (store: PipelineStore) =
+            let fullPath = store.SubstituteValues parameters.Path
+            
             // Select rows from external database
-            Sqlite.selectBespoke parameters.Path parameters.Table parameters.Sql parameters.Parameters
+            Sqlite.selectBespoke fullPath parameters.Table parameters.Sql parameters.Parameters
             // Set the rows in the model...
             |> parameters.Table.SetRows
             // and insert into the store.
             |> store.InsertRows
             |> Result.map (fun rs ->
-                store.Log(name, $"{rs.Length} rows inserted from {parameters.Path}.")
+                store.Log(name, $"{rs.Length} rows inserted from {fullPath}.")
 
                 store)
 
-
+        let createAction (parameters: Parameters) = run parameters |> createAction name
 
 (*
         let deserialize (element: JsonElement) =

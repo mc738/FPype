@@ -21,16 +21,18 @@ module Import =
         type Parameters = { Path: string; Name: string }
 
         let run (parameters: Parameters) (store: PipelineStore) =
-            match File.Exists parameters.Path, store.GetImportsPath() with
+            let fullPath = store.SubstituteValues parameters.Path
+            
+            match File.Exists fullPath, store.GetImportsPath() with
             | true, Some importsPath ->
                 //store.GetState()
                 //let fi = FileInfo(path)
-                let fileName = Path.GetFileName(parameters.Path)
+                let fileName = Path.GetFileName(fullPath)
                 let newPath = Path.Combine(importsPath, fileName)
-                File.Copy(parameters.Path, newPath)
+                File.Copy(fullPath, newPath)
                 store.AddDataSource(parameters.Name, DataSourceType.File, newPath, "imports")
                 Ok store
-            | false, _ -> Error $"File `{parameters.Path}` not found."
+            | false, _ -> Error $"File `{fullPath}` not found."
             | _, None -> Error "Imports path not found in store state."
 
         let createAction parameters = run parameters |> createAction name

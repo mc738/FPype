@@ -3,7 +3,6 @@
 open System.IO
 open FPype.Data.Store
 
-
 module Export =
 
     open System
@@ -31,11 +30,9 @@ module Export =
 
             store
 
-
     module ``export-artifact`` =
 
         let name = "export_artifact"
-
 
         type Parameters =
             { ArtifactName: string
@@ -46,7 +43,8 @@ module Export =
             // "__exports_path"
             match
                 parameters.OutputPath
-                |> Option.orElseWith (fun _ -> store.GetStateValue "__exports_path"),
+                |> Option.orElseWith (fun _ -> store.GetStateValue "__exports_path")
+                |> Option.map store.SubstituteValues,
                 store.GetArtifact(parameters.ArtifactName)
             with
             | Some path, Some artifact ->
@@ -64,6 +62,3 @@ module Export =
             | _, None -> store.LogError(name, $"Artifact `{parameters.ArtifactName}` not found.")
 
             store
-
-
-    ()

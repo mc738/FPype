@@ -14,6 +14,24 @@ module Sqlite =
 
         table.SqliteCreateTable ctx
 
+    let createAndInitialize (path: string) (tables: TableModel list) =
+        try
+            use ctx = SqliteContext.Create path
+
+            ctx.ExecuteInTransactionV2(fun t ->
+                tables
+                |> List.map (fun tm ->
+                    tm.SqliteCreateTable t
+                    |> fun c ->
+                        { Name = tm.Name
+                          Columns = c
+                          Rows = tm.Rows })
+                |> Ok)
+        with ex ->
+            Error $"Error creating Sqlite database: {ex.Message}"
+
+
+
 
     let select (path: string) (table: TableModel) =
         use ctx = SqliteContext.Open(path)

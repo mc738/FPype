@@ -38,6 +38,7 @@
         <Compile Include="Actions\Transform.fs" />
         <Compile Include="Actions\Export.fs" />
         <Compile Include="Actions\ML.fs" />
+        <Compile Include="Actions\Load.fs" />
         <Compile Include="Configuration\Persistence.fs" />
         <Compile Include="Configuration\Common.fs" />
         <Compile Include="Configuration\Pipelines.fs" />

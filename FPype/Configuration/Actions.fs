@@ -1,6 +1,7 @@
 ﻿namespace FPype.Configuration
 
 open FPype.Actions.ML
+open Microsoft.VisualBasic.CompilerServices
 
 module Actions =
 
@@ -47,12 +48,33 @@ module Actions =
                     |> Ok
                 | None, _ -> Error "Missing path property"
                 | _, None -> Error "Missing name property"
-                
-        let names =
-            [ Utils.``create-directory``.name ]
 
-        let all =
-            [ Utils.``create-directory``.name, ``create-directory``.deserialize ]
+        module ``create_sqlite_database`` =
+
+            let deserialize (ctx: SqliteContext) (json: JsonElement) =
+                match Json.tryGetStringProperty "path" json, Json.tryGetArrayProperty "tables" json with
+                | Some path, Some tables ->
+                    tables
+                    |> List.map (fun el ->
+                        TableVersion.TryFromJson el
+                        |> Result.bind (fun tv -> Tables.tryCreateTableModel ctx tv.Name tv.Version))
+                    |> flattenResultList
+                    |> Result.map (fun ts ->
+                        ({ Path = path
+                           Tables = ts
+                           VariableName = Json.tryGetStringProperty "variable" json }
+                        : Utils.``create-sqlite-database``.Parameters)
+                        |> Utils.``create-sqlite-database``.createAction)
+                | None, _ -> Error "Missing path property"
+                | _, None -> Error "Missing tables property"
+
+        let names =
+            [ Utils.``create-directory``.name; Utils.``create-sqlite-database``.name ]
+
+        let all ctx =
+            [ Utils.``create-directory``.name, ``create-directory``.deserialize
+              Utils.``create-sqlite-database``.name, create_sqlite_database.deserialize ctx ]
+
     module Import =
 
         module ``import-file`` =
@@ -76,7 +98,8 @@ module Actions =
                 | Some path, Some name, Some size ->
                     ({ Path = path
                        CollectionName = name
-                       ChunkSize = size }: Import.``chunk-file``.Parameters)
+                       ChunkSize = size }
+                    : Import.``chunk-file``.Parameters)
                     |> Import.``chunk-file``.createAction
                     |> Ok
                 | None, _, _ -> Error "Missing path property"
@@ -103,7 +126,8 @@ module Actions =
                        AdditionHeaders = additionalHeaders
                        Name = name
                        ResponseType = Json.tryGetStringProperty "responseType" json
-                       Collection = Json.tryGetStringProperty "collection" json }: Import.``http-get``.Parameters)
+                       Collection = Json.tryGetStringProperty "collection" json }
+                    : Import.``http-get``.Parameters)
                     |> Import.``http-get``.createAction
                     |> Ok
                 | None, _ -> Error "Missing url property"
@@ -141,11 +165,11 @@ module Actions =
                     Tables.tryCreateTableModel ctx tableVersion.Name tableVersion.Version
                     |> Result.map (fun t ->
                         ({ CollectionName = collection
-                           Table = t }: Extract.``parse-csv-collection``.Parameters)
+                           Table = t }
+                        : Extract.``parse-csv-collection``.Parameters)
                         |> Extract.``parse-csv-collection``.createAction)
                 | None, _ -> Error "Missing collection property"
                 | _, Error e -> Error $"Error creating table: {e}"
-
 
         module ``grok`` =
 
@@ -171,21 +195,43 @@ module Actions =
                                      with
                                      | Some n, Some p -> Some(n, p)
                                      | _ -> None))
-                             |> Option.defaultValue [] }: Extract.``grok``.Parameters)
+                             |> Option.defaultValue [] }
+                        : Extract.``grok``.Parameters)
                         |> Extract.``grok``.createAction)
                 | None, _, _ -> Error "Missing source property"
                 | _, None, _ -> Error "Missing grokString property"
                 | _, _, Error e -> Error $"Error creating table: {e}"
 
+        module ``query-sqlite-database`` =
+
+            let deserialize (ctx: SqliteContext) (json: JsonElement) =
+                match
+                    Json.tryGetStringProperty "path" json, TableVersion.TryCreate json, QueryVersion.TryCreate json
+                with
+                | Some path, Ok tableVersion, Ok query ->
+                    createQueryAndTable ctx query tableVersion
+                    |> Result.map (fun (q, t) ->
+                        ({ Path = path
+                           Table = t
+                           Sql = q
+                           Parameters = [] }
+                        : Extract.``query-sqlite-database``.Parameters)
+                        |> Extract.``query-sqlite-database``.createAction)
+                | None, _, _ -> Error "Missing source property"
+                | _, Error e, _ -> Error $"Error creating query: {e}"
+                | _, _, Error e -> Error $"Error creating table: {e}"
+
         let names =
             [ Extract.``parse-csv``.name
               Extract.``parse-csv-collection``.name
-              Extract.``grok``.name ]
+              Extract.``grok``.name
+              Extract.``query-sqlite-database``.name ]
 
         let all (ctx: SqliteContext) =
             [ Extract.``parse-csv``.name, ``parse-csv``.deserialize ctx
               Extract.``parse-csv-collection``.name, ``parse-csv``.deserialize ctx
-              Extract.``grok``.name, ``grok``.deserialize ctx ]
+              Extract.``grok``.name, ``grok``.deserialize ctx
+              Extract.``query-sqlite-database``.name, ``query-sqlite-database``.deserialize ctx ]
 
     module Transform =
 
@@ -196,6 +242,7 @@ module Actions =
                 | Ok query, Ok tableVersion ->
                     createQueryAndTable ctx query tableVersion
                     |> Result.map (fun (q, t) ->
+                        // NOTE currently parameters.Parameters is always empty.
                         ({ Table = t; Sql = q; Parameters = [] }: Transform.``aggregate``.Parameters)
                         |> Transform.aggregate.createAction)
                 | Error e, _ -> Error $"Error creating query: {e}"
@@ -216,7 +263,8 @@ module Actions =
                         ({ Table = t
                            SelectSql = q
                            DateGroups = dateGroup
-                           CategoryField = categoryField }: Transform.``aggregate-by-date-and-category``.Parameters)
+                           CategoryField = categoryField }
+                        : Transform.``aggregate-by-date-and-category``.Parameters)
                         |> Transform.``aggregate-by-date-and-category``.createAction)
                 | Error e, _, _, _ -> Error $"Error creating date groups: {e}"
                 | _, None, _, _ -> Error "Missing `category` field"
@@ -236,7 +284,8 @@ module Actions =
                     |> Result.map (fun (q, t) ->
                         ({ Table = t
                            SelectSql = q
-                           DateGroups = dateGroup }: Transform.``aggregate-by-date``.Parameters)
+                           DateGroups = dateGroup }
+                        : Transform.``aggregate-by-date``.Parameters)
                         |> Transform.``aggregate-by-date``.createAction)
                 | Error e, _, _ -> Error $"Error creating date groups: {e}"
                 | _, Error e, _ -> Error $"Error creating table: {e}"
@@ -293,7 +342,8 @@ module Actions =
                        ModelName = mn
                        DataSource = ds
                        ModelSavePath = msp
-                       ContextSeed = Json.tryGetIntProperty "contextSeed" json }: ML.``train-binary-classification-model``.Parameters)
+                       ContextSeed = Json.tryGetIntProperty "contextSeed" json }
+                    : ML.``train-binary-classification-model``.Parameters)
                     |> ML.``train-binary-classification-model``.createAction
                     |> Ok
                 | Error e, _, _, _ -> Error e
@@ -316,7 +366,8 @@ module Actions =
                        ModelName = mn
                        DataSource = ds
                        ModelSavePath = msp
-                       ContextSeed = Json.tryGetIntProperty "contextSeed" json }: ML.``train-multiclass-classification-model``.Parameters)
+                       ContextSeed = Json.tryGetIntProperty "contextSeed" json }
+                    : ML.``train-multiclass-classification-model``.Parameters)
                     |> ML.``train-multiclass-classification-model``.createAction
                     |> Ok
                 | Error e, _, _, _ -> Error e
@@ -339,7 +390,8 @@ module Actions =
                        ModelName = mn
                        DataSource = ds
                        ModelSavePath = msp
-                       ContextSeed = Json.tryGetIntProperty "contextSeed" json }: ML.``train-regression-model``.Parameters)
+                       ContextSeed = Json.tryGetIntProperty "contextSeed" json }
+                    : ML.``train-regression-model``.Parameters)
                     |> ML.``train-regression-model``.createAction
                     |> Ok
                 | Error e, _, _, _ -> Error e
@@ -362,7 +414,8 @@ module Actions =
                        ModelName = mn
                        DataSource = ds
                        ModelSavePath = msp
-                       ContextSeed = Json.tryGetIntProperty "contextSeed" json }: ML.``train-matrix-factorization-model``.Parameters)
+                       ContextSeed = Json.tryGetIntProperty "contextSeed" json }
+                    : ML.``train-matrix-factorization-model``.Parameters)
                     |> ML.``train-matrix-factorization-model``.createAction
                     |> Ok
                 | Error e, _, _, _ -> Error e
@@ -393,7 +446,7 @@ module Actions =
           yield! ML.names ]
 
     let all (ctx: SqliteContext) =
-        [ yield! Utils.all
+        [ yield! Utils.all ctx
           yield! Import.all
           yield! Extract.all ctx
           yield! Transform.all ctx
@@ -477,7 +530,8 @@ module Actions =
                ActionType = actionType
                ActionBlob = BlobField.FromBytes ms
                Hash = hash
-               Step = prevStep + 1 }: Parameters.NewPipelineAction)
+               Step = prevStep + 1 }
+            : Parameters.NewPipelineAction)
             |> Operations.insertPipelineAction ctx
             |> Ok)
         |> Option.defaultWith (fun _ -> Error $"Version `{version.ToLabel()}` of pipeline `{pipeline}` not found.")
@@ -509,7 +563,8 @@ module Actions =
                    ActionType = actionType
                    ActionBlob = BlobField.FromBytes ms
                    Hash = hash
-                   Step = step }: Parameters.NewPipelineAction)
+                   Step = step }
+                : Parameters.NewPipelineAction)
                 |> Operations.insertPipelineAction ctx
                 |> Ok)
         |> Option.defaultWith (fun _ -> Error $"Version `{version.ToLabel()}` of pipeline `{pipeline}` not found")
