@@ -421,11 +421,6 @@ module Types =
 
             handler data
 
-
-
-
-
-
         static member CoerceValueToType<'T>(value: 'T, baseType: BaseType) =
             let handler value (target: Type) (successHandler: obj -> Value) =
                 TypeHelpers.convert value target
@@ -734,6 +729,28 @@ module Types =
 
             handler fv
 
+        member fv.GetFloat() =
+            let rec handler (value: Value) =
+                match value with
+                | Boolean _ -> 0.
+                | Byte v -> float v
+                | Char _ -> 0.
+                | Decimal v -> float v
+                | Double v -> float v
+                | Float v -> float v
+                | Int v -> float v
+                | Short v -> float v
+                | Long v -> float v
+                | String v -> float v
+                | DateTime _ -> 0.
+                | Guid _ -> 0.
+                | Option v ->
+                    match v with
+                    | Some v -> handler v
+                    | None -> 0.
+
+            handler fv
+        
         member v.IsMatch(value: Value) =
             let rec handler (v: Value) (v2: Value) =
                 match v, v2 with

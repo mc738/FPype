@@ -19,6 +19,10 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "_external", "_external", "{
 EndProject
 Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "FPype.Infrastructure", "FPype.Infrastructure\FPype.Infrastructure.fsproj", "{DDC77E4D-E240-4DA9-BDB8-B73CA351315C}"
 EndProject
+Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "FSVG", "..\FSVG\FSVG\FSVG.fsproj", "{ABEB55B8-F572-41CD-81A6-69FA259C38EF}"
+EndProject
+Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "FSVG.Charts", "..\FSVG\FSVG.Charts\FSVG.Charts.fsproj", "{A9129778-A72F-4179-980A-9153E716F135}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -45,7 +49,17 @@ Global
 		{DDC77E4D-E240-4DA9-BDB8-B73CA351315C}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{DDC77E4D-E240-4DA9-BDB8-B73CA351315C}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{DDC77E4D-E240-4DA9-BDB8-B73CA351315C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{ABEB55B8-F572-41CD-81A6-69FA259C38EF}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{ABEB55B8-F572-41CD-81A6-69FA259C38EF}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{ABEB55B8-F572-41CD-81A6-69FA259C38EF}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{ABEB55B8-F572-41CD-81A6-69FA259C38EF}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A9129778-A72F-4179-980A-9153E716F135}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A9129778-A72F-4179-980A-9153E716F135}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A9129778-A72F-4179-980A-9153E716F135}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A9129778-A72F-4179-980A-9153E716F135}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
+		{ABEB55B8-F572-41CD-81A6-69FA259C38EF} = {23F03A24-5616-41EF-AFB2-B5BEDD79743D}
+		{A9129778-A72F-4179-980A-9153E716F135} = {23F03A24-5616-41EF-AFB2-B5BEDD79743D}
 	EndGlobalSection
 EndGlobal

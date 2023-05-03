@@ -304,6 +304,8 @@ module Models =
                     | None -> ""
 
             tr.Values |> List.map handler |> String.concat ","
+            
+        member tr.TryGetValue(index: int) = tr.Values |> List.tryItem index
 
     type ObjectDefinition =
         { Name: string
