@@ -29,6 +29,7 @@
         <Compile Include="ML\MatrixFactorization.fs" />
         <Compile Include="Connectors\Common.fs" />
         <Compile Include="Connectors\Sqlite.fs" />
+        <Compile Include="Visualizations\Charts\Common.fs" />
         <Compile Include="Visualizations\Charts\LineCharts.fs" />
         <Compile Include="Scripting\Core.fs" />
         <Compile Include="Scripting\FSharp.fs" />
@@ -40,6 +41,7 @@
         <Compile Include="Actions\Export.fs" />
         <Compile Include="Actions\ML.fs" />
         <Compile Include="Actions\Load.fs" />
+        <Compile Include="Actions\Visualizations.fs" />
         <Compile Include="Configuration\Persistence.fs" />
         <Compile Include="Configuration\Common.fs" />
         <Compile Include="Configuration\Pipelines.fs" />

@@ -10,8 +10,10 @@ open FPype.Core.Paths
 open FPype.Core.Types
 open FPype.Data
 open FPype.Data.Models
+open FPype.Data.Store
 open FPype.ML
 open FPype.Scripting.Core
+open FSVG.Charts
 open Microsoft.FSharp.Core
 open Microsoft.ML
 open Microsoft.ML.Data
@@ -96,7 +98,6 @@ module ServerReport =
         | Error e ->
 
             printfn $"Error: {e}"
-
 
 module ObjectTableMapperTest =
 
@@ -711,6 +712,105 @@ module CommsTest =
 
         ()
 
+module ChartsActionTest =
+
+    open FSVG
+    open FSVG.Charts
+    open Visualizations.Charts.LineCharts
+    open Actions.Visualizations
+
+    let run _ =
+
+        let store =
+            PipelineStore.Open(
+                "D:\\DataSets\\sp_500\\pipelines\\v7\\pipeline\\runs",
+                "f478ec8c85c34014b8c379c239c5c43d"
+            )
+
+
+        let parameters =
+            ({ ResultBucket = "test_charts"
+               FileNameFormat = "comparison_2022_{0}"
+               CategoriesQuerySql =
+                 "SELECT cgvsai.company FROM company_growth_vs_sector_and_industry cgvsai WHERE cgvsai.growth_vs_industry > 0 AND cgvsai.growth_vs_sector > 0;"
+               CategoriesTable =
+                 ({ Name = "query_categories"
+                    Columns =
+                      [ ({ Name = "company"
+                           Type = BaseType.String
+                           ImportHandler = None }
+                        : TableColumn) ]
+                    Rows = [] }
+                 : TableModel)
+               CategoryIndex = 0
+               TimeSeriesQuerySql =
+                 "SELECT sp.entry_date, sp.close_value as company_close, ibm.average_close as industry_average_close, sbm.average_close as sector_average_close FROM sp500_prices sp JOIN industry_by_month ibm ON DATE(sp.entry_date) = DATE(ibm.entry_date) AND sp.gics_sub_industry = ibm.industry JOIN sector_by_month sbm ON DATE(sp.entry_date) = DATE(sbm.entry_date) AND sp.gics_sector = sbm.sector WHERE DATE(sp.entry_date) >= DATE('2022-01-01') AND DATE(sp.entry_date) < ('2023-01-01') AND sp.company = @0;"
+               TimeSeriesTable =
+                 ({ Name = "time_series"
+                    Columns =
+                      [ ({ Name = "entry_date"
+                           Type = BaseType.DateTime
+                           ImportHandler = None }
+                        : TableColumn)
+                        ({ Name = "company_close"
+                           Type = BaseType.Decimal
+                           ImportHandler = None }
+                        : TableColumn)
+                        ({ Name = "industry_average_close"
+                           Type = BaseType.Decimal
+                           ImportHandler = None }
+                        : TableColumn)
+                        ({ Name = "sector_average_close"
+                           Type = BaseType.Decimal
+                           ImportHandler = None }
+                        : TableColumn) ]
+                    Rows = [] }
+                 : TableModel)
+               GeneratorSettings =
+                 ({ TimestampValueIndex = 0
+                    TimestampFormat = "MM-yy"
+                    UnitSize = 100.
+                    ChartSettings =
+                      ({ LeftOffset = None
+                         RightOffset = None
+                         TopOffset = None
+                         BottomOffset = None
+                         Title = None
+                         XLabel = None
+                         YMajorMarks = [ 50.; 100. ]
+                         YMinorMarks = [ 25.; 75. ] }
+                      : TimeSeriesChartSettings)
+                    SeriesSettings =
+                      [ // Industry
+                        ({ ValueIndex = 2
+                           StokeWidth = 0.3
+                           Color = SvgColor.Grey
+                           LineType = LineCharts.LineType.Bezier
+                           Shading = None }
+                        : SeriesSettings)
+                        // Sector
+                        ({ ValueIndex = 2
+                           StokeWidth = 0.3
+                           Color = SvgColor.Named "lightgrey"
+                           LineType = LineCharts.LineType.Bezier
+                           Shading = None }
+                        : SeriesSettings)
+                        // Company
+                        ({ ValueIndex = 1
+                           StokeWidth = 0.3
+                           Color = SvgColor.Black
+                           LineType = LineCharts.LineType.Bezier
+                           Shading = None }
+                        : SeriesSettings) ] }
+                 : TimeSeriesChartGeneratorSettings) }
+            : ``generate-time-series-chart-collection``.Parameters)
+
+        match ``generate-time-series-chart-collection``.run parameters store with
+        | Ok _ -> ()
+        | Error e ->
+            ()
+
+ChartsActionTest.run ()
 
 CommsTest.run ()
 

@@ -21,17 +21,7 @@ type PipelineContext =
         match Directory.Exists basePath with
         | true ->
             let id = Guid.NewGuid().ToString("n")
-            //let dir = Path.Combine(basePath, id)
-            //let importDir = Path.Combine(dir, "imports")
-            //let exportDir = Path.Combine(dir, "exports")
-            //let tmpDir = Path.Combine(dir, "tmp")
-
-
-            //Directory.CreateDirectory(dir) |> ignore
-            //Directory.CreateDirectory(importDir) |> ignore
-            //Directory.CreateDirectory(exportDir) |> ignore
-            //Directory.CreateDirectory(tmpDir) |> ignore
-
+           
             PipelineStore.Initialize(basePath, id)
             |> Result.map (fun store ->
                 { Id = id
