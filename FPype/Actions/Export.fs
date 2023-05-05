@@ -43,7 +43,7 @@ module Export =
             // "__exports_path"
             match
                 parameters.OutputPath
-                |> Option.orElseWith (fun _ -> store.GetStateValue "__exports_path")
+                |> Option.orElseWith (fun _ -> store.GetExportsPath())
                 |> Option.map store.SubstituteValues,
                 store.GetArtifact(parameters.ArtifactName)
             with
@@ -62,3 +62,32 @@ module Export =
             | _, None -> store.LogError(name, $"Artifact `{parameters.ArtifactName}` not found.")
 
             store
+
+    module ``export-artifact-bucket`` =
+        
+        let name = "export_artifact"
+         
+         
+        type Parameters =
+            { BucketName: string
+              OutputPath: string option }
+
+        let run (parameters: Parameters) (store: PipelineStore) =
+            match
+                parameters.OutputPath
+                    |> Option.orElseWith (fun _ -> store.GetExportsPath())
+                    |> Option.map store.SubstituteValues
+            with
+            | Some path ->
+                store.GetArtifactBucket parameters.BucketName
+                |> List.iter (fun a ->
+                    File.WriteAllBytes(Path.Combine(path, $"{a.Name}.{a.Type}"), a.Data.ToBytes()))
+                
+                Ok store
+            | None ->
+                let msg = "Export path not found."
+                store.LogError(name, msg)
+                Error msg
+                
+            
+            

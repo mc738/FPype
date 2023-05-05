@@ -789,9 +789,9 @@ module ChartsActionTest =
                            Shading = None }
                         : SeriesSettings)
                         // Sector
-                        ({ ValueIndex = 2
+                        ({ ValueIndex = 3
                            StokeWidth = 0.3
-                           Color = SvgColor.Named "lightgrey"
+                           Color = SvgColor.Named "blue"
                            LineType = LineCharts.LineType.Bezier
                            Shading = None }
                         : SeriesSettings)
@@ -810,7 +810,23 @@ module ChartsActionTest =
         | Error e ->
             ()
 
+module ExportBucketTest =
+    
+    let run _ =
+        
+        let store =
+            PipelineStore.Open(
+                "D:\\DataSets\\sp_500\\pipelines\\v7\\pipeline\\runs",
+                "f478ec8c85c34014b8c379c239c5c43d"
+            )
+        
+        let r = Actions.Export.``export-artifact-bucket``.run ({ BucketName = "test_charts"; OutputPath = None }) store
+        
+        
+        ()
+
 ChartsActionTest.run ()
+ExportBucketTest.run ()
 
 CommsTest.run ()
 

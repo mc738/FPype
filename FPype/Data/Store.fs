@@ -227,6 +227,9 @@ module Store =
             [ box name ]
         )
 
+    let getArtifactBucket (ctx: SqliteContext) (name: string) =
+        ctx.SelectAnon<Artifact>("SELECT name, bucket, type, data FROM __artifacts WHERE bucket = @0;", [ box name ])
+
     let addResource (ctx: SqliteContext) (name: string) (resourceType: string) (data: byte array) =
         use ms = new MemoryStream(data)
         let hash = ms.GetSHA256Hash()
@@ -654,6 +657,8 @@ module Store =
             |> addArtifact ctx
 
         member ps.GetArtifact(name) = getArtifact ctx name
+
+        member ps.GetArtifactBucket(name) = getArtifactBucket ctx name
 
         member ps.AddResource(name, resourceType, data: byte array) = addResource ctx name resourceType data
 
