@@ -12,15 +12,18 @@ module LineCharts =
 
     type TimeSeriesEntry = { Value: float; Timestamp: DateTime }
 
-    [<RequireQualifiedAccess>]
-    type MaxValue =
-        | Specific of float
-        | UnitSize of float
+    type ValueRange =
+        { Minimum: RangeValueType
+          Maximum: RangeValueType }
+
+    and [<RequireQualifiedAccess>] RangeValueType =
+        | Specific of Value: float
+        | UnitSize of Units: float
 
     type TimeSeriesChartGeneratorSettings =
         { TimestampValueIndex: int
           TimestampFormat: string
-          UnitSize: float
+          Range: ValueRange
           ChartSettings: TimeSeriesChartSettings
           SeriesSettings: SeriesSettings list }
 
@@ -110,15 +113,11 @@ module LineCharts =
                         acc)
                 (Ok seriesValueMap)
             |> Result.map (fun vs ->
-                ({ SplitValueHandler =
-                    fun percent maxValue ->
-                        (float maxValue / float 100) * float percent |> int |> (fun r -> r.ToString())
-                   Normalizer = fun p -> (p.Value / p.MaxValue) * 100.
+                ({ SplitValueHandler = floatValueSplitter
+                   Normalizer = floatRangeNormalizer
                    PointNames = tss
                    Series = vs |> Map.toList |> List.map snd }
                 : LineCharts.SeriesCollection<float>)))
-
-
 
     (*
         
@@ -148,15 +147,34 @@ module LineCharts =
     let generate (settings: TimeSeriesChartGeneratorSettings) (table: TableModel) =
         createTimeSeriesFromTable settings table
         |> Result.map (fun sc ->
-            // Find max value and round up to next unit size
-            sc.Series
-            |> List.fold
-                (fun v s ->
-                    let sv = s.Values |> List.max
+            let maxValue =
+                match settings.Range.Maximum with
+                | RangeValueType.Specific v -> v
+                | RangeValueType.UnitSize us ->
+                    sc.Series
+                    |> List.fold
+                        (fun v s ->
+                            let sv = s.Values |> List.max
 
-                    match sv > v with
-                    | true -> sv
-                    | false -> v)
-                0.
-            |> ceiling settings.UnitSize
-            |> LineCharts.generate (settings.ChartSettings.ToLineChartSettings()) sc)
+                            match sv > v with
+                            | true -> sv
+                            | false -> v)
+                        0.
+                    |> ceiling us
+
+            let minValue =
+                match settings.Range.Minimum with
+                | RangeValueType.Specific v -> v
+                | RangeValueType.UnitSize us ->
+                    sc.Series
+                    |> List.fold
+                        (fun v s ->
+                            let sv = s.Values |> List.min
+
+                            match sv < v with
+                            | true -> sv
+                            | false -> v)
+                        0.
+                    |> floor us
+
+            LineCharts.generate (settings.ChartSettings.ToLineChartSettings()) sc minValue maxValue)

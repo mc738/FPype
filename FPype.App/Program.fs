@@ -769,7 +769,9 @@ module ChartsActionTest =
                GeneratorSettings =
                  ({ TimestampValueIndex = 0
                     TimestampFormat = "MM-yy"
-                    UnitSize = 100.
+                    Range =
+                      { Minimum = RangeValueType.Specific 0.
+                        Maximum = RangeValueType.UnitSize 100. }
                     ChartSettings =
                       ({ LeftOffset = None
                          RightOffset = None
@@ -807,22 +809,25 @@ module ChartsActionTest =
 
         match ``generate-time-series-chart-collection``.run parameters store with
         | Ok _ -> ()
-        | Error e ->
-            ()
+        | Error e -> ()
 
 module ExportBucketTest =
-    
+
     let run _ =
-        
+
         let store =
             PipelineStore.Open(
                 "D:\\DataSets\\sp_500\\pipelines\\v7\\pipeline\\runs",
                 "f478ec8c85c34014b8c379c239c5c43d"
             )
-        
-        let r = Actions.Export.``export-artifact-bucket``.run ({ BucketName = "test_charts"; OutputPath = None }) store
-        
-        
+
+        let r =
+            Actions.Export.``export-artifact-bucket``.run
+                ({ BucketName = "test_charts"
+                   OutputPath = None })
+                store
+
+
         ()
 
 ChartsActionTest.run ()
