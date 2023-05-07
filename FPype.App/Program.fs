@@ -777,28 +777,137 @@ module ChartsActionTest =
                          RightOffset = None
                          TopOffset = None
                          BottomOffset = None
+                         LegendPosition = Some LegendPosition.Right 
                          Title = None
                          XLabel = None
+                         YLabel = Some "Close value ($)" 
                          YMajorMarks = [ 50.; 100. ]
                          YMinorMarks = [ 25.; 75. ] }
                       : TimeSeriesChartSettings)
                     SeriesSettings =
                       [ // Industry
-                        ({ ValueIndex = 2
+                        ({ Name = "Industry"
+                           ValueIndex = 2
                            StokeWidth = 0.3
                            Color = SvgColor.Grey
                            LineType = LineCharts.LineType.Bezier
                            Shading = None }
                         : SeriesSettings)
                         // Sector
-                        ({ ValueIndex = 3
+                        ({ Name = "Sector"
+                           ValueIndex = 3
                            StokeWidth = 0.3
                            Color = SvgColor.Named "blue"
                            LineType = LineCharts.LineType.Bezier
                            Shading = None }
                         : SeriesSettings)
                         // Company
-                        ({ ValueIndex = 1
+                        ({ Name = "Company"
+                           ValueIndex = 1
+                           StokeWidth = 0.3
+                           Color = SvgColor.Black
+                           LineType = LineCharts.LineType.Bezier
+                           Shading = None }
+                        : SeriesSettings) ] }
+                 : TimeSeriesChartGeneratorSettings) }
+            : ``generate-time-series-chart-collection``.Parameters)
+
+        match ``generate-time-series-chart-collection``.run parameters store with
+        | Ok _ -> ()
+        | Error e -> ()
+        
+module ChartsActionTest2 =
+
+    open FSVG
+    open FSVG.Charts
+    open Visualizations.Charts.LineCharts
+    open Actions.Visualizations
+
+    let run _ =
+
+        let store =
+            PipelineStore.Open(
+                "D:\\DataSets\\sp_500\\pipelines\\v7\\pipeline\\runs",
+                "f478ec8c85c34014b8c379c239c5c43d"
+            )
+
+
+        let parameters =
+            ({ ResultBucket = "test_charts"
+               FileNameFormat = "comparison_2022_{0}-growth"
+               CategoriesQuerySql =
+                 "SELECT cgvsai.company FROM company_growth_vs_sector_and_industry cgvsai WHERE cgvsai.growth_vs_industry > 0 AND cgvsai.growth_vs_sector > 0;"
+               CategoriesTable =
+                 ({ Name = "query_categories"
+                    Columns =
+                      [ ({ Name = "company"
+                           Type = BaseType.String
+                           ImportHandler = None }
+                        : TableColumn) ]
+                    Rows = [] }
+                 : TableModel)
+               CategoryIndex = 0
+               TimeSeriesQuerySql =
+                 "SELECT cgbm.from_date as entry_date, cgbm.growth_percent AS growth_percent, igbm.growth_percent AS industry_growth_percent, sgbm.growth_percent AS sector_growth_percent FROM company_growth_by_month cgbm JOIN companies c ON cgbm.security_name = c.security_name JOIN industry_growth_by_month igbm ON DATE(cgbm.from_date) = DATE(igbm.from_date) AND c.industry = igbm.industry JOIN sector_growth_by_month sgbm ON DATE(cgbm.from_date) = DATE(sgbm.from_date) AND c.sector = sgbm.sector WHERE DATE(cgbm.from_date) >= DATE('2022-01-01') AND DATE(cgbm.from_date) < ('2023-01-01') AND c.company = @0;"
+               TimeSeriesTable =
+                 ({ Name = "time_series"
+                    Columns =
+                      [ ({ Name = "entry_date"
+                           Type = BaseType.DateTime
+                           ImportHandler = None }
+                        : TableColumn)
+                        ({ Name = "growth_percent"
+                           Type = BaseType.Decimal
+                           ImportHandler = None }
+                        : TableColumn)
+                        ({ Name = "industry_growth_percent"
+                           Type = BaseType.Decimal
+                           ImportHandler = None }
+                        : TableColumn)
+                        ({ Name = "sector_growth_percent"
+                           Type = BaseType.Decimal
+                           ImportHandler = None }
+                        : TableColumn) ]
+                    Rows = [] }
+                 : TableModel)
+               GeneratorSettings =
+                 ({ TimestampValueIndex = 0
+                    TimestampFormat = "MM-yy"
+                    Range =
+                      { Minimum = RangeValueType.UnitSize 100.
+                        Maximum = RangeValueType.UnitSize 100. }
+                    ChartSettings =
+                      ({ LeftOffset = None
+                         RightOffset = None
+                         TopOffset = None
+                         BottomOffset = None
+                         LegendPosition = Some LegendPosition.Right  
+                         Title = None
+                         XLabel = None
+                         YLabel = Some "Growth (%)" 
+                         YMajorMarks = [ 50.; 100. ]
+                         YMinorMarks = [ 25.; 75. ] }
+                      : TimeSeriesChartSettings)
+                    SeriesSettings =
+                      [ // Industry
+                        ({ Name = "Industry"
+                           ValueIndex = 2
+                           StokeWidth = 0.3
+                           Color = SvgColor.Grey
+                           LineType = LineCharts.LineType.Bezier
+                           Shading = None }
+                        : SeriesSettings)
+                        // Sector
+                        ({ Name = "Sector"
+                           ValueIndex = 3
+                           StokeWidth = 0.3
+                           Color = SvgColor.Named "blue"
+                           LineType = LineCharts.LineType.Bezier
+                           Shading = None }
+                        : SeriesSettings)
+                        // Company
+                        ({ Name = "Company"
+                           ValueIndex = 1
                            StokeWidth = 0.3
                            Color = SvgColor.Black
                            LineType = LineCharts.LineType.Bezier
@@ -831,6 +940,7 @@ module ExportBucketTest =
         ()
 
 ChartsActionTest.run ()
+ChartsActionTest2.run ()
 ExportBucketTest.run ()
 
 CommsTest.run ()

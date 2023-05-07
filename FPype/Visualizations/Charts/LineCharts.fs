@@ -32,8 +32,10 @@ module LineCharts =
           BottomOffset: float option
           TopOffset: float option
           RightOffset: float option
+          LegendPosition: FSVG.Charts.Common.LegendPosition option
           Title: string option
           XLabel: string option
+          YLabel: string option
           YMajorMarks: float list
           YMinorMarks: float list }
 
@@ -42,14 +44,17 @@ module LineCharts =
                RightOffset = tsc.RightOffset |> Option.defaultValue 10
                TopOffset = tsc.TopOffset |> Option.defaultValue 10
                BottomOffset = tsc.BottomOffset |> Option.defaultValue 10
+               LegendStyle = tsc.LegendPosition |> Option.map (fun lp -> { Bordered = false; Position = lp })
                Title = tsc.Title
                XLabel = tsc.XLabel
+               YLabel = tsc.YLabel
                YMajorMarks = tsc.YMajorMarks
                YMinorMarks = tsc.YMinorMarks }
             : LineCharts.Settings)
 
     and SeriesSettings =
-        { ValueIndex: int
+        { Name: string
+          ValueIndex: int
           StokeWidth: float
           Color: SvgColor
           LineType: LineCharts.LineType
@@ -61,11 +66,12 @@ module LineCharts =
             settings.SeriesSettings
             |> List.mapi (fun i s ->
                 i,
-                ({ Style =
-                    { Color = s.Color
-                      StokeWidth = s.StokeWidth
-                      LineType = s.LineType
-                      Shading = s.Shading }
+                ({ Name = s.Name
+                   Style =
+                     { Color = s.Color
+                       StokeWidth = s.StokeWidth
+                       LineType = s.LineType
+                       Shading = s.Shading }
                    Values = [] }
                 : LineCharts.Series<float>))
             |> Map.ofList
