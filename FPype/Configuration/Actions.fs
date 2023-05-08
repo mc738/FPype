@@ -1,6 +1,8 @@
 ﻿namespace FPype.Configuration
 
 open FPype.Actions.ML
+open FPype.Visualizations.Charts.LineCharts
+open Freql.Sqlite
 open Microsoft.VisualBasic.CompilerServices
 
 module Actions =
@@ -320,12 +322,50 @@ module Actions =
 
     module Export =
 
-        let names = []
+        open FPype.Actions.Export
 
-        let all (ctx: SqliteContext) = []
+
+        module ``table-to-csv`` =
+            ()
+        (*    
+            let deserialize (ctx: SqliteContext) (json: JsonElement) =
+                match
+                    TableVersion.TryFromJson json,
+                    
+        *)
+
+        module ``export-artifact`` =
+
+            let deserialize (json: JsonElement) =
+                match Json.tryGetStringProperty "artifactName" json with
+                | Some an ->
+                    ({ ArtifactName = an
+                       OutputPath = Json.tryGetStringProperty "outputPath" json
+                       FileExtension = Json.tryGetStringProperty "fileExtension" json }
+                    : ``export-artifact``.Parameters)
+                    |> ``export-artifact``.createAction
+                    |> Ok
+                | None -> Error "Missing `artifactName` property"
+
+        module ``export-artifact-bucket`` =
+
+            let deserialize (json: JsonElement) =
+                match Json.tryGetStringProperty "bucketName" json with
+                | Some bn ->
+                    ({ BucketName = bn
+                       OutputPath = Json.tryGetStringProperty "outputPath" json }
+                    : ``export-artifact-bucket``.Parameters)
+                    |> ``export-artifact-bucket``.createAction
+                    |> Ok
+                | None -> Error "Missing `bucketName` property"
+
+        let names = [ ``export-artifact``.name; ``export-artifact-bucket``.name ]
+
+        let all (ctx: SqliteContext) =
+            [ ``export-artifact``.name, ``export-artifact``.deserialize
+              ``export-artifact-bucket``.name, ``export-artifact-bucket``.deserialize ]
 
     module ML =
-
 
         module ``train-binary-classification-model`` =
             let deserialize (ctx: SqliteContext) (json: JsonElement) =
@@ -436,6 +476,59 @@ module Actions =
               ML.``train-regression-model``.name, ``train-regression-model``.deserialize ctx
               ML.``train-matrix-factorization-model``.name, ``train-matrix-factorization-model``.deserialize ctx ]
 
+    module Visualizations =
+
+        open FPype.Actions.Visualizations
+
+        module ``generate-time-series-chart-collection`` =
+
+            let deserialize (ctx: SqliteContext) (json: JsonElement) =
+                match
+                    Json.tryGetProperty "categoriesQuery" json
+                    |> Option.map QueryVersion.TryFromJson
+                    |> Option.defaultValue (Error "Missing `categoriesQuery` object"),
+                    Json.tryGetProperty "categoriesTable" json
+                    |> Option.map TableVersion.TryFromJson
+                    |> Option.defaultValue (Error "Missing `categoriesTable` object"),
+                    Json.tryGetIntProperty "categoryIndex" json,
+                    Json.tryGetProperty "timeSeriesQuery" json
+                    |> Option.map QueryVersion.TryFromJson
+                    |> Option.defaultValue (Error "Missing `timeSeriesQuery` object"),
+                    Json.tryGetProperty "timeSeriesTable" json
+                    |> Option.map TableVersion.TryFromJson
+                    |> Option.defaultValue (Error "Missing `timeSeriesTable` object"),
+                    Json.tryGetProperty "settings" json
+                    |> Option.map TimeSeriesChartGeneratorSettings.TryFromJson
+                    |> Option.defaultValue (Error "Missing `settings` property")
+                with
+                | Ok cqv, Ok ctv, Some ci, Ok tqv, Ok ttv, Ok gs ->
+                    match createQueryAndTable ctx cqv ctv, createQueryAndTable ctx tqv ttv with
+                    | Ok(catQuery, catTable), Ok(tsQuery, tsTable) ->
+                        ({ ResultBucket = Json.tryGetStringProperty "resultBucket" json |> Option.defaultValue "exports"
+                           FileNameFormat = Json.tryGetStringProperty "fileNameFormat" json |> Option.defaultValue "{0}"
+                           CategoriesQuerySql = catQuery
+                           CategoriesTable = catTable
+                           CategoryIndex = ci
+                           TimeSeriesQuerySql = tsQuery
+                           TimeSeriesTable = tsTable
+                           GeneratorSettings = gs }
+                        : ``generate-time-series-chart-collection``.Parameters)
+                        |> ``generate-time-series-chart-collection``.createAction
+                        |> Ok
+                    | Error e, _ -> Error e
+                    | _, Error e -> Error e
+                | Error e, _, _, _, _, _ -> Error e
+                | _, Error e, _, _, _, _ -> Error e
+                | _, _, None, _, _, _ -> Error "Missing `categoryIndex` property"
+                | _, _, _, Error e, _, _ -> Error e
+                | _, _, _, _, Error e, _ -> Error e
+                | _, _, _, _, _, Error e -> Error e
+
+        let names = [ ``generate-time-series-chart-collection``.name ]
+
+        let all (ctx: SqliteContext) =
+            [ ``generate-time-series-chart-collection``.name, ``generate-time-series-chart-collection``.deserialize ctx ]
+
     let names =
         [ yield! Utils.names
           yield! Import.names
@@ -443,7 +536,8 @@ module Actions =
           yield! Transform.names
           yield! Load.names
           yield! Export.names
-          yield! ML.names ]
+          yield! ML.names
+          yield! Visualizations.names ]
 
     let all (ctx: SqliteContext) =
         [ yield! Utils.all ctx
@@ -452,7 +546,8 @@ module Actions =
           yield! Transform.all ctx
           yield! Load.all ctx
           yield! Export.all ctx
-          yield! ML.all ctx ]
+          yield! ML.all ctx
+          yield! Visualizations.all ctx ]
 
     let createAction
         (actionsMap: Map<string, JsonElement -> Result<PipelineAction, string>>)

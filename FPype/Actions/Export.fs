@@ -1,10 +1,9 @@
 ﻿namespace FPype.Actions
 
-open System.IO
-open FPype.Data.Store
-
 module Export =
 
+    open System.IO
+    open FPype.Data.Store
     open System
     open FsToolbox.Extensions
     open FPype.Data
@@ -28,7 +27,9 @@ module Export =
 
             store.AddArtifact(parameters.ArtifactName, parameters.BucketName, "csv", csv.ToUtf8Bytes())
 
-            store
+            Ok store
+
+        let createAction parameters = run parameters |> createAction name
 
     module ``export-artifact`` =
 
@@ -61,13 +62,15 @@ module Export =
             | None, _ -> store.LogError(name, "Export path not found.")
             | _, None -> store.LogError(name, $"Artifact `{parameters.ArtifactName}` not found.")
 
-            store
+            Ok store
+
+        let createAction parameters = run parameters |> createAction name
 
     module ``export-artifact-bucket`` =
-        
-        let name = "export_artifact"
-         
-         
+
+        let name = "export_artifact_bucket"
+
+
         type Parameters =
             { BucketName: string
               OutputPath: string option }
@@ -75,19 +78,17 @@ module Export =
         let run (parameters: Parameters) (store: PipelineStore) =
             match
                 parameters.OutputPath
-                    |> Option.orElseWith (fun _ -> store.GetExportsPath())
-                    |> Option.map store.SubstituteValues
+                |> Option.orElseWith (fun _ -> store.GetExportsPath())
+                |> Option.map store.SubstituteValues
             with
             | Some path ->
                 store.GetArtifactBucket parameters.BucketName
-                |> List.iter (fun a ->
-                    File.WriteAllBytes(Path.Combine(path, $"{a.Name}.{a.Type}"), a.Data.ToBytes()))
-                
+                |> List.iter (fun a -> File.WriteAllBytes(Path.Combine(path, $"{a.Name}.{a.Type}"), a.Data.ToBytes()))
+
                 Ok store
             | None ->
                 let msg = "Export path not found."
                 store.LogError(name, msg)
                 Error msg
-                
-            
-            
+
+        let createAction parameters = run parameters |> createAction name

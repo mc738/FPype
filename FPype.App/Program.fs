@@ -13,6 +13,7 @@ open FPype.Data.Models
 open FPype.Data.Store
 open FPype.ML
 open FPype.Scripting.Core
+open FPype.Visualizations.Charts
 open FSVG.Charts
 open Microsoft.FSharp.Core
 open Microsoft.ML
@@ -773,7 +774,9 @@ module ChartsActionTest =
                       { Minimum = RangeValueType.Specific 0.
                         Maximum = RangeValueType.UnitSize 100. }
                     ChartSettings =
-                      ({ LeftOffset = None
+                      ({ Height = None
+                         Width = None
+                         LeftOffset = None
                          RightOffset = None
                          TopOffset = None
                          BottomOffset = None
@@ -781,8 +784,8 @@ module ChartsActionTest =
                          Title = None
                          XLabel = None
                          YLabel = Some "Close value ($)" 
-                         YMajorMarks = [ 50.; 100. ]
-                         YMinorMarks = [ 25.; 75. ] }
+                         YMajorMarkers = [ 50.; 100. ]
+                         YMinorMarkers = [ 25.; 75. ] }
                       : TimeSeriesChartSettings)
                     SeriesSettings =
                       [ // Industry
@@ -877,7 +880,9 @@ module ChartsActionTest2 =
                       { Minimum = RangeValueType.UnitSize 100.
                         Maximum = RangeValueType.UnitSize 100. }
                     ChartSettings =
-                      ({ LeftOffset = None
+                      ({ Height = None
+                         Width = None 
+                         LeftOffset = None
                          RightOffset = None
                          TopOffset = None
                          BottomOffset = None
@@ -885,8 +890,8 @@ module ChartsActionTest2 =
                          Title = None
                          XLabel = None
                          YLabel = Some "Growth (%)" 
-                         YMajorMarks = [ 50.; 100. ]
-                         YMinorMarks = [ 25.; 75. ] }
+                         YMajorMarkers = [ 50.; 100. ]
+                         YMinorMarkers = [ 25.; 75. ] }
                       : TimeSeriesChartSettings)
                     SeriesSettings =
                       [ // Industry

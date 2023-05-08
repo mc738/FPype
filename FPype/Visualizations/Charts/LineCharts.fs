@@ -1,9 +1,12 @@
 ﻿namespace FPype.Visualizations.Charts
 
 open System
+open System.Text.Json
 open FPype.Core.Types
 open FPype.Data.Models
 open FSVG
+open FSVG.Charts
+open FsToolbox.Core
 
 module LineCharts =
 
@@ -12,14 +15,6 @@ module LineCharts =
 
     type TimeSeriesEntry = { Value: float; Timestamp: DateTime }
 
-    type ValueRange =
-        { Minimum: RangeValueType
-          Maximum: RangeValueType }
-
-    and [<RequireQualifiedAccess>] RangeValueType =
-        | Specific of Value: float
-        | UnitSize of Units: float
-
     type TimeSeriesChartGeneratorSettings =
         { TimestampValueIndex: int
           TimestampFormat: string
@@ -27,29 +22,98 @@ module LineCharts =
           ChartSettings: TimeSeriesChartSettings
           SeriesSettings: SeriesSettings list }
 
+        static member TryFromJson(json: JsonElement) =
+            match
+                Json.tryGetIntProperty "timestampValueIndex" json,
+                Json.tryGetProperty "range" json
+                |> Option.map ValueRange.TryFromJson
+                |> Option.defaultValue (Error "Missing range property"),
+                Json.tryGetArrayProperty "series" json
+                |> Option.map (List.map SeriesSettings.TryFromJson >> flattenResultList)
+                |> Option.defaultValue (Error "Missing series property")
+            with
+            | Some tsv, Ok r, Ok ss ->
+                { TimestampValueIndex = tsv
+                  TimestampFormat = Json.tryGetStringProperty "timestampFormat" json |> Option.defaultValue "u"
+                  Range = r
+                  ChartSettings =
+                    Json.tryGetProperty "chartSettings" json
+                    |> Option.map TimeSeriesChartSettings.FromJson
+                    |> Option.defaultValue (TimeSeriesChartSettings.Default())
+                  SeriesSettings = ss }
+                |> Ok
+            | None, _, _ -> Error "Missing timestampValueIndex"
+            | _, Error e, _ -> Error e
+            | _, _, Error e -> Error e
+
+
     and TimeSeriesChartSettings =
-        { LeftOffset: float option
+        { Height: float option
+          Width: float option
           BottomOffset: float option
           TopOffset: float option
+          LeftOffset: float option
           RightOffset: float option
           LegendPosition: FSVG.Charts.Common.LegendPosition option
           Title: string option
           XLabel: string option
           YLabel: string option
-          YMajorMarks: float list
-          YMinorMarks: float list }
+          YMajorMarkers: float list
+          YMinorMarkers: float list }
+
+        static member Default() =
+            { Height = None
+              Width = None
+              BottomOffset = None
+              TopOffset = None
+              LeftOffset = None
+              RightOffset = None
+              LegendPosition = None
+              Title = None
+              XLabel = None
+              YLabel = None
+              YMajorMarkers = [ 50.; 100. ]
+              YMinorMarkers = [ 25.; 75. ] }
+
+        static member FromJson(json: JsonElement) =
+            { Height = Json.tryGetDoubleProperty "height" json
+              Width = Json.tryGetDoubleProperty "width" json
+              TopOffset = Json.tryGetDoubleProperty "topOffset" json
+              BottomOffset = Json.tryGetDoubleProperty "bottomOffset" json
+              LeftOffset = Json.tryGetDoubleProperty "leftOffset" json
+              RightOffset = Json.tryGetDoubleProperty "rightOffset" json
+              LegendPosition =
+                Json.tryGetStringProperty "legendPosition" json
+                |> Option.bind (function
+                    | "bottom" -> Some LegendPosition.Bottom
+                    | "right" -> Some LegendPosition.Right
+                    | _ -> None)
+              Title = Json.tryGetStringProperty "title" json
+              XLabel = Json.tryGetStringProperty "xLabel" json
+              YLabel = Json.tryGetStringProperty "yLabel" json
+              YMajorMarkers =
+                Json.tryGetArrayProperty "yMajorMarkers" json
+                |> Option.map (List.choose (Json.tryGetDouble))
+                |> Option.defaultValue []
+              YMinorMarkers =
+                Json.tryGetArrayProperty "yMinorMarkers" json
+                |> Option.map (List.choose (Json.tryGetDouble))
+                |> Option.defaultValue [] }
 
         member tsc.ToLineChartSettings() =
-            ({ LeftOffset = tsc.LeftOffset |> Option.defaultValue 10
-               RightOffset = tsc.RightOffset |> Option.defaultValue 10
-               TopOffset = tsc.TopOffset |> Option.defaultValue 10
-               BottomOffset = tsc.BottomOffset |> Option.defaultValue 10
+            ({ ChartDimensions =
+                { Height = tsc.Height |> Option.defaultValue 100.
+                  Width = tsc.Width |> Option.defaultValue 100.
+                  LeftOffset = tsc.LeftOffset |> Option.defaultValue 10
+                  RightOffset = tsc.RightOffset |> Option.defaultValue 10
+                  TopOffset = tsc.TopOffset |> Option.defaultValue 10
+                  BottomOffset = tsc.BottomOffset |> Option.defaultValue 10 }
                LegendStyle = tsc.LegendPosition |> Option.map (fun lp -> { Bordered = false; Position = lp })
                Title = tsc.Title
                XLabel = tsc.XLabel
                YLabel = tsc.YLabel
-               YMajorMarks = tsc.YMajorMarks
-               YMinorMarks = tsc.YMinorMarks }
+               YMajorMarkers = tsc.YMajorMarkers
+               YMinorMarkers = tsc.YMinorMarkers }
             : LineCharts.Settings)
 
     and SeriesSettings =
@@ -59,6 +123,37 @@ module LineCharts =
           Color: SvgColor
           LineType: LineCharts.LineType
           Shading: LineCharts.ShadingOptions option }
+
+        static member TryFromJson(json: JsonElement) =
+            match
+                Json.tryGetStringProperty "name" json,
+                Json.tryGetIntProperty "valueIndex" json,
+                Json.tryGetProperty "color" json
+                |> Option.map SvgColor.TryFromJson
+                |> Option.defaultValue (Error "Missing color property")
+            with
+            | Some n, Some vi, Ok color ->
+                { Name = n
+                  ValueIndex = vi
+                  StokeWidth = 0.3
+                  Color = color
+                  LineType =
+                    Json.tryGetStringProperty "lineType" json
+                    |> Option.bind (function
+                        | "bezier" -> Some LineCharts.LineType.Bezier
+                        | "straight" -> Some LineCharts.LineType.Straight
+                        | _ -> None)
+                    |> Option.defaultValue LineCharts.LineType.Straight
+                  Shading =
+                    Json.tryGetProperty "shading" json
+                    |> Option.bind (fun sp ->
+                        match SvgColor.TryFromJson sp with
+                        | Ok c -> Some { Color = c }
+                        | Error _ -> None) }
+                |> Ok
+            | None, _, _ -> Error "Missing name property"
+            | _, None, _ -> Error "Missing valueIndex property"
+            | _, _, Error e -> Error e
 
     let createTimeSeriesFromTable (settings: TimeSeriesChartGeneratorSettings) (table: TableModel) =
         // This will have it's values populated later.

@@ -3,8 +3,8 @@
 open FPype.Configuration.Persistence
 
 
-module Verification =
+module Verification = ()
     
     
-    let checkSubscription (subscription: Records.)
+    //let checkSubscription (subscription: Records.)
 

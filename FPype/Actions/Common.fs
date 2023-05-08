@@ -7,7 +7,6 @@ open FPype.Data.Store
 open FsToolbox.Extensions
 open FPype.Data
 
-
 [<AutoOpen>]
 module Common =
 
@@ -18,15 +17,11 @@ module Common =
 
          }
 
-
-    ()
-
     type PipelineAction =
         { Name: string
           Action: PipelineStore -> Result<PipelineStore, string> }
 
         static member Create(name, action) = { Name = name; Action = action }
-
 
     let createAction (name: string) (action: PipelineStore -> Result<PipelineStore, string>) =
         PipelineAction.Create(name, action)

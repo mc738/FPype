@@ -12,7 +12,8 @@ module Visualizations =
 
         open FPype.Visualizations.Charts.LineCharts
 
-
+        let name = "generate_time_series_chart_collection"
+        
         type Parameters =
             { ResultBucket: string
               FileNameFormat: string
@@ -24,7 +25,6 @@ module Visualizations =
               GeneratorSettings: TimeSeriesChartGeneratorSettings }
 
         let run (parameters: Parameters) (store: PipelineStore) =
-
 
             // Fetch the categories
             // TODO support addition query parameters?
@@ -56,3 +56,5 @@ module Visualizations =
                     | Error e -> Error e)
                 (Ok())
             |> Result.map (fun _ -> store)
+
+        let createAction parameters = run parameters |> createAction name
