@@ -54,6 +54,27 @@ module Transform =
                 : ObjectModel))
 
     [<RequireQualifiedAccess>]
+    module ``execute-query`` =
+        // NOTE This is currently the same as aggregate. However the name is better.
+        
+        let name = "execute_query"
+
+        type Parameters =
+            { Table: TableModel
+              Sql: string
+              Parameters: obj list }
+
+        let run (parameters: Parameters) (store: PipelineStore) =
+            store.CreateTable(parameters.Table)
+            |> fun t -> store.BespokeSelectRows(t, parameters.Sql, parameters.Parameters)
+            |> store.InsertRows
+            |> Result.map (fun r ->
+                store.Log(name, $"Executed query and saved {r.Length} row(s) to table `{parameters.Table.Name}`.")
+                store)
+
+        let createAction (parameters: Parameters) = run parameters |> createAction name
+    
+    [<RequireQualifiedAccess>]
     module ``aggregate`` =
         let name = "aggregate"
 

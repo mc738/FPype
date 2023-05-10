@@ -1,5 +1,6 @@
 ﻿namespace FPype.Configuration
 
+open FPype.Actions
 open FPype.Actions.ML
 open FPype.Visualizations.Charts.LineCharts
 open Freql.Sqlite
@@ -237,6 +238,19 @@ module Actions =
 
     module Transform =
 
+        module ``execute-query`` =
+
+            let deserialize (ctx: SqliteContext) (json: JsonElement) =
+                match QueryVersion.TryCreate json, TableVersion.TryCreate json with
+                | Ok query, Ok tableVersion ->
+                    createQueryAndTable ctx query tableVersion
+                    |> Result.map (fun (q, t) ->
+                        // NOTE currently parameters.Parameters is always empty.
+                        ({ Table = t; Sql = q; Parameters = [] }: Transform.``execute-query``.Parameters)
+                        |> Transform.``execute-query``.createAction)
+                | Error e, _ -> Error $"Error creating query: {e}"
+                | _, Error e -> Error $"Error creating table: {e}"
+
         module ``aggregate`` =
 
             let deserialize (ctx: SqliteContext) (json: JsonElement) =
@@ -303,13 +317,15 @@ module Actions =
                 |> Result.map Transform.``map-to-object``.createAction
 
         let names =
-            [ Transform.``aggregate``.name
+            [ Transform.``execute-query``.name
+              Transform.``aggregate``.name
               Transform.``aggregate-by-date-and-category``.name
               Transform.``aggregate-by-date``.name
               Transform.``map-to-object``.name ]
 
         let all (ctx: SqliteContext) =
-            [ Transform.``aggregate``.name, ``aggregate``.deserialize ctx
+            [ Transform.``execute-query``.name, ``execute-query``.deserialize ctx
+              Transform.``aggregate``.name, ``aggregate``.deserialize ctx
               Transform.``aggregate-by-date-and-category``.name, ``aggregate-by-date-and-category``.deserialize ctx
               Transform.``aggregate-by-date``.name, ``aggregate-by-date``.deserialize ctx
               Transform.``map-to-object``.name, ``map-to-object``.deserialize ctx ]
