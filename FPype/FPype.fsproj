@@ -31,6 +31,7 @@
         <Compile Include="Connectors\Sqlite.fs" />
         <Compile Include="Visualizations\Charts\Common.fs" />
         <Compile Include="Visualizations\Charts\LineCharts.fs" />
+        <Compile Include="Visualizations\Charts\ScatterCharts.fs" />
         <Compile Include="Scripting\Core.fs" />
         <Compile Include="Scripting\FSharp.fs" />
         <Compile Include="Actions\Common.fs" />

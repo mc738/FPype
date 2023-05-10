@@ -46,7 +46,6 @@ module LineCharts =
             | _, Error e, _ -> Error e
             | _, _, Error e -> Error e
 
-
     and TimeSeriesChartSettings =
         { Height: float option
           Width: float option
