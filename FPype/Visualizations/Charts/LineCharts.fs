@@ -1,18 +1,18 @@
 ﻿namespace FPype.Visualizations.Charts
 
-open System
-open System.Text.Json
-open FPype.Core.Types
-open FPype.Data.Models
-open FSVG
-open FSVG.Charts
-open FsToolbox.Core
-
 module LineCharts =
 
+        
+    open System
+    open System.Text.Json
+    open FsToolbox.Core
+    open FSVG
     open FSVG.Charts
     open FPype.Core
+    open FPype.Core.Types
+    open FPype.Data.Models
 
+        
     type TimeSeriesEntry = { Value: float; Timestamp: DateTime }
 
     type TimeSeriesChartGeneratorSettings =

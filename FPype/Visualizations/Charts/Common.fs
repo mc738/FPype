@@ -2,6 +2,7 @@
 
 open System.Text.Json
 open FSVG
+open FSVG.Charts
 open FsToolbox.Core
 open Microsoft.FSharp.Core
 
@@ -91,3 +92,21 @@ module Common =
                         |> Ok
                     | t -> Error $"Unknown SvgColor type: {t}"
                 | None -> Error "Missing type property"
+
+        type PaddingType with
+
+
+            static member TryFromJson(json: JsonElement) =
+                match Json.tryGetStringProperty "type" json, Json.tryGetDoubleProperty "value" json with
+                | Some t, Some v ->
+                    match t with
+                    | "percent" -> PaddingType.Percent v |> Ok
+                    | "specific" -> PaddingType.Specific v |> Ok
+                    | t -> Error $"Unknown padding type: {t}"
+                | None, _ -> Error "Missing type property"
+                | _, None -> Error "Missing value property"
+
+            static member FromJson(json: JsonElement, ?defaultValue: PaddingType) =
+                match PaddingType.TryFromJson json with
+                | Ok v -> v
+                | Error _ -> defaultValue |> Option.defaultValue (PaddingType.Specific 1.)

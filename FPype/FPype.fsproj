@@ -32,6 +32,7 @@
         <Compile Include="Visualizations\Charts\Common.fs" />
         <Compile Include="Visualizations\Charts\LineCharts.fs" />
         <Compile Include="Visualizations\Charts\ScatterCharts.fs" />
+        <Compile Include="Visualizations\Charts\CandleStickCharts.fs" />
         <Compile Include="Scripting\Core.fs" />
         <Compile Include="Scripting\FSharp.fs" />
         <Compile Include="Actions\Common.fs" />
