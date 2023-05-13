@@ -540,10 +540,60 @@ module Actions =
                 | _, _, _, _, Error e, _ -> Error e
                 | _, _, _, _, _, Error e -> Error e
 
-        let names = [ ``generate-time-series-chart-collection``.name ]
+        module ``generate-candle-stick-chart-collection`` =
+
+            open FPype.Visualizations.Charts.CandleStickCharts
+
+            let deserialize (ctx: SqliteContext) (json: JsonElement) =
+                match
+                    Json.tryGetProperty "categoriesQuery" json
+                    |> Option.map QueryVersion.TryFromJson
+                    |> Option.defaultValue (Error "Missing `categoriesQuery` object"),
+                    Json.tryGetProperty "categoriesTable" json
+                    |> Option.map TableVersion.TryFromJson
+                    |> Option.defaultValue (Error "Missing `categoriesTable` object"),
+                    Json.tryGetIntProperty "categoryIndex" json,
+                    Json.tryGetProperty "seriesQuery" json
+                    |> Option.map QueryVersion.TryFromJson
+                    |> Option.defaultValue (Error "Missing `seriesQuery` object"),
+                    Json.tryGetProperty "seriesTable" json
+                    |> Option.map TableVersion.TryFromJson
+                    |> Option.defaultValue (Error "Missing `seriesTable` object"),
+                    Json.tryGetProperty "settings" json
+                    |> Option.map CandleStickChartGeneratorSettings.TryFromJson
+                    |> Option.defaultValue (Error "Missing `settings` property")
+                with
+                | Ok cqv, Ok ctv, Some ci, Ok tqv, Ok ttv, Ok gs ->
+                    match createQueryAndTable ctx cqv ctv, createQueryAndTable ctx tqv ttv with
+                    | Ok(catQuery, catTable), Ok(tsQuery, tsTable) ->
+                        ({ ResultBucket = Json.tryGetStringProperty "resultBucket" json |> Option.defaultValue "exports"
+                           FileNameFormat = Json.tryGetStringProperty "fileNameFormat" json |> Option.defaultValue "{0}"
+                           CategoriesQuerySql = catQuery
+                           CategoriesTable = catTable
+                           CategoryIndex = ci
+                           SeriesQuerySql = tsQuery
+                           SeriesTable = tsTable
+                           GeneratorSettings = gs }
+                        : ``generate-candle-stick-chart-collection``.Parameters)
+                        |> ``generate-candle-stick-chart-collection``.createAction
+                        |> Ok
+                    | Error e, _ -> Error e
+                    | _, Error e -> Error e
+                | Error e, _, _, _, _, _ -> Error e
+                | _, Error e, _, _, _, _ -> Error e
+                | _, _, None, _, _, _ -> Error "Missing `categoryIndex` property"
+                | _, _, _, Error e, _, _ -> Error e
+                | _, _, _, _, Error e, _ -> Error e
+                | _, _, _, _, _, Error e -> Error e
+
+        let names =
+            [ ``generate-time-series-chart-collection``.name
+              ``generate-candle-stick-chart-collection``.name ]
 
         let all (ctx: SqliteContext) =
-            [ ``generate-time-series-chart-collection``.name, ``generate-time-series-chart-collection``.deserialize ctx ]
+            [ ``generate-time-series-chart-collection``.name, ``generate-time-series-chart-collection``.deserialize ctx
+              ``generate-candle-stick-chart-collection``.name,
+              ``generate-candle-stick-chart-collection``.deserialize ctx ]
 
     let names =
         [ yield! Utils.names

@@ -93,6 +93,11 @@ module Common =
                     | t -> Error $"Unknown SvgColor type: {t}"
                 | None -> Error "Missing type property"
 
+            static member FromJson(json: JsonElement, ?defaultValue: SvgColor) =
+                match SvgColor.TryFromJson json with
+                | Ok v -> v
+                | Error _ -> defaultValue |> Option.defaultValue SvgColor.Grey
+
         type PaddingType with
 
 

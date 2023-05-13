@@ -1,5 +1,7 @@
 ﻿namespace FPype.Visualizations.Charts
 
+open FSVG
+
 module CandleStickCharts =
 
     open System
@@ -11,7 +13,7 @@ module CandleStickCharts =
     open FPype.Core.Types
     open FPype.Data.Models
 
-    type TimeSeriesChartGeneratorSettings =
+    type CandleStickChartGeneratorSettings =
         { TimestampValueIndex: int
           TimestampFormat: string
           Range: ValueRange
@@ -41,7 +43,6 @@ module CandleStickCharts =
             | None, _, _ -> Error "Missing timestampValueIndex"
             | _, Error e, _ -> Error e
             | _, _, Error e -> Error e
-
 
     and CandleStickChartSettings =
         { Height: float option
@@ -121,7 +122,10 @@ module CandleStickCharts =
 
 
     and CandleStickSeriesSettings =
-        { OpenValueIndex: int
+        { PositiveColor: SvgColor
+          NegativeColor: SvgColor
+          StrokeWidth: float
+          OpenValueIndex: int
           CloseValueIndex: int
           HighValueIndex: int
           LowValueIndex: int }
@@ -134,7 +138,16 @@ module CandleStickCharts =
                 Json.tryGetIntProperty "lowValueIndex" json
             with
             | Some ovi, Some cvi, Some hvi, Some lvi ->
-                { OpenValueIndex = ovi
+                { PositiveColor =
+                    Json.tryGetProperty "positiveColor" json
+                    |> Option.map (fun el -> SvgColor.FromJson(el, SvgColor.Named "green"))
+                    |> Option.defaultValue (SvgColor.Named "green")
+                  NegativeColor =
+                    Json.tryGetProperty "negativeColor" json
+                    |> Option.map (fun el -> SvgColor.FromJson(el, SvgColor.Named "red"))
+                    |> Option.defaultValue (SvgColor.Named "red")
+                  StrokeWidth = Json.tryGetDoubleProperty "strokeWidth" json |> Option.defaultValue 1.
+                  OpenValueIndex = ovi
                   CloseValueIndex = cvi
                   HighValueIndex = hvi
                   LowValueIndex = lvi }
@@ -143,16 +156,70 @@ module CandleStickCharts =
             | _, None, _, _ -> Error "Missing closeValueIndex property"
             | _, _, None, _ -> Error "Missing highValueIndex property"
             | _, _, _, None -> Error "Missing lowValueIndex property"
-            
-    let createCandleStickSeriesFromTable (settings: TimeSeriesChartGeneratorSettings) (table: TableModel) =
-        
-        
-        
-        ({
-            SplitValueHandler = floatValueSplitter
-            Normalizer = floatRangeNormalizer
-            ValueComparer = floatValueComparer
-            SectionNames = []
-            Series = failwith "todo" 
-        }: CandleStickCharts.SeriesCollection<float>)
-        |> Ok
+
+    let createCandleStickSeriesFromTable (settings: CandleStickChartGeneratorSettings) (table: TableModel) =
+
+        //let (names, series) =
+        table.Rows
+        |> List.map (fun r ->
+            match
+                r.TryGetValue settings.TimestampValueIndex,
+                r.TryGetValue settings.SeriesSettings.OpenValueIndex,
+                r.TryGetValue settings.SeriesSettings.CloseValueIndex,
+                r.TryGetValue settings.SeriesSettings.HighValueIndex,
+                r.TryGetValue settings.SeriesSettings.LowValueIndex
+            with
+            | Some ts, Some ovi, Some cvi, Some hvi, Some lvi ->
+                match ts with
+                | Value.DateTime dt ->
+                    (dt.ToString(settings.TimestampFormat),
+                     ({ OpenValue = ovi.GetFloat()
+                        CloseValue = cvi.GetFloat()
+                        HighValue = hvi.GetFloat()
+                        LowValue = lvi.GetFloat() }
+                     : CandleStickCharts.SeriesValue<float>))
+                    |> Ok
+                | _ -> Error $"Value at index {settings.TimestampValueIndex} is not a datetime"
+            | None, _, _, _, _ -> Error $"Timestamp at index {settings.TimestampValueIndex} not found"
+            | _, None, _, _, _ -> Error $"Open value at index {settings.SeriesSettings.OpenValueIndex} not found"
+            | _, _, None, _, _ -> Error $"Close value at index {settings.SeriesSettings.CloseValueIndex} not found"
+            | _, _, _, None, _ -> Error $"High value at index {settings.SeriesSettings.HighValueIndex} not found"
+            | _, _, _, _, None -> Error $"Low value at index {settings.SeriesSettings.LowValueIndex} not found"
+
+        )
+        |> flattenResultList
+        |> Result.map List.unzip
+        |> Result.map (fun (names, values) ->
+            ({ SplitValueHandler = floatValueSplitter
+               Normalizer = floatRangeNormalizer
+               ValueComparer = floatValueComparer
+               Style =
+                 { PositiveColor = settings.SeriesSettings.PositiveColor
+                   NegativeColor = settings.SeriesSettings.NegativeColor
+                   StrokeWidth = settings.SeriesSettings.StrokeWidth }
+               SectionNames = names
+               Values = values }
+            : CandleStickCharts.Series<float>))
+
+    let generate (settings: CandleStickChartGeneratorSettings) (table: TableModel) =
+        createCandleStickSeriesFromTable settings table
+        |> Result.map (fun s ->
+            let maxValue =
+                match settings.Range.Maximum with
+                | RangeValueType.Specific v -> v
+                | RangeValueType.UnitSize us ->
+                    s.Values
+                    |> List.maxBy (fun v -> v.HighValue)
+                    |> fun r -> r.HighValue
+                    |> ceiling us
+
+            let minValue =
+                match settings.Range.Minimum with
+                | RangeValueType.Specific v -> v
+                | RangeValueType.UnitSize us ->
+                    s.Values
+                    |> List.minBy (fun v -> v.LowValue)
+                    |> fun r -> r.LowValue
+                    |> floor us
+
+            CandleStickCharts.generate (settings.ChartSettings.ToSettings()) s minValue maxValue)

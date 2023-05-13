@@ -2,6 +2,7 @@
 open System.IO
 open System.Text.Json
 open FPype
+open FPype.Actions.Visualizations
 open FPype.Configuration
 open FPype.Core
 open FPype.Core.Expressions.Parsing
@@ -14,6 +15,7 @@ open FPype.Data.Store
 open FPype.ML
 open FPype.Scripting.Core
 open FPype.Visualizations.Charts
+open FSVG
 open FSVG.Charts
 open Microsoft.FSharp.Core
 open Microsoft.ML
@@ -780,10 +782,10 @@ module ChartsActionTest =
                          RightOffset = None
                          TopOffset = None
                          BottomOffset = None
-                         LegendPosition = Some LegendPosition.Right 
+                         LegendPosition = Some LegendPosition.Right
                          Title = None
                          XLabel = None
-                         YLabel = Some "Close value ($)" 
+                         YLabel = Some "Close value ($)"
                          YMajorMarkers = [ 50.; 100. ]
                          YMinorMarkers = [ 25.; 75. ] }
                       : TimeSeriesChartSettings)
@@ -791,7 +793,7 @@ module ChartsActionTest =
                       [ // Industry
                         ({ Name = "Industry"
                            ValueIndex = 2
-                           StokeWidth = 0.3
+                           StrokeWidth = 0.3
                            Color = SvgColor.Grey
                            LineType = LineCharts.LineType.Bezier
                            Shading = None }
@@ -799,7 +801,7 @@ module ChartsActionTest =
                         // Sector
                         ({ Name = "Sector"
                            ValueIndex = 3
-                           StokeWidth = 0.3
+                           StrokeWidth = 0.3
                            Color = SvgColor.Named "blue"
                            LineType = LineCharts.LineType.Bezier
                            Shading = None }
@@ -807,7 +809,7 @@ module ChartsActionTest =
                         // Company
                         ({ Name = "Company"
                            ValueIndex = 1
-                           StokeWidth = 0.3
+                           StrokeWidth = 0.3
                            Color = SvgColor.Black
                            LineType = LineCharts.LineType.Bezier
                            Shading = None }
@@ -818,7 +820,7 @@ module ChartsActionTest =
         match ``generate-time-series-chart-collection``.run parameters store with
         | Ok _ -> ()
         | Error e -> ()
-        
+
 module ChartsActionTest2 =
 
     open FSVG
@@ -881,15 +883,15 @@ module ChartsActionTest2 =
                         Maximum = RangeValueType.UnitSize 100. }
                     ChartSettings =
                       ({ Height = None
-                         Width = None 
+                         Width = None
                          LeftOffset = None
                          RightOffset = None
                          TopOffset = None
                          BottomOffset = None
-                         LegendPosition = Some LegendPosition.Right  
+                         LegendPosition = Some LegendPosition.Right
                          Title = None
                          XLabel = None
-                         YLabel = Some "Growth (%)" 
+                         YLabel = Some "Growth (%)"
                          YMajorMarkers = [ 50.; 100. ]
                          YMinorMarkers = [ 25.; 75. ] }
                       : TimeSeriesChartSettings)
@@ -897,7 +899,7 @@ module ChartsActionTest2 =
                       [ // Industry
                         ({ Name = "Industry"
                            ValueIndex = 2
-                           StokeWidth = 0.3
+                           StrokeWidth = 0.3
                            Color = SvgColor.Grey
                            LineType = LineCharts.LineType.Bezier
                            Shading = None }
@@ -905,7 +907,7 @@ module ChartsActionTest2 =
                         // Sector
                         ({ Name = "Sector"
                            ValueIndex = 3
-                           StokeWidth = 0.3
+                           StrokeWidth = 0.3
                            Color = SvgColor.Named "blue"
                            LineType = LineCharts.LineType.Bezier
                            Shading = None }
@@ -913,7 +915,7 @@ module ChartsActionTest2 =
                         // Company
                         ({ Name = "Company"
                            ValueIndex = 1
-                           StokeWidth = 0.3
+                           StrokeWidth = 0.3
                            Color = SvgColor.Black
                            LineType = LineCharts.LineType.Bezier
                            Shading = None }
@@ -922,6 +924,97 @@ module ChartsActionTest2 =
             : ``generate-time-series-chart-collection``.Parameters)
 
         match ``generate-time-series-chart-collection``.run parameters store with
+        | Ok _ -> ()
+        | Error e -> ()
+
+module CandleStickChartsActionTest =
+
+    open FPype.Visualizations.Charts.CandleStickCharts
+
+    let run _ =
+
+        let store =
+            PipelineStore.Open(
+                "D:\\DataSets\\sp_500\\pipelines\\v7\\pipeline\\runs",
+                "f478ec8c85c34014b8c379c239c5c43d"
+            )
+
+
+        let parameters =
+            ({ ResultBucket = "test_charts"
+               FileNameFormat = "comparison_2022_{0}-candle_stick"
+               CategoriesQuerySql =
+                 "SELECT cgvsai.company FROM company_growth_vs_sector_and_industry cgvsai WHERE cgvsai.growth_vs_industry > 0 AND cgvsai.growth_vs_sector > 0;"
+               CategoriesTable =
+                 ({ Name = "query_categories"
+                    Columns =
+                      [ ({ Name = "company"
+                           Type = BaseType.String
+                           ImportHandler = None }
+                        : TableColumn) ]
+                    Rows = [] }
+                 : TableModel)
+               CategoryIndex = 0
+               SeriesQuerySql =
+                 "SELECT sp.entry_date, sp.open_value, sp.close_value, sp.high_value, sp.low_value FROM sp500_prices sp WHERE DATE(sp.entry_date) >= DATE('2022-01-01') AND DATE(sp.entry_date) < DATE('2023-01-01') AND sp.company = @0;"
+               SeriesTable =
+                 ({ Name = "time_series"
+                    Columns =
+                      [ ({ Name = "entry_date"
+                           Type = BaseType.DateTime
+                           ImportHandler = None }
+                        : TableColumn)
+                        ({ Name = "open_value"
+                           Type = BaseType.Decimal
+                           ImportHandler = None }
+                        : TableColumn)
+                        ({ Name = "close_value"
+                           Type = BaseType.Decimal
+                           ImportHandler = None }
+                        : TableColumn)
+                        ({ Name = "high_value"
+                           Type = BaseType.Decimal
+                           ImportHandler = None }
+                        : TableColumn)
+                        ({ Name = "low_value"
+                           Type = BaseType.Decimal
+                           ImportHandler = None }
+                        : TableColumn) ]
+                    Rows = [] }
+                 : TableModel)
+               GeneratorSettings =
+                 ({ TimestampValueIndex = 0
+                    TimestampFormat = "MM-yy"
+                    Range =
+                      { Minimum = RangeValueType.Specific 0.
+                        Maximum = RangeValueType.UnitSize 100. }
+                    ChartSettings =
+                      ({ Height = None
+                         Width = None
+                         LeftOffset = None
+                         RightOffset = None
+                         TopOffset = None
+                         BottomOffset = None
+                         LegendPosition = None
+                         SectionPadding = PaddingType.Specific 1.
+                         Title = None
+                         XLabel = None
+                         YLabel = Some "Value ($)"
+                         YMajorMarkers = [ 50.; 100. ]
+                         YMinorMarkers = [ 25.; 75. ] }
+                      : CandleStickChartSettings)
+                    SeriesSettings =
+                      { PositiveColor = SvgColor.Named "green"
+                        NegativeColor = SvgColor.Named "red"
+                        StrokeWidth = 0.3
+                        OpenValueIndex = 1
+                        CloseValueIndex = 2
+                        HighValueIndex = 3
+                        LowValueIndex = 4 } }
+                 : CandleStickChartGeneratorSettings) }
+            : ``generate-candle-stick-chart-collection``.Parameters)
+
+        match ``generate-candle-stick-chart-collection``.run parameters store with
         | Ok _ -> ()
         | Error e -> ()
 
@@ -946,6 +1039,7 @@ module ExportBucketTest =
 
 ChartsActionTest.run ()
 ChartsActionTest2.run ()
+CandleStickChartsActionTest.run ()
 ExportBucketTest.run ()
 
 CommsTest.run ()

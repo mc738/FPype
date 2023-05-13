@@ -118,7 +118,7 @@ module LineCharts =
     and SeriesSettings =
         { Name: string
           ValueIndex: int
-          StokeWidth: float
+          StrokeWidth: float
           Color: SvgColor
           LineType: LineCharts.LineType
           Shading: LineCharts.ShadingOptions option }
@@ -134,7 +134,7 @@ module LineCharts =
             | Some n, Some vi, Ok color ->
                 { Name = n
                   ValueIndex = vi
-                  StokeWidth = 0.3
+                  StrokeWidth = 0.3
                   Color = color
                   LineType =
                     Json.tryGetStringProperty "lineType" json
@@ -163,7 +163,7 @@ module LineCharts =
                 ({ Name = s.Name
                    Style =
                      { Color = s.Color
-                       StokeWidth = s.StokeWidth
+                       StrokeWidth = s.StrokeWidth
                        LineType = s.LineType
                        Shading = s.Shading }
                    Values = [] }
