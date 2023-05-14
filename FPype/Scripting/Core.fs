@@ -3,6 +3,7 @@
 open System
 open System.IO.Pipes
 open System.Text
+open System.Text.Json.Serialization
 open System.Threading.Channels
 open FPype.Data.Store
 
@@ -75,30 +76,223 @@ module Core =
         [<RequireQualifiedAccess>]
         type RequestMessage =
             | RawMessage of Body: string
+            | AddStateValue
+            | UpdateStateValue
+            | GetState
+            | GetStateValue
+            | StateValueExists
+            //| GetStateValueAsKey
+            //| GetStateValueAsDateTime
+            //| GetStateValueAsGuid
+            //| GetStateValueAsBool
+            | GetId
+            | GetComputerName
+            | GetUserName
+            | GetBasePath
+            | GetImportsPath
+            | GetExportsPath
+            | GetTmpPath
+            | GetStorePath
+            // ClearTmp?
+            | AddDataSource
+            | GetDataSource
+            | AddArtifact
+            | GetArtifact
+            | GetArtifactBucket
+            | AddResource
+            | GetResource
+            | AddCacheItem
+            | GetCacheItem
+            | DeleteCacheItem
+            // Clear cache??
+            | AddResult
+            | AddImportError
+            | AddVariable
+            | SubstituteValues
+            | CreateTable
+            | InsertRows
+            | SelectRows
+            | SelectBespokeRows
+            | Log
+            | LogError
+            | LogWarning
+            | IteratorNext
+            | IteratorBreak
             | Close
 
             static member FromMessage(message: Message) =
                 match message.Header.MessageTypeByte with
                 | 0uy -> RequestMessage.Close |> Ok
                 | 1uy -> message.Body |> Encoding.UTF8.GetString |> RequestMessage.RawMessage |> Ok
+                | 2uy -> failwith "todo" //AddStateValue
+                | 3uy -> failwith "todo" // UpdateStateValue -> failwith "todo"
+                | 4uy -> failwith "todo" // GetState -> failwith "todo"
+                | 5uy -> failwith "todo" // GetStateValue -> failwith "todo"
+                | 6uy -> failwith "todo" //StateValueExists -> failwith "todo"
+                | 7uy -> failwith "todo" // GetId -> failwith "todo"
+                | 8uy -> failwith "todo" // GetComputerName -> failwith "todo"
+                | 9uy -> failwith "todo" // GetUserName -> failwith "todo"
+                | 10uy -> failwith "todo" // GetBasePath -> failwith "todo"
+                | 11uy -> failwith "todo" // GetImportsPath -> failwith "todo"
+                | 12uy -> failwith "todo" //GetExportsPath -> failwith "todo"
+                | 13uy -> failwith "todo" // GetTmpPath -> failwith "todo"
+                | 14uy -> failwith "todo" // GetStorePath -> failwith "todo"
+                | 15uy -> failwith "todo" //AddDataSource -> failwith "todo"
+                | 16uy -> failwith "todo" //GetDataSource -> failwith "todo"
+                | 17uy -> failwith "todo" //AddArtifact -> failwith "todo"
+                | 18uy -> failwith "todo" //GetArtifact -> failwith "todo"
+                | 19uy -> failwith "todo" //GetArtifactBucket -> failwith "todo"
+                | 20uy -> failwith "todo" //AddResource -> failwith "todo"
+                | 21uy -> failwith "todo" //GetResource -> failwith "todo"
+                | 22uy -> failwith "todo" //AddCacheItem -> failwith "todo"
+                | 23uy -> failwith "todo" // GetCacheItem -> failwith "todo"
+                | 24uy -> failwith "todo" // DeleteCacheItem -> failwith "todo"
+                | 25uy -> failwith "todo" // AddResult -> failwith "todo"
+                | 26uy -> failwith "todo" // AddImportError -> failwith "todo"
+                | 27uy -> failwith "todo" // AddVariable -> failwith "todo"
+                | 28uy -> failwith "todo" // SubstituteValues -> failwith "todo"
+                | 29uy -> failwith "todo" // CreateTable -> failwith "todo"
+                | 30uy -> failwith "todo" // InsertRows -> failwith "todo"
+                | 31uy -> failwith "todo" // SelectRows -> failwith "todo"
+                | 32uy -> failwith "todo" // SelectBespokeRows -> failwith "todo"
+                | 33uy -> failwith "todo" // Log -> failwith "todo"
+                | 34uy -> failwith "todo" // LogError -> failwith "todo"
+                | 35uy -> failwith "todo" // LogWarning -> failwith "todo"
+                | 254uy -> failwith "todo" // IteratorNext
+                | 255uy -> failwith "todo" // IteratorBreak
                 | _ -> Error $"Unknown message type ({message})"
 
             member rm.GetMessageTypeByte() =
                 match rm with
                 | RawMessage _ -> 1uy
+                | AddStateValue -> 2uy
+                | UpdateStateValue -> 3uy
+                | GetState -> 4uy
+                | GetStateValue -> 5uy
+                | StateValueExists -> 6uy
+                | GetId -> 7uy
+                | GetComputerName -> 8uy
+                | GetUserName -> 9uy
+                | GetBasePath -> 10uy
+                | GetImportsPath -> 11uy
+                | GetExportsPath -> 12uy
+                | GetTmpPath -> 13uy
+                | GetStorePath -> 14uy
+                | AddDataSource -> 15uy
+                | GetDataSource -> 16uy
+                | AddArtifact -> 17uy
+                | GetArtifact -> 18uy
+                | GetArtifactBucket -> 19uy
+                | AddResource -> 20uy
+                | GetResource -> 21uy
+                | AddCacheItem -> 22uy
+                | GetCacheItem -> 23uy
+                | DeleteCacheItem -> 24uy
+                | AddResult -> 25uy
+                | AddImportError -> 26uy
+                | AddVariable -> 27uy
+                | SubstituteValues -> 28uy
+                | CreateTable -> 29uy
+                | InsertRows -> 30uy
+                | SelectRows -> 31uy
+                | SelectBespokeRows -> 32uy
+                | Log -> 33uy
+                | LogError -> 34uy
+                | LogWarning -> 35uy
+                | IteratorNext -> 254uy
+                | IteratorBreak -> 255uy
                 | Close -> 0uy
 
             member rm.ToMessage() =
                 match rm with
                 | RawMessage body -> Message.Create(body, rm.GetMessageTypeByte())
                 | Close -> Message.CreateEmpty(rm.GetMessageTypeByte())
+                | AddStateValue -> failwith "todo"
+                | UpdateStateValue -> failwith "todo"
+                | GetState -> failwith "todo"
+                | GetStateValue -> failwith "todo"
+                | StateValueExists -> failwith "todo"
+                | GetId -> failwith "todo"
+                | GetComputerName -> failwith "todo"
+                | GetUserName -> failwith "todo"
+                | GetBasePath -> failwith "todo"
+                | GetImportsPath -> failwith "todo"
+                | GetExportsPath -> failwith "todo"
+                | GetTmpPath -> failwith "todo"
+                | GetStorePath -> failwith "todo"
+                | AddDataSource -> failwith "todo"
+                | GetDataSource -> failwith "todo"
+                | AddArtifact -> failwith "todo"
+                | GetArtifact -> failwith "todo"
+                | GetArtifactBucket -> failwith "todo"
+                | AddResource -> failwith "todo"
+                | GetResource -> failwith "todo"
+                | AddCacheItem -> failwith "todo"
+                | GetCacheItem -> failwith "todo"
+                | DeleteCacheItem -> failwith "todo"
+                | AddResult -> failwith "todo"
+                | AddImportError -> failwith "todo"
+                | AddVariable -> failwith "todo"
+                | SubstituteValues -> failwith "todo"
+                | CreateTable -> failwith "todo"
+                | InsertRows -> failwith "todo"
+                | SelectRows -> failwith "todo"
+                | SelectBespokeRows -> failwith "todo"
+                | Log -> failwith "todo"
+                | LogError -> failwith "todo"
+                | LogWarning -> failwith "todo"
+                | IteratorNext -> failwith "todo"
+                | IteratorBreak -> failwith "todo"
 
             member rm.Serialize() = rm.ToMessage().Serialize()
 
 
+        and [<CLIMutable>] AddStateValueRequest =
+            { [<JsonPropertyName("key")>]
+              Key: string
+              [<JsonPropertyName("value")>]
+              Value: string }
+
+        and [<CLIMutable>] UpdateStateValueRequest =
+            { [<JsonPropertyName("key")>]
+              Key: string
+              [<JsonPropertyName("value")>]
+              Value: string }
+
+        and [<CLIMutable>] GetStateValueRequest =
+            { [<JsonPropertyName("key")>]
+              Key: string }
+
+        and [<CLIMutable>] StateValueExistsRequest =
+            { [<JsonPropertyName("key")>]
+              Key: string }
+
+        and [<CLIMutable>] AddDataSourceRequest =
+            { [<JsonPropertyName("name")>]
+              Name: string
+              [<JsonPropertyName("dataSourceType")>]
+              DataSourceType: string
+              [<JsonPropertyName("uri")>]
+              Uri: string
+              [<JsonPropertyName("collectionName")>]
+              CollectionName: string }
+
+        and [<CLIMutable>] GetDataSourceRequest =
+            { [<JsonPropertyName("name")>]
+              Name: string }
+
+        and [<CLIMutable>] GetDataSourcesByCollection =
+            { [<JsonPropertyName("collectionName")>]
+              CollectionName: string }
+
+        
         [<RequireQualifiedAccess>]
         type ResponseMessage =
             | RawMessage of Body: string
+            | Acknowledge
+            | Value
+            | String
+
             | Close
 
             static member FromMessage(message: Message) =
@@ -118,164 +312,3 @@ module Core =
                 | Close -> Message.CreateEmpty(rm.GetMessageTypeByte())
 
             member rm.Serialize() = rm.ToMessage().Serialize()
-
-        // Start server should
-        // 1. Create the message ctxs
-        // 2. start server (perferrable in back ground)
-        // 3. handle receiving requests and passing them to ctx
-        //
-        // How should this work?
-        // - blocking function that accepts store
-        // - internally it can response to requests
-        // - once script is complete it returns (like action)
-        // - all logic, data etc is internal
-        //
-        // Channels - not needed, all handled here?
-
-    [<RequireQualifiedAccess>]
-    module Server =
-
-        open System.IO
-        open System.IO.Pipes
-
-        let readMessage (stream: NamedPipeServerStream) =
-            try
-                let headerBuffer: byte array = Array.zeroCreate 8
-
-                stream.Read(headerBuffer) |> ignore
-
-                IPC.Header.TryDeserialize headerBuffer
-                |> Result.bind (fun h ->
-                    try
-                        let buffer: byte array = Array.zeroCreate h.Length
-
-                        stream.Read(buffer) |> ignore
-
-                        IPC.Message.Create(h, buffer) |> Ok
-                    with ex ->
-                        Error $"Unhandled except while reading message body: {ex.Message}")
-            with ex ->
-                Error $"Unhandled except while reading message header: {ex.Message}"
-
-        let sendResponse (stream: NamedPipeServerStream) (response: IPC.ResponseMessage) =
-            try
-                stream.Write(response.Serialize())
-                Ok true
-            with ex ->
-                Error $"Unhandled exception while writing response: {ex.Message}"
-
-        let start (handler: IPC.RequestMessage -> IPC.ResponseMessage option) (pipeName: string) =
-            let stream = new NamedPipeServerStream(pipeName, PipeDirection.InOut)
-
-            // NOTE - need a timeout?
-            stream.WaitForConnection()
-
-            let rec run () =
-                try
-                    match stream.IsConnected with
-                    | true ->
-
-                        let cont =
-                            readMessage stream
-                            |> Result.bind IPC.RequestMessage.FromMessage
-                            |> Result.bind (fun req ->
-                                match req with
-                                | IPC.RequestMessage.Close -> Ok false
-                                | _ ->
-                                    match handler req with
-                                    | Some res -> sendResponse stream res
-                                    | None -> Ok true)
-
-                        match cont, stream.IsConnected with
-                        | Ok true, true -> run ()
-                        | Ok false, _
-                        | _, false ->
-                            printfn "Server complete. closing."
-                            Ok()
-                        | Error e, _ ->
-                            // TODO handle error
-                            Ok()
-                    | false ->
-                        printfn "Server complete. closing."
-                        Ok()
-                with ex ->
-                    Error $"Server error - {ex}"
-
-            run ()
-
-    [<RequireQualifiedAccess>]
-    module Client =
-
-        open System.IO
-        open System.IO.Pipes
-
-        type Context = { Stream: NamedPipeClientStream }
-
-        let readResponse (ctx: Context) =
-
-            let headerBuffer: byte array = Array.zeroCreate 8
-
-            ctx.Stream.Read(headerBuffer) |> ignore
-
-            match IPC.Header.TryDeserialize headerBuffer with
-            | Ok h ->
-
-                let buffer: byte array = Array.zeroCreate h.Length
-
-                ctx.Stream.Read(buffer) |> ignore
-
-                let message = IPC.Message.Create(h, buffer)
-                
-
-                IPC.ResponseMessage.FromMessage message
-            
-            | Error e -> Error $"Error reading response: {e}"
-
-        let start (pipeName: string) =
-            let client = new NamedPipeClientStream(pipeName)
-            client.Connect()
-
-            { Stream = client }
-
-        let close (ctx: Context) =
-            if ctx.Stream.IsConnected then
-                ctx.Stream.Write(IPC.RequestMessage.Close.Serialize())
-
-                ctx.Stream.Close()
-
-        let sendRequest (ctx: Context) (request: IPC.RequestMessage) =
-            ctx.Stream.Write(request.Serialize())
-            readResponse ctx
-
-
-    /// <summary>
-    /// The script context.
-    /// To be used in scripts as a way to request data and run actions on a Pipeline store.
-    /// </summary>
-    type ScriptContext(pipeName) =
-        let clientCtx = Client.start pipeName
-
-        interface IDisposable with
-
-            member sc.Dispose() =
-                printfn "closing client..."
-                // On dispose (i.e. when script has ended) send close message and close the stream.
-                Client.close clientCtx
-
-        member _.SendRequest(request: IPC.RequestMessage) = Client.sendRequest clientCtx request
-
-
-    let executeScript (store: PipelineStore) () =
-
-        // Start pipe server
-
-        // Run script (on background thread?)
-
-        // On main handle requests etc
-
-        // Once script is complete a close signal should be sent
-
-        // Main thread handles close.
-
-
-        ()
