@@ -3,6 +3,7 @@
 open System
 open System.IO.Pipes
 open System.Text
+open System.Text.Json
 open System.Text.Json.Serialization
 open System.Threading.Channels
 open FPype.Data.Store
@@ -20,6 +21,14 @@ module Core =
 
         open System.IO
         open System.IO.Pipes
+
+        let deserialize<'T> (data: byte array) =
+            try
+                data |> Encoding.UTF8.GetString |> JsonSerializer.Deserialize<'T> |> Ok
+            with exn ->
+                Error $"Failed to deserialize message: {exn.Message}"
+
+        let serialize<'T> (value: 'T) = JsonSerializer.Serialize value
 
         let magicBytes = [ 14uy; 06uy ]
 
@@ -76,11 +85,11 @@ module Core =
         [<RequireQualifiedAccess>]
         type RequestMessage =
             | RawMessage of Body: string
-            | AddStateValue
-            | UpdateStateValue
+            | AddStateValue of Request: AddStateValueRequest
+            | UpdateStateValue of Request: UpdateStateValueRequest
             | GetState
-            | GetStateValue
-            | StateValueExists
+            | GetStateValue of Request: GetStateValueRequest
+            | StateValueExists of RequestMessage: StateValueExistsRequest
             //| GetStateValueAsKey
             //| GetStateValueAsDateTime
             //| GetStateValueAsGuid
@@ -94,21 +103,21 @@ module Core =
             | GetTmpPath
             | GetStorePath
             // ClearTmp?
-            | AddDataSource
-            | GetDataSource
-            | AddArtifact
-            | GetArtifact
-            | GetArtifactBucket
-            | AddResource
-            | GetResource
-            | AddCacheItem
-            | GetCacheItem
-            | DeleteCacheItem
+            | AddDataSource of Request: AddDataSourceRequest
+            | GetDataSource of Request: GetDataSourceRequest
+            | AddArtifact of Request: AddArtifactRequest
+            | GetArtifact of Request: GetArtifactRequest
+            | GetArtifactBucket of Request: GetArtifactBucketRequest
+            | AddResource of Request: AddResourceRequest
+            | GetResource of Request: GetResourceRequest
+            | AddCacheItem of Request: AddCacheItemRequest
+            | GetCacheItem of Request: GetCacheItemRequest
+            | DeleteCacheItem of Request: DeleteCacheItemRequest
             // Clear cache??
-            | AddResult
-            | AddImportError
-            | AddVariable
-            | SubstituteValues
+            | AddResult of Request: AddResultRequest
+            | AddImportError of Request: AddImportErrorRequest
+            | AddVariable of Request: AddVariableRequest
+            | SubstituteValues of Request: SubstituteValueRequest
             | CreateTable
             | InsertRows
             | SelectRows
@@ -124,25 +133,25 @@ module Core =
                 match message.Header.MessageTypeByte with
                 | 0uy -> RequestMessage.Close |> Ok
                 | 1uy -> message.Body |> Encoding.UTF8.GetString |> RequestMessage.RawMessage |> Ok
-                | 2uy -> failwith "todo" //AddStateValue
-                | 3uy -> failwith "todo" // UpdateStateValue -> failwith "todo"
-                | 4uy -> failwith "todo" // GetState -> failwith "todo"
-                | 5uy -> failwith "todo" // GetStateValue -> failwith "todo"
-                | 6uy -> failwith "todo" //StateValueExists -> failwith "todo"
-                | 7uy -> failwith "todo" // GetId -> failwith "todo"
-                | 8uy -> failwith "todo" // GetComputerName -> failwith "todo"
-                | 9uy -> failwith "todo" // GetUserName -> failwith "todo"
-                | 10uy -> failwith "todo" // GetBasePath -> failwith "todo"
-                | 11uy -> failwith "todo" // GetImportsPath -> failwith "todo"
-                | 12uy -> failwith "todo" //GetExportsPath -> failwith "todo"
-                | 13uy -> failwith "todo" // GetTmpPath -> failwith "todo"
-                | 14uy -> failwith "todo" // GetStorePath -> failwith "todo"
-                | 15uy -> failwith "todo" //AddDataSource -> failwith "todo"
-                | 16uy -> failwith "todo" //GetDataSource -> failwith "todo"
-                | 17uy -> failwith "todo" //AddArtifact -> failwith "todo"
-                | 18uy -> failwith "todo" //GetArtifact -> failwith "todo"
-                | 19uy -> failwith "todo" //GetArtifactBucket -> failwith "todo"
-                | 20uy -> failwith "todo" //AddResource -> failwith "todo"
+                | 2uy -> message.Body |> deserialize<AddStateValueRequest> |> Result.map AddStateValue
+                | 3uy -> message.Body |> deserialize<UpdateStateValueRequest> |> Result.map UpdateStateValue
+                | 4uy -> GetState |> Ok
+                | 5uy -> message.Body |> deserialize<GetStateValueRequest> |> Result.map GetStateValue 
+                | 6uy -> message.Body |> deserialize<StateValueExistsRequest> |> Result.map StateValueExists
+                | 7uy -> GetId |> Ok
+                | 8uy -> GetComputerName |> Ok
+                | 9uy -> GetUserName |> Ok
+                | 10uy -> GetBasePath |> Ok
+                | 11uy -> GetImportsPath |> Ok
+                | 12uy -> GetExportsPath |> Ok
+                | 13uy -> GetTmpPath |> Ok
+                | 14uy -> GetStorePath |> Ok
+                | 15uy -> message.Body |> deserialize<AddDataSourceRequest> |> Result.map AddDataSource
+                | 16uy -> message.Body |> deserialize<GetDataSourceRequest> |> Result.map GetDataSource
+                | 17uy -> message.Body |> deserialize<AddArtifactRequest> |> Result.map AddArtifact
+                | 18uy -> message.Body |> deserialize<GetArtifactRequest> |> Result.map GetArtifact
+                | 19uy -> message.Body |> deserialize<GetArtifactBucketRequest> |> Result.map GetArtifactBucket
+                | 20uy -> message.Body |> deserialize<AddResourceRequest> |> Result.map AddResource
                 | 21uy -> failwith "todo" //GetResource -> failwith "todo"
                 | 22uy -> failwith "todo" //AddCacheItem -> failwith "todo"
                 | 23uy -> failwith "todo" // GetCacheItem -> failwith "todo"
@@ -165,11 +174,11 @@ module Core =
             member rm.GetMessageTypeByte() =
                 match rm with
                 | RawMessage _ -> 1uy
-                | AddStateValue -> 2uy
-                | UpdateStateValue -> 3uy
+                | AddStateValue _ -> 2uy
+                | UpdateStateValue _ -> 3uy
                 | GetState -> 4uy
-                | GetStateValue -> 5uy
-                | StateValueExists -> 6uy
+                | GetStateValue _ -> 5uy
+                | StateValueExists _ -> 6uy
                 | GetId -> 7uy
                 | GetComputerName -> 8uy
                 | GetUserName -> 9uy
@@ -178,20 +187,20 @@ module Core =
                 | GetExportsPath -> 12uy
                 | GetTmpPath -> 13uy
                 | GetStorePath -> 14uy
-                | AddDataSource -> 15uy
-                | GetDataSource -> 16uy
-                | AddArtifact -> 17uy
-                | GetArtifact -> 18uy
-                | GetArtifactBucket -> 19uy
-                | AddResource -> 20uy
-                | GetResource -> 21uy
-                | AddCacheItem -> 22uy
-                | GetCacheItem -> 23uy
-                | DeleteCacheItem -> 24uy
-                | AddResult -> 25uy
-                | AddImportError -> 26uy
-                | AddVariable -> 27uy
-                | SubstituteValues -> 28uy
+                | AddDataSource _ -> 15uy
+                | GetDataSource _ -> 16uy
+                | AddArtifact _ -> 17uy
+                | GetArtifact _ -> 18uy
+                | GetArtifactBucket _ -> 19uy
+                | AddResource _ -> 20uy
+                | GetResource _ -> 21uy
+                | AddCacheItem _ -> 22uy
+                | GetCacheItem _ -> 23uy
+                | DeleteCacheItem _ -> 24uy
+                | AddResult _ -> 25uy
+                | AddImportError _ -> 26uy
+                | AddVariable _ -> 27uy
+                | SubstituteValues _ -> 28uy
                 | CreateTable -> 29uy
                 | InsertRows -> 30uy
                 | SelectRows -> 31uy
@@ -204,36 +213,38 @@ module Core =
                 | Close -> 0uy
 
             member rm.ToMessage() =
+                let mbt = rm.GetMessageTypeByte()
+
                 match rm with
-                | RawMessage body -> Message.Create(body, rm.GetMessageTypeByte())
-                | Close -> Message.CreateEmpty(rm.GetMessageTypeByte())
-                | AddStateValue -> failwith "todo"
-                | UpdateStateValue -> failwith "todo"
-                | GetState -> failwith "todo"
-                | GetStateValue -> failwith "todo"
-                | StateValueExists -> failwith "todo"
-                | GetId -> failwith "todo"
-                | GetComputerName -> failwith "todo"
-                | GetUserName -> failwith "todo"
-                | GetBasePath -> failwith "todo"
-                | GetImportsPath -> failwith "todo"
-                | GetExportsPath -> failwith "todo"
-                | GetTmpPath -> failwith "todo"
-                | GetStorePath -> failwith "todo"
-                | AddDataSource -> failwith "todo"
-                | GetDataSource -> failwith "todo"
-                | AddArtifact -> failwith "todo"
-                | GetArtifact -> failwith "todo"
-                | GetArtifactBucket -> failwith "todo"
-                | AddResource -> failwith "todo"
-                | GetResource -> failwith "todo"
-                | AddCacheItem -> failwith "todo"
-                | GetCacheItem -> failwith "todo"
-                | DeleteCacheItem -> failwith "todo"
-                | AddResult -> failwith "todo"
-                | AddImportError -> failwith "todo"
-                | AddVariable -> failwith "todo"
-                | SubstituteValues -> failwith "todo"
+                | RawMessage body -> Message.Create(body, mbt)
+                | Close -> Message.CreateEmpty(mbt)
+                | AddStateValue request -> Message.Create(serialize request, mbt)
+                | UpdateStateValue request -> Message.Create(serialize request, mbt)
+                | GetState -> Message.CreateEmpty(mbt)
+                | GetStateValue request -> Message.Create(serialize request, mbt)
+                | StateValueExists request -> Message.Create(serialize request, mbt)
+                | GetId -> Message.CreateEmpty(mbt)
+                | GetComputerName -> Message.CreateEmpty(mbt)
+                | GetUserName -> Message.CreateEmpty(mbt)
+                | GetBasePath -> Message.CreateEmpty(mbt)
+                | GetImportsPath -> Message.CreateEmpty(mbt)
+                | GetExportsPath -> Message.CreateEmpty(mbt)
+                | GetTmpPath -> Message.CreateEmpty(mbt)
+                | GetStorePath -> Message.CreateEmpty(mbt)
+                | AddDataSource request -> Message.Create(serialize request, mbt)
+                | GetDataSource request -> Message.Create(serialize request, mbt)
+                | AddArtifact request -> Message.Create(serialize request, mbt)
+                | GetArtifact request -> Message.Create(serialize request, mbt)
+                | GetArtifactBucket request -> Message.Create(serialize request, mbt)
+                | AddResource request -> Message.Create(serialize request, mbt)
+                | GetResource request -> Message.Create(serialize request, mbt)
+                | AddCacheItem request -> Message.Create(serialize request, mbt)
+                | GetCacheItem request -> Message.Create(serialize request, mbt)
+                | DeleteCacheItem request -> Message.Create(serialize request, mbt)
+                | AddResult request -> Message.Create(serialize request, mbt)
+                | AddImportError request -> Message.Create(serialize request, mbt)
+                | AddVariable request -> Message.Create(serialize request, mbt)
+                | SubstituteValues request -> Message.Create(serialize request, mbt)
                 | CreateTable -> failwith "todo"
                 | InsertRows -> failwith "todo"
                 | SelectRows -> failwith "todo"
@@ -281,11 +292,87 @@ module Core =
             { [<JsonPropertyName("name")>]
               Name: string }
 
-        and [<CLIMutable>] GetDataSourcesByCollection =
+        and [<CLIMutable>] GetDataSourcesByCollectionRequest =
             { [<JsonPropertyName("collectionName")>]
               CollectionName: string }
 
-        
+        and [<CLIMutable>] AddArtifactRequest =
+            { [<JsonPropertyName("name")>]
+              Name: string
+              [<JsonPropertyName("bucket")>]
+              Bucket: string
+              [<JsonPropertyName("type")>]
+              Type: string
+              [<JsonPropertyName("base64Data")>]
+              Base64Data: string }
+
+        and [<CLIMutable>] GetArtifactRequest =
+            { [<JsonPropertyName("name")>]
+              Name: string }
+
+        and [<CLIMutable>] GetArtifactBucketRequest =
+            { [<JsonPropertyName("name")>]
+              Name: string }
+
+        and [<CLIMutable>] AddResourceRequest =
+            { [<JsonPropertyName("name")>]
+              Name: string
+              [<JsonPropertyName("type")>]
+              Type: string
+              [<JsonPropertyName("base64Data")>]
+              Base64Data: string }
+
+        and [<CLIMutable>] GetResourceRequest =
+            { [<JsonPropertyName("name")>]
+              Name: string }
+
+        and [<CLIMutable>] AddCacheItemRequest =
+            { [<JsonPropertyName("name")>]
+              Name: string
+              [<JsonPropertyName("base64Data")>]
+              Base64Data: string
+              [<JsonPropertyName("ttl")>]
+              Ttl: int }
+
+        and [<CLIMutable>] GetCacheItemRequest =
+            { [<JsonPropertyName("name")>]
+              Name: string }
+
+        and [<CLIMutable>] DeleteCacheItemRequest =
+            { [<JsonPropertyName("name")>]
+              Name: string }
+
+        and [<CLIMutable>] AddResultRequest =
+            { [<JsonPropertyName("step")>]
+              Step: string
+              [<JsonPropertyName("result")>]
+              Result: string
+              [<JsonPropertyName("startUtc")>]
+              StartUtc: DateTime
+              [<JsonPropertyName("endUtc")>]
+              EndUtc: DateTime
+              [<JsonPropertyName("serial")>]
+              Serial: int64 }
+
+        and [<CLIMutable>] AddImportErrorRequest =
+            { [<JsonPropertyName("step")>]
+              Step: string
+              [<JsonPropertyName("error")>]
+              Error: string
+              [<JsonPropertyName("value")>]
+              Value: string }
+
+        and [<CLIMutable>] AddVariableRequest =
+            { [<JsonPropertyName("name")>]
+              Name: string
+              [<JsonPropertyName("value")>]
+              Value: string }
+
+        and [<CLIMutable>] SubstituteValueRequest =
+            { [<JsonPropertyName("value")>]
+              Value: string }
+
+
         [<RequireQualifiedAccess>]
         type ResponseMessage =
             | RawMessage of Body: string
