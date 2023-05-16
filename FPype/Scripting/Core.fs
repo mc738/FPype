@@ -6,9 +6,169 @@ open System.Text
 open System.Text.Json
 open System.Text.Json.Serialization
 open System.Threading.Channels
+open FPype.Core.Types
+open FPype.Data
 open FPype.Data.Store
+open FsToolbox.Core
+open Microsoft.VisualBasic.CompilerServices
 
 module Core =
+
+
+    /// <summary>
+    /// A collection so models specifically for use in scripting.
+    /// NOTE - some of these might be similar/the same to entities in FPype.Data.Store.
+    /// But these are what should be used in script clients.
+    /// </summary>
+    [<RequireQualifiedAccess>]
+    module Models =
+
+        [<CLIMutable>]
+        type State =
+            { [<JsonPropertyName("values")>]
+              Values: StateValue seq }
+
+            static member FromEntities(entities: Store.StateValue list) =
+                { Values = entities |> List.map (fun sv -> { Key = sv.Name; Value = sv.Value }) }
+
+            static member Deserialize(json: string) =
+                try
+                    JsonSerializer.Deserialize<State> json |> Ok
+                with ex ->
+                    Error $"Failed to deserialize state model: {ex.Message}"
+
+            member s.Serialize() = JsonSerializer.Serialize s
+
+            member s.ToMap() =
+                s.Values |> List.ofSeq |> List.map (fun sv -> sv.Key, sv.Value) |> Map.ofList
+
+        and [<CLIMutable>] StateValue =
+            { [<JsonPropertyName("key")>]
+              Key: string
+              [<JsonPropertyName("value")>]
+              Value: string }
+
+        [<CLIMutable>]
+        type DataSource =
+            { [<JsonPropertyName("name")>]
+              Name: string
+              [<JsonPropertyName("type")>]
+              Type: string
+              [<JsonPropertyName("uri")>]
+              Uri: string
+              [<JsonPropertyName("collectionName")>]
+              CollectionName: string }
+
+            static member FromEntity(entity: Store.DataSource) =
+
+                { Name = entity.Name
+                  Type = entity.Type
+                  Uri = entity.Uri
+                  CollectionName = entity.CollectionName }
+
+            static member Deserialize(json: string) =
+                try
+                    JsonSerializer.Deserialize<DataSource> json |> Ok
+                with ex ->
+                    Error $"Failed to deserialize data source model: {ex.Message}"
+
+            member ds.Serialize() = JsonSerializer.Serialize ds
+
+        [<CLIMutable>]
+        type Artifact =
+            { [<JsonPropertyName("name")>]
+              Name: string
+              [<JsonPropertyName("bucket")>]
+              Bucket: string
+              [<JsonPropertyName("type")>]
+              Type: string
+              [<JsonPropertyName("base64Data")>]
+              Base64Data: string }
+
+            static member FromEntity(entity: Store.Artifact) =
+                { Name = entity.Name
+                  Bucket = entity.Name
+                  Type = entity.Type
+                  Base64Data = entity.Data.ToBytes() |> Conversions.toBase64 }
+
+            static member Deserialize(json: string) =
+                try
+                    JsonSerializer.Deserialize<Artifact> json |> Ok
+                with ex ->
+                    Error $"Failed to deserialize artifact model: {ex.Message}"
+
+            member a.Serialize() = JsonSerializer.Serialize a
+
+            member a.GetBytes() =
+                try
+                    a.Base64Data |> Conversions.fromBase64 |> Ok
+                with ex ->
+                    Error $"Failed to convert from base64: {ex.Message}"
+
+        [<CLIMutable>]
+        type Resource =
+            { [<JsonPropertyName("name")>]
+              Name: string
+              [<JsonPropertyName("type")>]
+              Type: string
+              [<JsonPropertyName("base64Data")>]
+              Base64Data: string
+              [<JsonPropertyName("hash")>]
+              Hash: string }
+
+            static member FromEntity(entity: Store.Resource) =
+                { Name = entity.Name
+                  Type = entity.Type
+                  Base64Data = entity.Data.ToBytes() |> Conversions.toBase64
+                  Hash = entity.Hash }
+
+            static member Deserialize(json: string) =
+                try
+                    JsonSerializer.Deserialize<Resource> json |> Ok
+                with ex ->
+                    Error $"Failed to deserialize resource model: {ex.Message}"
+
+            member r.Serialize() = JsonSerializer.Serialize r
+
+            member r.GetBytes() =
+                try
+                    r.Base64Data |> Conversions.fromBase64 |> Ok
+                with ex ->
+                    Error $"Failed to convert from base64: {ex.Message}"
+
+        [<CLIMutable>]
+        type CacheItem =
+            { [<JsonPropertyName("key")>]
+              Key: string
+              [<JsonPropertyName("base64Data")>]
+              Base64Data: string
+              [<JsonPropertyName("hash")>]
+              Hash: string
+              [<JsonPropertyName("createdOn")>]
+              CreatedOn: DateTime
+              [<JsonPropertyName("expiresOn")>]
+              ExpiresOn: DateTime }
+
+            static member FromEntity(entity: Store.CacheItem) =
+                { Key = entity.ItemKey
+                  Base64Data = entity.ItemValue.ToBytes() |> Conversions.toBase64
+                  Hash = entity.Hash
+                  CreatedOn = entity.CreatedOn
+                  ExpiresOn = entity.ExpiresOn }
+
+            static member Deserialize(json: string) =
+                try
+                    JsonSerializer.Deserialize<CacheItem> json |> Ok
+                with ex ->
+                    Error $"Failed to deserialize cache item model: {ex.Message}"
+
+            member ci.Serialize() = JsonSerializer.Serialize ci
+
+            member ci.GetBytes() =
+                try
+                    ci.Base64Data |> Conversions.fromBase64 |> Ok
+                with ex ->
+                    Error $"Failed to convert from base64: {ex.Message}"
 
     // Notes
     //
@@ -122,9 +282,9 @@ module Core =
             | InsertRows
             | SelectRows
             | SelectBespokeRows
-            | Log
-            | LogError
-            | LogWarning
+            | Log of Request: LogRequest
+            | LogError of Request: LogErrorRequest
+            | LogWarning of Request: LogWarningRequest
             | IteratorNext
             | IteratorBreak
             | Close
@@ -134,10 +294,16 @@ module Core =
                 | 0uy -> RequestMessage.Close |> Ok
                 | 1uy -> message.Body |> Encoding.UTF8.GetString |> RequestMessage.RawMessage |> Ok
                 | 2uy -> message.Body |> deserialize<AddStateValueRequest> |> Result.map AddStateValue
-                | 3uy -> message.Body |> deserialize<UpdateStateValueRequest> |> Result.map UpdateStateValue
+                | 3uy ->
+                    message.Body
+                    |> deserialize<UpdateStateValueRequest>
+                    |> Result.map UpdateStateValue
                 | 4uy -> GetState |> Ok
-                | 5uy -> message.Body |> deserialize<GetStateValueRequest> |> Result.map GetStateValue 
-                | 6uy -> message.Body |> deserialize<StateValueExistsRequest> |> Result.map StateValueExists
+                | 5uy -> message.Body |> deserialize<GetStateValueRequest> |> Result.map GetStateValue
+                | 6uy ->
+                    message.Body
+                    |> deserialize<StateValueExistsRequest>
+                    |> Result.map StateValueExists
                 | 7uy -> GetId |> Ok
                 | 8uy -> GetComputerName |> Ok
                 | 9uy -> GetUserName |> Ok
@@ -150,7 +316,10 @@ module Core =
                 | 16uy -> message.Body |> deserialize<GetDataSourceRequest> |> Result.map GetDataSource
                 | 17uy -> message.Body |> deserialize<AddArtifactRequest> |> Result.map AddArtifact
                 | 18uy -> message.Body |> deserialize<GetArtifactRequest> |> Result.map GetArtifact
-                | 19uy -> message.Body |> deserialize<GetArtifactBucketRequest> |> Result.map GetArtifactBucket
+                | 19uy ->
+                    message.Body
+                    |> deserialize<GetArtifactBucketRequest>
+                    |> Result.map GetArtifactBucket
                 | 20uy -> message.Body |> deserialize<AddResourceRequest> |> Result.map AddResource
                 | 21uy -> failwith "todo" //GetResource -> failwith "todo"
                 | 22uy -> failwith "todo" //AddCacheItem -> failwith "todo"
@@ -164,9 +333,9 @@ module Core =
                 | 30uy -> failwith "todo" // InsertRows -> failwith "todo"
                 | 31uy -> failwith "todo" // SelectRows -> failwith "todo"
                 | 32uy -> failwith "todo" // SelectBespokeRows -> failwith "todo"
-                | 33uy -> failwith "todo" // Log -> failwith "todo"
-                | 34uy -> failwith "todo" // LogError -> failwith "todo"
-                | 35uy -> failwith "todo" // LogWarning -> failwith "todo"
+                | 33uy -> message.Body |> deserialize<LogRequest> |> Result.map Log
+                | 34uy -> message.Body |> deserialize<LogErrorRequest> |> Result.map LogError
+                | 35uy -> message.Body |> deserialize<LogWarningRequest> |> Result.map LogWarning
                 | 254uy -> failwith "todo" // IteratorNext
                 | 255uy -> failwith "todo" // IteratorBreak
                 | _ -> Error $"Unknown message type ({message})"
@@ -205,9 +374,9 @@ module Core =
                 | InsertRows -> 30uy
                 | SelectRows -> 31uy
                 | SelectBespokeRows -> 32uy
-                | Log -> 33uy
-                | LogError -> 34uy
-                | LogWarning -> 35uy
+                | Log _ -> 33uy
+                | LogError _ -> 34uy
+                | LogWarning _ -> 35uy
                 | IteratorNext -> 254uy
                 | IteratorBreak -> 255uy
                 | Close -> 0uy
@@ -249,9 +418,9 @@ module Core =
                 | InsertRows -> failwith "todo"
                 | SelectRows -> failwith "todo"
                 | SelectBespokeRows -> failwith "todo"
-                | Log -> failwith "todo"
-                | LogError -> failwith "todo"
-                | LogWarning -> failwith "todo"
+                | Log request -> Message.Create(serialize request, mbt)
+                | LogError request -> Message.Create(serialize request, mbt)
+                | LogWarning request -> Message.Create(serialize request, mbt)
                 | IteratorNext -> failwith "todo"
                 | IteratorBreak -> failwith "todo"
 
@@ -373,12 +542,33 @@ module Core =
               Value: string }
 
 
+        // Tables
+
+        and [<CLIMutable>] LogRequest =
+            { [<JsonPropertyName("step")>]
+              Step: string
+              [<JsonPropertyName("message")>]
+              Message: string }
+
+        and [<CLIMutable>] LogErrorRequest =
+            { [<JsonPropertyName("step")>]
+              Step: string
+              [<JsonPropertyName("message")>]
+              Message: string }
+
+        and [<CLIMutable>] LogWarningRequest =
+            { [<JsonPropertyName("step")>]
+              Step: string
+              [<JsonPropertyName("message")>]
+              Message: string }
+
         [<RequireQualifiedAccess>]
         type ResponseMessage =
             | RawMessage of Body: string
             | Acknowledge
-            | Value
-            | String
+            | Value of Value: Value
+            | String of Value: string
+            | Bool of Value: bool
 
             | Close
 
