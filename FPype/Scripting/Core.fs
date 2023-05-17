@@ -14,7 +14,6 @@ open Microsoft.VisualBasic.CompilerServices
 
 module Core =
 
-
     /// <summary>
     /// A collection so models specifically for use in scripting.
     /// NOTE - some of these might be similar/the same to entities in FPype.Data.Store.
@@ -104,6 +103,22 @@ module Core =
                     a.Base64Data |> Conversions.fromBase64 |> Ok
                 with ex ->
                     Error $"Failed to convert from base64: {ex.Message}"
+
+        [<CLIMutable>]
+        type ArtifactBucket =
+            { [<JsonPropertyName("artifacts")>]
+              Artifacts: Artifact seq }
+
+            static member FromEntities(artifacts: Store.Artifact list) =
+                { Artifacts = artifacts |> List.map Artifact.FromEntity }
+
+            static member Deserialize(json: string) =
+                try
+                    JsonSerializer.Deserialize<Resource> json |> Ok
+                with ex ->
+                    Error $"Failed to deserialize artifact bucket model: {ex.Message}"
+
+            member ab.Serialize() = JsonSerializer.Serialize ab
 
         [<CLIMutable>]
         type Resource =

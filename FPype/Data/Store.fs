@@ -662,6 +662,8 @@ module Store =
 
         member ps.AddResource(name, resourceType, data: byte array) = addResource ctx name resourceType data
 
+        member ps.GetResourceEntity(name) = getResource ctx name
+
         member ps.GetResource(name) =
             getResource ctx name |> Option.map (fun r -> r.Data.ToBytes())
 

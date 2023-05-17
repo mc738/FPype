@@ -1,6 +1,7 @@
 ﻿namespace FPype.Scripting
 
 open FPype.Data
+open FPype.Scripting.Core
 open FsToolbox.Core
 
 [<RequireQualifiedAccess>]
@@ -9,6 +10,14 @@ module FSharp =
     open System
     open FPype.Data.Store
     open FPype.Scripting.Core
+
+    [<AutoOpen>]
+    module private Helpers =
+
+        let deserializeOption<'T> (fn: string -> Result<'T, string>) (str: string) =
+            match String.IsNullOrWhiteSpace(str) with
+            | true -> Ok None
+            | false -> fn str |> Result.map Some
 
     /// <summary>
     /// The script context.
@@ -37,7 +46,7 @@ module FSharp =
                 // On dispose (i.e. when script has ended) send close message and close the stream.
                 Client.close ctx
 
-        member _.SendRawRequest(request: IPC.RequestMessage) = Client.sendRequest clientCtx request
+        member _.SendRawRequest(request: IPC.RequestMessage) = Client.sendRequest ctx request
 
         member _.AddStateValue(key, value) =
             ({ Key = key; Value = value }: IPC.AddStateValueRequest)
@@ -47,7 +56,7 @@ module FSharp =
                 | IPC.ResponseMessage.Acknowledge -> Ok()
                 | r -> Error $"Invalid response type `{r}`.")
 
-        member _.AddStateValue(key, value) =
+        member _.UpdateStateValue(key, value) =
             ({ Key = key; Value = value }: IPC.UpdateStateValueRequest)
             |> IPC.RequestMessage.UpdateStateValue
             |> Client.sendRequest ctx
@@ -68,7 +77,11 @@ module FSharp =
             |> IPC.RequestMessage.GetStateValue
             |> Client.sendRequest ctx
             |> Result.bind (function
-                | IPC.ResponseMessage.String s -> Ok s
+                | IPC.ResponseMessage.String s ->
+                    match String.IsNullOrWhiteSpace s with
+                    | true -> None
+                    | false -> Some s
+                    |> Ok
                 | r -> Error $"Invalid response type `{r}`.")
 
         member _.StateValueExists(key) =
@@ -144,7 +157,6 @@ module FSharp =
             |> IPC.RequestMessage.AddDataSource
             |> Client.sendRequest ctx
             |> Result.bind (function
-                // TODO return type?
                 | IPC.ResponseMessage.Acknowledge -> Ok()
                 | r -> Error $"Invalid response type `{r}`.")
 
@@ -153,7 +165,7 @@ module FSharp =
             |> IPC.RequestMessage.GetDataSource
             |> Client.sendRequest ctx
             |> Result.bind (function
-                | IPC.ResponseMessage.String s -> Models.DataSource.Deserialize s
+                | IPC.ResponseMessage.String s -> deserializeOption Models.DataSource.Deserialize s
                 | r -> Error $"Invalid response type `{r}`.")
 
         member _.AddArtifact(name, bucket, artifactType, data) =
@@ -165,12 +177,136 @@ module FSharp =
             |> IPC.RequestMessage.AddArtifact
             |> Client.sendRequest ctx
             |> Result.bind (function
-                | IPC.ResponseMessage.Acknowledge -> Ok ()
+                | IPC.ResponseMessage.Acknowledge -> Ok()
                 | r -> Error $"Invalid response type `{r}`.")
 
-        member _.GetArtifact(name)
-           ({  }: IPC.GetArtifactRequest)
-    
+        member _.GetArtifact(name) =
+            ({ Name = name }: IPC.GetArtifactRequest)
+            |> IPC.RequestMessage.GetArtifact
+            |> Client.sendRequest ctx
+            |> Result.bind (function
+                | IPC.ResponseMessage.String s -> deserializeOption Models.Artifact.Deserialize s
+                | r -> Error $"Invalid response type `{r}`.")
+
+        member _.GetArtifactBucket(name) =
+            ({ Name = name }: IPC.GetArtifactBucketRequest)
+            |> IPC.RequestMessage.GetArtifactBucket
+            |> Client.sendRequest ctx
+            |> Result.bind (function
+                | IPC.ResponseMessage.String s -> Models.ArtifactBucket.Deserialize s
+                | r -> Error $"Invalid response type `{r}`.")
+
+        member _.AddResource(name, resourceType, data) =
+            ({ Name = name
+               Type = resourceType
+               Base64Data = Conversions.toBase64 data }
+            : IPC.AddResourceRequest)
+            |> IPC.RequestMessage.AddResource
+            |> Client.sendRequest ctx
+            |> Result.bind (function
+                | IPC.ResponseMessage.Acknowledge -> Ok()
+                | r -> Error $"Invalid response type `{r}`.")
+
+        member _.GetResource(name) =
+            ({ Name = name }: IPC.GetResourceRequest)
+            |> IPC.RequestMessage.GetResource
+            |> Client.sendRequest ctx
+            |> Result.bind (function
+                | IPC.ResponseMessage.String s -> deserializeOption Models.Resource.Deserialize s
+                | r -> Error $"Invalid response type `{r}`.")
+
+        member _.AddCacheItem(name, ttl, data) =
+            ({ Name = name
+               Base64Data = Conversions.toBase64 data
+               Ttl = ttl }
+            : IPC.AddCacheItemRequest)
+            |> IPC.RequestMessage.AddCacheItem
+            |> Client.sendRequest ctx
+            |> Result.bind (function
+                | IPC.ResponseMessage.Acknowledge -> Ok()
+                | r -> Error $"Invalid response type `{r}`.")
+
+        member _.GetCacheItem(name) =
+            ({ Name = name }: IPC.GetCacheItemRequest)
+            |> IPC.RequestMessage.GetCacheItem
+            |> Client.sendRequest ctx
+            |> Result.bind (function
+                | IPC.ResponseMessage.String s -> deserializeOption Models.CacheItem.Deserialize s
+                | r -> Error $"Invalid response type `{r}`.")
+
+        member _.DeleteCacheItem(name) =
+            ({ Name = name }: IPC.DeleteCacheItemRequest)
+            |> IPC.RequestMessage.DeleteCacheItem
+            |> Client.sendRequest ctx
+            |> Result.bind (function
+                | IPC.ResponseMessage.Acknowledge -> Ok()
+                | r -> Error $"Invalid response type `{r}`.")
+
+        member _.AddResult(step, result, startUtc, endUtc, serial) =
+            ({ Step = step
+               Result = result
+               StartUtc = startUtc
+               EndUtc = endUtc
+               Serial = serial }
+            : IPC.AddResultRequest)
+            |> IPC.RequestMessage.AddResult
+            |> Client.sendRequest ctx
+            |> Result.bind (function
+                | IPC.ResponseMessage.Acknowledge -> Ok()
+                | r -> Error $"Invalid response type `{r}`.")
+
+        member _.AddImportError(step, error, value) =
+            ({ Step = step
+               Error = error
+               Value = value }
+            : IPC.AddImportErrorRequest)
+            |> IPC.RequestMessage.AddImportError
+            |> Client.sendRequest ctx
+            |> Result.bind (function
+                | IPC.ResponseMessage.Acknowledge -> Ok()
+                | r -> Error $"Invalid response type `{r}`.")
+
+        member _.AddVariable(name, value) =
+            ({ Name = name; Value = value }: IPC.AddVariableRequest)
+            |> IPC.RequestMessage.AddVariable
+            |> Client.sendRequest ctx
+            |> Result.bind (function
+                | IPC.ResponseMessage.Acknowledge -> Ok()
+                | r -> Error $"Invalid response type `{r}`.")
+
+
+        member _.SubstituteValue(value) =
+            ({ Value = value }: IPC.SubstituteValueRequest)
+            |> IPC.RequestMessage.SubstituteValues
+            |> Client.sendRequest ctx
+            |> Result.bind (function
+                | IPC.ResponseMessage.String s -> Ok s
+                | r -> Error $"Invalid response type `{r}`.")
+
+        member _.Log(step, message) =
+            ({ Step = step; Message = message }: IPC.LogRequest)
+            |> IPC.RequestMessage.Log
+            |> Client.sendRequest ctx
+            |> Result.bind (function
+                | IPC.ResponseMessage.Acknowledge -> Ok()
+                | r -> Error $"Invalid response type `{r}`.")
+
+        member _.LogError(step, message) =
+            ({ Step = step; Message = message }: IPC.LogErrorRequest)
+            |> IPC.RequestMessage.LogError
+            |> Client.sendRequest ctx
+            |> Result.bind (function
+                | IPC.ResponseMessage.Acknowledge -> Ok()
+                | r -> Error $"Invalid response type `{r}`.")
+
+        member _.LogWarning(step, message) =
+            ({ Step = step; Message = message }: IPC.LogWarningRequest)
+            |> IPC.RequestMessage.LogWarning
+            |> Client.sendRequest ctx
+            |> Result.bind (function
+                | IPC.ResponseMessage.Acknowledge -> Ok()
+                | r -> Error $"Invalid response type `{r}`.")
+
 
 
     let executeScript (store: PipelineStore) () =
