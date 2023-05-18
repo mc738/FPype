@@ -241,11 +241,14 @@ module Core =
 
             static member Create(header: Header, body: byte array) = { Header = header; Body = body }
 
+            static member Create(body: byte array, messageTypeByte: byte) =
+                { Header = Header.Create(body.Length, messageTypeByte)
+                  Body = body }
+
             static member Create(body: string, messageTypeByte: byte) =
                 let b = Encoding.UTF8.GetBytes(body)
 
-                { Header = Header.Create(b.Length, messageTypeByte)
-                  Body = b }
+                Message.Create(b, messageTypeByte)
 
             static member CreateEmpty(messageTypeByte: byte) =
                 { Header = Header.Create(0, messageTypeByte)
@@ -591,16 +594,31 @@ module Core =
                 match message.Header.MessageTypeByte with
                 | 0uy -> ResponseMessage.Close |> Ok
                 | 1uy -> message.Body |> Encoding.UTF8.GetString |> ResponseMessage.RawMessage |> Ok
+                | 2uy -> ResponseMessage.Acknowledge |> Ok
+                | 3uy -> Value.TryDeserialize message.Body |> Result.map (fst >> ResponseMessage.Value)
+                | 4uy -> message.Body |> Encoding.UTF8.GetString |> ResponseMessage.String |> Ok
+                // NOTE - need try/catch?
+                | 5uy -> BitConverter.ToBoolean message.Body |> ResponseMessage.Bool |> Ok
                 | _ -> Error $"Unknown message type ({message})"
 
             member rm.GetMessageTypeByte() =
                 match rm with
-                | RawMessage _ -> 1uy
                 | Close -> 0uy
+                | RawMessage _ -> 1uy
+                | Acknowledge -> 2uy
+                | Value _ -> 3uy
+                | String _ -> 4uy
+                | Bool _ -> 5uy
 
             member rm.ToMessage() =
+                let mbt = rm.GetMessageTypeByte()
+
                 match rm with
-                | RawMessage body -> Message.Create(body, rm.GetMessageTypeByte())
-                | Close -> Message.CreateEmpty(rm.GetMessageTypeByte())
+                | RawMessage body -> Message.Create(body, mbt)
+                | Close -> Message.CreateEmpty(mbt)
+                | Acknowledge -> Message.CreateEmpty(mbt)
+                | Value value -> Message.Create(value.Serialize(), mbt)
+                | String value -> Message.Create(value, mbt)
+                | Bool value -> Message.Create(BitConverter.GetBytes(value), mbt)
 
             member rm.Serialize() = rm.ToMessage().Serialize()

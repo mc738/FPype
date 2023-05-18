@@ -6,6 +6,7 @@ open FPype.Data.Store
 open FPype.Scripting.Core
 open FsToolbox.Core
 open Microsoft.VisualBasic
+open Microsoft.VisualBasic.CompilerServices
 
 // Start server should
 // 1. Create the message ctxs
@@ -137,27 +138,47 @@ module Server =
                 | Some r -> (Models.Resource.FromEntity r).Serialize()
                 | None -> System.String.Empty
             |> IPC.ResponseMessage.String
-        | IPC.RequestMessage.AddCacheItem request -> failwith "todo"
-        | IPC.RequestMessage.GetCacheItem request -> failwith "todo"
-        | IPC.RequestMessage.DeleteCacheItem request -> failwith "todo"
-        | IPC.RequestMessage.AddResult request -> failwith "todo"
-        | IPC.RequestMessage.AddImportError request -> failwith "todo"
-        | IPC.RequestMessage.AddVariable request -> failwith "todo"
-        | IPC.RequestMessage.SubstituteValues request -> failwith "todo"
+        | IPC.RequestMessage.AddCacheItem request ->
+            store.AddCacheItem(request.Name, request.Base64Data |> Conversions.fromBase64, request.Ttl)
+            IPC.ResponseMessage.Acknowledge
+        | IPC.RequestMessage.GetCacheItem request ->
+            store.GetCacheItemEntity(request.Name)
+            |> function
+                | Some ci -> (Models.CacheItem.FromEntity ci).Serialize()
+                | None -> System.String.Empty
+            |> IPC.ResponseMessage.String
+        | IPC.RequestMessage.DeleteCacheItem request ->
+            store.DeleteCacheItem(request.Name)
+            IPC.ResponseMessage.Acknowledge
+        | IPC.RequestMessage.AddResult request ->
+            store.AddResult(request.Step, request.Result, request.StartUtc, request.EndUtc, request.Serial)
+            IPC.ResponseMessage.Acknowledge
+        | IPC.RequestMessage.AddImportError request ->
+            store.AddImportError(request.Step, request.Error, request.Value)
+            IPC.ResponseMessage.Acknowledge
+        | IPC.RequestMessage.AddVariable request ->
+            store.AddVariable(request.Name, request.Value)
+            IPC.ResponseMessage.Acknowledge
+        | IPC.RequestMessage.SubstituteValues request ->
+            store.SubstituteValues(request.Value) |> IPC.ResponseMessage.String
         | IPC.RequestMessage.CreateTable -> failwith "todo"
         | IPC.RequestMessage.InsertRows -> failwith "todo"
         | IPC.RequestMessage.SelectRows -> failwith "todo"
         | IPC.RequestMessage.SelectBespokeRows -> failwith "todo"
-        | IPC.RequestMessage.Log request -> failwith "todo"
-        | IPC.RequestMessage.LogError request -> failwith "todo"
-        | IPC.RequestMessage.LogWarning request -> failwith "todo"
+        | IPC.RequestMessage.Log request ->
+            store.Log(request.Step, request.Message)
+            IPC.ResponseMessage.Acknowledge
+        | IPC.RequestMessage.LogError request ->
+            store.LogError(request.Step, request.Message)
+            IPC.ResponseMessage.Acknowledge
+        | IPC.RequestMessage.LogWarning request ->
+            store.LogWarning(request.Step, request.Message)
+            IPC.ResponseMessage.Acknowledge
         | IPC.RequestMessage.IteratorNext -> failwith "todo"
         | IPC.RequestMessage.IteratorBreak -> failwith "todo"
         | IPC.RequestMessage.Close -> IPC.ResponseMessage.Close
 
-
-
-    let start (handler: IPC.RequestMessage -> IPC.ResponseMessage option) (pipeName: string) =
+    let start (store: PipelineStore) (pipeName: string) =
         let stream = new NamedPipeServerStream(pipeName, PipeDirection.InOut)
 
         // NOTE - need a timeout?
@@ -174,10 +195,7 @@ module Server =
                         |> Result.bind (fun req ->
                             match req with
                             | IPC.RequestMessage.Close -> Ok false
-                            | _ ->
-                                match handler req with
-                                | Some res -> sendResponse stream res
-                                | None -> Ok true)
+                            | _ -> handleRequest store req |> sendResponse stream)
 
                     match cont, stream.IsConnected with
                     | Ok true, true -> run ()

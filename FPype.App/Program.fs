@@ -666,20 +666,23 @@ module CommsTest =
 
     open System.IO
     open System.IO.Pipes
+    open FPype.Scripting
 
     let testClient _ =
         async {
 
-            use ctx = new ScriptContext("testpipe")
+            use ctx = new FSharp.PipelineStoreProxy("testpipe")
 
             //let ctx = Client.start "testpipe"
 
             for i in [ 0..10 ] do
-                match ctx.SendRequest(IPC.RequestMessage.RawMessage $"Hello server. Time is {DateTime.UtcNow}") with
+                match ctx.GetId() with
                 | Ok res ->
-                    match res with
-                    | IPC.ResponseMessage.RawMessage b -> printfn $"[CLIENT] {b}"
-                    | IPC.ResponseMessage.Close -> ()
+                    printfn $"ID is: {res}"
+                | Error e -> printfn $"ERROR - {e}"
+                
+                match ctx.Log("test", $"This is a test message at {DateTime.UtcNow}") with
+                | Ok _ -> printfn "Logged!"
                 | Error e -> printfn $"ERROR - {e}"
 
                 do! Async.Sleep 1000
@@ -694,18 +697,13 @@ module CommsTest =
 
         //let r = Scripting.Core.IPC.Header.TryDeserialize(h.Serialize())
 
-        let handler (req: IPC.RequestMessage) =
-            match req with
-            | IPC.RequestMessage.RawMessage b ->
-                printfn $"[SERVER] {b}"
-                IPC.ResponseMessage.RawMessage $"Hello from server - {DateTime.UtcNow}" |> Some
-            | IPC.RequestMessage.Close ->
-                printfn $"[SERVER] Close request received."
-                None
+        let store =
+            PipelineStore.Open(
+                "D:\\DataSets\\sp_500\\pipelines\\v7\\pipeline\\runs",
+                "f478ec8c85c34014b8c379c239c5c43d"
+            )
 
-
-
-        let server = async { return Server.start handler "testpipe" }
+        let server = async { return Server.start store "testpipe" }
 
         let _ = testClient () |> Async.Ignore |> Async.Start
 
@@ -714,6 +712,37 @@ module CommsTest =
         printfn "Complete"
 
         ()
+
+module ScriptTest =
+    
+    open System.IO
+    open System.IO.Pipes
+    open FPype.Scripting
+    
+    let run _ =
+        
+        let store =
+            PipelineStore.Open(
+                "D:\\DataSets\\sp_500\\pipelines\\v7\\pipeline\\runs",
+                "f478ec8c85c34014b8c379c239c5c43d"
+            )
+        
+        let hostCtx = FSharp.ScriptHost.HostContext.Create()
+        
+        let r =
+            [
+                async { return FSharp.executeScript hostCtx "C:\\Users\\44748\\Projects\\FPype\\FPype.Scripts\\HelloWorld.fsx" "HelloWorld.execute" "testpipe" }
+                async { return Server.start store "testpipe" }
+            ]
+            |> Async.Parallel
+            |> Async.RunSynchronously
+        
+        
+        
+        
+        
+        ()
+
 
 module ChartsActionTest =
 
@@ -1037,12 +1066,15 @@ module ExportBucketTest =
 
         ()
 
+ScriptTest.run ()
+CommsTest.run ()
+
 ChartsActionTest.run ()
 ChartsActionTest2.run ()
 CandleStickChartsActionTest.run ()
 ExportBucketTest.run ()
 
-CommsTest.run ()
+
 
 //MiscTest.createDynamicObj ()
 //MLTest.train ()

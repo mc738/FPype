@@ -670,6 +670,9 @@ module Store =
         member ps.AddCacheItem(key: string, value: byte array, ?ttl: int) =
             defaultArg ttl 1000000 |> addCacheItem ctx key value
 
+        member ps.GetCacheItemEntity(key: string) =
+            getCacheItem ctx key
+            
         member ps.GetCacheItem(key: string) =
             getCacheItem ctx key |> Option.map (fun r -> r.ItemValue.ToBytes())
 
