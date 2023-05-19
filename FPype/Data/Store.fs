@@ -544,7 +544,7 @@ module Store =
             | None, _ -> ps.AddStateValue(StateNames.userName, userName)
 
         member ps.SetUserName() =
-            ps.SetComputerName(Environment.UserName)
+            ps.SetUserName(Environment.UserName)
 
         member ps.GetBasePath() = ps.GetStateValue(StateNames.basePath)
 
@@ -609,7 +609,6 @@ module Store =
                 ps.CreateDirectory("imports") |> Option.iter ps.SetImportsPath |> Ok
             with ex ->
                 Error $"Failed to create imports directory. Error - {ex.Message}"
-
 
         member ps.CreateExportDirectory() =
             try
