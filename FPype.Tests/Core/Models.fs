@@ -96,3 +96,37 @@ type TablesTests() =
                 let ar = actual.Rows |> List.item i
                 Assert.AreEqual(r, ar))
         | Error e -> Assert.Fail(e)
+
+
+    [<TestMethod>]
+    member _.``Serialize and deserialize empty table``() =
+        let table =
+            ({ Name = "test_table"
+               Columns =
+                 [ { Name = "col_a"
+                     Type = BaseType.String
+                     ImportHandler = None }
+                   { Name = "col_b"
+                     Type = BaseType.Int
+                     ImportHandler = None } ]
+               Rows = [] })
+
+        match table.Serialize() |> TableModel.TryDeserialize with
+        | Ok(actual, data) ->
+            Assert.AreEqual(0, data.Length)
+            Assert.AreEqual(table.Name, actual.Name)
+            Assert.AreEqual(table.Columns.Length, actual.Columns.Length)
+            Assert.AreEqual(table.Rows.Length, actual.Rows.Length)
+
+            table.Columns
+            |> List.iteri (fun i c ->
+                let ac = actual.Columns |> List.item i
+                Assert.AreEqual(c.Name, ac.Name)
+                Assert.AreEqual(c.Type, ac.Type)
+                Assert.AreEqual(c.ImportHandler, None))
+
+            table.Rows
+            |> List.iteri (fun i r ->
+                let ar = actual.Rows |> List.item i
+                Assert.AreEqual(r, ar))
+        | Error e -> Assert.Fail(e)
