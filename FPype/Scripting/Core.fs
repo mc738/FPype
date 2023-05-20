@@ -8,6 +8,7 @@ open System.Text.Json.Serialization
 open System.Threading.Channels
 open FPype.Core.Types
 open FPype.Data
+open FPype.Data.Models
 open FPype.Data.Store
 open FsToolbox.Core
 open Microsoft.VisualBasic.CompilerServices
@@ -184,6 +185,33 @@ module Core =
                     ci.Base64Data |> Conversions.fromBase64 |> Ok
                 with ex ->
                     Error $"Failed to convert from base64: {ex.Message}"
+
+
+    [<RequireQualifiedAccess>]
+    module Iterators =
+
+        type Table =
+            { Id: string
+              Current: int
+              ChunkSize: int
+              Table: TableModel
+              Query: string
+              Parameters: obj list }
+
+            member t.GetQueryAndParameters() =
+                match t.IsStart() with
+                | true -> $"{t.Query} LIMIT @{t.Parameters.Length}", t.Parameters @ [ t.ChunkSize ]
+                | false ->
+                    $"{t.Query} LIMIT @{t.Parameters.Length} OFFSET @{t.Parameters.Length + 1}",
+                    t.Parameters @ [ t.ChunkSize; t.Current ]
+
+            member t.Next() =
+                { t with
+                    Current = t.Current + t.ChunkSize }
+
+            member t.IsStart() = t.Current = 0
+
+            member t.Restart() = { t with Current = 0 }
 
     // Notes
     //

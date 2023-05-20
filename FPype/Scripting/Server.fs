@@ -28,6 +28,28 @@ module Server =
     open System.IO.Pipes
     open FPype.Scripting.Core
 
+    type ServerState =
+        { TableIterators: Map<string, Iterators.Table> }
+
+        static member Create() = { TableIterators = Map.empty }
+
+        member ss.AddTableIterator(iterator: Iterators.Table) =
+            { ss with
+                TableIterators = ss.TableIterators.Add(iterator.Id, iterator) }
+
+        member ss.GetTableIterator(id: string) = ss.TableIterators.TryFind id
+
+        member ss.BreakTableIterator(id: string) =
+            { ss with
+                TableIterators = ss.TableIterators.Remove id }
+
+        member ss.ProgressTableIterator(id: string) =
+            match ss.TableIterators.TryFind id with
+            | Some ti ->
+                { ss with
+                    TableIterators = ss.TableIterators.Add(ti.Id, ti.Next()) }
+            | None -> ss
+
     let readMessage (stream: NamedPipeServerStream) =
         try
             let headerBuffer: byte array = Array.zeroCreate 8
@@ -54,7 +76,7 @@ module Server =
         with ex ->
             Error $"Unhandled exception while writing response: {ex.Message}"
 
-    let handleRequest (store: PipelineStore) (request: IPC.RequestMessage) =
+    let handleRequest (state: ServerState) (store: PipelineStore) (request: IPC.RequestMessage) =
         match request with
         | IPC.RequestMessage.RawMessage body -> failwith "todo"
         | IPC.RequestMessage.AddStateValue request ->
@@ -162,7 +184,10 @@ module Server =
         | IPC.RequestMessage.SubstituteValues request ->
             store.SubstituteValues(request.Value) |> IPC.ResponseMessage.String
         | IPC.RequestMessage.CreateTable -> failwith "todo"
-        | IPC.RequestMessage.InsertRows -> failwith "todo"
+        | IPC.RequestMessage.InsertRows ->
+            
+            
+            failwith "todo"
         | IPC.RequestMessage.SelectRows -> failwith "todo"
         | IPC.RequestMessage.SelectBespokeRows -> failwith "todo"
         | IPC.RequestMessage.Log request ->
@@ -175,7 +200,7 @@ module Server =
             store.LogWarning(request.Step, request.Message)
             IPC.ResponseMessage.Acknowledge
         | IPC.RequestMessage.IteratorNext -> failwith "todo"
-        | IPC.RequestMessage.IteratorBreak -> failwith "todo"
+        | IPC.RequestMessage.IteratorBreak -> IPC.ResponseMessage.Acknowledge
         | IPC.RequestMessage.Close -> IPC.ResponseMessage.Close
 
     let start (store: PipelineStore) (pipeName: string) =
@@ -184,7 +209,7 @@ module Server =
         // NOTE - need a timeout?
         stream.WaitForConnection()
 
-        let rec run () =
+        let rec run (state: ServerState) =
             try
                 match stream.IsConnected with
                 | true ->
@@ -195,10 +220,30 @@ module Server =
                         |> Result.bind (fun req ->
                             match req with
                             | IPC.RequestMessage.Close -> Ok false
-                            | _ -> handleRequest store req |> sendResponse stream)
+                            | IPC.RequestMessage.SelectRows ->
+                                // Special handling for select rows -
+                                // * Add new iterator (if required)
+
+                                failwith "todo"
+                            | IPC.RequestMessage.SelectBespokeRows ->
+                                // Special handling for select rows -
+                                // * Add new iterator (if required)
+
+                                failwith "todo"
+                            | IPC.RequestMessage.IteratorNext ->
+                                // Special handling for next
+                                // push iterator forwards by one
+                                let newState = state.ProgressTableIterator ""
+
+
+                                failwith "todo"
+                            | IPC.RequestMessage.IteratorBreak ->
+                                let newState = state.BreakTableIterator ""
+                                failwith "todo"
+                            | _ -> handleRequest state store req |> sendResponse stream)
 
                     match cont, stream.IsConnected with
-                    | Ok true, true -> run ()
+                    | Ok true, true -> run (state)
                     | Ok false, _
                     | _, false ->
                         printfn "Server complete. closing."
@@ -212,4 +257,4 @@ module Server =
             with ex ->
                 Error $"Server error - {ex}"
 
-        run ()
+        run (ServerState.Create())

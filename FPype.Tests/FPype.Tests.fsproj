@@ -9,6 +9,7 @@
 
     <ItemGroup>
         <Compile Include="Core\Common.fs" />
+        <Compile Include="Core\Models.fs" />
         <Compile Include="Core\Expressions.fs" />
         <Compile Include="Core\Paths.fs" />
         <Compile Include="Core\JPath.fs" />

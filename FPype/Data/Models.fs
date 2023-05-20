@@ -57,10 +57,12 @@ module Models =
         *)
 
         member tm.PrependColumns(columns: TableColumn list) =
-            { tm with Columns = columns @ tm.Columns }
+            { tm with
+                Columns = columns @ tm.Columns }
 
         member tm.AppendColumns(columns: TableColumn list) =
-            { tm with Columns = tm.Columns @ columns }
+            { tm with
+                Columns = tm.Columns @ columns }
 
         member tm.SetRows(rows: TableRow list) = { tm with Rows = rows }
 
@@ -119,7 +121,8 @@ module Models =
                 ({ Name = newName
                    Columns =
                      TableColumn.JoinColumns(tm.Columns, table2.Columns, dropColumnsA, dropColumnsB, false, true)
-                   Rows = r }: TableModel)
+                   Rows = r }
+                : TableModel)
 
         member tm.ToCsv(settings: CsvExportSettings) =
             [ match settings.IncludeHeader with
@@ -170,7 +173,7 @@ module Models =
 
             handler c1 dropColumnsA c1Optional @ handler c2 dropColumnsB c2Optional
 
-    
+
 
     (*
         member tc.ToField(index: int) =
@@ -186,6 +189,30 @@ module Models =
         { Values: Value list }
 
         static member FromValues(values: Value list) = { Values = values }
+
+        static member TryDeserialize(data: byte array) =
+            // NOTE this will fail if the row length is bigger than Int32.MaxValue
+            // This should be fine, rows shouldn't be bigger than this (2147483647 bytes).
+            match data |> Array.length >= 4 with
+            | true ->
+                let l, r = data |> Array.splitAt 4
+                let len = BitConverter.ToInt32 l
+
+                match r.Length >= len with
+                | true ->
+                    let row, tail = r |> Array.splitAt r.Length
+
+                    let rec run (acc: Value list, remaining: byte array) =
+                        match Value.TryDeserialize remaining with
+                        | Ok(v, t) ->
+                            match t |> Array.isEmpty with
+                            | true -> acc @ [ v ] |> Ok
+                            | false -> run (acc @ [ v ], t)
+                        | Error e -> Error e
+
+                    run ([], row) |> Result.map (fun vs -> { Values = vs }, tail)
+                | false -> Error "Row length is too short"
+            | false -> Error "Data length is too short"
 
         member tr.Box() =
             tr.Values
@@ -304,8 +331,14 @@ module Models =
                     | None -> ""
 
             tr.Values |> List.map handler |> String.concat ","
-            
+
         member tr.TryGetValue(index: int) = tr.Values |> List.tryItem index
+
+        member tr.Serialize() =
+            let sv = tr.Values |> List.map (fun v -> v.Serialize()) |> Array.concat
+
+            [| yield! BitConverter.GetBytes sv.Length; yield! sv |]
+
 
     type ObjectDefinition =
         { Name: string
