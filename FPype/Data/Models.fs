@@ -1,6 +1,7 @@
 ﻿namespace FPype.Data
 
 open System
+open System.Text
 open System.Text.Json
 open FPype.Core
 open FPype.Core.JPath
@@ -14,47 +15,92 @@ module Models =
           Columns: TableColumn list
           Rows: TableRow list }
 
-        (*
-        static member FromViewModel(model: TableViewModel) =
-            model.Fields
-            |> List.ofSeq
-            |> List.map (fun f -> f.Name, TableColumn.FromTabularModelField f)
-            |> List.fold
-                (fun (columns, errors) (name, column) ->
-                    match column with
-                    | Some c -> columns @ [ c ], errors
-                    | None -> columns, errors @ [ name ])
-                ([], [])
-            |> fun (columns, errors) ->
-                match errors |> List.isEmpty with
+        static member TryDeserialize(data: byte array) =
+            // Table consists of
+            // 1. Head (table details)
+            //     a. Name length
+            //     b. Name
+            // 2. Columns
+            //    a. Length
+            //    b. Count
+            //    c. Data
+            // 3. Rows
+            //    a. Length
+            //    b. Count
+            //    c. Data
+
+            match data.Length >= 4 with
+            | true ->
+                let (nlb, tail) = data |> Array.splitAt 4
+
+                let nLen = BitConverter.ToInt32 nlb
+
+                match tail.Length >= nLen with
+                | true -> Ok(tail |> Array.splitAt nLen)
+                | false -> Error "Unable to deserialize table name"
+            | false -> Error "Data length is too short"
+            |> Result.bind (fun (nb, data) ->
+                let name = nb |> Encoding.UTF8.GetString
+
+                // 2. Columns
+                //    a. Length
+                //    b. Count
+                //    c. Data
+
+                match data.Length >= 8 with
                 | true ->
-                    { Name = model.Name
-                      Columns = columns
-                      Rows = [] }
-                    |> Ok
+                    let (b, tail) = data |> Array.splitAt 8
+
+                    let lb, cb = b |> Array.splitAt 4
+
+                    let len = BitConverter.ToInt32 lb
+                    let count = BitConverter.ToInt32 cb
+
+                    match tail.Length >= len with
+                    | true ->
+                        let (cd, tail) = tail |> Array.splitAt len
+
+                        let rec handle (acc, i, d) =
+                            match i < count with
+                            | true ->
+                                match TableColumn.TryDeserialize(d) with
+                                | Ok(tc, t) -> handle (acc @ [ tc ], i + 1, t)
+                                | Error e -> Error $"Failed to deserialize column {i}. Error - {e}"
+                            | false -> Ok acc
+
+                        handle ([], 0, cd) |> Result.map (fun tcs -> name, tcs, tail)
+                    | false -> Error "Unable to deserialize columns: data too short"
+                | false -> Error "Column header data length is too short")
+            |> Result.bind (fun (name, tcs, data) ->
+                match data |> Array.isEmpty with
+                | true -> Ok(name, tcs, [], data)
                 | false ->
-                    let errorsStr = String.concat ", " errors
-                    Error $"The following columns could not be created: {errorsStr}."
+                    let (b, tail) = data |> Array.splitAt 8
 
-        member tm.ToViewModel(id, height, width, x, y) =
-            let tvm = TableViewModel()
+                    let lb, cb = b |> Array.splitAt 4
 
-            tvm.Name <- tm.Name
+                    let len = BitConverter.ToInt32 lb
+                    let count = BitConverter.ToInt32 cb
 
-            tvm.Fields <-
-                tm.Columns
-                |> List.mapi (fun i c -> c.ToField(i))
-                |> ResizeArray
+                    match tail.Length >= len with
+                    | true ->
+                        let (cd, tail) = tail |> Array.splitAt len
 
-            tvm.Id <- id
-            tvm.Height <- height
-            tvm.Width <- width
-            tvm.X <- x
-            tvm.Y <- y
-            tvm.OriginalX <- x
-            tvm.OriginalY <- y
-            tvm
-        *)
+                        let rec handle (acc, i, d) =
+                            match i < count with
+                            | true ->
+                                match TableRow.TryDeserialize(d) with
+                                | Ok(tr, t) -> handle (acc @ [ tr ], i + 1, t)
+                                | Error e -> Error $"Failed to deserialize row {i}. Error - {e}"
+                            | false -> Ok acc
+
+                        handle ([], 0, cd) |> Result.map (fun trs -> name, tcs, trs, tail)
+                    | false -> Error "Unable to deserialize rows: data too short")
+            |> Result.map (fun (name, tcs, trs, tail) ->
+                { Name = name
+                  Columns = tcs
+                  Rows = trs },
+                tail)
 
         member tm.PrependColumns(columns: TableColumn list) =
             { tm with
@@ -131,19 +177,67 @@ module Models =
 
               yield! tm.Rows |> List.map (fun tr -> tr.ToCsv(settings)) ]
 
+        member tm.Serialize() =
+            // Table consists of
+            // 1. Head (table details)
+            //     a. Name length
+            //     b. Name
+            // 2. Columns
+            //    a. Length
+            //    b. Count
+            //    c. Data
+            // 3. Rows
+            //    a. Length
+            //    b. Count
+            //    c. Data
+
+            let nb = tm.Name |> Encoding.UTF8.GetBytes
+
+            let tcb = tm.Columns |> List.map (fun tc -> tc.Serialize()) |> Array.concat
+            let trb = tm.Rows |> List.map (fun tr -> tr.Serialize()) |> Array.concat
+
+            [| yield! nb.Length |> BitConverter.GetBytes
+               yield! nb
+               yield! tcb.Length |> BitConverter.GetBytes
+               yield! tm.Columns.Length |> BitConverter.GetBytes
+               yield! tcb
+               yield! trb.Length |> BitConverter.GetBytes
+               yield! tm.Rows.Length |> BitConverter.GetBytes
+               yield! trb |]
+
     and TableColumn =
         { Name: string
           Type: BaseType
           ImportHandler: (string -> CoercionResult) option }
 
-        (*
-        static member FromTabularModelField(field: Field) =
-            BaseType.FromDataType(field.Type, field.Optional)
-            |> Option.map (fun t ->
-                { Name = field.Name
-                  Type = t
-                  ImportHandler = None })
-        *)
+        static member TryDeserialize(data: byte array) =
+            // The serialized column contains
+            // 1. The type (as a byte) (index 0)
+            // 2. Is optional (index 1)
+            // 3. Name length (index 2, 3, 4, 5)
+            // 4. The name (6 - onwards)
+
+            match data.Length >= 6 with
+            | true ->
+                let h, t = data |> Array.splitAt 6
+
+                let btb = h[0]
+                let o = [| h[1] |] |> BitConverter.ToBoolean
+
+                let len = data |> Array.splitAt 2 |> snd |> BitConverter.ToInt32
+
+                match t.Length >= len with
+                | true ->
+                    BaseType.TryFromByte(btb, o)
+                    |> Result.map (fun bt ->
+                        let nb, rb = t |> Array.splitAt len
+
+                        { Name = Encoding.UTF8.GetString nb
+                          Type = bt
+                          ImportHandler = None },
+                        rb)
+                | false -> Error "Unable to deserialize column name"
+            | false -> Error "Data length is too short"
 
         static member JoinColumns
             (
@@ -174,16 +268,15 @@ module Models =
             handler c1 dropColumnsA c1Optional @ handler c2 dropColumnsB c2Optional
 
 
+        member tc.Serialize() =
+            let nb = tc.Name |> Encoding.UTF8.GetBytes
 
-    (*
-        member tc.ToField(index: int) =
-            let f = Field()
-            f.Name <- tc.Name
-            f.Type <- tc.Type.ToDateType()
-            f.Optional <- tc.Type.IsOptionType()
-            f.FieldIndex <- index
-            f
-        *)
+            [| tc.Type.ToByte()
+               match tc.Type.IsOptionType() with
+               | true -> 1uy
+               | false -> 0uy
+               yield! BitConverter.GetBytes nb.Length
+               yield! nb |]
 
     and TableRow =
         { Values: Value list }
@@ -200,7 +293,7 @@ module Models =
 
                 match r.Length >= len with
                 | true ->
-                    let row, tail = r |> Array.splitAt r.Length
+                    let row, tail = r |> Array.splitAt len
 
                     let rec run (acc: Value list, remaining: byte array) =
                         match Value.TryDeserialize remaining with

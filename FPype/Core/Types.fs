@@ -125,6 +125,27 @@ module Types =
 
         static member FromType(typeInfo: Type) = BaseType.FromName(typeInfo.FullName)
 
+        static member TryFromByte(value: byte, isOptional: bool) =
+            match value with
+            | 1uy -> Ok Boolean
+            | 2uy -> Ok Byte
+            | 3uy -> Ok Char
+            | 4uy -> Ok Decimal
+            | 5uy -> Ok Double
+            | 6uy -> Ok Float
+            | 7uy -> Ok Int
+            | 8uy -> Ok Short
+            | 9uy -> Ok Long
+            | 10uy -> Ok String
+            | 11uy -> Ok DateTime
+            | 12uy -> Ok Guid
+            | _ -> Error $"Unknown base type byte: {value}"
+            |> Result.map (fun bt ->
+                match isOptional with
+                | true -> Option bt
+                | false -> bt)
+
+
         (*
         static member GetDataTypes() =
             seq {
@@ -213,7 +234,7 @@ module Types =
                     failwith "To implement"
 
             handler bt
-            
+
         member bt.Serialize() =
             let rec handle (baseType: BaseType) =
                 match baseType with
@@ -229,9 +250,27 @@ module Types =
                 | BaseType.Long -> "long"
                 | BaseType.String -> "string"
                 | BaseType.Guid -> "uuid"
-                | BaseType.Option ibt ->
-                    handle ibt
-                    
+                | BaseType.Option ibt -> handle ibt
+
+            handle bt
+
+        member bt.ToByte() =
+            let rec handle (baseType: BaseType) =
+                match baseType with
+                | Boolean -> 1uy
+                | Byte -> 2uy
+                | Char -> 3uy
+                | Decimal -> 4uy
+                | Double -> 5uy
+                | Float -> 6uy
+                | Int -> 7uy
+                | Short -> 8uy
+                | Long -> 9uy
+                | String -> 10uy
+                | DateTime -> 11uy
+                | Guid -> 12uy
+                | Option ibt -> handle ibt
+
             handle bt
 
     [<RequireQualifiedAccess>]
@@ -304,7 +343,7 @@ module Types =
                 | Some 4uy ->
                     // len 16
                     let t = data |> Array.tail
-                    
+
                     match t.Length >= 16 with
                     | true ->
                         let (b, r) = t |> Array.splitAt 16
@@ -750,7 +789,7 @@ module Types =
                     | None -> 0.
 
             handler fv
-        
+
         member v.IsMatch(value: Value) =
             let rec handler (v: Value) (v2: Value) =
                 match v, v2 with

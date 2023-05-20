@@ -35,7 +35,6 @@ module FSharp =
 
         member _.SendRequest(request: IPC.RequestMessage) = Client.sendRequest clientCtx request
 
-
     type PipelineStoreProxy(pipeName) =
         let ctx = Client.start pipeName
 
@@ -306,7 +305,6 @@ module FSharp =
             |> Result.bind (function
                 | IPC.ResponseMessage.Acknowledge -> Ok()
                 | r -> Error $"Invalid response type `{r}`.")
-
 
     module ScriptHost =
         open System.IO

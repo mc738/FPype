@@ -213,6 +213,32 @@ module Core =
 
             member t.Restart() = { t with Current = 0 }
 
+        type IteratorSettings =
+            { ChunkSize: int
+              Table: TableModel
+              Query: string
+              Parameters: Value list }
+
+        let iter
+            (fn: TableRow list -> unit)
+            (fetch: int -> IteratorSettings -> TableRow list)
+            (settings: IteratorSettings)
+            =
+            let rec run (i: int) =
+                let rows = fetch i settings
+
+                match rows.IsEmpty with
+                | true -> ()
+                | false ->
+                    fn rows
+                    run (i + settings.ChunkSize)
+
+            run (0)
+
+
+
+
+
     // Notes
     //
     // Need to handle 2 types of response (?):
@@ -331,8 +357,8 @@ module Core =
             | Log of Request: LogRequest
             | LogError of Request: LogErrorRequest
             | LogWarning of Request: LogWarningRequest
-            | IteratorNext
-            | IteratorBreak
+            //| IteratorNext
+            //| IteratorBreak
             | Close
 
             static member FromMessage(message: Message) =
@@ -382,8 +408,8 @@ module Core =
                 | 33uy -> message.Body |> deserialize<LogRequest> |> Result.map Log
                 | 34uy -> message.Body |> deserialize<LogErrorRequest> |> Result.map LogError
                 | 35uy -> message.Body |> deserialize<LogWarningRequest> |> Result.map LogWarning
-                | 254uy -> failwith "todo" // IteratorNext
-                | 255uy -> failwith "todo" // IteratorBreak
+                //| 254uy -> failwith "todo" // IteratorNext
+                //| 255uy -> failwith "todo" // IteratorBreak
                 | _ -> Error $"Unknown message type ({message})"
 
             member rm.GetMessageTypeByte() =
@@ -423,8 +449,8 @@ module Core =
                 | Log _ -> 33uy
                 | LogError _ -> 34uy
                 | LogWarning _ -> 35uy
-                | IteratorNext -> 254uy
-                | IteratorBreak -> 255uy
+                //| IteratorNext -> 254uy
+                //| IteratorBreak -> 255uy
                 | Close -> 0uy
 
             member rm.ToMessage() =
@@ -467,8 +493,8 @@ module Core =
                 | Log request -> Message.Create(serialize request, mbt)
                 | LogError request -> Message.Create(serialize request, mbt)
                 | LogWarning request -> Message.Create(serialize request, mbt)
-                | IteratorNext -> failwith "todo"
-                | IteratorBreak -> failwith "todo"
+                //| IteratorNext -> failwith "todo"
+                //| IteratorBreak -> failwith "todo"
 
             member rm.Serialize() = rm.ToMessage().Serialize()
 

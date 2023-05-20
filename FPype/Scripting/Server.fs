@@ -28,6 +28,7 @@ module Server =
     open System.IO.Pipes
     open FPype.Scripting.Core
 
+    (*
     type ServerState =
         { TableIterators: Map<string, Iterators.Table> }
 
@@ -49,7 +50,8 @@ module Server =
                 { ss with
                     TableIterators = ss.TableIterators.Add(ti.Id, ti.Next()) }
             | None -> ss
-
+    *)
+    
     let readMessage (stream: NamedPipeServerStream) =
         try
             let headerBuffer: byte array = Array.zeroCreate 8
@@ -76,7 +78,7 @@ module Server =
         with ex ->
             Error $"Unhandled exception while writing response: {ex.Message}"
 
-    let handleRequest (state: ServerState) (store: PipelineStore) (request: IPC.RequestMessage) =
+    let handleRequest (*(state: ServerState)*) (store: PipelineStore) (request: IPC.RequestMessage) =
         match request with
         | IPC.RequestMessage.RawMessage body -> failwith "todo"
         | IPC.RequestMessage.AddStateValue request ->
@@ -199,8 +201,8 @@ module Server =
         | IPC.RequestMessage.LogWarning request ->
             store.LogWarning(request.Step, request.Message)
             IPC.ResponseMessage.Acknowledge
-        | IPC.RequestMessage.IteratorNext -> failwith "todo"
-        | IPC.RequestMessage.IteratorBreak -> IPC.ResponseMessage.Acknowledge
+        //| IPC.RequestMessage.IteratorNext -> failwith "todo"
+        //| IPC.RequestMessage.IteratorBreak -> IPC.ResponseMessage.Acknowledge
         | IPC.RequestMessage.Close -> IPC.ResponseMessage.Close
 
     let start (store: PipelineStore) (pipeName: string) =
@@ -209,7 +211,7 @@ module Server =
         // NOTE - need a timeout?
         stream.WaitForConnection()
 
-        let rec run (state: ServerState) =
+        let rec run ((*state: ServerState*)) =
             try
                 match stream.IsConnected with
                 | true ->
@@ -230,6 +232,7 @@ module Server =
                                 // * Add new iterator (if required)
 
                                 failwith "todo"
+                            (*
                             | IPC.RequestMessage.IteratorNext ->
                                 // Special handling for next
                                 // push iterator forwards by one
@@ -240,10 +243,11 @@ module Server =
                             | IPC.RequestMessage.IteratorBreak ->
                                 let newState = state.BreakTableIterator ""
                                 failwith "todo"
-                            | _ -> handleRequest state store req |> sendResponse stream)
+                            *)  
+                            | _ -> handleRequest (*state*) store req |> sendResponse stream)
 
                     match cont, stream.IsConnected with
-                    | Ok true, true -> run (state)
+                    | Ok true, true -> run ((*state*))
                     | Ok false, _
                     | _, false ->
                         printfn "Server complete. closing."
@@ -257,4 +261,4 @@ module Server =
             with ex ->
                 Error $"Server error - {ex}"
 
-        run (ServerState.Create())
+        run ((*ServerState.Create()*))
