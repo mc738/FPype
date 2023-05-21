@@ -185,13 +185,15 @@ module Server =
             IPC.ResponseMessage.Acknowledge
         | IPC.RequestMessage.SubstituteValues request ->
             store.SubstituteValues(request.Value) |> IPC.ResponseMessage.String
-        | IPC.RequestMessage.CreateTable -> failwith "todo"
-        | IPC.RequestMessage.InsertRows ->
-            
-            
-            failwith "todo"
-        | IPC.RequestMessage.SelectRows -> failwith "todo"
-        | IPC.RequestMessage.SelectBespokeRows -> failwith "todo"
+        | IPC.RequestMessage.CreateTable request ->
+            store.CreateTable(request.Table) |> ignore
+            IPC.ResponseMessage.Acknowledge
+        | IPC.RequestMessage.InsertRows request ->
+            store.InsertRows(request.Table) |> ignore
+            IPC.ResponseMessage.Acknowledge
+        | IPC.RequestMessage.SelectRows request ->
+            store.BespokeSelectRows(request.Table, request.QuerySql, request.Parameters |> List.map (fun p -> p.Box()))
+            |> fun t -> IPC.ResponseMessage.Rows t.Rows
         | IPC.RequestMessage.Log request ->
             store.Log(request.Step, request.Message)
             IPC.ResponseMessage.Acknowledge
@@ -222,6 +224,7 @@ module Server =
                         |> Result.bind (fun req ->
                             match req with
                             | IPC.RequestMessage.Close -> Ok false
+                            (*
                             | IPC.RequestMessage.SelectRows ->
                                 // Special handling for select rows -
                                 // * Add new iterator (if required)
@@ -232,7 +235,7 @@ module Server =
                                 // * Add new iterator (if required)
 
                                 failwith "todo"
-                            (*
+                            
                             | IPC.RequestMessage.IteratorNext ->
                                 // Special handling for next
                                 // push iterator forwards by one

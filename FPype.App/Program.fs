@@ -708,6 +708,8 @@ module CommsTest =
         let _ = testClient () |> Async.Ignore |> Async.Start
 
         let r = server |> Async.RunSynchronously
+        
+        
 
         printfn "Complete"
 

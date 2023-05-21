@@ -282,6 +282,33 @@ module FSharp =
                 | IPC.ResponseMessage.String s -> Ok s
                 | r -> Error $"Invalid response type `{r}`.")
 
+        member _.CreateTable(table) =
+            ({ Table = table }: IPC.CreateTableRequest)
+            |> IPC.RequestMessage.CreateTable
+            |> Client.sendRequest ctx
+            |> Result.bind (function
+                | IPC.ResponseMessage.Acknowledge -> Ok()
+                | r -> Error $"Invalid response type `{r}`.")
+
+        member _.InsertRows(table) =
+            ({ Table = table }: IPC.InsertRowsRequest)
+            |> IPC.RequestMessage.InsertRows
+            |> Client.sendRequest ctx
+            |> Result.bind (function
+                | IPC.ResponseMessage.Acknowledge -> Ok()
+                | r -> Error $"Invalid response type `{r}`.")
+
+        member _.SelectRows(table, query, parameters) =
+            ({ Table = table
+               QuerySql = query
+               Parameters = parameters }
+            : IPC.SelectRowsRequest)
+            |> IPC.RequestMessage.SelectRows
+            |> Client.sendRequest ctx
+            |> Result.bind (function
+                | IPC.ResponseMessage.Rows rows -> Ok rows
+                | r -> Error $"Invalid response type `{r}`.")
+
         member _.Log(step, message) =
             ({ Step = step; Message = message }: IPC.LogRequest)
             |> IPC.RequestMessage.Log

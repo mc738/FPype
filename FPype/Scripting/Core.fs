@@ -11,7 +11,6 @@ open FPype.Data
 open FPype.Data.Models
 open FPype.Data.Store
 open FsToolbox.Core
-open Microsoft.VisualBasic.CompilerServices
 
 module Core =
 
@@ -350,10 +349,9 @@ module Core =
             | AddImportError of Request: AddImportErrorRequest
             | AddVariable of Request: AddVariableRequest
             | SubstituteValues of Request: SubstituteValueRequest
-            | CreateTable
-            | InsertRows
-            | SelectRows
-            | SelectBespokeRows
+            | CreateTable of Request: CreateTableRequest
+            | InsertRows of Request: InsertRowsRequest
+            | SelectRows of Request: SelectRowsRequest
             | Log of Request: LogRequest
             | LogError of Request: LogErrorRequest
             | LogWarning of Request: LogWarningRequest
@@ -393,21 +391,72 @@ module Core =
                     |> deserialize<GetArtifactBucketRequest>
                     |> Result.map GetArtifactBucket
                 | 20uy -> message.Body |> deserialize<AddResourceRequest> |> Result.map AddResource
-                | 21uy -> failwith "todo" //GetResource -> failwith "todo"
-                | 22uy -> failwith "todo" //AddCacheItem -> failwith "todo"
-                | 23uy -> failwith "todo" // GetCacheItem -> failwith "todo"
-                | 24uy -> failwith "todo" // DeleteCacheItem -> failwith "todo"
-                | 25uy -> failwith "todo" // AddResult -> failwith "todo"
-                | 26uy -> failwith "todo" // AddImportError -> failwith "todo"
-                | 27uy -> failwith "todo" // AddVariable -> failwith "todo"
-                | 28uy -> failwith "todo" // SubstituteValues -> failwith "todo"
-                | 29uy -> failwith "todo" // CreateTable -> failwith "todo"
-                | 30uy -> failwith "todo" // InsertRows -> failwith "todo"
-                | 31uy -> failwith "todo" // SelectRows -> failwith "todo"
+                | 21uy -> message.Body |> deserialize<GetResourceRequest> |> Result.map GetResource
+                | 22uy -> message.Body |> deserialize<AddCacheItemRequest> |> Result.map AddCacheItem
+                | 23uy -> message.Body |> deserialize<GetCacheItemRequest> |> Result.map GetCacheItem
+                | 24uy ->
+                    message.Body
+                    |> deserialize<DeleteCacheItemRequest>
+                    |> Result.map DeleteCacheItem
+                | 25uy -> message.Body |> deserialize<AddResultRequest> |> Result.map AddResult
+                | 26uy -> message.Body |> deserialize<AddImportErrorRequest> |> Result.map AddImportError
+                | 27uy -> message.Body |> deserialize<AddVariableRequest> |> Result.map AddVariable
+                | 28uy ->
+                    message.Body
+                    |> deserialize<SubstituteValueRequest>
+                    |> Result.map SubstituteValues
+                | 29uy ->
+                    message.Body
+                    |> TableModel.TryDeserialize
+                    |> Result.map (fst >> fun t -> ({ Table = t }: CreateTableRequest) |> CreateTable)
+                | 30uy ->
+                    message.Body
+                    |> TableModel.TryDeserialize
+                    |> Result.map (fst >> fun t -> ({ Table = t }: InsertRowsRequest) |> InsertRows)
+                | 31uy ->
+                    message.Body
+                    |> TableModel.TryDeserialize
+                    |> Result.bind (fun (table, data) ->
+                        // Get query
+                        match data.Length >= 4 with
+                        | true ->
+                            let (qlb, tail) = data |> Array.splitAt 4
+                            let qLen = BitConverter.ToInt32 qlb
+
+                            match tail.Length >= qLen with
+                            | true ->
+                                let (qb, tail) = tail |> Array.splitAt qLen
+
+                                Ok(table, Encoding.UTF8.GetString qb, tail)
+                            | false -> Error "Unable to deserialize query: data too short"
+                        | false -> Error "Query data length is too short")
+                    |> Result.bind (fun (table, query, data) ->
+                        // Get the parameters.
+
+                        match data.Length >= 4 with
+                        | true ->
+                            let (plb, tail) = data |> Array.splitAt 4
+                            let pCount = BitConverter.ToInt32 plb
+
+                            let rec handler (acc, i, d) =
+                                match i < pCount with
+                                | true ->
+                                    match Value.TryDeserialize d with
+                                    | Ok(v, tail) -> handler (acc @ [ v ], i + 1, tail)
+                                    | Error e -> Error e
+                                | false -> Ok acc
+
+                            handler ([], 0, tail)
+                            |> Result.map (fun pv ->
+                                { Table = table
+                                  QuerySql = query
+                                  Parameters = pv }
+                                |> SelectRows)
+                        | false -> Error "Parameter data length is too short")
                 | 32uy -> failwith "todo" // SelectBespokeRows -> failwith "todo"
-                | 33uy -> message.Body |> deserialize<LogRequest> |> Result.map Log
-                | 34uy -> message.Body |> deserialize<LogErrorRequest> |> Result.map LogError
-                | 35uy -> message.Body |> deserialize<LogWarningRequest> |> Result.map LogWarning
+                | 100uy -> message.Body |> deserialize<LogRequest> |> Result.map Log
+                | 101uy -> message.Body |> deserialize<LogErrorRequest> |> Result.map LogError
+                | 102uy -> message.Body |> deserialize<LogWarningRequest> |> Result.map LogWarning
                 //| 254uy -> failwith "todo" // IteratorNext
                 //| 255uy -> failwith "todo" // IteratorBreak
                 | _ -> Error $"Unknown message type ({message})"
@@ -442,13 +491,12 @@ module Core =
                 | AddImportError _ -> 26uy
                 | AddVariable _ -> 27uy
                 | SubstituteValues _ -> 28uy
-                | CreateTable -> 29uy
-                | InsertRows -> 30uy
-                | SelectRows -> 31uy
-                | SelectBespokeRows -> 32uy
-                | Log _ -> 33uy
-                | LogError _ -> 34uy
-                | LogWarning _ -> 35uy
+                | CreateTable _ -> 29uy
+                | InsertRows _ -> 30uy
+                | SelectRows _ -> 31uy
+                | Log _ -> 100uy
+                | LogError _ -> 101uy
+                | LogWarning _ -> 102uy
                 //| IteratorNext -> 254uy
                 //| IteratorBreak -> 255uy
                 | Close -> 0uy
@@ -486,15 +534,25 @@ module Core =
                 | AddImportError request -> Message.Create(serialize request, mbt)
                 | AddVariable request -> Message.Create(serialize request, mbt)
                 | SubstituteValues request -> Message.Create(serialize request, mbt)
-                | CreateTable -> failwith "todo"
-                | InsertRows -> failwith "todo"
-                | SelectRows -> failwith "todo"
-                | SelectBespokeRows -> failwith "todo"
+                | CreateTable request -> Message.Create(request.Table.Serialize(), mbt)
+                | InsertRows request -> Message.Create(request.Table.Serialize(), mbt)
+                | SelectRows request ->
+
+                    let queryBytes = request.QuerySql |> Encoding.UTF8.GetBytes
+
+                    let body =
+                        [| yield! request.Table.Serialize()
+                           yield! queryBytes.Length |> BitConverter.GetBytes
+                           yield! queryBytes
+                           yield! request.Parameters.Length |> BitConverter.GetBytes
+                           yield! request.Parameters |> List.map (fun p -> p.Serialize()) |> Array.concat |]
+
+                    Message.Create(body, mbt)
                 | Log request -> Message.Create(serialize request, mbt)
                 | LogError request -> Message.Create(serialize request, mbt)
                 | LogWarning request -> Message.Create(serialize request, mbt)
-                //| IteratorNext -> failwith "todo"
-                //| IteratorBreak -> failwith "todo"
+            //| IteratorNext -> failwith "todo"
+            //| IteratorBreak -> failwith "todo"
 
             member rm.Serialize() = rm.ToMessage().Serialize()
 
@@ -615,6 +673,15 @@ module Core =
 
 
         // Tables
+        // NOTE this are not serialized as json.
+        and CreateTableRequest = { Table: TableModel }
+
+        and InsertRowsRequest = { Table: TableModel }
+
+        and SelectRowsRequest =
+            { Table: TableModel
+              QuerySql: string
+              Parameters: Value list }
 
         and [<CLIMutable>] LogRequest =
             { [<JsonPropertyName("step")>]
@@ -641,7 +708,7 @@ module Core =
             | Value of Value: Value
             | String of Value: string
             | Bool of Value: bool
-
+            | Rows of Rows: TableRow list
             | Close
 
             static member FromMessage(message: Message) =
@@ -653,6 +720,24 @@ module Core =
                 | 4uy -> message.Body |> Encoding.UTF8.GetString |> ResponseMessage.String |> Ok
                 // NOTE - need try/catch?
                 | 5uy -> BitConverter.ToBoolean message.Body |> ResponseMessage.Bool |> Ok
+                | 6uy ->
+                    // Get count and create rows
+                    match message.Body.Length >= 4 with
+                    | true ->
+                        let (lb, d) = message.Body |> Array.splitAt 4
+
+                        let count = BitConverter.ToInt32 lb
+
+                        let rec handle (acc, i, d) =
+                            match i < count with
+                            | true ->
+                                match TableRow.TryDeserialize(d) with
+                                | Ok(tr, tail) -> handle (acc @ [ tr ], i + 1, tail)
+                                | Error e -> Error e
+                            | false -> Ok acc
+
+                        handle ([], 0, d) |> Result.map ResponseMessage.Rows
+                    | false -> Error "Data length is too short"
                 | _ -> Error $"Unknown message type ({message})"
 
             member rm.GetMessageTypeByte() =
@@ -663,6 +748,7 @@ module Core =
                 | Value _ -> 3uy
                 | String _ -> 4uy
                 | Bool _ -> 5uy
+                | Rows _ -> 6uy
 
             member rm.ToMessage() =
                 let mbt = rm.GetMessageTypeByte()
@@ -674,5 +760,9 @@ module Core =
                 | Value value -> Message.Create(value.Serialize(), mbt)
                 | String value -> Message.Create(value, mbt)
                 | Bool value -> Message.Create(BitConverter.GetBytes(value), mbt)
+                | Rows rows ->
+                    [| yield! rows.Length |> BitConverter.GetBytes
+                       yield! rows |> List.map (fun r -> r.Serialize()) |> Array.concat |]
+                    |> fun d -> Message.Create(d, mbt)
 
             member rm.Serialize() = rm.ToMessage().Serialize()
