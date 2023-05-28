@@ -30,9 +30,6 @@ module Sqlite =
         with ex ->
             Error $"Error creating Sqlite database: {ex.Message}"
 
-
-
-
     let select (path: string) (table: TableModel) =
         use ctx = SqliteContext.Open(path)
 

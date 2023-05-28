@@ -273,7 +273,6 @@ module FSharp =
                 | IPC.ResponseMessage.Acknowledge -> Ok()
                 | r -> Error $"Invalid response type `{r}`.")
 
-
         member _.SubstituteValue(value) =
             ({ Value = value }: IPC.SubstituteValueRequest)
             |> IPC.RequestMessage.SubstituteValues
