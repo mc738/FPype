@@ -4,3 +4,6 @@
 <meta name="wikd:icon" content="fas fa-plug">
 
 # Hosting
+
+There are multiple options for hosting pipelines.
+The can be run via `FPype.App`
