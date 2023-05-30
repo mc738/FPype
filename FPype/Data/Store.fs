@@ -2,6 +2,7 @@
 
 open FPype.Core.Logging
 open FPype.Data.Models
+open FsToolbox.Core
 
 
 module Store =
@@ -66,6 +67,7 @@ module Store =
             """
         CREATE TABLE __import_errors (
             step TEXT NOT NULL,
+            action_type TEXT NOT NULL,
             error TEXT NOT NULL,
             value TEXT NOT NULL
         );
@@ -75,6 +77,7 @@ module Store =
             """
         CREATE TABLE __log (
             step TEXT NOT NULL,
+            action_type TEXT NOT NULL,
             message TEXT NOT NULL,
             is_error INTEGER NOT NULL,
             is_warning INTEGER NOT NULL,
@@ -184,11 +187,13 @@ module Store =
 
     type ImportError =
         { Step: string
+          ActionType: string
           Error: string
           Value: string }
 
     type LogItem =
         { Step: string
+          ActionType: string
           Message: string
           IsError: bool
           IsWarning: bool
@@ -383,6 +388,16 @@ module Store =
         { Handler: LogItem -> unit }
 
         static member Default() = { Handler = fun _ -> () }
+
+        static member ConsoleLogger() =
+            { Handler =
+                fun li ->
+                    if li.IsError then
+                        ConsoleIO.printError $"[{li.TimestampUtc}] {li.Step} ({li.ActionType}) - {li.Message}"
+                    else if li.IsWarning then
+                        ConsoleIO.printWarning $"[{li.TimestampUtc}] {li.Step} ({li.ActionType}) - {li.Message}"
+                    else
+                        printfn $"[{li.TimestampUtc}] {li.Step} ({li.ActionType}) - {li.Message}" }
 
     type PipelineStore(ctx: SqliteContext, basePath: string, id: string, logger: PipelineLogger) =
 
@@ -693,8 +708,9 @@ module Store =
             : ActionResult)
             |> addResult ctx
 
-        member ps.AddImportError(step, error, value) =
+        member ps.AddImportError(step, actionType, error, value) =
             ({ Step = step
+               ActionType = actionType
                Error = error
                Value = value }
             : ImportError)
@@ -773,21 +789,23 @@ module Store =
         member ps.BespokeSelectAndAppendRows(table: TableModel, sql, parameters) =
             table.SqliteBespokeSelect(ctx, sql, parameters) |> table.AppendRows
 
-        member ps.Log(step, message) =
+        member ps.Log(step, actionType, message) =
             let item =
                 ({ Step = step
+                   ActionType = actionType
                    Message = message
                    IsError = false
                    IsWarning = false
                    TimestampUtc = DateTime.UtcNow }
                 : LogItem)
-                
+
             addLogItem ctx item
             logger.Handler item
 
-        member ps.LogError(step, message) =
+        member ps.LogError(step, actionType, message) =
             let item =
                 ({ Step = step
+                   ActionType = actionType
                    Message = message
                    IsError = true
                    IsWarning = false
@@ -797,9 +815,10 @@ module Store =
             addLogItem ctx item
             logger.Handler item
 
-        member ps.LogWarning(step, message) =
+        member ps.LogWarning(step, actionType, message) =
             let item =
                 ({ Step = step
+                   ActionType = actionType
                    Message = message
                    IsError = false
                    IsWarning = true

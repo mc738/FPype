@@ -17,12 +17,12 @@ module Load =
               Sql: string
               Parameters: obj list }
 
-        let run (parameters: Parameters) (store: PipelineStore) =
+        let run (parameters: Parameters) (stepName: string) (store: PipelineStore) =
             let fullPath = store.SubstituteValues parameters.Path
 
             store.BespokeSelectRows(parameters.Table, parameters.Sql, parameters.Parameters)
             |> insert fullPath
             |> Result.map (fun rs ->
-                store.Log(name, $"{rs.Length} rows inserted into {fullPath}.")
+                store.Log(stepName, name, $"{rs.Length} rows inserted into {fullPath}.")
 
                 store)

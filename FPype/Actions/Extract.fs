@@ -151,17 +151,17 @@ module Extract =
             { DataSource: string
               Table: TableModel }
 
-        let run (parameters: Parameters) (store: PipelineStore) =
+        let run (parameters: Parameters) (stepName: string) (store: PipelineStore) =
             getDataSourceAsLinesByName store parameters.DataSource
             |> Result.map (Internal.createRows parameters.Table.Columns)
             |> Result.bind (fun r ->
                 match r.Errors |> List.isEmpty |> not with
                 | true ->
-                    store.LogWarning("parse_csv", $"Error parsing {r.Errors.Length} row(s)")
+                    store.LogWarning(stepName, name, $"Error parsing {r.Errors.Length} row(s)")
 
                     r.Errors
                     |> List.map (fun e ->
-                        store.AddImportError("parse_csv", e.Message, $"{e.LineNumber}:{e.ColumnNumber} - {e.Line}"))
+                        store.AddImportError(stepName, name, e.Message, $"{e.LineNumber}:{e.ColumnNumber} - {e.Line}"))
                     |> ignore
                 | false -> ()
 
@@ -169,10 +169,10 @@ module Extract =
                 |> fun t -> { t with Rows = r.Rows }
                 |> store.InsertRows)
             |> Result.map (fun r ->
-                store.Log("parse_csv", $"Imported {r.Length} row(s) to table `{parameters.Table.Name}`.")
+                store.Log(stepName, stepName, $"Imported {r.Length} row(s) to table `{parameters.Table.Name}`.")
                 store)
 
-        let createAction stepName parameters = run parameters |> createAction name stepName
+        let createAction stepName parameters = run parameters stepName |> createAction name stepName
 
     [<RequireQualifiedAccess>]
     module ``parse-csv-collection`` =
@@ -182,7 +182,7 @@ module Extract =
             { CollectionName: string
               Table: TableModel }
 
-        let run (parameters: Parameters) (store: PipelineStore) =
+        let run (parameters: Parameters) (stepName: string) (store: PipelineStore) =
             store.GetSourcesByCollection parameters.CollectionName
             |> List.map (fun ds ->
                 getDataSourceAsLines store ds
@@ -191,13 +191,14 @@ module Extract =
                     match r.Errors |> List.isEmpty |> not with
                     | true ->
                         store.LogWarning(
-                            "parse_csv",
+                            stepName,
+                            name,
                             $"Error parsing {r.Errors.Length} row(s) from source `{ds.Name}`"
                         )
 
                         r.Errors
                         |> List.map (fun e ->
-                            store.AddImportError(name, e.Message, $"{e.LineNumber}:{e.ColumnNumber} - {e.Line}"))
+                            store.AddImportError(stepName, name, e.Message, $"{e.LineNumber}:{e.ColumnNumber} - {e.Line}"))
                         |> ignore
                     | false -> ()
 
@@ -206,6 +207,7 @@ module Extract =
                     |> store.InsertRows)
                 |> Result.map (fun r ->
                     store.Log(
+                        stepName,
                         name,
                         $"Imported {r.Length} row(s) from data source `{ds.Name}` to table `{parameters.Table.Name}`."
                     )
@@ -214,7 +216,7 @@ module Extract =
             |> flattenResultList
             |> Result.map (fun _ -> store)
 
-        let createAction stepName parameters = run parameters |> createAction name stepName
+        let createAction stepName parameters = run parameters stepName |> createAction name stepName
 
     /// Split a source into individual chucks for processing.
     /// This is essentially a preprocessing action.
@@ -233,7 +235,7 @@ module Extract =
               GrokString: string
               ExtraPatterns: (string * string) list }
 
-        let run (parameters: Parameters) (store: PipelineStore) =
+        let run (parameters: Parameters) (stepName: string) (store: PipelineStore) =
             //store
 
             let patterns =
@@ -262,11 +264,11 @@ module Extract =
             |> Result.bind (fun r ->
                 match r.Errors |> List.isEmpty |> not with
                 | true ->
-                    store.LogWarning("grok", $"Error parsing {r.Errors.Length} row(s)")
+                    store.LogWarning(stepName, name, $"Error parsing {r.Errors.Length} row(s)")
 
                     r.Errors
                     |> List.map (fun e ->
-                        store.AddImportError("grok", e.Message, $"{e.LineNumber}:{e.ColumnNumber} - {e.Line}"))
+                        store.AddImportError(stepName, name, e.Message, $"{e.LineNumber}:{e.ColumnNumber} - {e.Line}"))
                     |> ignore
                 | false -> ()
 
@@ -274,10 +276,10 @@ module Extract =
                 |> fun t -> { t with Rows = r.Rows }
                 |> store.InsertRows)
             |> Result.map (fun r ->
-                store.Log("grok", $"Imported {r.Length} row(s) to table `{parameters.Table.Name}`.")
+                store.Log(stepName, name, $"Imported {r.Length} row(s) to table `{parameters.Table.Name}`.")
                 store)
 
-        let createAction stepName parameters = run parameters |> createAction name stepName
+        let createAction stepName parameters = run parameters stepName |> createAction name stepName
 
     module ``query-sqlite-database`` =
 
@@ -289,7 +291,7 @@ module Extract =
               Sql: string
               Parameters: obj list }
 
-        let run (parameters: Parameters) (store: PipelineStore) =
+        let run (parameters: Parameters) (stepName: string) (store: PipelineStore) =
             let fullPath = store.SubstituteValues parameters.Path
             
             // Select rows from external database
@@ -299,11 +301,11 @@ module Extract =
             // and insert into the store.
             |> store.InsertRows
             |> Result.map (fun rs ->
-                store.Log(name, $"{rs.Length} rows inserted from {fullPath}.")
+                store.Log(stepName, name, $"{rs.Length} rows inserted from {fullPath}.")
 
                 store)
 
-        let createAction stepName parameters = run parameters |> createAction name stepName
+        let createAction stepName parameters = run parameters stepName |> createAction name stepName
 
 (*
         let deserialize (element: JsonElement) =

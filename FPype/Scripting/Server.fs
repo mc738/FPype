@@ -178,7 +178,7 @@ module Server =
             store.AddResult(request.Step, request.Result, request.StartUtc, request.EndUtc, request.Serial)
             IPC.ResponseMessage.Acknowledge
         | IPC.RequestMessage.AddImportError request ->
-            store.AddImportError(request.Step, request.Error, request.Value)
+            store.AddImportError(request.Step, "script", request.Error, request.Value)
             IPC.ResponseMessage.Acknowledge
         | IPC.RequestMessage.AddVariable request ->
             store.AddVariable(request.Name, request.Value)
@@ -195,13 +195,13 @@ module Server =
             store.BespokeSelectRows(request.Table, request.QuerySql, request.Parameters |> List.map (fun p -> p.Box()))
             |> fun t -> IPC.ResponseMessage.Rows t.Rows
         | IPC.RequestMessage.Log request ->
-            store.Log(request.Step, request.Message)
+            store.Log(request.Step, "script", request.Message)
             IPC.ResponseMessage.Acknowledge
         | IPC.RequestMessage.LogError request ->
-            store.LogError(request.Step, request.Message)
+            store.LogError(request.Step, "script", request.Message)
             IPC.ResponseMessage.Acknowledge
         | IPC.RequestMessage.LogWarning request ->
-            store.LogWarning(request.Step, request.Message)
+            store.LogWarning(request.Step, "script", request.Message)
             IPC.ResponseMessage.Acknowledge
         //| IPC.RequestMessage.IteratorNext -> failwith "todo"
         //| IPC.RequestMessage.IteratorBreak -> IPC.ResponseMessage.Acknowledge

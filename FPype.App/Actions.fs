@@ -3,6 +3,7 @@
 open System.IO
 open FPype
 open FPype.Configuration
+open FPype.Data.Store
 open FsToolbox.AppEnvironment.Args.Mapping
 
 module Actions =
@@ -39,11 +40,11 @@ module Actions =
         PipelineContext.Create(
             cfg,
             options.BasePath,
-            true,
             options.PipelineName,
             (match options.PipelineVersion with
              | Some v -> ItemVersion.Specific 1
              | None -> ItemVersion.Latest),
-            Map.empty
+            Map.empty,
+            PipelineLogger.ConsoleLogger()
         )
         |> Result.bind (fun ctx -> ctx.Run())

@@ -22,7 +22,7 @@ module ML =
               ModelSavePath: string
               ContextSeed: int option }
 
-        let run (parameters: Parameters) (store: PipelineStore) =
+        let run (parameters: Parameters) (stepName: string) (store: PipelineStore) =
             let mlCtx = createCtx parameters.ContextSeed
 
             getDataSourceAsFileUri store parameters.ModelName
@@ -30,6 +30,7 @@ module ML =
                 BinaryClassification.train mlCtx (store.SubstituteValues parameters.ModelSavePath) parameters.TrainingSettings
             )
             |> Result.map (fun metrics ->
+                store.Log(stepName, name, $"Model saved to `{parameters.ModelSavePath}`.")
 
                 match
                     BinaryClassification.metricsToTable
@@ -39,12 +40,12 @@ module ML =
                     |> store.CreateTable
                     |> store.InsertRows
                 with
-                | Ok _ -> store.Log(name, $"Model `{parameters.ModelName}` metrics saved.")
-                | Error e -> store.LogError(name, $"Error saving metrics: {e}")
+                | Ok _ -> store.Log(stepName, name, $"Model `{parameters.ModelName}` metrics saved.")
+                | Error e -> store.LogError(stepName, name, $"Error saving metrics: {e}")
 
                 store)
 
-        let createAction stepName parameters = run parameters |> createAction name stepName
+        let createAction stepName parameters = run parameters stepName |> createAction name stepName
 
     module ``train-multiclass-classification-model`` =
         let name = "train_multiclass_classification_model"
@@ -56,7 +57,7 @@ module ML =
               ModelSavePath: string
               ContextSeed: int option }
 
-        let run (parameters: Parameters) (store: PipelineStore) =
+        let run (parameters: Parameters) (stepName: string) (store: PipelineStore) =
             let mlCtx = createCtx parameters.ContextSeed
 
             getDataSourceAsFileUri store parameters.ModelName
@@ -67,6 +68,8 @@ module ML =
                     parameters.TrainingSettings
             )
             |> Result.map (fun metrics ->
+                store.Log(stepName, name, $"Model saved to `{parameters.ModelSavePath}`.")
+                
                 match
                     MulticlassClassification.metricsToTable
                         parameters.ModelName
@@ -75,12 +78,12 @@ module ML =
                     |> store.CreateTable
                     |> store.InsertRows
                 with
-                | Ok _ -> store.Log(name, $"Model `{parameters.ModelName}` metrics saved.")
-                | Error e -> store.LogError(name, $"Error saving metrics: {e}")
+                | Ok _ -> store.Log(stepName, name, $"Model `{parameters.ModelName}` metrics saved.")
+                | Error e -> store.LogError(stepName, name, $"Error saving metrics: {e}")
 
                 store)
 
-        let createAction stepName parameters = run parameters |> createAction name stepName
+        let createAction stepName parameters = run parameters stepName |> createAction name stepName
         
     module ``train-regression-model`` =
         let name = "train_regression_model"
@@ -92,7 +95,7 @@ module ML =
               ModelSavePath: string
               ContextSeed: int option }
 
-        let run (parameters: Parameters) (store: PipelineStore) =
+        let run (parameters: Parameters) (stepName: string) (store: PipelineStore) =
             let mlCtx = createCtx parameters.ContextSeed
 
             getDataSourceAsFileUri store parameters.ModelName
@@ -100,17 +103,19 @@ module ML =
                 Regression.train mlCtx (store.SubstituteValues parameters.ModelSavePath) parameters.TrainingSettings
             )
             |> Result.map (fun metrics ->
+                store.Log(stepName, name, $"Model saved to `{parameters.ModelSavePath}`.")
+                
                 match
                     Regression.metricsToTable parameters.ModelName parameters.TrainingSettings.TrainerType metrics
                     |> store.CreateTable
                     |> store.InsertRows
                 with
-                | Ok _ -> store.Log(name, $"Model `{parameters.ModelName}` metrics saved.")
-                | Error e -> store.LogError(name, $"Error saving metrics: {e}")
+                | Ok _ -> store.Log(stepName, name, $"Model `{parameters.ModelName}` metrics saved.")
+                | Error e -> store.LogError(stepName, name, $"Error saving metrics: {e}")
 
                 store)
 
-        let createAction stepName parameters = run parameters |> createAction name stepName
+        let createAction stepName parameters = run parameters stepName |> createAction name stepName
 
     module ``train-matrix-factorization-model`` =
         let name = "train_matrix_factorization_model"
@@ -122,7 +127,7 @@ module ML =
               ModelSavePath: string
               ContextSeed: int option }
 
-        let run (parameters: Parameters) (store: PipelineStore) =
+        let run (parameters: Parameters) (stepName: string) (store: PipelineStore) =
             let mlCtx = createCtx parameters.ContextSeed
 
             getDataSourceAsFileUri store parameters.ModelName
@@ -138,9 +143,9 @@ module ML =
                     |> store.CreateTable
                     |> store.InsertRows
                 with
-                | Ok _ -> store.Log(name, $"Model `{parameters.ModelName}` metrics saved.")
-                | Error e -> store.LogError(name, $"Error saving metrics: {e}")
+                | Ok _ -> store.Log(stepName, name, $"Model `{parameters.ModelName}` metrics saved.")
+                | Error e -> store.LogError(stepName, name, $"Error saving metrics: {e}")
 
                 store)
 
-        let createAction stepName parameters = run parameters |> createAction name stepName
+        let createAction stepName parameters = run parameters stepName |> createAction name stepName

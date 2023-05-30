@@ -14,21 +14,25 @@ type PipelineContext =
     { Id: string
       StorePath: string
       Store: PipelineStore
-      LogToConsole: bool
       Actions: PipelineAction list
       Logger: PipelineLogger }
 
-    static member Initialize(basePath: string, logToConsole: bool, actions: PipelineAction list, runId: string option, logger: PipelineLogger) =
+    static member Initialize
+        (
+            basePath: string,
+            actions: PipelineAction list,
+            runId: string option,
+            logger: PipelineLogger
+        ) =
         match Directory.Exists basePath with
         | true ->
-            let id = runId |> Option.defaultWith (fun _ -> Guid.NewGuid().ToString("n")) 
-           
+            let id = runId |> Option.defaultWith (fun _ -> Guid.NewGuid().ToString("n"))
+
             PipelineStore.Initialize(basePath, id, logger)
             |> Result.map (fun store ->
                 { Id = id
                   StorePath = store.StorePath
                   Store = store
-                  LogToConsole = logToConsole
                   Actions = actions
                   Logger = logger })
 
@@ -38,7 +42,6 @@ type PipelineContext =
         (
             config: ConfigurationStore,
             basePath: string,
-            logToConsole: bool,
             pipeline: string,
             version: ItemVersion,
             args: Map<string, string>,
@@ -47,7 +50,7 @@ type PipelineContext =
         ) =
         config.CreateActions(pipeline, version)
         |> Result.bind (fun pa ->
-            PipelineContext.Initialize(basePath, logToConsole, pa, runId, logger)
+            PipelineContext.Initialize(basePath, pa, runId, logger)
             |> Result.map (fun ctx ->
 
                 config.GetPipelineVersion(pipeline, version)
@@ -79,44 +82,31 @@ type PipelineContext =
 
     member p.Run() =
 
-        let log (store: PipelineStore) (name: string) (message: string) =
-            store.Log(name, message)
-
-            if p.LogToConsole then
-                printfn $"[{DateTime.UtcNow}] {name} - {message}"
-
-        let logError (store: PipelineStore) (name: string) (message: string) =
-            store.LogError(name, message)
-
-            if p.LogToConsole then
-                printfn $"[{DateTime.UtcNow}] {name} - {message}"
 
         let executeAction (pa: PipelineAction) (store: PipelineStore) =
-            
-            store.Log (pa.Name, "Started")
-            
-            log store pa.Name "Started"
+
+            store.Log(pa.StepName, pa.Name, "Started")
 
             match pa.Action store with
             | Ok s ->
-                log s pa.Name "Complete"
-                
-                
+                store.Log(pa.StepName, pa.Name, "Complete")
+
                 Ok s
             | Error e ->
-                logError store pa.Name $"Failed. Error: {e}"
+                store.LogError(pa.StepName, pa.Name, $"Failed. Error: {e}")
+
                 Error e
 
         // Take start timestamp
-        
+
         let startTimestamp = DateTime.UtcNow
-        
+
         let result =
             p.Actions
             |> List.fold (fun r a -> r |> Result.bind (executeAction a)) (Ok p.Store)
-        
+
         let endTimestamp = DateTime.UtcNow
-        
+
         match result with
-        | Ok s -> ()
-        | Error e -> ()
+        | Ok s -> Ok s
+        | Error e -> Error e
