@@ -444,10 +444,10 @@ module Store =
                 store.AddStateValue(StateNames.initializedTimestamp, DateTime.UtcNow.ToString())
 
                 store)
-
+        
         member pd.Id = id
 
-        member ps.BasePath = Path.Combine(basePath, id)
+        member ps.BasePath = basePath
 
         member ps.StorePath = Path.Combine(ps.BasePath, "store.db")
 
@@ -456,6 +456,9 @@ module Store =
         member ps.DefaultExportPath = Path.Combine(ps.BasePath, "exports")
 
         member ps.DefaultTmpPath = Path.Combine(basePath, "tmp")
+        
+        member ps.Close() =
+           ctx.Close()
 
         member ps.AddStateValue(name, value) =
             addStateValue ctx { Name = name; Value = value }

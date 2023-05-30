@@ -114,10 +114,10 @@ type PipelineContext =
         let endTimestamp = DateTime.UtcNow
 
         match result with
-        | Ok s ->
+        | Ok store ->
             let offset = endTimestamp - startTimestamp
             
-            p.Store.Log("end", "main", $"Pipeline completed successful ({offset.TotalSeconds}s)")
-
-            Ok s
+            store.Log("end", "main", $"Pipeline completed successful ({offset.TotalSeconds}s)")
+            
+            Ok store
         | Error e -> Error e
