@@ -85,11 +85,15 @@ type PipelineContext =
 
         let executeAction (pa: PipelineAction) (store: PipelineStore) =
 
+            let startTimestamp = DateTime.UtcNow
             store.Log(pa.StepName, pa.Name, "Started")
 
             match pa.Action store with
             | Ok s ->
-                store.Log(pa.StepName, pa.Name, "Complete")
+                let endTimeStamp = DateTime.UtcNow
+                let offset = endTimeStamp - startTimestamp
+                
+                store.Log(pa.StepName, pa.Name, $"Complete ({offset.TotalSeconds}s)")
 
                 Ok s
             | Error e ->
@@ -100,6 +104,8 @@ type PipelineContext =
         // Take start timestamp
 
         let startTimestamp = DateTime.UtcNow
+        
+        p.Store.Log("start", "main", $"Starting pipeline {p.Id}")
 
         let result =
             p.Actions
@@ -108,5 +114,10 @@ type PipelineContext =
         let endTimestamp = DateTime.UtcNow
 
         match result with
-        | Ok s -> Ok s
+        | Ok s ->
+            let offset = endTimestamp - startTimestamp
+            
+            p.Store.Log("end", "main", $"Pipeline completed successful ({offset.TotalSeconds}s)")
+
+            Ok s
         | Error e -> Error e
