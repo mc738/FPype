@@ -1,5 +1,6 @@
 ﻿namespace FPype.Data
 
+open FPype.Core.Logging
 open FPype.Data.Models
 
 
@@ -123,7 +124,7 @@ module Store =
 
         let storePath = "__store_path"
 
-        let initilialzedTimestamp = "__initialized_timestamp"
+        let initializedTimestamp = "__initialized_timestamp"
 
     (*
         let contextTableSql =
@@ -378,14 +379,20 @@ module Store =
         ctx.Bespoke<TableRow>(sql, parameters, mapper model.Columns)
     *)
 
-    type PipelineStore(ctx: SqliteContext, basePath: string, id: string) =
+    type PipelineLogger =
+        { Handler: LogItem -> unit }
 
-        static member Open(basePath: string, id: string) =
+        static member Default() = { Handler = fun _ -> () }
+
+    type PipelineStore(ctx: SqliteContext, basePath: string, id: string, logger: PipelineLogger) =
+
+        static member Open(basePath: string, id: string, ?logger: PipelineLogger) =
             let storePath = Path.Combine(basePath, id, "store.db")
 
-            SqliteContext.Open(storePath) |> (fun ctx -> PipelineStore(ctx, basePath, id))
+            SqliteContext.Open(storePath)
+            |> (fun ctx -> PipelineStore(ctx, basePath, id, logger |> Option.defaultValue (PipelineLogger.Default())))
 
-        static member Create(basePath, id) =
+        static member Create(basePath, id, logger: PipelineLogger) =
             let path = Path.Combine(basePath, id)
 
             match Directory.Exists path with
@@ -396,7 +403,7 @@ module Store =
 
             let ctx = SqliteContext.Create storePath
             initialize ctx
-            let store = PipelineStore(ctx, path, id)
+            let store = PipelineStore(ctx, path, id, logger)
             store.AddStateValue(StateNames.id, id)
             store.SetBasePath(path)
             store.SetStorePath(storePath)
@@ -404,10 +411,10 @@ module Store =
             store.SetUserName()
             store
 
+        static member Initialize(basePath: string, id: string, ?logger: PipelineLogger) =
 
-        static member Initialize(basePath: string, id: string) =
-
-            let store = PipelineStore.Create(basePath, id)
+            let store =
+                PipelineStore.Create(basePath, id, logger |> Option.defaultValue (PipelineLogger.Default()))
 
             // Should some of these not allow
 
@@ -419,7 +426,7 @@ module Store =
             |> Result.bind (fun _ -> store.CreateExportDirectory())
             |> Result.bind (fun _ -> store.CreateTmpDirectory())
             |> Result.map (fun _ ->
-                store.AddStateValue(StateNames.initilialzedTimestamp, DateTime.UtcNow.ToString())
+                store.AddStateValue(StateNames.initializedTimestamp, DateTime.UtcNow.ToString())
 
                 store)
 
@@ -543,8 +550,7 @@ module Store =
             | Some _, false -> ()
             | None, _ -> ps.AddStateValue(StateNames.userName, userName)
 
-        member ps.SetUserName() =
-            ps.SetUserName(Environment.UserName)
+        member ps.SetUserName() = ps.SetUserName(Environment.UserName)
 
         member ps.GetBasePath() = ps.GetStateValue(StateNames.basePath)
 
@@ -628,7 +634,7 @@ module Store =
             | None -> ()
 
         member ps.IsInitialized() =
-            match ps.GetStateValue(StateNames.initilialzedTimestamp) with
+            match ps.GetStateValue(StateNames.initializedTimestamp) with
             | Some _ -> true
             | None -> false
 
@@ -669,9 +675,8 @@ module Store =
         member ps.AddCacheItem(key: string, value: byte array, ?ttl: int) =
             defaultArg ttl 1000000 |> addCacheItem ctx key value
 
-        member ps.GetCacheItemEntity(key: string) =
-            getCacheItem ctx key
-            
+        member ps.GetCacheItemEntity(key: string) = getCacheItem ctx key
+
         member ps.GetCacheItem(key: string) =
             getCacheItem ctx key |> Option.map (fun r -> r.ItemValue.ToBytes())
 
@@ -769,28 +774,37 @@ module Store =
             table.SqliteBespokeSelect(ctx, sql, parameters) |> table.AppendRows
 
         member ps.Log(step, message) =
-            ({ Step = step
-               Message = message
-               IsError = false
-               IsWarning = false
-               TimestampUtc = DateTime.UtcNow }
-            : LogItem)
-            |> addLogItem ctx
+            let item =
+                ({ Step = step
+                   Message = message
+                   IsError = false
+                   IsWarning = false
+                   TimestampUtc = DateTime.UtcNow }
+                : LogItem)
+                
+            addLogItem ctx item
+            logger.Handler item
 
         member ps.LogError(step, message) =
-            ({ Step = step
-               Message = message
-               IsError = true
-               IsWarning = false
-               TimestampUtc = DateTime.UtcNow }
-            : LogItem)
-            |> addLogItem ctx
+            let item =
+                ({ Step = step
+                   Message = message
+                   IsError = true
+                   IsWarning = false
+                   TimestampUtc = DateTime.UtcNow }
+                : LogItem)
+
+            addLogItem ctx item
+            logger.Handler item
 
         member ps.LogWarning(step, message) =
-            ({ Step = step
-               Message = message
-               IsError = false
-               IsWarning = true
-               TimestampUtc = DateTime.UtcNow }
-            : LogItem)
-            |> addLogItem ctx
+            let item =
+                ({ Step = step
+                   Message = message
+                   IsError = false
+                   IsWarning = true
+                   TimestampUtc = DateTime.UtcNow }
+                : LogItem)
+
+            addLogItem ctx item
+            logger.Handler item

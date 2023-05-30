@@ -19,12 +19,13 @@ module Common =
 
     type PipelineAction =
         { Name: string
+          StepName: string
           Action: PipelineStore -> Result<PipelineStore, string> }
 
-        static member Create(name, action) = { Name = name; Action = action }
+        static member Create(name, stepName, action) = { Name = name; StepName = stepName; Action = action }
 
-    let createAction (name: string) (action: PipelineStore -> Result<PipelineStore, string>) =
-        PipelineAction.Create(name, action)
+    let createAction (name: string) (stepName: string) (action: PipelineStore -> Result<PipelineStore, string>) =
+        PipelineAction.Create(name, stepName, action)
 
     let getDataSourceAsString (store: PipelineStore) (dataSource: DataSource) =
         match DataSourceType.Deserialize dataSource.Type with
@@ -72,7 +73,6 @@ module Common =
                 Error "Artifact data sources to be implemented"
             | None -> Error "Unknown data source type")
         |> Option.defaultWith (fun _ -> Error $"Data source `{sourceName}` not found")
-        
         
     let toJsonElement (str: string) =
         try

@@ -15,20 +15,22 @@ type PipelineContext =
       StorePath: string
       Store: PipelineStore
       LogToConsole: bool
-      Actions: PipelineAction list }
+      Actions: PipelineAction list
+      Logger: PipelineLogger }
 
-    static member Initialize(basePath: string, logToConsole: bool, actions: PipelineAction list) =
+    static member Initialize(basePath: string, logToConsole: bool, actions: PipelineAction list, runId: string option, logger: PipelineLogger) =
         match Directory.Exists basePath with
         | true ->
-            let id = Guid.NewGuid().ToString("n")
+            let id = runId |> Option.defaultWith (fun _ -> Guid.NewGuid().ToString("n")) 
            
-            PipelineStore.Initialize(basePath, id)
+            PipelineStore.Initialize(basePath, id, logger)
             |> Result.map (fun store ->
                 { Id = id
                   StorePath = store.StorePath
                   Store = store
                   LogToConsole = logToConsole
-                  Actions = actions })
+                  Actions = actions
+                  Logger = logger })
 
         | false -> Error $"Base directory `{basePath}` does not exist."
 
@@ -39,11 +41,13 @@ type PipelineContext =
             logToConsole: bool,
             pipeline: string,
             version: ItemVersion,
-            args: Map<string, string>
+            args: Map<string, string>,
+            logger: PipelineLogger,
+            ?runId: string
         ) =
         config.CreateActions(pipeline, version)
         |> Result.bind (fun pa ->
-            PipelineContext.Initialize(basePath, logToConsole, pa)
+            PipelineContext.Initialize(basePath, logToConsole, pa, runId, logger)
             |> Result.map (fun ctx ->
 
                 config.GetPipelineVersion(pipeline, version)
@@ -88,15 +92,31 @@ type PipelineContext =
                 printfn $"[{DateTime.UtcNow}] {name} - {message}"
 
         let executeAction (pa: PipelineAction) (store: PipelineStore) =
+            
+            store.Log (pa.Name, "Started")
+            
             log store pa.Name "Started"
 
             match pa.Action store with
             | Ok s ->
                 log s pa.Name "Complete"
+                
+                
                 Ok s
             | Error e ->
                 logError store pa.Name $"Failed. Error: {e}"
                 Error e
 
-        p.Actions
-        |> List.fold (fun r a -> r |> Result.bind (executeAction a)) (Ok p.Store)
+        // Take start timestamp
+        
+        let startTimestamp = DateTime.UtcNow
+        
+        let result =
+            p.Actions
+            |> List.fold (fun r a -> r |> Result.bind (executeAction a)) (Ok p.Store)
+        
+        let endTimestamp = DateTime.UtcNow
+        
+        match result with
+        | Ok s -> ()
+        | Error e -> ()
