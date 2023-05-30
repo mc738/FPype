@@ -59,7 +59,7 @@ module Visualizations =
                 (Ok())
             |> Result.map (fun _ -> store)
 
-        let createAction parameters = run parameters |> createAction name
+        let createAction stepName parameters = run parameters |> createAction name stepName
         
     module ``generate-candle-stick-chart-collection`` =
 
@@ -110,4 +110,4 @@ module Visualizations =
                 (Ok())
             |> Result.map (fun _ -> store)
 
-        let createAction parameters = run parameters |> createAction name
+        let createAction stepName parameters = run parameters |> createAction name stepName

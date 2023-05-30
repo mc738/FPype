@@ -72,7 +72,7 @@ module Transform =
                 store.Log(name, $"Executed query and saved {r.Length} row(s) to table `{parameters.Table.Name}`.")
                 store)
 
-        let createAction (parameters: Parameters) = run parameters |> createAction name
+        let createAction stepName parameters = run parameters |> createAction name stepName
     
     [<RequireQualifiedAccess>]
     module ``aggregate`` =
@@ -91,7 +91,7 @@ module Transform =
                 store.Log("aggregate", $"Aggregated and saved {r.Length} row(s) to table `{parameters.Table.Name}`.")
                 store)
 
-        let createAction (parameters: Parameters) = run parameters |> createAction name
+        let createAction stepName parameters = run parameters |> createAction name stepName
 
     [<RequireQualifiedAccess>]
     module ``aggregate-by-date`` =
@@ -141,7 +141,7 @@ module Transform =
                 |> store.InsertRows)
             |> fun _ -> Ok store
 
-        let createAction (parameters: Parameters) = run parameters |> createAction name
+        let createAction stepName parameters = run parameters |> createAction name stepName
 
     [<RequireQualifiedAccess>]
     module ``aggregate-by-date-and-category`` =
@@ -193,7 +193,7 @@ module Transform =
                 |> store.InsertRows)
             |> fun _ -> Ok store
 
-        let createAction (parameters: Parameters) = run parameters |> createAction name
+        let createAction stepName parameters = run parameters |> createAction name stepName
 
     [<RequireQualifiedAccess>]
     module ``map-to-object`` =
@@ -221,7 +221,7 @@ module Transform =
             store.AddArtifact(mapper.ObjectName, "objects", "object", ms.ToArray())
             Ok store
 
-        let createAction (mapper: TableObjectMap) = run mapper |> createAction name
+        let createAction stepName parameters = run parameters |> createAction name stepName
 
     [<RequireQualifiedAccess>]
     module ``map-object-to-table`` =
@@ -282,7 +282,7 @@ module Transform =
                 store.Log("merge_results", $"Merged and saved {r.Length} row(s) to table `{parameters.Table.Name}`.")
                 store)
 
-        let createAction (parameters: Parameters) = run parameters |> createAction name
+        let createAction stepName parameters = run parameters |> createAction name stepName
 
     [<RequireQualifiedAccess>]
     module ``map-to-table`` =

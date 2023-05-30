@@ -28,7 +28,7 @@ module Utils =
             with ex ->
                 Error $"Failed to create directory `{fullPath}` - {ex.Message}"
 
-        let createAction parameters = run parameters |> createAction name
+        let createAction stepName parameters = run parameters |> createAction name stepName
 
     module ``set-variable`` =
 
@@ -62,4 +62,4 @@ module Utils =
 
                 store)
 
-        let createAction parameters = run parameters |> createAction name
+        let createAction stepName parameters = run parameters |> createAction name stepName

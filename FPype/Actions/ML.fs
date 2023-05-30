@@ -44,7 +44,7 @@ module ML =
 
                 store)
 
-        let createAction (parameters: Parameters) = run parameters |> createAction name
+        let createAction stepName parameters = run parameters |> createAction name stepName
 
     module ``train-multiclass-classification-model`` =
         let name = "train_multiclass_classification_model"
@@ -80,8 +80,8 @@ module ML =
 
                 store)
 
-        let createAction (parameters: Parameters) = run parameters |> createAction name
-
+        let createAction stepName parameters = run parameters |> createAction name stepName
+        
     module ``train-regression-model`` =
         let name = "train_regression_model"
 
@@ -110,7 +110,7 @@ module ML =
 
                 store)
 
-        let createAction (parameters: Parameters) = run parameters |> createAction name
+        let createAction stepName parameters = run parameters |> createAction name stepName
 
     module ``train-matrix-factorization-model`` =
         let name = "train_matrix_factorization_model"
@@ -143,4 +143,4 @@ module ML =
 
                 store)
 
-        let createAction (parameters: Parameters) = run parameters |> createAction name
+        let createAction stepName parameters = run parameters |> createAction name stepName

@@ -64,7 +64,7 @@ module Export =
 
             Ok store
 
-        let createAction parameters = run parameters |> createAction name
+        let createAction stepName parameters = run parameters |> createAction name stepName
 
     module ``export-artifact-bucket`` =
 
@@ -91,4 +91,4 @@ module Export =
                 store.LogError(name, msg)
                 Error msg
 
-        let createAction parameters = run parameters |> createAction name
+        let createAction stepName parameters = run parameters |> createAction name stepName

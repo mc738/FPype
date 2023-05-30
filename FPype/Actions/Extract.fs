@@ -172,7 +172,7 @@ module Extract =
                 store.Log("parse_csv", $"Imported {r.Length} row(s) to table `{parameters.Table.Name}`.")
                 store)
 
-        let createAction (parameters: Parameters) = run parameters |> createAction name
+        let createAction stepName parameters = run parameters |> createAction name stepName
 
     [<RequireQualifiedAccess>]
     module ``parse-csv-collection`` =
@@ -214,7 +214,7 @@ module Extract =
             |> flattenResultList
             |> Result.map (fun _ -> store)
 
-        let createAction (parameters: Parameters) = run parameters |> createAction name
+        let createAction stepName parameters = run parameters |> createAction name stepName
 
     /// Split a source into individual chucks for processing.
     /// This is essentially a preprocessing action.
@@ -277,7 +277,7 @@ module Extract =
                 store.Log("grok", $"Imported {r.Length} row(s) to table `{parameters.Table.Name}`.")
                 store)
 
-        let createAction parameters = run parameters |> createAction name
+        let createAction stepName parameters = run parameters |> createAction name stepName
 
     module ``query-sqlite-database`` =
 
@@ -303,7 +303,7 @@ module Extract =
 
                 store)
 
-        let createAction (parameters: Parameters) = run parameters |> createAction name
+        let createAction stepName parameters = run parameters |> createAction name stepName
 
 (*
         let deserialize (element: JsonElement) =

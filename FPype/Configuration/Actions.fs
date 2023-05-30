@@ -43,18 +43,18 @@ module Actions =
 
     module Utils =
         module ``create-directory`` =
-            let deserialize (json: JsonElement) =
+            let deserialize (stepName: string) (json: JsonElement) =
                 match Json.tryGetStringProperty "path" json, Json.tryGetStringProperty "name" json with
                 | Some path, Some name ->
                     ({ Path = path; Name = name }: Utils.``create-directory``.Parameters)
-                    |> Utils.``create-directory``.createAction
+                    |> Utils.``create-directory``.createAction stepName
                     |> Ok
                 | None, _ -> Error "Missing path property"
                 | _, None -> Error "Missing name property"
 
         module ``create_sqlite_database`` =
 
-            let deserialize (ctx: SqliteContext) (json: JsonElement) =
+            let deserialize (ctx: SqliteContext) (stepName: string) (json: JsonElement) =
                 match Json.tryGetStringProperty "path" json, Json.tryGetArrayProperty "tables" json with
                 | Some path, Some tables ->
                     tables
@@ -67,7 +67,7 @@ module Actions =
                            Tables = ts
                            VariableName = Json.tryGetStringProperty "variable" json }
                         : Utils.``create-sqlite-database``.Parameters)
-                        |> Utils.``create-sqlite-database``.createAction)
+                        |> Utils.``create-sqlite-database``.createAction stepName)
                 | None, _ -> Error "Missing path property"
                 | _, None -> Error "Missing tables property"
 
@@ -75,24 +75,24 @@ module Actions =
             [ Utils.``create-directory``.name; Utils.``create-sqlite-database``.name ]
 
         let all ctx =
-            [ Utils.``create-directory``.name, ``create-directory``.deserialize
+            [ Utils.``create-directory``.name, ``create-directory``.deserialize 
               Utils.``create-sqlite-database``.name, create_sqlite_database.deserialize ctx ]
 
     module Import =
 
         module ``import-file`` =
-            let deserialize (json: JsonElement) =
+            let deserialize (stepName: string) (json: JsonElement) =
                 match Json.tryGetStringProperty "path" json, Json.tryGetStringProperty "name" json with
                 | Some path, Some name ->
                     ({ Path = path; Name = name }: Import.``import-file``.Parameters)
-                    |> Import.``import-file``.createAction
+                    |> Import.``import-file``.createAction stepName
                     |> Ok
                 | None, _ -> Error "Missing path property"
                 | _, None -> Error "Missing name property"
 
         module ``chunk-file`` =
 
-            let deserialize (json: JsonElement) =
+            let deserialize (stepName: string) (json: JsonElement) =
                 match
                     Json.tryGetStringProperty "path" json,
                     Json.tryGetStringProperty "name" json,
@@ -103,14 +103,14 @@ module Actions =
                        CollectionName = name
                        ChunkSize = size }
                     : Import.``chunk-file``.Parameters)
-                    |> Import.``chunk-file``.createAction
+                    |> Import.``chunk-file``.createAction stepName
                     |> Ok
                 | None, _, _ -> Error "Missing path property"
                 | _, None, _ -> Error "Missing name property"
                 | _, _, None -> Error "Missing size property"
 
         module ``http-get`` =
-            let deserialize (json: JsonElement) =
+            let deserialize (stepName: string) (json: JsonElement) =
                 match Json.tryGetStringProperty "url" json, Json.tryGetStringProperty "name" json with
                 | Some url, Some name ->
                     let additionalHeaders =
@@ -131,7 +131,7 @@ module Actions =
                        ResponseType = Json.tryGetStringProperty "responseType" json
                        Collection = Json.tryGetStringProperty "collection" json }
                     : Import.``http-get``.Parameters)
-                    |> Import.``http-get``.createAction
+                    |> Import.``http-get``.createAction stepName
                     |> Ok
                 | None, _ -> Error "Missing url property"
                 | _, None -> Error "Missing name property"
@@ -141,7 +141,7 @@ module Actions =
               Import.``chunk-file``.name
               Import.``http-get``.name ]
 
-        let all =
+        let all  =
             [ Import.``import-file``.name, ``import-file``.deserialize
               Import.``chunk-file``.name, ``chunk-file``.deserialize
               Import.``http-get``.name, ``http-get``.deserialize ]
@@ -150,19 +150,19 @@ module Actions =
 
         module ``parse-csv`` =
 
-            let deserialize (ctx: SqliteContext) (json: JsonElement) =
+            let deserialize (ctx: SqliteContext) (stepName: string) (json: JsonElement) =
                 match Json.tryGetStringProperty "source" json, TableVersion.TryCreate json with
                 | Some source, Ok tableVersion ->
                     Tables.tryCreateTableModel ctx tableVersion.Name tableVersion.Version
                     |> Result.map (fun t ->
                         ({ DataSource = source; Table = t }: Extract.``parse-csv``.Parameters)
-                        |> Extract.``parse-csv``.createAction)
+                        |> Extract.``parse-csv``.createAction stepName)
                 | None, _ -> Error "Missing source property"
                 | _, Error e -> Error $"Error creating table: {e}"
 
         module ``parse-csv-collection`` =
 
-            let deserialize (ctx: SqliteContext) (json: JsonElement) =
+            let deserialize (ctx: SqliteContext) (stepName: string) (json: JsonElement) =
                 match Json.tryGetStringProperty "collection" json, TableVersion.TryCreate json with
                 | Some collection, Ok tableVersion ->
                     Tables.tryCreateTableModel ctx tableVersion.Name tableVersion.Version
@@ -170,13 +170,13 @@ module Actions =
                         ({ CollectionName = collection
                            Table = t }
                         : Extract.``parse-csv-collection``.Parameters)
-                        |> Extract.``parse-csv-collection``.createAction)
+                        |> Extract.``parse-csv-collection``.createAction stepName)
                 | None, _ -> Error "Missing collection property"
                 | _, Error e -> Error $"Error creating table: {e}"
 
         module ``grok`` =
 
-            let deserialize (ctx: SqliteContext) (json: JsonElement) =
+            let deserialize (ctx: SqliteContext) (stepName: string) (json: JsonElement) =
                 match
                     Json.tryGetStringProperty "source" json,
                     Json.tryGetStringProperty "grokString" json,
@@ -200,14 +200,14 @@ module Actions =
                                      | _ -> None))
                              |> Option.defaultValue [] }
                         : Extract.``grok``.Parameters)
-                        |> Extract.``grok``.createAction)
+                        |> Extract.``grok``.createAction stepName)
                 | None, _, _ -> Error "Missing source property"
                 | _, None, _ -> Error "Missing grokString property"
                 | _, _, Error e -> Error $"Error creating table: {e}"
 
         module ``query-sqlite-database`` =
 
-            let deserialize (ctx: SqliteContext) (json: JsonElement) =
+            let deserialize (ctx: SqliteContext) (stepName: string) (json: JsonElement) =
                 match
                     Json.tryGetStringProperty "path" json, TableVersion.TryCreate json, QueryVersion.TryCreate json
                 with
@@ -219,7 +219,7 @@ module Actions =
                            Sql = q
                            Parameters = [] }
                         : Extract.``query-sqlite-database``.Parameters)
-                        |> Extract.``query-sqlite-database``.createAction)
+                        |> Extract.``query-sqlite-database``.createAction stepName)
                 | None, _, _ -> Error "Missing source property"
                 | _, Error e, _ -> Error $"Error creating query: {e}"
                 | _, _, Error e -> Error $"Error creating table: {e}"
@@ -240,33 +240,33 @@ module Actions =
 
         module ``execute-query`` =
 
-            let deserialize (ctx: SqliteContext) (json: JsonElement) =
+            let deserialize (ctx: SqliteContext) (stepName: string) (json: JsonElement) =
                 match QueryVersion.TryCreate json, TableVersion.TryCreate json with
                 | Ok query, Ok tableVersion ->
                     createQueryAndTable ctx query tableVersion
                     |> Result.map (fun (q, t) ->
                         // NOTE currently parameters.Parameters is always empty.
                         ({ Table = t; Sql = q; Parameters = [] }: Transform.``execute-query``.Parameters)
-                        |> Transform.``execute-query``.createAction)
+                        |> Transform.``execute-query``.createAction stepName)
                 | Error e, _ -> Error $"Error creating query: {e}"
                 | _, Error e -> Error $"Error creating table: {e}"
 
         module ``aggregate`` =
 
-            let deserialize (ctx: SqliteContext) (json: JsonElement) =
+            let deserialize (ctx: SqliteContext) (stepName: string) (json: JsonElement) =
                 match QueryVersion.TryCreate json, TableVersion.TryCreate json with
                 | Ok query, Ok tableVersion ->
                     createQueryAndTable ctx query tableVersion
                     |> Result.map (fun (q, t) ->
                         // NOTE currently parameters.Parameters is always empty.
                         ({ Table = t; Sql = q; Parameters = [] }: Transform.``aggregate``.Parameters)
-                        |> Transform.aggregate.createAction)
+                        |> Transform.aggregate.createAction stepName)
                 | Error e, _ -> Error $"Error creating query: {e}"
                 | _, Error e -> Error $"Error creating table: {e}"
 
         module ``aggregate-by-date-and-category`` =
 
-            let deserialize (ctx: SqliteContext) (json: JsonElement) =
+            let deserialize (ctx: SqliteContext) (stepName: string) (json: JsonElement) =
                 match
                     Json.tryGetElementsProperty "dateGroups" json |> Groups.createDateGroup,
                     Json.tryGetStringProperty "categoryField" json,
@@ -281,7 +281,7 @@ module Actions =
                            DateGroups = dateGroup
                            CategoryField = categoryField }
                         : Transform.``aggregate-by-date-and-category``.Parameters)
-                        |> Transform.``aggregate-by-date-and-category``.createAction)
+                        |> Transform.``aggregate-by-date-and-category``.createAction stepName)
                 | Error e, _, _, _ -> Error $"Error creating date groups: {e}"
                 | _, None, _, _ -> Error "Missing `category` field"
                 | _, _, Error e, _ -> Error $"Error creating table: {e}"
@@ -289,7 +289,7 @@ module Actions =
 
         module ``aggregate-by-date`` =
 
-            let deserialize (ctx: SqliteContext) (json: JsonElement) =
+            let deserialize (ctx: SqliteContext) (stepName: string) (json: JsonElement) =
                 match
                     Json.tryGetElementsProperty "dateGroups" json |> Groups.createDateGroup,
                     TableVersion.TryCreate json,
@@ -302,19 +302,19 @@ module Actions =
                            SelectSql = q
                            DateGroups = dateGroup }
                         : Transform.``aggregate-by-date``.Parameters)
-                        |> Transform.``aggregate-by-date``.createAction)
+                        |> Transform.``aggregate-by-date``.createAction stepName)
                 | Error e, _, _ -> Error $"Error creating date groups: {e}"
                 | _, Error e, _ -> Error $"Error creating table: {e}"
                 | _, _, Error e -> Error $"Error creating query: {e}"
 
         module ``map-to-object`` =
 
-            let deserialize (ctx: SqliteContext) (json: JsonElement) =
+            let deserialize (ctx: SqliteContext) (stepName: string) (json: JsonElement) =
                 match Json.tryGetStringProperty "mapper" json, Json.tryGetIntProperty "version" json with
                 | Some m, Some v -> ItemVersion.Specific v |> TableObjectMappers.load ctx m
                 | Some m, None -> ItemVersion.Latest |> TableObjectMappers.load ctx m
                 | None, _ -> Error "Missing `mapper` property"
-                |> Result.map Transform.``map-to-object``.createAction
+                |> Result.map (Transform.``map-to-object``.createAction stepName)
 
         let names =
             [ Transform.``execute-query``.name
@@ -352,26 +352,26 @@ module Actions =
 
         module ``export-artifact`` =
 
-            let deserialize (json: JsonElement) =
+            let deserialize (stepName: string) (json: JsonElement) =
                 match Json.tryGetStringProperty "artifactName" json with
                 | Some an ->
                     ({ ArtifactName = an
                        OutputPath = Json.tryGetStringProperty "outputPath" json
                        FileExtension = Json.tryGetStringProperty "fileExtension" json }
                     : ``export-artifact``.Parameters)
-                    |> ``export-artifact``.createAction
+                    |> ``export-artifact``.createAction stepName
                     |> Ok
                 | None -> Error "Missing `artifactName` property"
 
         module ``export-artifact-bucket`` =
 
-            let deserialize (json: JsonElement) =
+            let deserialize (stepName: string) (json: JsonElement) =
                 match Json.tryGetStringProperty "bucketName" json with
                 | Some bn ->
                     ({ BucketName = bn
                        OutputPath = Json.tryGetStringProperty "outputPath" json }
                     : ``export-artifact-bucket``.Parameters)
-                    |> ``export-artifact-bucket``.createAction
+                    |> ``export-artifact-bucket``.createAction stepName
                     |> Ok
                 | None -> Error "Missing `bucketName` property"
 
@@ -384,7 +384,7 @@ module Actions =
     module ML =
 
         module ``train-binary-classification-model`` =
-            let deserialize (ctx: SqliteContext) (json: JsonElement) =
+            let deserialize (ctx: SqliteContext) (stepName: string) (json: JsonElement) =
                 match
                     Json.tryGetProperty "trainingSettings" json
                     |> Option.map FPype.ML.BinaryClassification.TrainingSettings.FromJson
@@ -400,7 +400,7 @@ module Actions =
                        ModelSavePath = msp
                        ContextSeed = Json.tryGetIntProperty "contextSeed" json }
                     : ML.``train-binary-classification-model``.Parameters)
-                    |> ML.``train-binary-classification-model``.createAction
+                    |> ML.``train-binary-classification-model``.createAction stepName
                     |> Ok
                 | Error e, _, _, _ -> Error e
                 | _, None, _, _ -> Error "Missing `modelName` property"
@@ -408,7 +408,7 @@ module Actions =
                 | _, _, _, None -> Error "Missing `modelSavePath` property"
 
         module ``train-multiclass-classification-model`` =
-            let deserialize (ctx: SqliteContext) (json: JsonElement) =
+            let deserialize (ctx: SqliteContext) (stepName: string) (json: JsonElement) =
                 match
                     Json.tryGetProperty "trainingSettings" json
                     |> Option.map FPype.ML.MulticlassClassification.TrainingSettings.FromJson
@@ -424,7 +424,7 @@ module Actions =
                        ModelSavePath = msp
                        ContextSeed = Json.tryGetIntProperty "contextSeed" json }
                     : ML.``train-multiclass-classification-model``.Parameters)
-                    |> ML.``train-multiclass-classification-model``.createAction
+                    |> ML.``train-multiclass-classification-model``.createAction stepName
                     |> Ok
                 | Error e, _, _, _ -> Error e
                 | _, None, _, _ -> Error "Missing `modelName` property"
@@ -432,7 +432,7 @@ module Actions =
                 | _, _, _, None -> Error "Missing `modelSavePath` property"
 
         module ``train-regression-model`` =
-            let deserialize (ctx: SqliteContext) (json: JsonElement) =
+            let deserialize (ctx: SqliteContext) (stepName: string) (json: JsonElement) =
                 match
                     Json.tryGetProperty "trainingSettings" json
                     |> Option.map FPype.ML.Regression.TrainingSettings.FromJson
@@ -448,7 +448,7 @@ module Actions =
                        ModelSavePath = msp
                        ContextSeed = Json.tryGetIntProperty "contextSeed" json }
                     : ML.``train-regression-model``.Parameters)
-                    |> ML.``train-regression-model``.createAction
+                    |> ML.``train-regression-model``.createAction stepName
                     |> Ok
                 | Error e, _, _, _ -> Error e
                 | _, None, _, _ -> Error "Missing `modelName` property"
@@ -456,7 +456,7 @@ module Actions =
                 | _, _, _, None -> Error "Missing `modelSavePath` property"
 
         module ``train-matrix-factorization-model`` =
-            let deserialize (ctx: SqliteContext) (json: JsonElement) =
+            let deserialize (ctx: SqliteContext) (stepName: string) (json: JsonElement) =
                 match
                     Json.tryGetProperty "trainingSettings" json
                     |> Option.map FPype.ML.MatrixFactorization.TrainingSettings.FromJson
@@ -472,7 +472,7 @@ module Actions =
                        ModelSavePath = msp
                        ContextSeed = Json.tryGetIntProperty "contextSeed" json }
                     : ML.``train-matrix-factorization-model``.Parameters)
-                    |> ML.``train-matrix-factorization-model``.createAction
+                    |> ML.``train-matrix-factorization-model``.createAction stepName
                     |> Ok
                 | Error e, _, _, _ -> Error e
                 | _, None, _, _ -> Error "Missing `modelName` property"
@@ -487,7 +487,7 @@ module Actions =
 
         let all (ctx: SqliteContext) =
             [ ML.``train-binary-classification-model``.name, ``train-binary-classification-model``.deserialize ctx
-              ML.``train-multiclass-classification-model``.name,
+              ML.``train-multiclass-classification-model``.name, 
               ``train-multiclass-classification-model``.deserialize ctx
               ML.``train-regression-model``.name, ``train-regression-model``.deserialize ctx
               ML.``train-matrix-factorization-model``.name, ``train-matrix-factorization-model``.deserialize ctx ]
@@ -498,7 +498,7 @@ module Actions =
 
         module ``generate-time-series-chart-collection`` =
 
-            let deserialize (ctx: SqliteContext) (json: JsonElement) =
+            let deserialize (ctx: SqliteContext) (stepName: string) (json: JsonElement) =
                 match
                     Json.tryGetProperty "categoriesQuery" json
                     |> Option.map QueryVersion.TryFromJson
@@ -529,7 +529,7 @@ module Actions =
                            TimeSeriesTable = tsTable
                            GeneratorSettings = gs }
                         : ``generate-time-series-chart-collection``.Parameters)
-                        |> ``generate-time-series-chart-collection``.createAction
+                        |> ``generate-time-series-chart-collection``.createAction stepName
                         |> Ok
                     | Error e, _ -> Error e
                     | _, Error e -> Error e
@@ -544,7 +544,7 @@ module Actions =
 
             open FPype.Visualizations.Charts.CandleStickCharts
 
-            let deserialize (ctx: SqliteContext) (json: JsonElement) =
+            let deserialize (ctx: SqliteContext) (stepName: string) (json: JsonElement) =
                 match
                     Json.tryGetProperty "categoriesQuery" json
                     |> Option.map QueryVersion.TryFromJson
@@ -575,7 +575,7 @@ module Actions =
                            SeriesTable = tsTable
                            GeneratorSettings = gs }
                         : ``generate-candle-stick-chart-collection``.Parameters)
-                        |> ``generate-candle-stick-chart-collection``.createAction
+                        |> ``generate-candle-stick-chart-collection``.createAction stepName
                         |> Ok
                     | Error e, _ -> Error e
                     | _, Error e -> Error e
@@ -616,14 +616,14 @@ module Actions =
           yield! Visualizations.all ctx ]
 
     let createAction
-        (actionsMap: Map<string, JsonElement -> Result<PipelineAction, string>>)
+        (actionsMap: Map<string, string -> JsonElement -> Result<PipelineAction, string>>)
         (action: Records.PipelineAction)
         =
         let actionData = action.ActionBlob |> blobToString |> toJson
-
+        
         try
             actionsMap.TryFind action.ActionType
-            |> Option.map (fun b -> b actionData)
+            |> Option.map (fun b -> b action.Name actionData)
             |> Option.defaultWith (fun _ -> Error $"Unknown action type: `{action.ActionType}`")
         with exn ->
             Error $"Failed to create action. Exception: {exn.Message}"
@@ -638,6 +638,8 @@ module Actions =
         | ItemVersion.Specific v ->
             Operations.selectPipelineVersionRecord ctx [ "WHERE pipeline = @0 AND version = @1;" ] [ pipelineId; v ]
         |> Option.map (fun pv ->
+            let allMap = all ctx
+            
             Operations.selectPipelineActionRecords ctx [ "WHERE pipeline_version_id = @0" ] [ pv.Id ]
             |> List.sortBy (fun pa -> pa.Step)
             |> List.map (createAction (all ctx |> Map.ofList))

@@ -35,7 +35,7 @@ module Import =
             | false, _ -> Error $"File `{fullPath}` not found."
             | _, None -> Error "Imports path not found in store state."
 
-        let createAction parameters = run parameters |> createAction name
+        let createAction stepName parameters = run parameters |> createAction name stepName
 
     module ``chunk-file`` =
         let name = "chunk_file"
@@ -64,7 +64,7 @@ module Import =
             | false, _ -> Error $"File `{parameters.Path}` not found."
             | _, None -> Error "Imports path not found in store state."
 
-        let createAction parameters = run parameters |> createAction name
+        let createAction stepName parameters = run parameters |> createAction name stepName
 
     module ``unzip-files`` =
 
@@ -130,5 +130,5 @@ module Import =
 
                 store)
 
-        let createAction parameters = run parameters |> createAction name        
+        let createAction stepName parameters = run parameters |> createAction name stepName
         
