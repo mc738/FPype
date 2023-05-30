@@ -169,7 +169,7 @@ module Extract =
                 |> fun t -> { t with Rows = r.Rows }
                 |> store.InsertRows)
             |> Result.map (fun r ->
-                store.Log(stepName, stepName, $"Imported {r.Length} row(s) to table `{parameters.Table.Name}`.")
+                store.Log(stepName, name, $"Imported {r.Length} row(s) to table `{parameters.Table.Name}`.")
                 store)
 
         let createAction stepName parameters = run parameters stepName |> createAction name stepName
