@@ -69,12 +69,30 @@ type ConfigurationStore(ctx: SqliteContext) =
                 |> List.exists (fun at -> String.Equals(at.Name, an, StringComparison.OrdinalIgnoreCase))
             with
             | true -> ()
-            | false -> Actions.addType ctx an
+            | false -> Actions.addType ctx an)
 
-        )
+    member pc.AddMetadataItem(key: string, value: string, ?allowUpdate: bool) =
+        match pc.GetMetadataItem key with
+        | Some v ->
+            match allowUpdate |> Option.defaultValue false with
+            | true ->
+                ctx.ExecuteVerbatimNonQueryAnon(
+                    "UPDATE __metadata SET item_value = @0 WHERE item_key = @1",
+                    [ value; key ]
+                )
+                |> ignore
+            | false -> ()
+        | None ->
+            ({ ItemKey = key; ItemValue = value }: Parameters.NewMetadataItem)
+            |> Operations.insertMetadataItem ctx
 
+    member pc.GetMetadataItem(key: string) =
+        Operations.selectMetadataItemRecord ctx [ "WHERE item_key = @0" ] [ key ]
 
-        ()
+    member pc.GetMetadata() =
+        Operations.selectMetadataItemRecords ctx [] []
+        |> List.map (fun md -> md.ItemKey, md.ItemValue)
+        |> Map.ofList
 
     member pc.GetTable(tableName, ?version: ItemVersion) =
         ItemVersion.FromOptional version |> Tables.tryCreateTableModel ctx tableName
