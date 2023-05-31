@@ -16,7 +16,7 @@ type ConfigurationStore(ctx: SqliteContext) =
             // Sync action types to make sure any new ones exist.
             cfg.SyncActionTypes()
             cfg
-            
+
         | false ->
             use ctx = SqliteContext.Create path
 
@@ -40,20 +40,29 @@ type ConfigurationStore(ctx: SqliteContext) =
               Records.ObjectTableMapperVersion.CreateTableSql() ]
             |> List.iter (fun sql -> ctx.ExecuteSqlNonQuery sql |> ignore)
 
-            Actions.names
+            match additionActions with
+            | Some aa -> Actions.names @ aa
+            | None -> Actions.names
             |> List.iter (fun n -> ({ Name = n }: Parameters.NewActionType) |> Operations.insertActionType ctx)
 
-            
-            
+            metadata
+            |> Option.iter (fun md ->
+                md
+                |> Map.iter (fun k v ->
+                    ({ ItemKey = k; ItemValue = v }: Parameters.NewMetadataItem)
+                    |> Operations.insertMetadataItem ctx))
+
             ConfigurationStore ctx
 
     static member Load(path) =
         SqliteContext.Open path |> ConfigurationStore
 
-    member pc.SyncActionTypes() =
+    member pc.SyncActionTypes(?additionActions: string list) =
         let types = Actions.getAllTypes ctx
 
-        Actions.names
+        match additionActions with
+        | Some aa -> Actions.names @ aa
+        | None -> Actions.names
         |> List.iter (fun an ->
             match
                 types
@@ -74,7 +83,8 @@ type ConfigurationStore(ctx: SqliteContext) =
         ({ Id = id
            Name = tableName
            Version = ItemVersion.FromOptional version
-           Columns = columns }: Tables.NewTable)
+           Columns = columns }
+        : Tables.NewTable)
         |> Tables.addTransaction ctx
 
     member pc.GetQuery(queryName, ?version: ItemVersion) =
@@ -84,7 +94,8 @@ type ConfigurationStore(ctx: SqliteContext) =
         ({ Id = id
            Name = name
            Version = ItemVersion.FromOptional version
-           Query = query }: Queries.NewQuery)
+           Query = query }
+        : Queries.NewQuery)
         |> Queries.addTransaction ctx
 
     member pc.CreateActions(pipelineId, ?version: ItemVersion) =
@@ -99,7 +110,8 @@ type ConfigurationStore(ctx: SqliteContext) =
         ({ Id = id
            Name = name
            Version = ItemVersion.FromOptional version
-           Mapper = mapper }: TableObjectMappers.NewTableObjectMapper)
+           Mapper = mapper }
+        : TableObjectMappers.NewTableObjectMapper)
         |> TableObjectMappers.addRawTransaction ctx
 
     member pc.GetPipelineVersion(name, ?version: ItemVersion) =
