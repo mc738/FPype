@@ -5,9 +5,34 @@ open System.Text.Json.Serialization
 open Freql.Core.Common
 open Freql.Sqlite
 
-/// Module generated on 01/03/2023 19:59:33 (utc) via Freql.Sqlite.Tools.
+/// Module generated on 31/05/2023 20:55:35 (utc) via Freql.Tools.
 [<RequireQualifiedAccess>]
 module Records =
+    /// A record representing a row in the table `__metadata`.
+    type MetadataItem =
+        { [<JsonPropertyName("itemKey")>] ItemKey: string
+          [<JsonPropertyName("itemValue")>] ItemValue: string }
+    
+        static member Blank() =
+            { ItemKey = String.Empty
+              ItemValue = String.Empty }
+    
+        static member CreateTableSql() = """
+        CREATE TABLE "__metadata" (
+	item_key TEXT NOT NULL,
+	item_value TEXT NOT NULL
+)
+        """
+    
+        static member SelectSql() = """
+        SELECT
+              __metadata.`item_key`,
+              __metadata.`item_value`
+        FROM __metadata
+        """
+    
+        static member TableName() = "__metadata"
+    
     /// A record representing a row in the table `action_types`.
     type ActionType =
         { [<JsonPropertyName("name")>] Name: string }
@@ -592,9 +617,19 @@ module Records =
         static member TableName() = "table_object_mappers"
     
 
-/// Module generated on 01/03/2023 19:59:33 (utc) via Freql.Tools.
+/// Module generated on 31/05/2023 20:55:35 (utc) via Freql.Tools.
 [<RequireQualifiedAccess>]
 module Parameters =
+    /// A record representing a new row in the table `__metadata`.
+    type NewMetadataItem =
+        { [<JsonPropertyName("itemKey")>] ItemKey: string
+          [<JsonPropertyName("itemValue")>] ItemValue: string }
+    
+        static member Blank() =
+            { ItemKey = String.Empty
+              ItemValue = String.Empty }
+    
+    
     /// A record representing a new row in the table `action_types`.
     type NewActionType =
         { [<JsonPropertyName("name")>] Name: string }
@@ -825,12 +860,36 @@ module Parameters =
             { Name = String.Empty }
     
     
-/// Module generated on 01/03/2023 19:59:33 (utc) via Freql.Tools.
+/// Module generated on 31/05/2023 20:55:35 (utc) via Freql.Tools.
 [<RequireQualifiedAccess>]
 module Operations =
 
     let buildSql (lines: string list) = lines |> String.concat Environment.NewLine
 
+    /// Select a `Records.MetadataItem` from the table `__metadata`.
+    /// Internally this calls `context.SelectSingleAnon<Records.MetadataItem>` and uses Records.MetadataItem.SelectSql().
+    /// The caller can provide extra string lines to create a query and boxed parameters.
+    /// It is up to the caller to verify the sql and parameters are correct,
+    /// this should be considered an internal function (not exposed in public APIs).
+    /// Parameters are assigned names based on their order in 0 indexed array. For example: @0,@1,@2...
+    /// Example: selectMetadataItemRecord ctx "WHERE `field` = @0" [ box `value` ]
+    let selectMetadataItemRecord (context: SqliteContext) (query: string list) (parameters: obj list) =
+        let sql = [ Records.MetadataItem.SelectSql() ] @ query |> buildSql
+        context.SelectSingleAnon<Records.MetadataItem>(sql, parameters)
+    
+    /// Internally this calls `context.SelectAnon<Records.MetadataItem>` and uses Records.MetadataItem.SelectSql().
+    /// The caller can provide extra string lines to create a query and boxed parameters.
+    /// It is up to the caller to verify the sql and parameters are correct,
+    /// this should be considered an internal function (not exposed in public APIs).
+    /// Parameters are assigned names based on their order in 0 indexed array. For example: @0,@1,@2...
+    /// Example: selectMetadataItemRecords ctx "WHERE `field` = @0" [ box `value` ]
+    let selectMetadataItemRecords (context: SqliteContext) (query: string list) (parameters: obj list) =
+        let sql = [ Records.MetadataItem.SelectSql() ] @ query |> buildSql
+        context.SelectAnon<Records.MetadataItem>(sql, parameters)
+    
+    let insertMetadataItem (context: SqliteContext) (parameters: Parameters.NewMetadataItem) =
+        context.Insert("__metadata", parameters)
+    
     /// Select a `Records.ActionType` from the table `action_types`.
     /// Internally this calls `context.SelectSingleAnon<Records.ActionType>` and uses Records.ActionType.SelectSql().
     /// The caller can provide extra string lines to create a query and boxed parameters.

@@ -9,7 +9,7 @@ open Freql.Sqlite
 
 type ConfigurationStore(ctx: SqliteContext) =
 
-    static member Initialize(path) =
+    static member Initialize(path, ?additionActions: string list, ?metadata: Map<string, string>) =
         match File.Exists path with
         | true ->
             let cfg = SqliteContext.Open path |> ConfigurationStore
@@ -20,7 +20,8 @@ type ConfigurationStore(ctx: SqliteContext) =
         | false ->
             use ctx = SqliteContext.Create path
 
-            [ Records.ActionType.CreateTableSql()
+            [ Records.MetadataItem.CreateTableSql()
+              Records.ActionType.CreateTableSql()
               Records.Pipeline.CreateTableSql()
               Records.PipelineVersion.CreateTableSql()
               Records.PipelineAction.CreateTableSql()
@@ -42,6 +43,8 @@ type ConfigurationStore(ctx: SqliteContext) =
             Actions.names
             |> List.iter (fun n -> ({ Name = n }: Parameters.NewActionType) |> Operations.insertActionType ctx)
 
+            
+            
             ConfigurationStore ctx
 
     static member Load(path) =
