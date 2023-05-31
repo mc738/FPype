@@ -14,6 +14,7 @@
         <Compile Include="Core\JPath.fs" />
         <Compile Include="Core\Queries.fs" />
         <Compile Include="Core\Logging.fs" />
+        <Compile Include="Security\Common.fs" />
         <Compile Include="Security\Credentials.fs" />
         <Compile Include="Data\Resources\Grok.fs" />
         <Compile Include="Data\Common.fs" />
@@ -66,7 +67,8 @@
       <PackageReference Include="freql.mysql" Version="0.9.0" />
       <PackageReference Include="Freql.Sqlite" Version="0.9.0" />
       <PackageReference Include="FSharp.Compiler.Service" Version="41.0.7" />
-      <PackageReference Include="FsToolbox" Version="0.3.3" />
+      <PackageReference Include="FsToolbox" Version="0.5.0" />
+      <PackageReference Include="FsToolbox.S3" Version="0.5.0" />
       <PackageReference Include="Microsoft.ML" Version="2.0.1" />
       <PackageReference Include="Microsoft.ML.Recommender" Version="0.20.1" />
     </ItemGroup>
