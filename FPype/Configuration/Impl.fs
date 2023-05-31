@@ -116,9 +116,9 @@ type ConfigurationStore(ctx: SqliteContext) =
         : Queries.NewQuery)
         |> Queries.addTransaction ctx
 
-    member pc.CreateActions(pipelineId, ?version: ItemVersion) =
+    member pc.CreateActions(pipelineId, ?version: ItemVersion, ?additionActions: Actions.ActionCollection) =
         ItemVersion.FromOptional version
-        |> Actions.createActions ctx pipelineId
+        |> Actions.createActions ctx pipelineId additionActions
         |> Result.mapError (fun msg -> $"Could not create actions: {msg}")
 
     member pc.GetTableObjectMapper(name, ?version: ItemVersion) =
@@ -151,6 +151,5 @@ type ConfigurationStore(ctx: SqliteContext) =
         | false -> Error $"File `{filePath}` does not exist."
 
     member pc.ImportFromFile(path: string) = Import.fromFileTransaction ctx path
-
 
 //member pc.GetPipelineResources(pipeline: string, ?version: Version) =

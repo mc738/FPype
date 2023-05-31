@@ -615,6 +615,9 @@ module Actions =
           yield! ML.all ctx
           yield! Visualizations.all ctx ]
 
+    
+    type ActionCollection = SqliteContext -> (string * (string -> JsonElement -> Result<PipelineAction, string>)) list
+    
     let createAction
         (actionsMap: Map<string, string -> JsonElement -> Result<PipelineAction, string>>)
         (action: Records.PipelineAction)
@@ -628,7 +631,7 @@ module Actions =
         with exn ->
             Error $"Failed to create action. Exception: {exn.Message}"
 
-    let createActions (ctx: SqliteContext) (pipelineId: string) (version: ItemVersion) =
+    let createActions (ctx: SqliteContext) (pipelineId: string) (additionActions: ActionCollection option) (version: ItemVersion) =
         match version with
         | ItemVersion.Latest ->
             Operations.selectPipelineVersionRecord
@@ -638,11 +641,15 @@ module Actions =
         | ItemVersion.Specific v ->
             Operations.selectPipelineVersionRecord ctx [ "WHERE pipeline = @0 AND version = @1;" ] [ pipelineId; v ]
         |> Option.map (fun pv ->
-            let allMap = all ctx
-            
+            let actionMap =
+                match additionActions with
+                | Some aa -> all ctx @ aa ctx
+                | None -> all ctx
+                |> Map.ofList
+                
             Operations.selectPipelineActionRecords ctx [ "WHERE pipeline_version_id = @0" ] [ pv.Id ]
             |> List.sortBy (fun pa -> pa.Step)
-            |> List.map (createAction (all ctx |> Map.ofList))
+            |> List.map (createAction actionMap)
             |> flattenResultList)
         |> Option.defaultWith (fun _ -> Error $"Pipeline `{pipelineId}` (version {version.ToLabel()}) not found.")
 

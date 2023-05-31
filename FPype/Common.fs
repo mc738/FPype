@@ -46,9 +46,12 @@ type PipelineContext =
             version: ItemVersion,
             args: Map<string, string>,
             logger: PipelineLogger,
-            ?runId: string
+            ?runId: string,
+            ?additionActions: Actions.ActionCollection
         ) =
-        config.CreateActions(pipeline, version)
+        match additionActions with
+        | Some aa -> config.CreateActions(pipeline, version, aa)
+        | None -> config.CreateActions(pipeline, version) 
         |> Result.bind (fun pa ->
             PipelineContext.Initialize(basePath, pa, runId, logger)
             |> Result.map (fun ctx ->
