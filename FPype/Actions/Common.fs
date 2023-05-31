@@ -13,9 +13,7 @@ module Common =
     open FPype.Data.Store
 
     type TableResolver =
-        { GetName: unit -> string
-
-         }
+        { GetName: unit -> string }
 
     type PipelineAction =
         { Name: string
