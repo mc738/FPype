@@ -14,6 +14,7 @@
         <Compile Include="Core\JPath.fs" />
         <Compile Include="Core\Queries.fs" />
         <Compile Include="Core\Logging.fs" />
+        <Compile Include="Core\Serialization.fs" />
         <Compile Include="Security\Common.fs" />
         <Compile Include="Security\Credentials.fs" />
         <Compile Include="Data\Resources\Grok.fs" />
