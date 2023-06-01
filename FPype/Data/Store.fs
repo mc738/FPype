@@ -798,12 +798,33 @@ module Store =
             ps.CreateTable model
 
         member ps.CreateTable(model: TableModel) =
+
+            match getTableSchema ctx model.Name with
+            | Some ts ->
+                match Strings.equalOrdinalIgnoreCase ts.Hash (model.GetSchemaHash()) with
+                | true -> ()
+                | false ->
+                    // Trying to add a table that area
+                    // TODO What to do? error?
+                    ()
+            | None -> addTableSchema ctx model
+
             model.SqliteCreateTable(ctx) |> ignore
-            // TODO check if exists.
-            addTableSchema ctx model
+
             model
 
-        member ps.InsertRows(table: TableModel) = table.SqliteInsert ctx
+        member ps.InsertRows(table: TableModel) =
+            match getTableSchema ctx table.Name with
+            | Some ts ->
+                match Strings.equalOrdinalIgnoreCase ts.Hash (table.GetSchemaHash()) with
+                | true -> ()
+                | false ->
+                    // Trying to add a table that area
+                    // TODO What to do? error?
+                    ()
+            | None -> addTableSchema ctx table
+
+            table.SqliteInsert ctx
 
         member ps.SelectRawRows(table: TableModel) = table.SqliteSelect ctx
 
