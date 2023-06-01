@@ -211,6 +211,13 @@ module Models =
                yield! tm.Rows.Length |> BitConverter.GetBytes
                yield! trb |]
 
+        member tm.ToSchema() =
+            ({ Name = tm.Name
+               Columns = tm.Columns |> List.map (fun tc -> tc.ToSchema()) }
+            : TableSchema)
+
+        member tm.GetSchemaJson() = tm.ToSchema().ToJson()
+
     and TableColumn =
         { Name: string
           Type: BaseType
