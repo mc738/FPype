@@ -107,6 +107,13 @@ module Store =
             CONSTRAINT __cache_PK PRIMARY KEY (item_key)
         );
         """
+        
+        let tableSchemesSql =
+            """
+            CREATE TABLE __table_schemes (
+                table_name TEXT NOT NULL,
+                scheme_blob BLOB NOT NULL
+            """
 
     [<RequireQualifiedAccess>]
     module StateNames =

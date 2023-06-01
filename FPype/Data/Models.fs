@@ -1,6 +1,7 @@
 ﻿namespace FPype.Data
 
 open System
+open System.IO
 open System.Text
 open System.Text.Json
 open FPype.Core
@@ -101,6 +102,11 @@ module Models =
                   Columns = tcs
                   Rows = trs },
                 tail)
+
+        static member FromSchema(schema: TableSchema) =
+            { Name = schema.Name
+              Columns = schema.Columns |> List.map TableColumn.FromSchema
+              Rows = [] }
 
         member tm.PrependColumns(columns: TableColumn list) =
             { tm with
@@ -239,6 +245,11 @@ module Models =
                 | false -> Error "Unable to deserialize column name"
             | false -> Error "Data length is too short"
 
+        static member FromSchema(schema: TableColumnSchema) =
+            { Name = schema.Name
+              Type = schema.Type
+              ImportHandler = None }
+
         static member JoinColumns
             (
                 c1,
@@ -277,6 +288,9 @@ module Models =
                | false -> 0uy
                yield! BitConverter.GetBytes nb.Length
                yield! nb |]
+
+        member tc.ToSchema() =
+            ({ Name = tc.Name; Type = tc.Type }: TableColumnSchema)
 
     and TableRow =
         { Values: Value list }
@@ -432,6 +446,75 @@ module Models =
 
             [| yield! BitConverter.GetBytes sv.Length; yield! sv |]
 
+    /// <summary>
+    /// A table schema is simplified representation of a TableModel.
+    /// The are designed to allow the store to save a representation of a table in the data store and
+    /// provide an easy way for clients to show the table layout.
+    /// </summary>
+    and TableSchema =
+        { Name: string
+          Columns: TableColumnSchema list }
+
+        static member FromJson(json: JsonElement) =
+            match Json.tryGetStringProperty "name" json, Json.tryGetArrayProperty "columns" json with
+            | Some n, Some c ->
+                c
+                |> List.map TableColumnSchema.FromJson
+                |> flattenResultList
+                |> Result.map (fun cs -> { Name = n; Columns = cs })
+            | None, _ -> Serialization.missingProperty "name"
+            | _, None -> Serialization.missingProperty "columns"
+
+        member ts.ToJson() =
+            use ms = new MemoryStream()
+
+            let mutable opts = JsonWriterOptions()
+            opts.Indented <- true
+
+            use writer = new Utf8JsonWriter(ms, opts)
+
+            ts.WriteToJson writer
+
+            writer.Flush()
+
+            ms.ToArray() |> Encoding.UTF8.GetString
+
+        member internal ts.WriteToJson(writer: Utf8JsonWriter) =
+            writer.WriteStartObject()
+
+            writer.WriteString("name", ts.Name)
+
+            Json.writeArray (fun w -> ts.Columns |> List.iter (fun c -> c.WriteToJson w)) "columns" writer
+
+            writer.WriteEndObject()
+
+    and TableColumnSchema =
+        { Name: string
+          Type: BaseType }
+
+        static member FromJson(json: JsonElement) =
+            match
+                Json.tryGetStringProperty "name" json,
+                Json.tryGetStringProperty "type" json,
+                Json.tryGetBoolProperty "optional" json
+            with
+            | Some n, Some t, Some o ->
+                match BaseType.FromId(t, o) with
+                | Some bt -> Ok { Name = n; Type = bt }
+                | None -> Error $"Failed to deserialize base type for column `{n}` (base type: {t})"
+            | None, _, _ -> Serialization.missingProperty "name"
+            | _, None, _ -> Serialization.missingProperty "type"
+            | _, _, None -> Serialization.missingProperty "optional"
+
+        member internal tcs.WriteToJson(writer: Utf8JsonWriter) =
+            writer.WriteStartObject()
+
+            writer.WriteString("name", tcs.Name)
+
+            writer.WriteString("type", tcs.Type.Serialize())
+            writer.WriteBoolean("optional", tcs.Type.IsOptionType())
+
+            writer.WriteEndObject()
 
     type ObjectDefinition =
         { Name: string
