@@ -9,7 +9,36 @@ module ReadOperations =
     open FPype.Infrastructure.Core.Persistence
     open Freql.MySql
     open FsToolbox.Core.Results
-    
+
+    module Internal =
+
+        let allTablesForSubscription (ctx: MySqlContext) (subscriptionId: string) =
+            Operations.selectTableModelRecords ctx [ "WHERE subscription_id = @0" ] [ subscriptionId ]
+            |> List.map (fun tr ->
+                Fetch.tableVersions ctx tr.Id
+                |> FetchResult.map (fun tvrs ->
+                    tvrs
+                    |> List.choose (fun tvr ->
+                        match Fetch.tableColumns ctx tvr.Id with
+                        | FetchResult.Success tcs ->
+                            ({ TableReference = tr.Reference
+                               Reference = tvr.Reference
+                               Name = tr.Name
+                               Version = tvr.Version
+                               Columns =
+                                 tcs
+                                 |> List.map (fun c ->
+                                     ({ Reference = c.Reference
+                                        Name = c.Name
+                                        Type = BaseType.String // TODO sort out
+                                        Optional = c.Optional
+                                        ImportHandlerData = c.ImportHandlerJson
+                                        Index = c.ColumnIndex }
+                                     : TableColumnDetails)) }
+                            : TableVersionDetails)
+                            |> Some
+                        | FetchResult.Failure fr -> None)))
+
     let latestTableVersion (ctx: MySqlContext) (userReference: string) (tableReference: string) =
         Fetch.user ctx userReference
         |> FetchResult.merge (fun ur sr -> ur, sr) (fun ur -> Fetch.subscriptionById ctx ur.Id)

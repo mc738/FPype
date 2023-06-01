@@ -208,6 +208,17 @@ module Fetch =
                Exception = Some ex })
             |> FetchResult.Failure
 
+    let tableVersions (ctx: MySqlContext) (tableId: int) =
+        try
+            Operations.selectTableModelVersionRecords ctx [ "WHERE table_id = @0 AND version = @1;" ] [ tableId ]
+            |> FetchResult.Success
+        with ex ->
+            ({ Message = "Unhandled exception while fetching table version"
+               DisplayMessage = "Error fetching table version"
+               Exception = Some ex })
+            |> FetchResult.Failure
+
+
     let tableVersionByReference (ctx: MySqlContext) (reference: string) =
         try
             Operations.selectTableModelVersionRecord ctx [ "WHERE reference = @0;" ] [ reference ]
@@ -223,7 +234,7 @@ module Fetch =
                DisplayMessage = "Error fetching table version"
                Exception = Some ex })
             |> FetchResult.Failure
-            
+
     let tableVersionById (ctx: MySqlContext) (id: int) =
         try
             Operations.selectTableModelVersionRecord ctx [ "WHERE id = @0;" ] [ id ]
@@ -540,7 +551,10 @@ module Fetch =
 
     let objectTableMapperLatestVersion (ctx: MySqlContext) (objectTableMapperId: int) =
         try
-            Operations.selectObjectTableMapperVersionRecord ctx [ "WHERE object_table_mapper_id = @0 ORDER BY version DESC LIMIT 1;" ] [ objectTableMapperId ]
+            Operations.selectObjectTableMapperVersionRecord
+                ctx
+                [ "WHERE object_table_mapper_id = @0 ORDER BY version DESC LIMIT 1;" ]
+                [ objectTableMapperId ]
             |> Option.map FetchResult.Success
             |> Option.defaultWith (fun _ ->
                 ({ Message = $"Latest version of object table mapper (id: {objectTableMapperId}) not found"
@@ -556,7 +570,10 @@ module Fetch =
 
     let objectTableMapperVersion (ctx: MySqlContext) (objectTableMapperId: int) (version: int) =
         try
-            Operations.selectObjectTableMapperVersionRecord ctx [ "WHERE object_table_mapper_id = @0 AND version = @1;" ] [ objectTableMapperId; version ]
+            Operations.selectObjectTableMapperVersionRecord
+                ctx
+                [ "WHERE object_table_mapper_id = @0 AND version = @1;" ]
+                [ objectTableMapperId; version ]
             |> Option.map FetchResult.Success
             |> Option.defaultWith (fun _ ->
                 ({ Message = $"Version {version} of object table mapper (id: {objectTableMapperId}) not found"
