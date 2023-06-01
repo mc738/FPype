@@ -2,8 +2,9 @@
 
 open FPype.Core.Logging
 open FPype.Data.Models
+open Freql.Core.Common.Types
 open FsToolbox.Core
-
+open FsToolbox.Extensions
 
 module Store =
 
@@ -107,12 +108,13 @@ module Store =
             CONSTRAINT __cache_PK PRIMARY KEY (item_key)
         );
         """
-        
-        let tableSchemesSql =
+
+        let tableSchemasSql =
             """
             CREATE TABLE __table_schemes (
-                table_name TEXT NOT NULL,
-                scheme_blob BLOB NOT NULL
+                name TEXT NOT NULL,
+                scheme_blob BLOB NOT NULL,
+                hash TEXT NOY NULL
             """
 
     [<RequireQualifiedAccess>]
@@ -156,7 +158,8 @@ module Store =
           Internal.importErrorsTableSql
           Internal.logTableSql
           Internal.resourcesTableSql
-          Internal.cacheTableSql ]
+          Internal.cacheTableSql
+          Internal.tableSchemasSql ]
         |> List.map ctx.ExecuteSqlNonQuery
         |> ignore
 
@@ -205,6 +208,11 @@ module Store =
           IsError: bool
           IsWarning: bool
           TimestampUtc: DateTime }
+
+    type TableSchema =
+        { Name: string
+          SchemaBlob: BlobField
+          Hash: string }
 
     type StateValue = { Name: string; Value: string }
 
@@ -301,6 +309,22 @@ module Store =
     let addImportError (ctx: SqliteContext) (error: ImportError) = ctx.Insert("__import_errors", error)
 
     let addLogItem (ctx: SqliteContext) (item: LogItem) = ctx.Insert("__log", item)
+
+    let addTableSchema (ctx: SqliteContext) (table: TableModel) =
+        let schema = table.GetSchemaJson()
+        use ms = new MemoryStream(schema.ToUtf8Bytes())
+
+        ({ Name = table.Name
+           SchemaBlob = BlobField.FromStream ms
+           Hash = schema.GetSHA256Hash() }
+        : TableSchema)
+        |> fun ts -> ctx.Insert("__table_schemas", ts)
+
+    let getTableSchema (ctx: SqliteContext) (name: string) =
+        ctx.SelectSingleAnon<TableSchema>(
+            "SELECT name, schema_blob, hash FROM __table_schemas WHERE table_name = @0;",
+            [ box name ]
+        )
 
     (*
     let rec typeName bt notNull =
@@ -451,7 +475,7 @@ module Store =
                 store.AddStateValue(StateNames.initializedTimestamp, DateTime.UtcNow.ToString())
 
                 store)
-        
+
         member pd.Id = id
 
         member ps.BasePath = basePath
@@ -463,9 +487,8 @@ module Store =
         member ps.DefaultExportPath = Path.Combine(ps.BasePath, "exports")
 
         member ps.DefaultTmpPath = Path.Combine(basePath, "tmp")
-        
-        member ps.Close() =
-           ctx.Close()
+
+        member ps.Close() = ctx.Close()
 
         member ps.AddStateValue(name, value) =
             addStateValue ctx { Name = name; Value = value }
@@ -776,6 +799,8 @@ module Store =
 
         member ps.CreateTable(model: TableModel) =
             model.SqliteCreateTable(ctx) |> ignore
+            // TODO check if exists.
+            addTableSchema ctx model
             model
 
         member ps.InsertRows(table: TableModel) = table.SqliteInsert ctx

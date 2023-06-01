@@ -8,6 +8,7 @@ open FPype.Core
 open FPype.Core.JPath
 open FPype.Core.Types
 open FsToolbox.Core
+open FsToolbox.Extensions
 
 module Models =
 
@@ -217,6 +218,10 @@ module Models =
             : TableSchema)
 
         member tm.GetSchemaJson() = tm.ToSchema().ToJson()
+        
+        member tm.GetSchemaHash() = tm.ToSchema().GetHash()
+
+
 
     and TableColumn =
         { Name: string
@@ -485,6 +490,8 @@ module Models =
             writer.Flush()
 
             ms.ToArray() |> Encoding.UTF8.GetString
+
+        member ts.GetHash() = ts.ToJson().GetSHA256Hash()
 
         member internal ts.WriteToJson(writer: Utf8JsonWriter) =
             writer.WriteStartObject()
