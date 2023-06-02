@@ -111,10 +111,11 @@ module Store =
 
         let tableSchemasSql =
             """
-            CREATE TABLE __table_schemes (
+            CREATE TABLE __table_schemas (
                 name TEXT NOT NULL,
-                scheme_blob BLOB NOT NULL,
+                schema_blob BLOB NOT NULL,
                 hash TEXT NOY NULL
+            );
             """
 
     [<RequireQualifiedAccess>]
@@ -322,7 +323,7 @@ module Store =
 
     let getTableSchema (ctx: SqliteContext) (name: string) =
         ctx.SelectSingleAnon<TableSchema>(
-            "SELECT name, schema_blob, hash FROM __table_schemas WHERE table_name = @0;",
+            "SELECT name, schema_blob, hash FROM __table_schemas WHERE name = @0;",
             [ box name ]
         )
 
