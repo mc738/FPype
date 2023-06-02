@@ -141,6 +141,12 @@ module Store =
 
         let initializedTimestamp = "__initialized_timestamp"
 
+        let pipelineName = "__pipeline_name"
+        
+        let pipelineVersion = "__pipeline_version"
+        
+        let pipelineVersionId = "__pipeline_version_id"
+    
     (*
         let contextTableSql =
             """
@@ -642,6 +648,29 @@ module Store =
             | Some _, false -> ()
             | None, _ -> ps.AddStateValue(StateNames.tmpPath, tmpPath)
 
+        member ps.GetPipelineName() = ps.GetStateValue(StateNames.pipelineName)
+
+        member ps.SetPipelineName(name) =
+            match ps.GetPipelineName() with
+            | Some _ -> ()
+            | None -> ps.AddStateValue(StateNames.pipelineName, name)
+
+        member ps.GetPipelineVersion() = ps.GetStateValueAsInt(StateNames.pipelineVersion)
+
+        member ps.SetPipelineVersion(version: int) =
+            match ps.GetPipelineName() with
+            | Some _ -> ()
+            | None -> ps.AddStateValue(StateNames.pipelineVersion, string version)
+
+        member ps.GetPipelineVersionId() = ps.GetStateValue(StateNames.pipelineVersionId)
+
+        member ps.SetPipelineVersionId(id) =
+            match ps.GetPipelineName() with
+            | Some _ -> ()
+            | None -> ps.AddStateValue(StateNames.pipelineVersionId, id)
+
+        
+        
         /// <summary>
         /// This is not really needed. ps.StorePath returns a non option version (the value should exist).
         /// However this does indicate if the store has been initialized.

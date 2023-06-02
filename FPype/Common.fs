@@ -51,7 +51,7 @@ type PipelineContext =
         ) =
         match additionActions with
         | Some aa -> config.CreateActions(pipeline, version, aa)
-        | None -> config.CreateActions(pipeline, version) 
+        | None -> config.CreateActions(pipeline, version)
         |> Result.bind (fun pa ->
             PipelineContext.Initialize(basePath, pa, runId, logger)
             |> Result.map (fun ctx ->
@@ -62,7 +62,11 @@ type PipelineContext =
                     |> List.iter (fun pr ->
                         match config.GetResourceVersion(pr.ResourceVersionId) with
                         | Some r -> ctx.Store.AddResource(r.Resource, r.ResourceType, r.RawBlob.ToBytes())
-                        | None -> ()))
+                        | None -> ())
+
+                    ctx.Store.SetPipelineName(pv.Pipeline)
+                    ctx.Store.SetPipelineVersion(pv.Version)
+                    ctx.Store.SetPipelineVersionId(pv.Id))
 
                 // Get and validate args
 
@@ -95,7 +99,7 @@ type PipelineContext =
             | Ok s ->
                 let endTimeStamp = DateTime.UtcNow
                 let offset = endTimeStamp - startTimestamp
-                
+
                 store.Log(pa.StepName, pa.Name, $"Complete ({offset.TotalSeconds}s)")
 
                 Ok s
@@ -107,7 +111,7 @@ type PipelineContext =
         // Take start timestamp
 
         let startTimestamp = DateTime.UtcNow
-        
+
         p.Store.Log("start", "main", $"Starting pipeline {p.Id}")
 
         let result =
@@ -119,8 +123,8 @@ type PipelineContext =
         match result with
         | Ok store ->
             let offset = endTimestamp - startTimestamp
-            
+
             store.Log("end", "main", $"Pipeline completed successful ({offset.TotalSeconds}s)")
-            
+
             Ok store
         | Error e -> Error e
