@@ -1,5 +1,7 @@
 ﻿namespace FPype.Data
 
+open System.Text
+open System.Text.Json
 open FPype.Core.Logging
 open FPype.Data.Models
 open Freql.Core.Common.Types
@@ -215,6 +217,8 @@ module Store =
           SchemaBlob: BlobField
           Hash: string }
 
+    type TableListingItem = { Name: string }
+
     type StateValue = { Name: string; Value: string }
 
     let updateStateValue (ctx: SqliteContext) (name: string) (newValue: string) =
@@ -326,6 +330,9 @@ module Store =
             "SELECT name, schema_blob, hash FROM __table_schemas WHERE name = @0;",
             [ box name ]
         )
+
+    let getTableListing (ctx: SqliteContext) =
+        ctx.SelectAnon<TableListingItem>("SELECT name, schema_blob, hash FROM __table_schemas", [])
 
     (*
     let rec typeName bt notNull =
@@ -884,3 +891,223 @@ module Store =
 
             addLogItem ctx item
             logger.Handler item
+
+
+    /// <summary>
+    /// A readonly connection to a pipeline store. This treats the store as immutable.
+    /// </summary>
+    type PipelineStoreReader(ctx: SqliteContext, basePath: string, id: string) =
+
+        static member Open(basePath: string, id: string) =
+            let storePath = Path.Combine(basePath, id, "store.db")
+
+            SqliteContext.Open(storePath, mode = SqliteOpenMode.ReadOnly)
+            |> (fun ctx -> PipelineStoreReader(ctx, basePath, id))
+
+        member pd.Id = id
+
+        member ps.BasePath = basePath
+
+        member ps.StorePath = Path.Combine(ps.BasePath, "store.db")
+
+        member ps.DefaultImportsPath = Path.Combine(ps.BasePath, "imports")
+
+        member ps.DefaultExportPath = Path.Combine(ps.BasePath, "exports")
+
+        member ps.DefaultTmpPath = Path.Combine(basePath, "tmp")
+
+        member ps.Close() = ctx.Close()
+
+        member ps.GetState() = getState ctx
+
+        member ps.GetStateValue(key) =
+            getStateValue ctx key |> Option.map (fun sv -> sv.Value)
+
+        member ps.StateValueExists(key) =
+            match ps.GetStateValue key with
+            | Some _ -> true
+            | None -> false
+
+        member ps.GetStateValueAsValue(key, baseType: BaseType, ?format: string) =
+            ps.GetStateValue key
+            |> Option.bind (fun str ->
+                match format with
+                | Some f -> Value.FromString(str, baseType, f)
+                | None -> Value.FromString(str, baseType))
+
+        member ps.GetStateValueAsDateTime(key, ?format: string) =
+            ps.GetStateValue key
+            |> Option.bind (fun str ->
+                match format with
+                | Some f ->
+                    match
+                        DateTime.TryParseExact(str, f, CultureInfo.InvariantCulture, DateTimeStyles.AdjustToUniversal)
+                    with
+                    | true, v -> Some v
+                    | false, _ -> None
+                | None ->
+                    match DateTime.TryParse(str) with
+                    | true, v -> Some v
+                    | false, _ -> None)
+
+        member ps.GetStateValueAsGuid(key, ?format: string) =
+            ps.GetStateValue key
+            |> Option.bind (fun str ->
+                match format with
+                | Some f ->
+                    match Guid.TryParseExact(str, f) with
+                    | true, v -> Some v
+                    | false, _ -> None
+                | None ->
+                    match Guid.TryParse(str) with
+                    | true, v -> Some v
+                    | false, _ -> None)
+
+        member ps.GetStateValueAsBool(key) =
+            ps.GetStateValue key
+            |> Option.map (fun str -> [ "true"; "1"; "yes"; "ok" ] |> List.contains (str.ToLower()))
+
+        member ps.GetStateValueAsInt(key) =
+            ps.GetStateValue key
+            |> Option.bind (fun str ->
+                match Int32.TryParse(str) with
+                | true, v -> Some v
+                | false, _ -> None)
+
+        member ps.GetStateValueAsDouble(key) =
+            ps.GetStateValue key
+            |> Option.bind (fun str ->
+                match Double.TryParse(str) with
+                | true, v -> Some v
+                | false, _ -> None)
+
+        member ps.GetStateValueAsSingle(key) =
+            ps.GetStateValue key
+            |> Option.bind (fun str ->
+                match Single.TryParse(str) with
+                | true, v -> Some v
+                | false, _ -> None)
+
+        member ps.GetStateValueAsDecimal(key) =
+            ps.GetStateValue key
+            |> Option.bind (fun str ->
+                match Decimal.TryParse(str) with
+                | true, v -> Some v
+                | false, _ -> None)
+
+        /// <summary>
+        /// This returns an optional string. Use ps.Id to get a non-optional version.
+        /// This is useful to check the id that is stored (such as for consistency checks).
+        /// </summary>
+        member ps.GetId() = ps.GetStateValue(StateNames.id)
+
+        member ps.GetComputerName() =
+            ps.GetStateValue(StateNames.computerName)
+
+        member ps.GetUserName() = ps.GetStateValue(StateNames.userName)
+
+        member ps.GetBasePath() = ps.GetStateValue(StateNames.basePath)
+
+        member ps.GetImportsPath() =
+            ps.GetStateValue(StateNames.importsPath)
+
+        member ps.GetExportsPath() =
+            ps.GetStateValue(StateNames.exportsPath)
+
+        member ps.GetTmpPath() = ps.GetStateValue(StateNames.tmpPath)
+
+        /// <summary>
+        /// This is not really needed. ps.StorePath returns a non option version (the value should exist).
+        /// However this does indicate if the store has been initialized.
+        /// </summary>
+        member ps.GetStorePath() = ps.GetStateValue(StateNames.storePath)
+
+        member ps.IsInitialized() =
+            match ps.GetStateValue(StateNames.initializedTimestamp) with
+            | Some _ -> true
+            | None -> false
+
+        member ps.GetDataSource(name) = getDataSource ctx name
+
+        member ps.GetSourcesByCollection(collectionName) =
+            getDataSourcesByCollectionName ctx collectionName
+
+        member ps.GetArtifact(name) = getArtifact ctx name
+
+        member ps.GetArtifactBucket(name) = getArtifactBucket ctx name
+
+        member ps.GetResourceEntity(name) = getResource ctx name
+
+        member ps.GetResource(name) =
+            getResource ctx name |> Option.map (fun r -> r.Data.ToBytes())
+
+        member ps.GetCacheItemEntity(key: string) = getCacheItem ctx key
+
+        member ps.GetCacheItem(key: string) =
+            getCacheItem ctx key |> Option.map (fun r -> r.ItemValue.ToBytes())
+
+        member ps.SubstituteValues(path: string, ?otherReplacements: (string * string) list) =
+            // Get the state values as a map to cut down on database calls.
+            let stateMap = ps.GetState() |> List.map (fun sv -> sv.Name, sv.Value) |> Map.ofList
+
+            [ "%IMPORTS%",
+              stateMap.TryFind StateNames.importsPath
+              |> Option.defaultValue ps.DefaultImportsPath
+              "%EXPORTS%",
+              stateMap.TryFind StateNames.exportsPath
+              |> Option.defaultValue ps.DefaultExportPath
+              "%TMP%", stateMap.TryFind StateNames.tmpPath |> Option.defaultValue ps.DefaultTmpPath
+              "%ID%", stateMap.TryFind StateNames.id |> Option.defaultValue ps.Id
+              "%COMPUTER_NAME%",
+              stateMap.TryFind StateNames.computerName
+              |> Option.defaultValue Environment.MachineName
+              "%USER_NAME%", stateMap.TryFind StateNames.userName |> Option.defaultValue Environment.UserName
+              // Variables can be stored as state values (with names starting with %).
+              // These are used for expanding paths too
+              yield!
+                  stateMap
+                  |> Map.toList
+                  |> List.choose (fun (k, v) ->
+                      match k.StartsWith('%') with
+                      | true -> Some(k, v)
+                      | false -> None)
+              match otherReplacements with
+              | Some orv -> yield! orv
+              | None -> () ]
+            |> path.ReplaceMultiple
+
+        member ps.GetTableListings() = getTableListing ctx
+        
+        member ps.GetTableSchema(name: string) =
+            getTableSchema ctx name
+            |> Option.map (fun ts ->
+                
+                try
+                    let json =
+                        ts.SchemaBlob.ToBytes()
+                        |> Encoding.UTF8.GetString
+                        |> JsonDocument.Parse 
+                        
+                    Models.TableSchema.FromJson <| json.RootElement
+                with
+                | ex -> Error $"Failed to deserialize table schema. Error: {ex.Message}")
+            |> Option.defaultWith (fun _ -> Error $"Table `{name}` not found")
+
+        member ps.SelectRawRows(table: TableModel) = table.SqliteSelect ctx
+
+        member ps.SelectAndAppendRows(table: TableModel) =
+            ps.SelectRawRows table |> table.AppendRows
+
+        member ps.SelectRows(table: TableModel) =
+            ps.SelectRawRows table |> fun r -> { table with Rows = r }
+
+        member ps.SelectRows(table: TableModel, condition, parameters) =
+            table.SqliteConditionalSelect(ctx, condition, parameters)
+            |> fun r -> { table with Rows = r }
+
+        member ps.BespokeSelectRows(table: TableModel, sql, parameters) =
+            table.SqliteBespokeSelect(ctx, sql, parameters)
+            |> fun r -> { table with Rows = r }
+
+        member ps.BespokeSelectAndAppendRows(table: TableModel, sql, parameters) =
+            table.SqliteBespokeSelect(ctx, sql, parameters) |> table.AppendRows
