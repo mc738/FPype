@@ -2,7 +2,10 @@
 
 open System
 open System.Text.Json.Serialization
+open FPype.Infrastructure.Core.Persistence
+open Freql.MySql
 open FsToolbox.Core.Results
+open Microsoft.Extensions.Logging
 
 module Events =
 
@@ -109,10 +112,6 @@ module Events =
             | TableObjectMapperVersionAdded data -> toJson data |> Result.map (fun r -> TableObjectMapperVersionAddedEvent.Name(), r)
             | ObjectTableMapperAdded data -> toJson data |> Result.map (fun r -> ObjectTableMapperAddedEvent.Name(), r)
             | ObjectTableMapperVersionAdded data -> toJson data |> Result.map (fun r -> ObjectTableMapperVersionAddedEvent.Name(), r)
-            
-            
-
-
 
     and [<CLIMutable>] PipelineAddedEvent =
         { [<JsonPropertyName("reference")>]
@@ -299,3 +298,27 @@ module Events =
           CreatedOnDateTime: DateTime }
 
         static member Name() = "object-table-mapper-version-added"
+
+    let addEvents
+        (ctx: MySqlContext)
+        (log: ILogger)
+        (quoteId: int)
+        (userId: int)
+        (timestamp: DateTime)
+        (events: ConfigurationEvent list)
+        =
+        events
+        |> List.fold
+            (fun last e ->
+                match e.Serialize() with
+                | Ok (name, data) ->
+                    ({ SubscriptionId = quoteId
+                       EventType = name
+                       EventTimestamp = timestamp
+                       EventData = data
+                       UserId = userId }: Parameters.NewConfigurationEvent)
+                    |> Operations.insertConfigurationEvent ctx
+
+                | Error e -> last)
+            0UL
+        |> int
