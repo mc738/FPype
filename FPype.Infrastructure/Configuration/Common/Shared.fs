@@ -1,6 +1,7 @@
 ﻿namespace FPype.Infrastructure.Configuration.Common
 
 open System
+open System.Text.Json
 open FPype.Data.Store
 open FsToolbox.Core.Results
 open Microsoft.FSharp.Core
@@ -35,3 +36,13 @@ module Shared =
                Exception = None }
             : FailureResult)
             |> ActionResult.Failure
+
+    let fromJson<'T> (json: string) =
+        try
+            JsonSerializer.Deserialize<'T> json |> Ok
+        with exn ->
+            Error(
+                { Message = exn.Message
+                  DisplayMessage = "Failed to deserialize object."
+                  Exception = Some exn }: FailureResult
+            )
