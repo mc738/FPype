@@ -5,7 +5,7 @@ open System.Text.Json.Serialization
 open Freql.Core.Common
 open Freql.MySql
 
-/// Module generated on 26/04/2023 21:19:12 (utc) via Freql.Sqlite.Tools.
+/// Module generated on 03/06/2023 09:57:39 (utc) via Freql.Tools.
 [<RequireQualifiedAccess>]
 module Records =
     /// A record representing a row in the table `cfg_action_types`.
@@ -34,6 +34,52 @@ module Records =
         """
     
         static member TableName() = "cfg_action_types"
+    
+    /// A record representing a row in the table `cfg_events`.
+    type ConfigurationEvent =
+        { [<JsonPropertyName("id")>] Id: int
+          [<JsonPropertyName("subscriptionId")>] SubscriptionId: int
+          [<JsonPropertyName("eventType")>] EventType: string
+          [<JsonPropertyName("eventTimestamp")>] EventTimestamp: DateTime
+          [<JsonPropertyName("eventData")>] EventData: string
+          [<JsonPropertyName("userId")>] UserId: int }
+    
+        static member Blank() =
+            { Id = 0
+              SubscriptionId = 0
+              EventType = String.Empty
+              EventTimestamp = DateTime.UtcNow
+              EventData = String.Empty
+              UserId = 0 }
+    
+        static member CreateTableSql() = """
+        CREATE TABLE `cfg_events` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `subscription_id` int NOT NULL,
+  `event_type` varchar(50) NOT NULL,
+  `event_timestamp` datetime NOT NULL,
+  `event_data` text NOT NULL,
+  `user_id` int NOT NULL,
+  PRIMARY KEY (`id`),
+  KEY `cfg_events_FK` (`subscription_id`),
+  KEY `cfg_events_FK_1` (`user_id`),
+  CONSTRAINT `cfg_events_FK` FOREIGN KEY (`subscription_id`) REFERENCES `subscriptions` (`id`),
+  CONSTRAINT `cfg_events_FK_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci
+        """
+    
+        static member SelectSql() = """
+        SELECT
+              cfg_events.`id`,
+              cfg_events.`subscription_id`,
+              cfg_events.`event_type`,
+              cfg_events.`event_timestamp`,
+              cfg_events.`event_data`,
+              cfg_events.`user_id`
+        FROM cfg_events
+        """
+    
+        static member TableName() = "cfg_events"
     
     /// A record representing a row in the table `cfg_object_table_mapper_versions`.
     type ObjectTableMapperVersion =
@@ -743,6 +789,67 @@ module Records =
     
         static member TableName() = "cfg_table_object_mappers"
     
+    /// A record representing a row in the table `pipeline_runs`.
+    type PipelineRunItem =
+        { [<JsonPropertyName("id")>] Id: int
+          [<JsonPropertyName("reference")>] Reference: string
+          [<JsonPropertyName("subscriptionId")>] SubscriptionId: int
+          [<JsonPropertyName("pipelineVersionId")>] PipelineVersionId: int
+          [<JsonPropertyName("startedOn")>] StartedOn: DateTime
+          [<JsonPropertyName("completedOn")>] CompletedOn: DateTime
+          [<JsonPropertyName("wasSuccessful")>] WasSuccessful: bool
+          [<JsonPropertyName("basePath")>] BasePath: string
+          [<JsonPropertyName("runBy")>] RunBy: int }
+    
+        static member Blank() =
+            { Id = 0
+              Reference = String.Empty
+              SubscriptionId = 0
+              PipelineVersionId = 0
+              StartedOn = DateTime.UtcNow
+              CompletedOn = DateTime.UtcNow
+              WasSuccessful = false
+              BasePath = String.Empty
+              RunBy = 0 }
+    
+        static member CreateTableSql() = """
+        CREATE TABLE `pipeline_runs` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `reference` varchar(36) NOT NULL,
+  `subscription_id` int NOT NULL,
+  `pipeline_version_id` int NOT NULL,
+  `started_on` datetime NOT NULL,
+  `completed_on` datetime NOT NULL,
+  `was_successful` tinyint(1) NOT NULL,
+  `base_path` varchar(500) NOT NULL,
+  `run_by` int NOT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `pipeline_runs_UN` (`reference`),
+  KEY `pipeline_runs_FK` (`subscription_id`),
+  KEY `pipeline_runs_FK_1` (`pipeline_version_id`),
+  KEY `pipeline_runs_FK_2` (`run_by`),
+  CONSTRAINT `pipeline_runs_FK` FOREIGN KEY (`subscription_id`) REFERENCES `subscriptions` (`id`),
+  CONSTRAINT `pipeline_runs_FK_1` FOREIGN KEY (`pipeline_version_id`) REFERENCES `cfg_pipeline_versions` (`id`),
+  CONSTRAINT `pipeline_runs_FK_2` FOREIGN KEY (`run_by`) REFERENCES `users` (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci
+        """
+    
+        static member SelectSql() = """
+        SELECT
+              pipeline_runs.`id`,
+              pipeline_runs.`reference`,
+              pipeline_runs.`subscription_id`,
+              pipeline_runs.`pipeline_version_id`,
+              pipeline_runs.`started_on`,
+              pipeline_runs.`completed_on`,
+              pipeline_runs.`was_successful`,
+              pipeline_runs.`base_path`,
+              pipeline_runs.`run_by`
+        FROM pipeline_runs
+        """
+    
+        static member TableName() = "pipeline_runs"
+    
     /// A record representing a row in the table `subscriptions`.
     type Subscription =
         { [<JsonPropertyName("id")>] Id: int
@@ -816,7 +923,7 @@ module Records =
         static member TableName() = "users"
     
 
-/// Module generated on 26/04/2023 21:19:12 (utc) via Freql.Tools.
+/// Module generated on 03/06/2023 09:57:39 (utc) via Freql.Tools.
 [<RequireQualifiedAccess>]
 module Parameters =
     /// A record representing a new row in the table `cfg_action_types`.
@@ -825,6 +932,22 @@ module Parameters =
     
         static member Blank() =
             { Name = String.Empty }
+    
+    
+    /// A record representing a new row in the table `cfg_events`.
+    type NewConfigurationEvent =
+        { [<JsonPropertyName("subscriptionId")>] SubscriptionId: int
+          [<JsonPropertyName("eventType")>] EventType: string
+          [<JsonPropertyName("eventTimestamp")>] EventTimestamp: DateTime
+          [<JsonPropertyName("eventData")>] EventData: string
+          [<JsonPropertyName("userId")>] UserId: int }
+    
+        static member Blank() =
+            { SubscriptionId = 0
+              EventType = String.Empty
+              EventTimestamp = DateTime.UtcNow
+              EventData = String.Empty
+              UserId = 0 }
     
     
     /// A record representing a new row in the table `cfg_object_table_mapper_versions`.
@@ -1073,6 +1196,28 @@ module Parameters =
               Name = String.Empty }
     
     
+    /// A record representing a new row in the table `pipeline_runs`.
+    type NewPipelineRunItem =
+        { [<JsonPropertyName("reference")>] Reference: string
+          [<JsonPropertyName("subscriptionId")>] SubscriptionId: int
+          [<JsonPropertyName("pipelineVersionId")>] PipelineVersionId: int
+          [<JsonPropertyName("startedOn")>] StartedOn: DateTime
+          [<JsonPropertyName("completedOn")>] CompletedOn: DateTime
+          [<JsonPropertyName("wasSuccessful")>] WasSuccessful: bool
+          [<JsonPropertyName("basePath")>] BasePath: string
+          [<JsonPropertyName("runBy")>] RunBy: int }
+    
+        static member Blank() =
+            { Reference = String.Empty
+              SubscriptionId = 0
+              PipelineVersionId = 0
+              StartedOn = DateTime.UtcNow
+              CompletedOn = DateTime.UtcNow
+              WasSuccessful = false
+              BasePath = String.Empty
+              RunBy = 0 }
+    
+    
     /// A record representing a new row in the table `subscriptions`.
     type NewSubscription =
         { [<JsonPropertyName("reference")>] Reference: string
@@ -1097,7 +1242,7 @@ module Parameters =
               Active = false }
     
     
-/// Module generated on 26/04/2023 21:19:12 (utc) via Freql.Tools.
+/// Module generated on 03/06/2023 09:57:39 (utc) via Freql.Tools.
 [<RequireQualifiedAccess>]
 module Operations =
 
@@ -1126,6 +1271,30 @@ module Operations =
     
     let insertActionType (context: MySqlContext) (parameters: Parameters.NewActionType) =
         context.Insert("cfg_action_types", parameters)
+    
+    /// Select a `Records.ConfigurationEvent` from the table `cfg_events`.
+    /// Internally this calls `context.SelectSingleAnon<Records.ConfigurationEvent>` and uses Records.ConfigurationEvent.SelectSql().
+    /// The caller can provide extra string lines to create a query and boxed parameters.
+    /// It is up to the caller to verify the sql and parameters are correct,
+    /// this should be considered an internal function (not exposed in public APIs).
+    /// Parameters are assigned names based on their order in 0 indexed array. For example: @0,@1,@2...
+    /// Example: selectConfigurationEventRecord ctx "WHERE `field` = @0" [ box `value` ]
+    let selectConfigurationEventRecord (context: MySqlContext) (query: string list) (parameters: obj list) =
+        let sql = [ Records.ConfigurationEvent.SelectSql() ] @ query |> buildSql
+        context.SelectSingleAnon<Records.ConfigurationEvent>(sql, parameters)
+    
+    /// Internally this calls `context.SelectAnon<Records.ConfigurationEvent>` and uses Records.ConfigurationEvent.SelectSql().
+    /// The caller can provide extra string lines to create a query and boxed parameters.
+    /// It is up to the caller to verify the sql and parameters are correct,
+    /// this should be considered an internal function (not exposed in public APIs).
+    /// Parameters are assigned names based on their order in 0 indexed array. For example: @0,@1,@2...
+    /// Example: selectConfigurationEventRecords ctx "WHERE `field` = @0" [ box `value` ]
+    let selectConfigurationEventRecords (context: MySqlContext) (query: string list) (parameters: obj list) =
+        let sql = [ Records.ConfigurationEvent.SelectSql() ] @ query |> buildSql
+        context.SelectAnon<Records.ConfigurationEvent>(sql, parameters)
+    
+    let insertConfigurationEvent (context: MySqlContext) (parameters: Parameters.NewConfigurationEvent) =
+        context.Insert("cfg_events", parameters)
     
     /// Select a `Records.ObjectTableMapperVersion` from the table `cfg_object_table_mapper_versions`.
     /// Internally this calls `context.SelectSingleAnon<Records.ObjectTableMapperVersion>` and uses Records.ObjectTableMapperVersion.SelectSql().
@@ -1510,6 +1679,30 @@ module Operations =
     
     let insertTableObjectMapper (context: MySqlContext) (parameters: Parameters.NewTableObjectMapper) =
         context.Insert("cfg_table_object_mappers", parameters)
+    
+    /// Select a `Records.PipelineRunItem` from the table `pipeline_runs`.
+    /// Internally this calls `context.SelectSingleAnon<Records.PipelineRunItem>` and uses Records.PipelineRunItem.SelectSql().
+    /// The caller can provide extra string lines to create a query and boxed parameters.
+    /// It is up to the caller to verify the sql and parameters are correct,
+    /// this should be considered an internal function (not exposed in public APIs).
+    /// Parameters are assigned names based on their order in 0 indexed array. For example: @0,@1,@2...
+    /// Example: selectPipelineRunItemRecord ctx "WHERE `field` = @0" [ box `value` ]
+    let selectPipelineRunItemRecord (context: MySqlContext) (query: string list) (parameters: obj list) =
+        let sql = [ Records.PipelineRunItem.SelectSql() ] @ query |> buildSql
+        context.SelectSingleAnon<Records.PipelineRunItem>(sql, parameters)
+    
+    /// Internally this calls `context.SelectAnon<Records.PipelineRunItem>` and uses Records.PipelineRunItem.SelectSql().
+    /// The caller can provide extra string lines to create a query and boxed parameters.
+    /// It is up to the caller to verify the sql and parameters are correct,
+    /// this should be considered an internal function (not exposed in public APIs).
+    /// Parameters are assigned names based on their order in 0 indexed array. For example: @0,@1,@2...
+    /// Example: selectPipelineRunItemRecords ctx "WHERE `field` = @0" [ box `value` ]
+    let selectPipelineRunItemRecords (context: MySqlContext) (query: string list) (parameters: obj list) =
+        let sql = [ Records.PipelineRunItem.SelectSql() ] @ query |> buildSql
+        context.SelectAnon<Records.PipelineRunItem>(sql, parameters)
+    
+    let insertPipelineRunItem (context: MySqlContext) (parameters: Parameters.NewPipelineRunItem) =
+        context.Insert("pipeline_runs", parameters)
     
     /// Select a `Records.Subscription` from the table `subscriptions`.
     /// Internally this calls `context.SelectSingleAnon<Records.Subscription>` and uses Records.Subscription.SelectSql().

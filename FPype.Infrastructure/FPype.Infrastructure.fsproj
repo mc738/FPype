@@ -12,6 +12,7 @@
         <Compile Include="Configuration\Common\Shared.fs" />
         <Compile Include="Configuration\Common\Verification.fs" />
         <Compile Include="Configuration\Common\Fetch.fs" />
+        <Compile Include="Configuration\Common\Events.fs" />
         <Compile Include="Configuration\Pipelines\Models.fs" />
         <Compile Include="Configuration\Pipelines\CreateOperations.fs" />
         <Compile Include="Configuration\Pipelines\ReadOperations.fs" />
@@ -31,11 +32,16 @@
         <Compile Include="Configuration\ObjectTableMappers\CreateOperations.fs" />
         <Compile Include="Configuration\ObjectTableMappers\ReadOperations.fs" />
         <Compile Include="Configuration\Impl.fs" />
+        <Folder Include="Pipelines\" />
+        <Compile Include="Services\PipelineService.fs" />
+        <Compile Include="Services\Extensions.fs" />
     </ItemGroup>
 
     <ItemGroup>
       <PackageReference Include="freql.mysql" Version="0.9.1" />
       <PackageReference Include="fstoolbox" Version="0.5.0" />
+      <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="7.0.0" />
+      <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="7.0.0" />
     </ItemGroup>
 
     <ItemGroup>

@@ -18,6 +18,10 @@ module Impl =
 
         let cfg = ConfigurationStore.Initialize(path, additionActions, metadata)
 
+        // Get pipelines
+        // Set
+        
+                
         Tables.ReadOperations.Internal.allTablesForSubscription ctx subscriptionId
         |> List.fold (fun (r1: Result<unit, string>) fr ->
             match r1 with

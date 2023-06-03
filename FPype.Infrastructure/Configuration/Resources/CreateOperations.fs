@@ -10,7 +10,7 @@ module CreateOperations =
     open FsToolbox.Extensions
     open FsToolbox.Core.Results
 
-    let query (ctx: MySqlContext) (userReference: string) (resource: NewResource) =
+    let resource (ctx: MySqlContext) (userReference: string) (resource: NewResource) =
         ctx.ExecuteInTransaction(fun t ->
             // Fetch
             Fetch.user t userReference
@@ -45,7 +45,7 @@ module CreateOperations =
                 |> ignore))
         |> toActionResult "Create resource"
 
-    let queryVersion (ctx: MySqlContext) (userReference: string) (resourceReference: string) (version: NewResourceVersion) =
+    let resourceVersion (ctx: MySqlContext) (userReference: string) (resourceReference: string) (version: NewResourceVersion) =
         ctx.ExecuteInTransaction(fun t ->
             // Fetch
             Fetch.user t userReference
