@@ -37,6 +37,16 @@ module Shared =
             : FailureResult)
             |> ActionResult.Failure
 
+    let toJson (value: 'T) =
+        try
+            JsonSerializer.Serialize value |> Ok
+        with exn ->
+            Error(
+                { Message = exn.Message
+                  DisplayMessage = "Failed to serialize object."
+                  Exception = Some exn }: FailureResult
+            )
+    
     let fromJson<'T> (json: string) =
         try
             JsonSerializer.Deserialize<'T> json |> Ok

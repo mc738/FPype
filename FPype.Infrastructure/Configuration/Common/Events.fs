@@ -70,12 +70,14 @@ module Events =
                 fromJson<ResourceVersionAddedEvent> data
                 |> Result.map ConfigurationEvent.ResourceVersionAdded
             | _ when name = TableObjectMapperAddedEvent.Name() ->
-                fromJson<TableObjectMapperAddedEvent> data |> Result.map ConfigurationEvent.TableObjectMapperAdded
+                fromJson<TableObjectMapperAddedEvent> data
+                |> Result.map ConfigurationEvent.TableObjectMapperAdded
             | _ when name = TableObjectMapperVersionAddedEvent.Name() ->
                 fromJson<TableObjectMapperVersionAddedEvent> data
                 |> Result.map ConfigurationEvent.TableObjectMapperVersionAdded
             | _ when name = ObjectTableMapperAddedEvent.Name() ->
-                fromJson<ObjectTableMapperAddedEvent> data |> Result.map ConfigurationEvent.ObjectTableMapperAdded
+                fromJson<ObjectTableMapperAddedEvent> data
+                |> Result.map ConfigurationEvent.ObjectTableMapperAdded
             | _ when name = ObjectTableMapperVersionAddedEvent.Name() ->
                 fromJson<ObjectTableMapperVersionAddedEvent> data
                 |> Result.map ConfigurationEvent.ObjectTableMapperVersionAdded
@@ -83,10 +85,32 @@ module Events =
                 let message = $"Unknowing configuration event type: `{name}`"
 
                 Error(
-                        { Message = message
-                          DisplayMessage = message
-                          Exception = None }: FailureResult)
+                    { Message = message
+                      DisplayMessage = message
+                      Exception = None }
+                    : FailureResult
+                )
 
+        member ce.Serialize() =
+            match ce with
+            | PipelineAdded data -> toJson data |> Result.map (fun r -> PipelineAddedEvent.Name(), r)
+            | PipelineVersionAdded data -> toJson data |> Result.map (fun r -> PipelineVersionAddedEvent.Name(), r)
+            | PipelineActionAdded data -> toJson data |> Result.map (fun r -> PipelineActionAddedEvent.Name(), r)
+            | PipelineResourceAdded data -> toJson data |> Result.map (fun r -> PipelineResourceAddedEvent.Name(), r)
+            | PipelineArgAdded data -> toJson data |> Result.map (fun r -> PipelineArgAddedEvent.Name(), r)
+            | TableAdded data -> toJson data |> Result.map (fun r -> TableAddedEvent.Name(), r)
+            | TableVersionAdded data -> toJson data |> Result.map (fun r -> TableVersionAddedEvent.Name(), r)
+            | TableColumnAdded data -> toJson data |> Result.map (fun r -> TableColumnAddedEvent.Name(), r)
+            | QueryAdded data -> toJson data |> Result.map (fun r -> QueryAddedEvent.Name(), r)
+            | QueryVersionAdded data -> toJson data |> Result.map (fun r -> QueryVersionAddedEvent.Name(), r)
+            | ResourceAdded data -> toJson data |> Result.map (fun r -> ResourceAddedEvent.Name(), r)
+            | ResourceVersionAdded data -> toJson data |> Result.map (fun r -> ResourceVersionAddedEvent.Name(), r)
+            | TableObjectMapperAdded data -> toJson data |> Result.map (fun r -> TableObjectMapperAddedEvent.Name(), r)
+            | TableObjectMapperVersionAdded data -> toJson data |> Result.map (fun r -> TableObjectMapperVersionAddedEvent.Name(), r)
+            | ObjectTableMapperAdded data -> toJson data |> Result.map (fun r -> ObjectTableMapperAddedEvent.Name(), r)
+            | ObjectTableMapperVersionAdded data -> toJson data |> Result.map (fun r -> ObjectTableMapperVersionAddedEvent.Name(), r)
+            
+            
 
 
 
