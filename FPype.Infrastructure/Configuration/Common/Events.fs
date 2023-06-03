@@ -2,6 +2,7 @@
 
 open System
 open System.Text.Json.Serialization
+open FsToolbox.Core.Results
 
 module Events =
 
@@ -39,25 +40,53 @@ module Events =
             | _ when name = PipelineAddedEvent.Name() ->
                 fromJson<PipelineAddedEvent> data |> Result.map ConfigurationEvent.PipelineAdded
             | _ when name = PipelineVersionAddedEvent.Name() ->
-                fromJson<PipelineVersionAddedEvent> data |> Result.map ConfigurationEvent.PipelineVersionAdded
+                fromJson<PipelineVersionAddedEvent> data
+                |> Result.map ConfigurationEvent.PipelineVersionAdded
             | _ when name = PipelineActionAddedEvent.Name() ->
-                fromJson<PipelineActionAddedEvent> data |> Result.map ConfigurationEvent.PipelineActionAdded
+                fromJson<PipelineActionAddedEvent> data
+                |> Result.map ConfigurationEvent.PipelineActionAdded
             | _ when name = PipelineResourceAddedEvent.Name() ->
-                fromJson<PipelineResourceAddedEvent> data |> Result.map ConfigurationEvent.PipelineResourceAdded
+                fromJson<PipelineResourceAddedEvent> data
+                |> Result.map ConfigurationEvent.PipelineResourceAdded
             | _ when name = PipelineArgAddedEvent.Name() ->
-                fromJson<PipelineArgAddedEvent> data |> Result.map ConfigurationEvent.PipelineArgAdded
+                fromJson<PipelineArgAddedEvent> data
+                |> Result.map ConfigurationEvent.PipelineArgAdded
             | _ when name = TableAddedEvent.Name() ->
                 fromJson<TableAddedEvent> data |> Result.map ConfigurationEvent.TableAdded
             | _ when name = TableVersionAddedEvent.Name() ->
-                fromJson<TableVersionAddedEvent> data |> Result.map ConfigurationEvent.TableVersionAdded
+                fromJson<TableVersionAddedEvent> data
+                |> Result.map ConfigurationEvent.TableVersionAdded
             | _ when name = TableColumnAddedEvent.Name() ->
-                fromJson<TableColumnAddedEvent> data |> Result.map ConfigurationEvent.TableColumnAdded
+                fromJson<TableColumnAddedEvent> data
+                |> Result.map ConfigurationEvent.TableColumnAdded
             | _ when name = QueryAddedEvent.Name() ->
                 fromJson<QueryAddedEvent> data |> Result.map ConfigurationEvent.QueryAdded
             | _ when name = QueryVersionAddedEvent.Name() ->
-                fromJson<QueryVersionAddedEvent> data |> Result.map ConfigurationEvent.QueryVersionAdded
-            
-    
+                fromJson<QueryVersionAddedEvent> data
+                |> Result.map ConfigurationEvent.QueryVersionAdded
+            | _ when name = ResourceAddedEvent.Name() ->
+                fromJson<ResourceAddedEvent> data |> Result.map ConfigurationEvent.ResourceAdded
+            | _ when name = ResourceVersionAddedEvent.Name() ->
+                fromJson<ResourceVersionAddedEvent> data
+                |> Result.map ConfigurationEvent.ResourceVersionAdded
+            | _ when name = TableObjectMapperAddedEvent.Name() ->
+                fromJson<TableObjectMapperAddedEvent> data |> Result.map ConfigurationEvent.TableObjectMapperAdded
+            | _ when name = TableObjectMapperVersionAddedEvent.Name() ->
+                fromJson<TableObjectMapperVersionAddedEvent> data
+                |> Result.map ConfigurationEvent.TableObjectMapperVersionAdded
+            | _ when name = ObjectTableMapperAddedEvent.Name() ->
+                fromJson<ObjectTableMapperAddedEvent> data |> Result.map ConfigurationEvent.ObjectTableMapperAdded
+            | _ when name = ObjectTableMapperVersionAddedEvent.Name() ->
+                fromJson<ObjectTableMapperVersionAddedEvent> data
+                |> Result.map ConfigurationEvent.ObjectTableMapperVersionAdded
+            | _ ->
+                let message = $"Unknowing configuration event type: `{name}`"
+
+                Error(
+                        { Message = message
+                          DisplayMessage = message
+                          Exception = None }: FailureResult)
+
 
 
 
