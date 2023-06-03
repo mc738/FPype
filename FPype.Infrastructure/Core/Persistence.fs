@@ -5,7 +5,7 @@ open System.Text.Json.Serialization
 open Freql.Core.Common
 open Freql.MySql
 
-/// Module generated on 03/06/2023 09:57:39 (utc) via Freql.Tools.
+/// Module generated on 03/06/2023 18:19:09 (utc) via Freql.Tools.
 [<RequireQualifiedAccess>]
 module Records =
     /// A record representing a row in the table `cfg_action_types`.
@@ -795,9 +795,10 @@ module Records =
           [<JsonPropertyName("reference")>] Reference: string
           [<JsonPropertyName("subscriptionId")>] SubscriptionId: int
           [<JsonPropertyName("pipelineVersionId")>] PipelineVersionId: int
-          [<JsonPropertyName("startedOn")>] StartedOn: DateTime
-          [<JsonPropertyName("completedOn")>] CompletedOn: DateTime
-          [<JsonPropertyName("wasSuccessful")>] WasSuccessful: bool
+          [<JsonPropertyName("queuedOn")>] QueuedOn: DateTime
+          [<JsonPropertyName("startedOn")>] StartedOn: DateTime option
+          [<JsonPropertyName("completedOn")>] CompletedOn: DateTime option
+          [<JsonPropertyName("wasSuccessful")>] WasSuccessful: bool option
           [<JsonPropertyName("basePath")>] BasePath: string
           [<JsonPropertyName("runBy")>] RunBy: int }
     
@@ -806,9 +807,10 @@ module Records =
               Reference = String.Empty
               SubscriptionId = 0
               PipelineVersionId = 0
-              StartedOn = DateTime.UtcNow
-              CompletedOn = DateTime.UtcNow
-              WasSuccessful = false
+              QueuedOn = DateTime.UtcNow
+              StartedOn = None
+              CompletedOn = None
+              WasSuccessful = None
               BasePath = String.Empty
               RunBy = 0 }
     
@@ -818,9 +820,10 @@ module Records =
   `reference` varchar(36) NOT NULL,
   `subscription_id` int NOT NULL,
   `pipeline_version_id` int NOT NULL,
-  `started_on` datetime NOT NULL,
-  `completed_on` datetime NOT NULL,
-  `was_successful` tinyint(1) NOT NULL,
+  `queued_on` datetime NOT NULL,
+  `started_on` datetime DEFAULT NULL,
+  `completed_on` datetime DEFAULT NULL,
+  `was_successful` tinyint(1) DEFAULT NULL,
   `base_path` varchar(500) NOT NULL,
   `run_by` int NOT NULL,
   PRIMARY KEY (`id`),
@@ -840,6 +843,7 @@ module Records =
               pipeline_runs.`reference`,
               pipeline_runs.`subscription_id`,
               pipeline_runs.`pipeline_version_id`,
+              pipeline_runs.`queued_on`,
               pipeline_runs.`started_on`,
               pipeline_runs.`completed_on`,
               pipeline_runs.`was_successful`,
@@ -923,7 +927,7 @@ module Records =
         static member TableName() = "users"
     
 
-/// Module generated on 03/06/2023 09:57:39 (utc) via Freql.Tools.
+/// Module generated on 03/06/2023 18:19:09 (utc) via Freql.Tools.
 [<RequireQualifiedAccess>]
 module Parameters =
     /// A record representing a new row in the table `cfg_action_types`.
@@ -1201,9 +1205,10 @@ module Parameters =
         { [<JsonPropertyName("reference")>] Reference: string
           [<JsonPropertyName("subscriptionId")>] SubscriptionId: int
           [<JsonPropertyName("pipelineVersionId")>] PipelineVersionId: int
-          [<JsonPropertyName("startedOn")>] StartedOn: DateTime
-          [<JsonPropertyName("completedOn")>] CompletedOn: DateTime
-          [<JsonPropertyName("wasSuccessful")>] WasSuccessful: bool
+          [<JsonPropertyName("queuedOn")>] QueuedOn: DateTime
+          [<JsonPropertyName("startedOn")>] StartedOn: DateTime option
+          [<JsonPropertyName("completedOn")>] CompletedOn: DateTime option
+          [<JsonPropertyName("wasSuccessful")>] WasSuccessful: bool option
           [<JsonPropertyName("basePath")>] BasePath: string
           [<JsonPropertyName("runBy")>] RunBy: int }
     
@@ -1211,9 +1216,10 @@ module Parameters =
             { Reference = String.Empty
               SubscriptionId = 0
               PipelineVersionId = 0
-              StartedOn = DateTime.UtcNow
-              CompletedOn = DateTime.UtcNow
-              WasSuccessful = false
+              QueuedOn = DateTime.UtcNow
+              StartedOn = None
+              CompletedOn = None
+              WasSuccessful = None
               BasePath = String.Empty
               RunBy = 0 }
     
@@ -1242,7 +1248,7 @@ module Parameters =
               Active = false }
     
     
-/// Module generated on 03/06/2023 09:57:39 (utc) via Freql.Tools.
+/// Module generated on 03/06/2023 18:19:09 (utc) via Freql.Tools.
 [<RequireQualifiedAccess>]
 module Operations =
 
