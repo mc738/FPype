@@ -17,7 +17,7 @@ type PipelineService(ctx: MySqlContext, log: ILogger<PipelineService>) =
            StartedOn = DateTime.UtcNow.AddMinutes(-5)
            CompletedOn = DateTime.UtcNow
            WasSuccessful = true
-           BasePath = ""
+           BasePath = "D:\\DataSets\\sp_500\\pipelines\\v10\\pipeline\\runs"
            RunBy = 1 }
         : Records.PipelineRunItem)
         |> FetchResult.Success
