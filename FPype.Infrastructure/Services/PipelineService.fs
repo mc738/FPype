@@ -14,9 +14,10 @@ type PipelineService(ctx: MySqlContext, log: ILogger<PipelineService>) =
            Reference = runId
            SubscriptionId = 1
            PipelineVersionId = 1
-           StartedOn = DateTime.UtcNow.AddMinutes(-5)
-           CompletedOn = DateTime.UtcNow
-           WasSuccessful = true
+           QueuedOn = DateTime.UtcNow.AddMinutes(-10) 
+           StartedOn = Some <| DateTime.UtcNow.AddMinutes(-5)
+           CompletedOn = Some DateTime.UtcNow
+           WasSuccessful = Some true
            BasePath = "D:\\DataSets\\sp_500\\pipelines\\v10\\pipeline\\runs"
            RunBy = 1 }
         : Records.PipelineRunItem)
