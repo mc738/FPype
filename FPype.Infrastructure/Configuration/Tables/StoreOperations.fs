@@ -90,4 +90,32 @@ module StoreOperations =
         |> FetchResult.merge (fun tc tv -> tv, tc) (fun tc -> Fetch.tableVersionById ctx tc.TableVersionId)
         |> FetchResult.merge (fun (tv, tc) t -> t, tv, tc) (fun (tv, tc) -> Fetch.tableById ctx tv.TableModelId)
         |> FetchResult.toResult
+        |> Result.bind (fun (t, tv, tc) ->
+            let verifiers =
+                [ Verification.subscriptionMatches subscription t.SubscriptionId
+                  // This is has likely already been checked.
+                  // But can't hurt to check here again just in case.
+                  Verification.subscriptionIsActive subscription ]
 
+            VerificationResult.verify verifiers (t, tv, tc))
+        |> Result.bind (fun (t, tv, tc) ->
+            let result =
+                store.AddTableColumn(
+                    tv.Reference,
+                    ({ Id = IdType.Specific tc.Reference
+                       Name = tc.Name
+                       DataType = tc.DataType
+                       Optional = tc.Optional
+                       ImportHandler = tc.ImportHandlerJson }
+                    : Tables.NewColumn)
+                )
+
+            match result with
+            | Ok _ -> Ok()
+            | Error e ->
+                ({ Message = e
+                   DisplayMessage = $"Failed to add table column `{tc.Reference}` ({tc.Name}) to configuration store"
+                   Exception = None }
+                : FailureResult)
+                |> Error)
+        |> ActionResult.fromResult

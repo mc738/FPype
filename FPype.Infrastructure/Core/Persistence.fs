@@ -5,7 +5,7 @@ open System.Text.Json.Serialization
 open Freql.Core.Common
 open Freql.MySql
 
-/// Module generated on 03/06/2023 18:19:09 (utc) via Freql.Tools.
+/// Module generated on 04/06/2023 10:34:39 (utc) via Freql.Tools.
 [<RequireQualifiedAccess>]
 module Records =
     /// A record representing a row in the table `cfg_action_types`.
@@ -42,7 +42,8 @@ module Records =
           [<JsonPropertyName("eventType")>] EventType: string
           [<JsonPropertyName("eventTimestamp")>] EventTimestamp: DateTime
           [<JsonPropertyName("eventData")>] EventData: string
-          [<JsonPropertyName("userId")>] UserId: int }
+          [<JsonPropertyName("userId")>] UserId: int
+          [<JsonPropertyName("batchReference")>] BatchReference: string }
     
         static member Blank() =
             { Id = 0
@@ -50,7 +51,8 @@ module Records =
               EventType = String.Empty
               EventTimestamp = DateTime.UtcNow
               EventData = String.Empty
-              UserId = 0 }
+              UserId = 0
+              BatchReference = String.Empty }
     
         static member CreateTableSql() = """
         CREATE TABLE `cfg_events` (
@@ -60,6 +62,7 @@ module Records =
   `event_timestamp` datetime NOT NULL,
   `event_data` text NOT NULL,
   `user_id` int NOT NULL,
+  `batch_reference` varchar(36) NOT NULL,
   PRIMARY KEY (`id`),
   KEY `cfg_events_FK` (`subscription_id`),
   KEY `cfg_events_FK_1` (`user_id`),
@@ -75,7 +78,8 @@ module Records =
               cfg_events.`event_type`,
               cfg_events.`event_timestamp`,
               cfg_events.`event_data`,
-              cfg_events.`user_id`
+              cfg_events.`user_id`,
+              cfg_events.`batch_reference`
         FROM cfg_events
         """
     
@@ -927,7 +931,7 @@ module Records =
         static member TableName() = "users"
     
 
-/// Module generated on 03/06/2023 18:19:09 (utc) via Freql.Tools.
+/// Module generated on 04/06/2023 10:34:39 (utc) via Freql.Tools.
 [<RequireQualifiedAccess>]
 module Parameters =
     /// A record representing a new row in the table `cfg_action_types`.
@@ -944,14 +948,16 @@ module Parameters =
           [<JsonPropertyName("eventType")>] EventType: string
           [<JsonPropertyName("eventTimestamp")>] EventTimestamp: DateTime
           [<JsonPropertyName("eventData")>] EventData: string
-          [<JsonPropertyName("userId")>] UserId: int }
+          [<JsonPropertyName("userId")>] UserId: int
+          [<JsonPropertyName("batchReference")>] BatchReference: string }
     
         static member Blank() =
             { SubscriptionId = 0
               EventType = String.Empty
               EventTimestamp = DateTime.UtcNow
               EventData = String.Empty
-              UserId = 0 }
+              UserId = 0
+              BatchReference = String.Empty }
     
     
     /// A record representing a new row in the table `cfg_object_table_mapper_versions`.
@@ -1248,7 +1254,7 @@ module Parameters =
               Active = false }
     
     
-/// Module generated on 03/06/2023 18:19:09 (utc) via Freql.Tools.
+/// Module generated on 04/06/2023 10:34:39 (utc) via Freql.Tools.
 [<RequireQualifiedAccess>]
 module Operations =
 
