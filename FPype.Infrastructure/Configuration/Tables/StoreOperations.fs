@@ -16,8 +16,27 @@ module StoreOperations =
         (subscription: Records.Subscription)
         (tableReference: string)
         =
+        Fetch.table ctx tableReference
+        |> FetchResult.toResult
+        |> Result.bind (fun t ->
+            let verifiers =
+                [ Verification.subscriptionMatches subscription t.SubscriptionId
+                  // This is has likely already been checked.
+                  // But can't hurt to check here again just in case.
+                  Verification.subscriptionIsActive subscription ]
 
-        ()
+            VerificationResult.verify verifiers t)
+        |> Result.bind (fun t ->
+
+            match store.AddTable(t.Name) with
+            | Ok _ -> Ok()
+            | Error e ->
+                ({ Message = e
+                   DisplayMessage = $"Failed to add table `{t.Name}` to configuration store"
+                   Exception = None }
+                : FailureResult)
+                |> Error)
+        |> ActionResult.fromResult
 
     let addTableVersion
         (ctx: MySqlContext)
@@ -49,12 +68,25 @@ module StoreOperations =
                        ImportHandler = c.ImportHandlerJson }
                     : Tables.NewColumn))
 
-            match store.AddTableVersion(IdType.Specific tv.Reference, t.Name, columns, ItemVersion.Specific tv.Version) with
+            match
+                store.AddTableVersion(IdType.Specific tv.Reference, t.Name, columns, ItemVersion.Specific tv.Version)
+            with
             | Ok _ -> Ok()
             | Error e ->
                 ({ Message = e
-                   DisplayMessage = $"Failed to add table `{t}` to configuration store"
+                   DisplayMessage = $"Failed to add table version `{tv.Reference}` ({t.Name}) to configuration store"
                    Exception = None }
                 : FailureResult)
                 |> Error)
         |> ActionResult.fromResult
+
+    let addTableColumn
+        (ctx: MySqlContext)
+        (store: ConfigurationStore)
+        (subscription: Records.Subscription)
+        (columnReference: string)
+        =
+        Fetch.tableColumnByReference ctx columnReference
+        |> FetchResult.merge (fun tv t -> t, tv) (fun tv -> Fetch.tableById ctx tv.Id)
+
+        ()

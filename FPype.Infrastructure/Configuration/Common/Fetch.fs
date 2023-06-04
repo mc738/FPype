@@ -261,6 +261,22 @@ module Fetch =
                Exception = Some ex })
             |> FetchResult.Failure
 
+    let tableColumnByReference (ctx: MySqlContext) (reference: string) =
+        try
+            Operations.selectTableColumnRecord ctx [ "WHERE reference = @0;" ] [ reference ]
+            |> Option.map FetchResult.Success
+            |> Option.defaultWith (fun _ ->
+                ({ Message = $"Table column (ref: {reference}) not found"
+                   DisplayMessage = "Table column not found"
+                   Exception = None }
+                : FailureResult)
+                |> FetchResult.Failure)
+        with ex ->
+            ({ Message = "Unhandled exception while fetching table column"
+               DisplayMessage = "Error fetching table column"
+               Exception = Some ex })
+            |> FetchResult.Failure
+    
     // Queries
     let query (ctx: MySqlContext) (reference: string) =
         try
