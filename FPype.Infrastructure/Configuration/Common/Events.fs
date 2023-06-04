@@ -109,9 +109,13 @@ module Events =
             | ResourceAdded data -> toJson data |> Result.map (fun r -> ResourceAddedEvent.Name(), r)
             | ResourceVersionAdded data -> toJson data |> Result.map (fun r -> ResourceVersionAddedEvent.Name(), r)
             | TableObjectMapperAdded data -> toJson data |> Result.map (fun r -> TableObjectMapperAddedEvent.Name(), r)
-            | TableObjectMapperVersionAdded data -> toJson data |> Result.map (fun r -> TableObjectMapperVersionAddedEvent.Name(), r)
+            | TableObjectMapperVersionAdded data ->
+                toJson data
+                |> Result.map (fun r -> TableObjectMapperVersionAddedEvent.Name(), r)
             | ObjectTableMapperAdded data -> toJson data |> Result.map (fun r -> ObjectTableMapperAddedEvent.Name(), r)
-            | ObjectTableMapperVersionAdded data -> toJson data |> Result.map (fun r -> ObjectTableMapperVersionAddedEvent.Name(), r)
+            | ObjectTableMapperVersionAdded data ->
+                toJson data
+                |> Result.map (fun r -> ObjectTableMapperVersionAddedEvent.Name(), r)
 
     and [<CLIMutable>] PipelineAddedEvent =
         { [<JsonPropertyName("reference")>]
@@ -302,7 +306,7 @@ module Events =
     let addEvents
         (ctx: MySqlContext)
         (log: ILogger)
-        (quoteId: int)
+        (subscriptionId: int)
         (userId: int)
         (timestamp: DateTime)
         (events: ConfigurationEvent list)
@@ -311,14 +315,25 @@ module Events =
         |> List.fold
             (fun last e ->
                 match e.Serialize() with
-                | Ok (name, data) ->
-                    ({ SubscriptionId = quoteId
+                | Ok(name, data) ->
+                    ({ SubscriptionId = subscriptionId
                        EventType = name
                        EventTimestamp = timestamp
                        EventData = data
-                       UserId = userId }: Parameters.NewConfigurationEvent)
+                       UserId = userId }
+                    : Parameters.NewConfigurationEvent)
                     |> Operations.insertConfigurationEvent ctx
 
                 | Error e -> last)
             0UL
         |> int
+
+    let selectEventRecords (ctx: MySqlContext) (subscriptionId: int) (previousTip: int) =
+        Operations.selectConfigurationEventRecords
+            ctx
+            [ "WHERE subscription_id = @0 AND id > @1" ]
+            [ subscriptionId; previousTip ]
+
+    let selectEvents (ctx: MySqlContext) (subscriptionId: int) (previousTip: int) =
+        selectEventRecords ctx subscriptionId previousTip
+        |> List.map (fun ce -> ConfigurationEvent.TryDeserialize(ce.EventType, ce.EventData) |> FetchResult.fromResult)

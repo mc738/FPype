@@ -19,6 +19,7 @@
         <Compile Include="Configuration\Tables\Models.fs" />
         <Compile Include="Configuration\Tables\CreateOperations.fs" />
         <Compile Include="Configuration\Tables\ReadOperations.fs" />
+        <Compile Include="Configuration\Tables\StoreOperations.fs" />
         <Compile Include="Configuration\Queries\Models.fs" />
         <Compile Include="Configuration\Queries\CreateOperations.fs" />
         <Compile Include="Configuration\Queries\ReadOperations.fs" />
