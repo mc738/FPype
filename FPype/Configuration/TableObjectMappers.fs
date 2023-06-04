@@ -14,7 +14,6 @@ module TableObjectMappers =
     open FPype.Configuration.Persistence
     open FPype.Data.Models
 
-    
     [<AutoOpen>]
     module private Internal =
 
