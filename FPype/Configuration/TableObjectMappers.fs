@@ -27,7 +27,7 @@ module TableObjectMappers =
                 Error
                     $"Error creating query: query `{queryVersion.Name}` (version `{queryVersion.Version.ToLabel()}`) not found")
 
-    type NewTableObjectMapper =
+    type NewTableObjectMapperVersion =
         { Id: IdType
           Name: string
           Version: ItemVersion
@@ -173,7 +173,7 @@ module TableObjectMappers =
     let addRawLatestVersionTransaction (ctx: SqliteContext) (id: IdType) (name: string) (mapper: string) =
         ctx.ExecuteInTransaction(fun t -> addRawLatestVersion t id name mapper)
 
-    let addSpecificVersionRaw (ctx: SqliteContext) (id: IdType) (name: string) (mapper: string) (version: int) =
+    let addRawSpecificVersion (ctx: SqliteContext) (id: IdType) (name: string) (mapper: string) (version: int) =
         match getVersionId ctx name version with
         | Some _ -> Error $"Version `{version}` of table object mapper `{name}` already exists."
         | None ->
@@ -203,12 +203,19 @@ module TableObjectMappers =
         (mapper: string)
         (version: int)
         =
-        ctx.ExecuteInTransactionV2(fun t -> addSpecificVersionRaw t id name mapper version)
+        ctx.ExecuteInTransactionV2(fun t -> addRawSpecificVersion t id name mapper version)
 
-    let addRaw (ctx: SqliteContext) (mapper: NewTableObjectMapper) =
+    let addRawVersion (ctx: SqliteContext) (mapper: NewTableObjectMapperVersion) =
         match mapper.Version with
         | ItemVersion.Latest -> addRawLatestVersion ctx mapper.Id mapper.Name mapper.Mapper |> Ok
-        | ItemVersion.Specific v -> addSpecificVersionRaw ctx mapper.Id mapper.Name mapper.Mapper v
+        | ItemVersion.Specific v -> addRawSpecificVersion ctx mapper.Id mapper.Name mapper.Mapper v
 
-    let addRawTransaction (ctx: SqliteContext) (mapper: NewTableObjectMapper) =
-        ctx.ExecuteInTransactionV2(fun t -> addRaw t mapper)
+    let addRawVersionTransaction (ctx: SqliteContext) (mapper: NewTableObjectMapperVersion) =
+        ctx.ExecuteInTransactionV2(fun t -> addRawVersion t mapper)
+
+    let add (ctx: SqliteContext) (mapperName: string) =
+        ({ Name = mapperName }: Parameters.NewTableObjectMapper)
+        |> Operations.insertTableObjectMapper ctx 
+       
+    let addTransaction (ctx: SqliteContext) (mapperName: string) =
+        ctx.ExecuteInTransaction(fun t -> add t mapperName)

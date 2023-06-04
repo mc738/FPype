@@ -81,14 +81,14 @@ module Import =
             ({ Id = IdType.FromJson json
                Name = n
                Version = ItemVersion.FromJson json
-               Mapper = m.ToString() }: TableObjectMappers.NewTableObjectMapper)
+               Mapper = m.ToString() }: TableObjectMappers.NewTableObjectMapperVersion)
             |> Ok
         | None, _ -> Error "Missing `name` property"
         | _, None -> Error "Missing `mapper` property"
         |> Result.bind (
             match transaction with
-            | true -> TableObjectMappers.addRawTransaction ctx
-            | false -> TableObjectMappers.addRaw ctx
+            | true -> TableObjectMappers.addRawVersionTransaction ctx
+            | false -> TableObjectMappers.addRawVersion ctx
         )
 
     let tableObjectMappers (ctx: SqliteContext) (transaction: bool) (json: JsonElement list) =

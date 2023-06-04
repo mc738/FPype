@@ -31,6 +31,7 @@
         <Compile Include="Configuration\TableObjectMappers\Models.fs" />
         <Compile Include="Configuration\TableObjectMappers\CreateOperations.fs" />
         <Compile Include="Configuration\TableObjectMappers\ReadOperations.fs" />
+        <Compile Include="Configuration\TableObjectMappers\StoreOperations.fs" />
         <Compile Include="Configuration\ObjectTableMappers\Models.fs" />
         <Compile Include="Configuration\ObjectTableMappers\CreateOperations.fs" />
         <Compile Include="Configuration\ObjectTableMappers\ReadOperations.fs" />

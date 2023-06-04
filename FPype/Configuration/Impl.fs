@@ -145,14 +145,21 @@ type ConfigurationStore(ctx: SqliteContext) =
 
     member pc.GetTableObjectMapper(name, ?version: ItemVersion) =
         ItemVersion.FromOptional version |> TableObjectMappers.load ctx name
-
-    member pc.AddTableObjectMapper(id, name, mapper, ?version) =
+    
+    /// <summary>
+    /// Add a mapper but not a version (or columns) - essentially a placeholder.
+    /// This is mostly for internal use.
+    /// </summary>
+    /// <param name="mapperName">The mapper name</param>
+    member pc.AddTableObjectMapper(mapperName: string) =TableObjectMappers.addTransaction ctx mapperName
+    
+    member pc.AddTableObjectMapperVersion(id, name, mapper, ?version) =
         ({ Id = id
            Name = name
            Version = ItemVersion.FromOptional version
            Mapper = mapper }
-        : TableObjectMappers.NewTableObjectMapper)
-        |> TableObjectMappers.addRawTransaction ctx
+        : TableObjectMappers.NewTableObjectMapperVersion)
+        |> TableObjectMappers.addRawVersionTransaction ctx
 
     member pc.GetPipelineVersion(name, ?version: ItemVersion) =
         Pipelines.get ctx name (version |> ItemVersion.FromOptional)
@@ -193,9 +200,6 @@ type ConfigurationStore(ctx: SqliteContext) =
 
         ItemVersion.FromOptional version
         |> Resources.addVersionTransaction ctx id resource resourceType ms
-
-
-
 
     member pc.ImportFromFile(path: string) = Import.fromFileTransaction ctx path
 
