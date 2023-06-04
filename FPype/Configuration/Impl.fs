@@ -171,7 +171,7 @@ type ConfigurationStore(ctx: SqliteContext) =
     /// <param name="mapperName">The mapper name</param>
     member pc.AddObjectTableMapper(mapperName: string) = ObjectTableMappers.addTransaction ctx mapperName
     
-    member pc.AddObjectTableMapperVersion(id, name, mapper, tableVersionId: string, ?version) =
+    member pc.AddObjectTableMapperVersion(id, name, tableVersionId: string, mapper, ?version) =
         ({ Id = id
            Name = name
            TableVersionId = tableVersionId 
