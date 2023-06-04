@@ -16,14 +16,15 @@ module Tables =
     open FPype.Data.Models
     open FPype.Configuration.Persistence
 
-    type NewTable =
+    type NewTableVersion =
         { Id: IdType
           Name: string
           Version: ItemVersion
           Columns: NewColumn list }
 
     and NewColumn =
-        { Name: string
+        { Id: IdType
+          Name: string
           DataType: string
           Optional: bool
           ImportHandler: string option }
@@ -35,7 +36,8 @@ module Tables =
                 Json.tryGetBoolProperty "optional" json
             with
             | Some n, Some dt, Some o ->
-                { Name = n
+                { Id = IdType.FromJson json
+                  Name = n
                   DataType = dt
                   Optional = o
                   ImportHandler =
@@ -64,8 +66,10 @@ module Tables =
                 ({ Name = tcr.Name
                    Type =
                      BaseType.FromId(tcr.DataType, tcr.Optional)
-                     |> Option.defaultWith (fun _ -> failwith $"Invalid type for column `{tcr.Name}`: `{tcr.DataType}`")
-                   ImportHandler = importHandler }: TableColumn))
+                     |> Option.defaultWith (fun _ ->
+                         failwith $"Invalid type for column `{tcr.Name}`: `{tcr.DataType}`")
+                   ImportHandler = importHandler }
+                : TableColumn))
             |> Ok
         with exn ->
             Error $"Error creating table columns: {exn}"
@@ -94,7 +98,8 @@ module Tables =
             |> Result.map (fun tc ->
                 ({ Name = tv.TableModel
                    Columns = tc
-                   Rows = [] }: TableModel)))
+                   Rows = [] }
+                : TableModel)))
         |> Option.defaultValue (Error $"Table `{tableName}` not found")
 
     let loadTableFromJson (ctx: SqliteContext) (propertyName: string) (json: JsonElement) =
@@ -139,7 +144,8 @@ module Tables =
         ({ Id = versionId
            TableModel = tableName
            Version = version
-           CreatedOn = timestamp () }: Parameters.NewTableModelVersion)
+           CreatedOn = timestamp () }
+        : Parameters.NewTableModelVersion)
         |> Operations.insertTableModelVersion ctx
 
         columns
@@ -148,22 +154,24 @@ module Tables =
             | Some ih ->
                 use ms = new MemoryStream(ih.ToUtf8Bytes())
 
-                ({ Id = createId ()
+                ({ Id = tc.Id.Get()
                    TableVersionId = versionId
                    Name = tc.Name
                    DataType = tc.DataType
                    Optional = tc.Optional
                    ImportHandler = BlobField.FromBytes ms |> Some
-                   ColumnIndex = i }: Parameters.NewTableColumn)
+                   ColumnIndex = i }
+                : Parameters.NewTableColumn)
                 |> Operations.insertTableColumn ctx
             | None ->
-                ({ Id = createId ()
+                ({ Id = tc.Id.Get()
                    TableVersionId = versionId
                    Name = tc.Name
                    DataType = tc.DataType
                    Optional = tc.Optional
                    ImportHandler = None
-                   ColumnIndex = i }: Parameters.NewTableColumn)
+                   ColumnIndex = i }
+                : Parameters.NewTableColumn)
                 |> Operations.insertTableColumn ctx)
 
     let addLatestVersionTransaction (ctx: SqliteContext) (id: IdType) (tableName: string) (columns: NewColumn list) =
@@ -190,7 +198,8 @@ module Tables =
             ({ Id = versionId
                TableModel = tableName
                Version = version
-               CreatedOn = timestamp () }: Parameters.NewTableModelVersion)
+               CreatedOn = timestamp () }
+            : Parameters.NewTableModelVersion)
             |> Operations.insertTableModelVersion ctx
 
             columns
@@ -199,22 +208,24 @@ module Tables =
                 | Some ih ->
                     use ms = new MemoryStream(ih.ToUtf8Bytes())
 
-                    ({ Id = createId ()
+                    ({ Id = tc.Id.Get()
                        TableVersionId = versionId
                        Name = tc.Name
                        DataType = tc.DataType
                        Optional = tc.Optional
                        ImportHandler = BlobField.FromBytes ms |> Some
-                       ColumnIndex = i }: Parameters.NewTableColumn)
+                       ColumnIndex = i }
+                    : Parameters.NewTableColumn)
                     |> Operations.insertTableColumn ctx
                 | None ->
-                    ({ Id = createId ()
+                    ({ Id = tc.Id.Get()
                        TableVersionId = versionId
                        Name = tc.Name
                        DataType = tc.DataType
                        Optional = tc.Optional
                        ImportHandler = None
-                       ColumnIndex = i }: Parameters.NewTableColumn)
+                       ColumnIndex = i }
+                    : Parameters.NewTableColumn)
                     |> Operations.insertTableColumn ctx)
             |> Ok
 
@@ -227,17 +238,57 @@ module Tables =
         =
         ctx.ExecuteInTransactionV2(fun t -> addSpecificVersion t id tableName columns version)
 
-    let add
-        (ctx: SqliteContext)
-        (table: NewTable)
-        =
+    let addVersion (ctx: SqliteContext) (table: NewTableVersion) =
         match table.Version with
         | ItemVersion.Latest -> addLatestVersion ctx table.Id table.Name table.Columns |> Ok
         | ItemVersion.Specific v -> addSpecificVersion ctx table.Id table.Name table.Columns v
-        
-    let addTransaction
-        (ctx: SqliteContext)
-        (table: NewTable)
-        =
-        ctx.ExecuteInTransactionV2(fun t -> add t table)
-    
+
+    let add (ctx: SqliteContext) (tableName: string) =
+        ({ Name = tableName }: Parameters.NewTableModel)
+        |> Operations.insertTableModel ctx
+
+    let addColumn (ctx: SqliteContext) (versionReference: string) (column: NewColumn) =
+        match Operations.selectTableModelVersionRecord ctx [ "WHERE reference = @0" ] [ versionReference ] with
+        | Some tv ->
+            let colIndex =
+                Operations.selectTableColumnRecord
+                    ctx
+                    [ "WHERE table_version_id = @0 ORDER BY column_index DESC LIMIT 1" ]
+                    [ tv.Version ]
+                |> Option.map (fun tcr -> tcr.ColumnIndex + 1)
+                |> Option.defaultValue 0
+
+            match column.ImportHandler with
+            | Some ih ->
+                use ms = new MemoryStream(ih.ToUtf8Bytes())
+
+                ({ Id = column.Id.Get()
+                   TableVersionId = tv.Id
+                   Name = column.Name
+                   DataType = column.DataType
+                   Optional = column.Optional
+                   ImportHandler = BlobField.FromBytes ms |> Some
+                   ColumnIndex = colIndex }
+                : Parameters.NewTableColumn)
+                |> Operations.insertTableColumn ctx
+            | None ->
+                ({ Id = column.Id.Get()
+                   TableVersionId = tv.Id
+                   Name = column.Name
+                   DataType = column.DataType
+                   Optional = column.Optional
+                   ImportHandler = None
+                   ColumnIndex = colIndex }
+                : Parameters.NewTableColumn)
+                |> Operations.insertTableColumn ctx
+            |> Ok
+        | None -> Error $"Table version `{versionReference}` not found"
+
+    let addVersionTransaction (ctx: SqliteContext) (table: NewTableVersion) =
+        ctx.ExecuteInTransactionV2(fun t -> addVersion t table)
+
+    let addTransaction (ctx: SqliteContext) (tableName: string) =
+        ctx.ExecuteInTransaction(fun t -> add t tableName)
+
+    let addColumnTransaction (ctx: SqliteContext) (versionReference: string) (column: NewColumn) =
+        ctx.ExecuteInTransactionV2(fun t -> addColumn t versionReference column)

@@ -97,14 +97,30 @@ type ConfigurationStore(ctx: SqliteContext) =
     member pc.GetTable(tableName, ?version: ItemVersion) =
         ItemVersion.FromOptional version |> Tables.tryCreateTableModel ctx tableName
 
-    member pc.AddTable(id, tableName, columns, ?version) =
+    /// <summary>
+    /// Add a table but not a version (or columns) - essentially a placeholder.
+    /// This is mostly for internal use. 
+    /// </summary>
+    /// <param name="tableName">The table name</param>
+    member pc.AddTable(tableName) =
+        Tables.addTransaction ctx tableName
+    
+    member pc.AddTableVersion(id, tableName, columns, ?version) =
         ({ Id = id
            Name = tableName
            Version = ItemVersion.FromOptional version
            Columns = columns }
-        : Tables.NewTable)
-        |> Tables.addTransaction ctx
+        : Tables.NewTableVersion)
+        |> Tables.addVersionTransaction ctx
 
+    /// <summary>
+    /// Add a new table column. This is mostly for internal use
+    /// </summary>
+    /// <param name="versionReference">The table version reference</param>
+    /// <param name="column">The new column</param>
+    member pc.AddTableColumn(versionReference, column) =
+        Tables.addColumnTransaction ctx versionReference column
+    
     member pc.GetQuery(queryName, ?version: ItemVersion) =
         ItemVersion.FromOptional version |> Queries.get ctx queryName
 

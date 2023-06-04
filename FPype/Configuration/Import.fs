@@ -31,7 +31,8 @@ module Import =
                 |> List.mapi (fun i c ->
                     match Json.tryGetStringProperty "name" c, Json.tryGetStringProperty "type" c with
                     | Some n, Some t ->
-                        ({ Name = n
+                        ({ Id = IdType.FromJson json
+                           Name = n
                            DataType = t
                            Optional = Json.tryGetBoolProperty "optional" c |> Option.defaultValue false
                            ImportHandler = Json.tryGetProperty "importHandler" c |> Option.map (fun ih -> ih.ToString()) }: Tables.NewColumn)
@@ -44,12 +45,12 @@ module Import =
                 ({ Id = IdType.FromJson json
                    Name = name
                    Version = ItemVersion.FromJson json
-                   Columns = columns }: Tables.NewTable))
+                   Columns = columns }: Tables.NewTableVersion))
         | None -> Error "Missing `name` property"
         |> Result.bind (
             match transaction with
-            | true -> Tables.addTransaction ctx
-            | false -> Tables.add ctx
+            | true -> Tables.addVersionTransaction ctx
+            | false -> Tables.addVersion ctx
         )
 
     let tables (ctx: SqliteContext) (transaction: bool) (json: JsonElement list) =

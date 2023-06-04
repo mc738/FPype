@@ -42,13 +42,14 @@ module StoreOperations =
             let columns =
                 tc
                 |> List.map (fun c ->
-                    ({ Name = c.Name
+                    ({ Id = IdType.Specific c.Reference
+                       Name = c.Name
                        DataType = c.DataType
                        Optional = c.Optional
                        ImportHandler = c.ImportHandlerJson }
                     : Tables.NewColumn))
 
-            match store.AddTable(IdType.Specific tv.Reference, t.Name, columns, ItemVersion.Specific tv.Version) with
+            match store.AddTableVersion(IdType.Specific tv.Reference, t.Name, columns, ItemVersion.Specific tv.Version) with
             | Ok _ -> Ok()
             | Error e ->
                 ({ Message = e
