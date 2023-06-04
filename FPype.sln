@@ -27,6 +27,8 @@ Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "FPype.Test", "FPype.Test\FP
 EndProject
 Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "FPype.Service", "FPype.Service\FPype.Service.fsproj", "{1C1CFC12-674D-414C-9D21-CDF76B40D42C}"
 EndProject
+Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "Armarium", "..\Armarium\Armarium\Armarium.fsproj", "{3E7A0F3E-ADB8-4E9B-A762-F4E8333FD2CB}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -69,9 +71,14 @@ Global
 		{1C1CFC12-674D-414C-9D21-CDF76B40D42C}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{1C1CFC12-674D-414C-9D21-CDF76B40D42C}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{1C1CFC12-674D-414C-9D21-CDF76B40D42C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{3E7A0F3E-ADB8-4E9B-A762-F4E8333FD2CB}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{3E7A0F3E-ADB8-4E9B-A762-F4E8333FD2CB}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{3E7A0F3E-ADB8-4E9B-A762-F4E8333FD2CB}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{3E7A0F3E-ADB8-4E9B-A762-F4E8333FD2CB}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
 		{ABEB55B8-F572-41CD-81A6-69FA259C38EF} = {23F03A24-5616-41EF-AFB2-B5BEDD79743D}
 		{A9129778-A72F-4179-980A-9153E716F135} = {23F03A24-5616-41EF-AFB2-B5BEDD79743D}
+		{3E7A0F3E-ADB8-4E9B-A762-F4E8333FD2CB} = {23F03A24-5616-41EF-AFB2-B5BEDD79743D}
 	EndGlobalSection
 EndGlobal

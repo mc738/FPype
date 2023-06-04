@@ -120,7 +120,7 @@ module Resources =
         =
         ctx.ExecuteInTransactionV2(fun t -> addSpecificVersion t id resource resourceType raw version)
 
-    let add
+    let addVersion
         (ctx: SqliteContext)
         (id: IdType)
         (resource: string)
@@ -132,7 +132,7 @@ module Resources =
         | ItemVersion.Latest -> addLatestVersion ctx id resource resourceType raw |> Ok
         | ItemVersion.Specific v -> addSpecificVersion ctx id resource resourceType raw v
 
-    let addTransaction
+    let addVersionTransaction
         (ctx: SqliteContext)
         (id: IdType)
         (resource: string)
@@ -140,5 +140,12 @@ module Resources =
         (raw: MemoryStream)
         (version: ItemVersion)
         =
-        ctx.ExecuteInTransactionV2(fun t -> add t id resource resourceType raw version)
+        ctx.ExecuteInTransactionV2(fun t -> addVersion t id resource resourceType raw version)
 
+
+    let add (ctx: SqliteContext) (resourceName: string) =
+        ({ Name = resourceName }: Parameters.NewResource)
+        |> Operations.insertResource ctx
+        
+    let addTransaction (ctx: SqliteContext) (resourceName: string) =
+        ctx.ExecuteInTransaction(fun t -> add t resourceName)

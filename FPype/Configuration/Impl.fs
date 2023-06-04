@@ -169,8 +169,33 @@ type ConfigurationStore(ctx: SqliteContext) =
             use ms = new MemoryStream(File.ReadAllBytes filePath)
 
             ItemVersion.FromOptional version
-            |> Resources.add ctx id resource resourceType ms
+            |> Resources.addVersionTransaction ctx id resource resourceType ms
         | false -> Error $"File `{filePath}` does not exist."
+
+    
+    /// <summary>
+    /// Add a resource but not a version (or columns) - essentially a placeholder.
+    /// This is mostly for internal use.
+    /// </summary>
+    /// <param name="resourceName">The resource name</param>
+    member pc.AddResource(resourceName: string) =
+        Resources.addTransaction ctx resourceName
+
+    member pc.AddResourceVersion
+        (
+            id: IdType,
+            resource: string,
+            resourceType: string,
+            raw: byte array,
+            ?version: ItemVersion
+        ) =
+        use ms = new MemoryStream(raw)
+
+        ItemVersion.FromOptional version
+        |> Resources.addVersionTransaction ctx id resource resourceType ms
+
+
+
 
     member pc.ImportFromFile(path: string) = Import.fromFileTransaction ctx path
 

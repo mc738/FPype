@@ -27,6 +27,7 @@
         <Compile Include="Configuration\Resources\Models.fs" />
         <Compile Include="Configuration\Resources\CreateOperations.fs" />
         <Compile Include="Configuration\Resources\ReadOperations.fs" />
+        <Compile Include="Configuration\Resources\StoreOperations.fs" />
         <Compile Include="Configuration\TableObjectMappers\Models.fs" />
         <Compile Include="Configuration\TableObjectMappers\CreateOperations.fs" />
         <Compile Include="Configuration\TableObjectMappers\ReadOperations.fs" />
@@ -47,6 +48,7 @@
     </ItemGroup>
 
     <ItemGroup>
+      <ProjectReference Include="..\..\Armarium\Armarium\Armarium.fsproj" />
       <ProjectReference Include="..\FPype\FPype.fsproj" />
     </ItemGroup>
 
