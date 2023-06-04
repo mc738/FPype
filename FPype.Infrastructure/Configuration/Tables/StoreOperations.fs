@@ -45,7 +45,7 @@ module StoreOperations =
         (versionReference: string)
         =
         Fetch.tableVersionByReference ctx versionReference
-        |> FetchResult.merge (fun tv t -> t, tv) (fun tv -> Fetch.tableById ctx tv.Id)
+        |> FetchResult.merge (fun tv t -> t, tv) (fun tv -> Fetch.tableById ctx tv.TableModelId)
         |> FetchResult.merge (fun (t, tv) tc -> t, tv, tc) (fun (_, tv) -> Fetch.tableColumns ctx tv.Id)
         |> FetchResult.toResult
         |> Result.bind (fun (t, tv, tc) ->
@@ -87,6 +87,7 @@ module StoreOperations =
         (columnReference: string)
         =
         Fetch.tableColumnByReference ctx columnReference
-        |> FetchResult.merge (fun tv t -> t, tv) (fun tv -> Fetch.tableById ctx tv.Id)
+        |> FetchResult.merge (fun tc tv -> tv, tc) (fun tc -> Fetch.tableVersionById ctx tc.TableVersionId)
+        |> FetchResult.merge (fun (tv, tc) t -> t, tv, tc) (fun (tv, tc) -> Fetch.tableById ctx tv.TableModelId)
+        |> FetchResult.toResult
 
-        ()
