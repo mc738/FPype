@@ -161,6 +161,26 @@ type ConfigurationStore(ctx: SqliteContext) =
         : TableObjectMappers.NewTableObjectMapperVersion)
         |> TableObjectMappers.addRawVersionTransaction ctx
 
+    member pc.GetTableObjectMapper(name, ?version: ItemVersion) = failwith "TODO"
+        //ItemVersion.FromOptional version |> TableObjectMappers.load ctx name
+    
+    /// <summary>
+    /// Add a mapper but not a version (or columns) - essentially a placeholder.
+    /// This is mostly for internal use.
+    /// </summary>
+    /// <param name="mapperName">The mapper name</param>
+    member pc.AddObjectTableMapper(mapperName: string) = ObjectTableMappers.addTransaction ctx mapperName
+    
+    member pc.AddObjectTableMapperVersion(id, name, mapper, tableVersionId: string, ?version) =
+        ({ Id = id
+           Name = name
+           TableVersionId = tableVersionId 
+           Version = ItemVersion.FromOptional version
+           Mapper = mapper }
+        : ObjectTableMappers.NewObjectTableMapperVersion)
+        |> ObjectTableMappers.addRawVersionTransaction ctx
+
+    
     member pc.GetPipelineVersion(name, ?version: ItemVersion) =
         Pipelines.get ctx name (version |> ItemVersion.FromOptional)
 
@@ -179,7 +199,6 @@ type ConfigurationStore(ctx: SqliteContext) =
             |> Resources.addVersionTransaction ctx id resource resourceType ms
         | false -> Error $"File `{filePath}` does not exist."
 
-    
     /// <summary>
     /// Add a resource but not a version (or columns) - essentially a placeholder.
     /// This is mostly for internal use.
