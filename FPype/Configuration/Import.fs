@@ -62,14 +62,14 @@ module Import =
             ({ Id = IdType.FromJson json
                Name = n
                Version = ItemVersion.FromJson json
-               Query = q }: Queries.NewQuery)
+               Query = q }: Queries.NewQueryVersion)
             |> Ok
         | None, _ -> Error "Missing `name` property"
         | _, None -> Error "Missing `query` property"
         |> Result.bind (
             match transaction with
-            | true -> Queries.addTransaction ctx
-            | false -> Queries.add ctx
+            | true -> Queries.addVersionTransaction ctx
+            | false -> Queries.addVersion ctx
         )
 
     let queries (ctx: SqliteContext) (transaction: bool) (json: JsonElement list) =

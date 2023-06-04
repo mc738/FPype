@@ -99,12 +99,11 @@ type ConfigurationStore(ctx: SqliteContext) =
 
     /// <summary>
     /// Add a table but not a version (or columns) - essentially a placeholder.
-    /// This is mostly for internal use. 
+    /// This is mostly for internal use.
     /// </summary>
     /// <param name="tableName">The table name</param>
-    member pc.AddTable(tableName) =
-        Tables.addTransaction ctx tableName
-    
+    member pc.AddTable(tableName) = Tables.addTransaction ctx tableName
+
     member pc.AddTableVersion(id, tableName, columns, ?version) =
         ({ Id = id
            Name = tableName
@@ -120,17 +119,24 @@ type ConfigurationStore(ctx: SqliteContext) =
     /// <param name="column">The new column</param>
     member pc.AddTableColumn(versionReference, column) =
         Tables.addColumnTransaction ctx versionReference column
-    
+
     member pc.GetQuery(queryName, ?version: ItemVersion) =
         ItemVersion.FromOptional version |> Queries.get ctx queryName
 
-    member pc.AddQuery(id, name, query, ?version: ItemVersion) =
+    /// <summary>
+    /// Add a query but not a version (or columns) - essentially a placeholder.
+    /// This is mostly for internal use.
+    /// </summary>
+    /// <param name="queryName">The query name</param>
+    member pc.AddQuery(queryName) = Queries.addTransaction ctx queryName
+
+    member pc.AddQueryVersion(id, name, query, ?version: ItemVersion) =
         ({ Id = id
            Name = name
            Version = ItemVersion.FromOptional version
            Query = query }
-        : Queries.NewQuery)
-        |> Queries.addTransaction ctx
+        : Queries.NewQueryVersion)
+        |> Queries.addVersionTransaction ctx
 
     member pc.CreateActions(pipelineId, ?version: ItemVersion, ?additionActions: Actions.ActionCollection) =
         ItemVersion.FromOptional version

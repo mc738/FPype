@@ -311,6 +311,8 @@ module Events =
         (timestamp: DateTime)
         (events: ConfigurationEvent list)
         =
+        let batchReference = createReference ()
+
         events
         |> List.fold
             (fun last e ->
@@ -320,7 +322,8 @@ module Events =
                        EventType = name
                        EventTimestamp = timestamp
                        EventData = data
-                       UserId = userId }
+                       UserId = userId
+                       BatchReference = batchReference }
                     : Parameters.NewConfigurationEvent)
                     |> Operations.insertConfigurationEvent ctx
 
@@ -336,4 +339,6 @@ module Events =
 
     let selectEvents (ctx: MySqlContext) (subscriptionId: int) (previousTip: int) =
         selectEventRecords ctx subscriptionId previousTip
-        |> List.map (fun ce -> ConfigurationEvent.TryDeserialize(ce.EventType, ce.EventData) |> FetchResult.fromResult)
+        |> List.map (fun ce ->
+            ConfigurationEvent.TryDeserialize(ce.EventType, ce.EventData)
+            |> FetchResult.fromResult)
