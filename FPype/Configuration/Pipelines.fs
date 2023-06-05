@@ -115,6 +115,13 @@ module Pipelines =
     let addVersionTransaction (ctx: SqliteContext) (pipeline: NewPipelineVersion) =
         ctx.ExecuteInTransactionV2(fun t -> addVersion t pipeline)
 
+    let add (ctx: SqliteContext) (pipelineName: string) =
+        ({ Name = pipelineName }: Parameters.NewPipeline)
+        |> Operations.insertPipeline ctx
+    
+    let addTransaction (ctx: SqliteContext) (pipelineName: string) =
+        ctx.ExecuteInTransaction(fun t -> add t pipelineName)
+    
     let getPipelineArg (ctx: SqliteContext) (versionId: string) (name: string) =
         Operations.selectPipelineArgRecord ctx [ "WHERE pipeline_version_id = @0 AND name = @1;" ] [ versionId; name ]
         |> Option.map (fun pa ->

@@ -145,14 +145,15 @@ type ConfigurationStore(ctx: SqliteContext) =
 
     member pc.GetTableObjectMapper(name, ?version: ItemVersion) =
         ItemVersion.FromOptional version |> TableObjectMappers.load ctx name
-    
+
     /// <summary>
     /// Add a mapper but not a version (or columns) - essentially a placeholder.
     /// This is mostly for internal use.
     /// </summary>
     /// <param name="mapperName">The mapper name</param>
-    member pc.AddTableObjectMapper(mapperName: string) =TableObjectMappers.addTransaction ctx mapperName
-    
+    member pc.AddTableObjectMapper(mapperName: string) =
+        TableObjectMappers.addTransaction ctx mapperName
+
     member pc.AddTableObjectMapperVersion(id, name, mapper, ?version) =
         ({ Id = id
            Name = name
@@ -162,26 +163,36 @@ type ConfigurationStore(ctx: SqliteContext) =
         |> TableObjectMappers.addRawVersionTransaction ctx
 
     member pc.GetTableObjectMapper(name, ?version: ItemVersion) = failwith "TODO"
-        //ItemVersion.FromOptional version |> TableObjectMappers.load ctx name
-    
+    //ItemVersion.FromOptional version |> TableObjectMappers.load ctx name
+
     /// <summary>
     /// Add a mapper but not a version (or columns) - essentially a placeholder.
     /// This is mostly for internal use.
     /// </summary>
     /// <param name="mapperName">The mapper name</param>
-    member pc.AddObjectTableMapper(mapperName: string) = ObjectTableMappers.addTransaction ctx mapperName
-    
+    member pc.AddObjectTableMapper(mapperName: string) =
+        ObjectTableMappers.addTransaction ctx mapperName
+
     member pc.AddObjectTableMapperVersion(id, name, tableVersionId: string, mapper, ?version) =
         ({ Id = id
            Name = name
-           TableVersionId = tableVersionId 
+           TableVersionId = tableVersionId
            Version = ItemVersion.FromOptional version
            Mapper = mapper }
         : ObjectTableMappers.NewObjectTableMapperVersion)
         |> ObjectTableMappers.addRawVersionTransaction ctx
 
-    
-    
+    member pc.AddPipeline(pipelineName: string) =
+        Pipelines.addTransaction ctx pipelineName
+
+    member pc.AddPipelineVersion(id, name, description, ?version) =
+        ({ Id = id
+           Name = name
+           Description = description
+           Version = ItemVersion.FromOptional version }
+        : Pipelines.NewPipelineVersion)
+        |> Pipelines.addVersionTransaction ctx
+
     member pc.GetPipelineVersion(name, ?version: ItemVersion) =
         Pipelines.get ctx name (version |> ItemVersion.FromOptional)
 
