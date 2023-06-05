@@ -181,6 +181,7 @@ type ConfigurationStore(ctx: SqliteContext) =
         |> ObjectTableMappers.addRawVersionTransaction ctx
 
     
+    
     member pc.GetPipelineVersion(name, ?version: ItemVersion) =
         Pipelines.get ctx name (version |> ItemVersion.FromOptional)
 

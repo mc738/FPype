@@ -126,11 +126,11 @@ module Import =
             ({ Id = IdType.FromJson json
                Name = n
                Description = Json.tryGetStringProperty "description" json |> Option.defaultValue ""
-               Version = ItemVersion.FromJson json }: Pipelines.NewPipeline)
+               Version = ItemVersion.FromJson json }: Pipelines.NewPipelineVersion)
             |> fun pipeline ->
                 match transaction with
-                | true -> Pipelines.addTransaction ctx pipeline
-                | false -> Pipelines.add ctx pipeline
+                | true -> Pipelines.addVersionTransaction ctx pipeline
+                | false -> Pipelines.addVersion ctx pipeline
         | None -> Error "Missing `name` property"
 
     let pipelines (ctx: SqliteContext) (transaction: bool) (json: JsonElement list) =

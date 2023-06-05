@@ -8,7 +8,7 @@ module Pipelines =
     open FPype.Configuration.Persistence
     open FPype.Data
 
-    type NewPipeline =
+    type NewPipelineVersion =
         { Id: IdType
           Name: string
           Description: string
@@ -107,13 +107,13 @@ module Pipelines =
         =
         ctx.ExecuteInTransactionV2(fun t -> addSpecificVersion t id pipeline description version)
 
-    let add (ctx: SqliteContext) (pipeline: NewPipeline) =
+    let addVersion (ctx: SqliteContext) (pipeline: NewPipelineVersion) =
         match pipeline.Version with
         | ItemVersion.Latest -> addLatestVersion ctx pipeline.Id pipeline.Name pipeline.Description |> Ok
         | ItemVersion.Specific v -> addSpecificVersion ctx pipeline.Id pipeline.Name pipeline.Description v
 
-    let addTransaction (ctx: SqliteContext) (pipeline: NewPipeline) =
-        ctx.ExecuteInTransactionV2(fun t -> add t pipeline)
+    let addVersionTransaction (ctx: SqliteContext) (pipeline: NewPipelineVersion) =
+        ctx.ExecuteInTransactionV2(fun t -> addVersion t pipeline)
 
     let getPipelineArg (ctx: SqliteContext) (versionId: string) (name: string) =
         Operations.selectPipelineArgRecord ctx [ "WHERE pipeline_version_id = @0 AND name = @1;" ] [ versionId; name ]

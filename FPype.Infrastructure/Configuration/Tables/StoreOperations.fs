@@ -1,15 +1,15 @@
 ﻿namespace FPype.Infrastructure.Configuration.Tables
 
-open FPype.Configuration
-open FPype.Infrastructure.Configuration.Common
-open FPype.Infrastructure.Core
-open FPype.Infrastructure.Core.Persistence
-open Freql.MySql
-open FsToolbox.Core.Results
-
 [<RequireQualifiedAccess>]
 module StoreOperations =
 
+    open FPype.Configuration
+    open FPype.Infrastructure.Configuration.Common
+    open FPype.Infrastructure.Core
+    open FPype.Infrastructure.Core.Persistence
+    open Freql.MySql
+    open FsToolbox.Core.Results
+    
     let addTable
         (ctx: MySqlContext)
         (store: ConfigurationStore)

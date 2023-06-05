@@ -16,6 +16,7 @@
         <Compile Include="Configuration\Pipelines\Models.fs" />
         <Compile Include="Configuration\Pipelines\CreateOperations.fs" />
         <Compile Include="Configuration\Pipelines\ReadOperations.fs" />
+        <Compile Include="Configuration\Pipelines\StoreOperations.fs" />
         <Compile Include="Configuration\Tables\Models.fs" />
         <Compile Include="Configuration\Tables\CreateOperations.fs" />
         <Compile Include="Configuration\Tables\ReadOperations.fs" />
