@@ -55,7 +55,6 @@ module Fetch =
                Exception = Some ex })
             |> FetchResult.Failure
 
-
     let pipelineById (ctx: MySqlContext) (id: int) =
         try
             Operations.selectPipelineRecord ctx [ "WHERE id = @0;" ] [ id ]
@@ -71,7 +70,6 @@ module Fetch =
                DisplayMessage = "Error fetching pipeline"
                Exception = Some ex })
             |> FetchResult.Failure
-
 
     let pipelineLatestVersion (ctx: MySqlContext) (pipelineId: int) =
         try
@@ -175,6 +173,22 @@ module Fetch =
                Exception = Some ex })
             |> FetchResult.Failure
     
+    let pipelineActionByReference (ctx: MySqlContext) (reference: string) =
+        try
+            Operations.selectPipelineActionRecord ctx [ "WHERE reference = @0" ] [ reference ]
+            |> Option.map FetchResult.Success
+            |> Option.defaultWith (fun _ ->
+                ({ Message = $"Pipeline action (ref: {reference}) not found"
+                   DisplayMessage = "Pipeline action not found"
+                   Exception = None }
+                : FailureResult)
+                |> FetchResult.Failure)
+        with ex ->
+            ({ Message = "Unhandled exception while fetching pipeline action"
+               DisplayMessage = "Error fetching pipeline action"
+               Exception = Some ex })
+            |> FetchResult.Failure
+    
     let pipelineActions (ctx: MySqlContext) (pipelineVersionId: int) =
         try
             Operations.selectPipelineActionRecords ctx [ "WHERE pipeline_version_id = @0" ] [ pipelineVersionId ]
@@ -185,6 +199,23 @@ module Fetch =
                Exception = Some ex })
             |> FetchResult.Failure
 
+    let actionTypeById (ctx: MySqlContext) (id: int) =
+        try
+            Operations.selectActionTypeRecord ctx [ "WHERE id = @0" ] [ id ]
+            |> Option.map FetchResult.Success
+            |> Option.defaultWith (fun _ ->
+                ({ Message = $"Action type (id: {id}) not found"
+                   DisplayMessage = "Action type not found"
+                   Exception = None }
+                : FailureResult)
+                |> FetchResult.Failure)
+        with ex ->
+            ({ Message = "Unhandled exception while fetching action type"
+               DisplayMessage = "Error fetching action type"
+               Exception = Some ex })
+            |> FetchResult.Failure
+    
+    
     // Tables
     let table (ctx: MySqlContext) (reference: string) =
         try

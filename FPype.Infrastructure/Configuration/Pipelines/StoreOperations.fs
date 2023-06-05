@@ -147,3 +147,44 @@ module StoreOperations =
                 : FailureResult)
                 |> Error)
         |> ActionResult.fromResult
+
+    let addPipelineAction
+        (ctx: MySqlContext)
+        (store: ConfigurationStore)
+        (subscription: Records.Subscription)
+        (versionReference: string)
+        =
+        Fetch.pipelineActionByReference ctx versionReference
+        |> FetchResult.merge (fun pa pv -> pv, pa) (fun pa -> Fetch.pipelineVersionById ctx pa.PipelineVersionId)
+        |> FetchResult.merge (fun (pv, pa) p -> p, pv, pa) (fun (pv, _) -> Fetch.pipelineById ctx pv.PipelineId)
+        |> FetchResult.merge (fun (p, pv, pa) a -> p, pv, pa, a) (fun (_, _, pa) ->
+            Fetch.actionTypeById ctx pa.ActionTypeId)
+        |> FetchResult.toResult
+        |> Result.bind (fun (p, pv, pa, a) ->
+            let verifiers =
+                [ Verification.subscriptionMatches subscription p.SubscriptionId
+                  // This is has likely already been checked.
+                  // But can't hurt to check here again just in case.
+                  Verification.subscriptionIsActive subscription ]
+
+            VerificationResult.verify verifiers (p, pv, pa, a))
+        |> Result.bind (fun (p, pv, pa, a) ->
+            match
+                store.AddPipelineAction(
+                    IdType.Specific pa.Reference,
+                    p.Name,
+                    pa.Name,
+                    a.Name,
+                    pa.ActionJson,
+                    pa.Step,
+                    ItemVersion.Specific pv.Version
+                )
+            with
+            | Ok _ -> Ok()
+            | Error e ->
+                ({ Message = e
+                   DisplayMessage = $"Failed to add pipeline arg `{pa.Reference}` ({p.Name}) to configuration store"
+                   Exception = None }
+                : FailureResult)
+                |> Error)
+        |> ActionResult.fromResult
