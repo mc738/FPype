@@ -183,7 +183,7 @@ module StoreOperations =
             | Ok _ -> Ok()
             | Error e ->
                 ({ Message = e
-                   DisplayMessage = $"Failed to add pipeline arg `{pa.Reference}` ({p.Name}) to configuration store"
+                   DisplayMessage = $"Failed to add pipeline action `{pa.Reference}` ({pa.Name}) to configuration store"
                    Exception = None }
                 : FailureResult)
                 |> Error)
