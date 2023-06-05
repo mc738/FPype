@@ -337,6 +337,19 @@ module Events =
             [ "WHERE subscription_id = @0 AND id > @1" ]
             [ subscriptionId; previousTip ]
 
+    let selectTip (ctx: MySqlContext) (subscriptionId: int) =
+        Operations.selectConfigurationEventRecord
+            ctx
+            [ "WHERE subscription_id = @0 ORDER BY id DESC" ]
+            [ subscriptionId ]
+        |> Option.map (fun er -> er.Id)
+        |> Option.defaultValue 0
+
+    let selectGlobalTip (ctx: MySqlContext) =
+        Operations.selectConfigurationEventRecord ctx [ "ORDER BY id DESC" ] []
+        |> Option.map (fun er -> er.Id)
+        |> Option.defaultValue 0
+
     let selectEvents (ctx: MySqlContext) (subscriptionId: int) (previousTip: int) =
         selectEventRecords ctx subscriptionId previousTip
         |> List.map (fun ce ->

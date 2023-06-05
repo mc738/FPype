@@ -23,6 +23,23 @@ module Fetch =
                Exception = Some ex })
             |> FetchResult.Failure
 
+    let subscriptionByReference (ctx: MySqlContext) (reference: string) =
+        try
+            Operations.selectSubscriptionRecord ctx [ "WHERE reference = @0" ] [ reference ]
+            |> Option.map FetchResult.Success
+            |> Option.defaultWith (fun _ ->
+                ({ Message = $"Subscription (id: {id}) not found"
+                   DisplayMessage = "Subscription not found"
+                   Exception = None }
+                : FailureResult)
+                |> FetchResult.Failure)
+        with ex ->
+            ({ Message = "Unhandled exception while fetching subscription"
+               DisplayMessage = "Error fetching subscription"
+               Exception = Some ex })
+            |> FetchResult.Failure
+
+    
     let user (ctx: MySqlContext) (reference: string) =
         try
             Operations.selectUserRecord ctx [ "WHERE reference = @0;" ] [ reference ]
