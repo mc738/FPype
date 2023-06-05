@@ -22,6 +22,11 @@ module Pipelines =
           Required: bool
           DefaultValue: string option }
 
+    type NewPipelineResource =
+        { Id: IdType
+          PipelineVersionId: string
+          ResourceVersionId: string }
+
     let getLatestVersion (ctx: SqliteContext) (pipeline: string) =
         Operations.selectPipelineVersionRecord ctx [ "WHERE pipeline = @0 ORDER BY version DESC LIMIT 1;" ] [ pipeline ]
 
@@ -76,7 +81,8 @@ module Pipelines =
            Pipeline = pipeline
            Version = version
            Description = description
-           CreatedOn = timestamp () }: Parameters.NewPipelineVersion)
+           CreatedOn = timestamp () }
+        : Parameters.NewPipelineVersion)
         |> Operations.insertPipelineVersion ctx
 
     let addLatestVersionTransaction (ctx: SqliteContext) (id: IdType) (pipeline: string) (description: string) =
@@ -94,7 +100,8 @@ module Pipelines =
                Pipeline = pipeline
                Version = version
                Description = description
-               CreatedOn = timestamp () }: Parameters.NewPipelineVersion)
+               CreatedOn = timestamp () }
+            : Parameters.NewPipelineVersion)
             |> Operations.insertPipelineVersion ctx
             |> Ok
 
@@ -118,23 +125,25 @@ module Pipelines =
     let add (ctx: SqliteContext) (pipelineName: string) =
         ({ Name = pipelineName }: Parameters.NewPipeline)
         |> Operations.insertPipeline ctx
-    
+
     let addTransaction (ctx: SqliteContext) (pipelineName: string) =
         ctx.ExecuteInTransaction(fun t -> add t pipelineName)
-    
+
     let getPipelineArg (ctx: SqliteContext) (versionId: string) (name: string) =
         Operations.selectPipelineArgRecord ctx [ "WHERE pipeline_version_id = @0 AND name = @1;" ] [ versionId; name ]
         |> Option.map (fun pa ->
             ({ Name = pa.Name
                Required = pa.Required
-               DefaultValue = pa.DefaultValue }: PipelineArg))
+               DefaultValue = pa.DefaultValue }
+            : PipelineArg))
 
     let getPipelineArgs (ctx: SqliteContext) (versionId: string) =
         Operations.selectPipelineArgRecords ctx [ "WHERE pipeline_version_id = @0;" ] [ versionId ]
         |> List.map (fun pa ->
             ({ Name = pa.Name
                Required = pa.Required
-               DefaultValue = pa.DefaultValue }: PipelineArg))
+               DefaultValue = pa.DefaultValue }
+            : PipelineArg))
 
     let addPipelineArg (ctx: SqliteContext) (arg: NewPipelineArg) =
         match arg.Version with
@@ -148,10 +157,22 @@ module Pipelines =
                    PipelineVersionId = versionId
                    Name = arg.Name
                    Required = arg.Required
-                   DefaultValue = arg.DefaultValue }: Parameters.NewPipelineArg)
+                   DefaultValue = arg.DefaultValue }
+                : Parameters.NewPipelineArg)
                 |> Operations.insertPipelineArg ctx
                 |> Ok)
-        |> Option.defaultWith (fun _ -> Error $"Version `{arg.Version.ToLabel()}` of pipeline `{arg.Pipeline}` not found")
-        
+        |> Option.defaultWith (fun _ ->
+            Error $"Version `{arg.Version.ToLabel()}` of pipeline `{arg.Pipeline}` not found")
+
     let addPipelineArgTransaction (ctx: SqliteContext) (arg: NewPipelineArg) =
         ctx.ExecuteInTransactionV2(fun t -> addPipelineArg t arg)
+
+    let addPipelineResource (ctx: SqliteContext) (resource: NewPipelineResource) =
+        ({ Id = resource.Id.Get()
+           PipelineVersionId = resource.PipelineVersionId
+           ResourceVersionId = resource.ResourceVersionId }
+        : Parameters.NewPipelineResource)
+        |> Operations.insertPipelineResource ctx
+
+    let addPipelineResourceTransaction (ctx: SqliteContext) (resource: NewPipelineResource) =
+        ctx.ExecuteInTransaction(fun t -> addPipelineResource t resource)

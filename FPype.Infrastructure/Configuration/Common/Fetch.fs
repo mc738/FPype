@@ -126,7 +126,55 @@ module Fetch =
                DisplayMessage = "Error fetching pipeline version"
                Exception = Some ex })
             |> FetchResult.Failure
-
+    
+    let pipelineVersionById (ctx: MySqlContext) (id: int) =
+        try
+            Operations.selectPipelineVersionRecord ctx [ "WHERE id = @0" ] [ id ]
+            |> Option.map FetchResult.Success
+            |> Option.defaultWith (fun _ ->
+                ({ Message = $"Pipeline version (id: {id}) not found"
+                   DisplayMessage = "Pipeline versions not found"
+                   Exception = None }
+                : FailureResult)
+                |> FetchResult.Failure)
+        with ex ->
+            ({ Message = "Unhandled exception while fetching pipeline version"
+               DisplayMessage = "Error fetching pipeline version"
+               Exception = Some ex })
+            |> FetchResult.Failure
+    
+    let pipelineResourceByReference (ctx: MySqlContext) (reference: string) =
+        try
+            Operations.selectPipelineResourceRecord ctx [ "WHERE reference = @0" ] [ reference ]
+            |> Option.map FetchResult.Success
+            |> Option.defaultWith (fun _ ->
+                ({ Message = $"Pipeline resource (ref: {reference}) not found"
+                   DisplayMessage = "Pipeline resource not found"
+                   Exception = None }
+                : FailureResult)
+                |> FetchResult.Failure)
+        with ex ->
+            ({ Message = "Unhandled exception while fetching pipeline resource"
+               DisplayMessage = "Error fetching pipeline resource"
+               Exception = Some ex })
+            |> FetchResult.Failure
+            
+    let pipelineArgByReference (ctx: MySqlContext) (reference: string) =
+        try
+            Operations.selectPipelineArgRecord ctx [ "WHERE reference = @0" ] [ reference ]
+            |> Option.map FetchResult.Success
+            |> Option.defaultWith (fun _ ->
+                ({ Message = $"Pipeline arg (ref: {reference}) not found"
+                   DisplayMessage = "Pipeline arg not found"
+                   Exception = None }
+                : FailureResult)
+                |> FetchResult.Failure)
+        with ex ->
+            ({ Message = "Unhandled exception while fetching pipeline arg"
+               DisplayMessage = "Error fetching pipeline arg"
+               Exception = Some ex })
+            |> FetchResult.Failure
+    
     let pipelineActions (ctx: MySqlContext) (pipelineVersionId: int) =
         try
             Operations.selectPipelineActionRecords ctx [ "WHERE pipeline_version_id = @0" ] [ pipelineVersionId ]
@@ -444,6 +492,23 @@ module Fetch =
                DisplayMessage = "Error fetching resource version"
                Exception = Some ex })
             |> FetchResult.Failure
+    
+    let resourceVersionById (ctx: MySqlContext) (id: int) =
+        try
+            Operations.selectResourceVersionRecord ctx [ "WHERE id = @0;" ] [ id ]
+            |> Option.map FetchResult.Success
+            |> Option.defaultWith (fun _ ->
+                ({ Message = $"Resource version (id: {id}) not found"
+                   DisplayMessage = "Resource version not found"
+                   Exception = None }
+                : FailureResult)
+                |> FetchResult.Failure)
+        with ex ->
+            ({ Message = "Unhandled exception while fetching resource version"
+               DisplayMessage = "Error fetching resource version"
+               Exception = Some ex })
+            |> FetchResult.Failure
+
 
     // Table object mappers
     let tableObjectMapper (ctx: MySqlContext) (reference: string) =
