@@ -8,6 +8,10 @@ open FsToolbox.Core.Results
 module Impl =
 
  
+    let buildNewStore () = ()
+    
+    let buildStoreFromSerial () = ()
+    
     
     
     let createConfigurationStore
