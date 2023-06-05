@@ -2,14 +2,14 @@
 
 [<RequireQualifiedAccess>]
 module StoreOperations =
-    
+
     open FPype.Configuration
     open FPype.Infrastructure.Configuration.Common
     open FPype.Infrastructure.Core
     open FPype.Infrastructure.Core.Persistence
     open Freql.MySql
     open FsToolbox.Core.Results
-    
+
     let addPipeline
         (ctx: MySqlContext)
         (store: ConfigurationStore)
@@ -28,7 +28,7 @@ module StoreOperations =
             VerificationResult.verify verifiers p)
         |> Result.bind (fun p ->
 
-            match store .AddTable(p.Name) with
+            match store.AddTable(p.Name) with
             | Ok _ -> Ok()
             | Error e ->
                 ({ Message = e
@@ -37,7 +37,7 @@ module StoreOperations =
                 : FailureResult)
                 |> Error)
         |> ActionResult.fromResult
-        
+
     let addPipelineVersion
         (ctx: MySqlContext)
         (store: ConfigurationStore)
@@ -58,17 +58,23 @@ module StoreOperations =
         |> Result.bind (fun (p, pv) ->
 
             match
-                store.AddPipelineVersion(IdType.Specific pv.Reference, p.Name, pv.Description, ItemVersion.Specific pv.Version)
+                store.AddPipelineVersion(
+                    IdType.Specific pv.Reference,
+                    p.Name,
+                    pv.Description,
+                    ItemVersion.Specific pv.Version
+                )
             with
             | Ok _ -> Ok()
             | Error e ->
                 ({ Message = e
-                   DisplayMessage = $"Failed to add pipeline version `{pv.Reference}` ({p.Name}) to configuration store"
+                   DisplayMessage =
+                     $"Failed to add pipeline version `{pv.Reference}` ({p.Name}) to configuration store"
                    Exception = None }
                 : FailureResult)
                 |> Error)
         |> ActionResult.fromResult
-    
+
     let addPipelineResource
         (ctx: MySqlContext)
         (store: ConfigurationStore)
@@ -78,10 +84,12 @@ module StoreOperations =
         Fetch.pipelineResourceByReference ctx pipelineResourceReference
         |> FetchResult.merge (fun prv pv -> pv, prv) (fun prv -> Fetch.pipelineVersionById ctx prv.PipelineVersionId)
         |> FetchResult.merge (fun (pv, prv) p -> p, pv, prv) (fun (pv, _) -> Fetch.pipelineById ctx pv.PipelineId)
-        |> FetchResult.merge (fun (p, pv, prv) rv -> p, pv, prv, rv) (fun (_, _, prv) -> Fetch.resourceVersionById ctx prv.ResourceVersionId)
-        |> FetchResult.merge (fun (p, pv, prv, rv) r -> p, pv, prv, r, rv) (fun (_, _, _, rv) -> Fetch.resourceById ctx rv.ResourceId)
+        |> FetchResult.merge (fun (p, pv, prv) rv -> p, pv, prv, rv) (fun (_, _, prv) ->
+            Fetch.resourceVersionById ctx prv.ResourceVersionId)
+        |> FetchResult.merge (fun (p, pv, prv, rv) r -> p, pv, prv, r, rv) (fun (_, _, _, rv) ->
+            Fetch.resourceById ctx rv.ResourceId)
         |> FetchResult.toResult
-        |> Result.bind (fun ( p, pv, prv, r, rv) ->
+        |> Result.bind (fun (p, pv, prv, r, rv) ->
             let verifiers =
                 [ Verification.subscriptionMatches subscription p.SubscriptionId
                   Verification.subscriptionMatches subscription r.SubscriptionId
@@ -92,9 +100,7 @@ module StoreOperations =
             VerificationResult.verify verifiers (p, pv, prv, r, rv))
         |> Result.bind (fun (p, pv, prv, r, rv) ->
 
-            match
-                store.AddPipelineResource(IdType.Specific prv.Reference, pv.Reference, rv.Reference)
-            with
+            match store.AddPipelineResource(IdType.Specific prv.Reference, pv.Reference, rv.Reference) with
             | Ok _ -> Ok()
             | Error e ->
                 ({ Message = e
@@ -123,14 +129,20 @@ module StoreOperations =
 
             VerificationResult.verify verifiers (p, pv, pa))
         |> Result.bind (fun (p, pv, pa) ->
-
             match
-                store.AddPipelineArg(IdType.Specific pv.Reference, p.Name, pv.Description, ItemVersion.Specific pv.Version)
+                store.AddPipelineArg(
+                    IdType.Specific pa.Reference,
+                    p.Name,
+                    pa.Name,
+                    pa.Required,
+                    pa.DefaultValue,
+                    ItemVersion.Specific pv.Version
+                )
             with
             | Ok _ -> Ok()
             | Error e ->
                 ({ Message = e
-                   DisplayMessage = $"Failed to add pipeline version `{pv.Reference}` ({p.Name}) to configuration store"
+                   DisplayMessage = $"Failed to add pipeline arg `{pa.Reference}` ({p.Name}) to configuration store"
                    Exception = None }
                 : FailureResult)
                 |> Error)

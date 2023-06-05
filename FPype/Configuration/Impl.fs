@@ -206,6 +206,16 @@ type ConfigurationStore(ctx: SqliteContext) =
     member pc.GetPipelineResources(pipelineVersionId) =
         Resources.getPipelineResources ctx pipelineVersionId
 
+    member pc.AddPipelineArg(id, pipeline, name, required, defaultValue, ?version) =
+        ({ Id = id
+           Pipeline = pipeline
+           Name = name
+           Version = ItemVersion.FromOptional version
+           Required = required
+           DefaultValue = defaultValue }
+        : Pipelines.NewPipelineArg)
+        |> Pipelines.addPipelineArgTransaction ctx
+
     member pc.GetResourceVersion(resourceVersionId) =
         Resources.getResourceVersionById ctx resourceVersionId
 
