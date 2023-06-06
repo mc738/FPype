@@ -2,6 +2,7 @@
 
 open FPype.Configuration
 open FPype.Infrastructure.Configuration.Common
+open FPype.Infrastructure.Configuration.Tables
 open FPype.Infrastructure.Core.Persistence
 open Freql.MySql
 open Freql.Sqlite
@@ -20,6 +21,8 @@ module Impl =
             =
             Operations.selectTableModelVersionRecords ctx [ "WHERE table_model_id = @0" ] [ tm.Id ]
             |> List.map (fun tv ->
+                Tables.StoreOperations.addTableVersion ctx cfg subscription tv.Reference
+                
                 let tcs =
                     Operations.selectTableColumnRecords ctx [ "WHERE table_model_version = @0" ] [ tv.Id ]
                     |> List.map (fun tc -> ({
@@ -32,6 +35,16 @@ module Impl =
                     
                 cfg.AddTableVersion(IdType.Specific tv.Reference, tm.Name, tcs, ItemVersion.Specific tv.Version))
             
+        let addQuery
+            (ctx: MySqlContext)
+            (cfg: ConfigurationStore)
+            (subscription: Records.Subscription)
+            (tm: Records.TableModel)
+            =
+            Operations.selectQueryVersionRecords ctx [ "WHERE query_id = @0" ] [ tm.Id ]
+            |> List.map (fun qv ->
+                // Double fetch?
+                Queries.StoreOperations.addQueryVersion ctx cfg subscription qv.Reference)
 
     let buildNewStore (ctx: MySqlContext) (subscription: string) (path: string) (additionActions: string list) =
         // No need to check serials when creating a fresh store.

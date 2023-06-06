@@ -1,5 +1,7 @@
 ﻿namespace FPype.Infrastructure.Configuration.Tables
 
+open System
+
 [<RequireQualifiedAccess>]
 module StoreOperations =
 
@@ -9,7 +11,7 @@ module StoreOperations =
     open FPype.Infrastructure.Core.Persistence
     open Freql.MySql
     open FsToolbox.Core.Results
-    
+
     let addTable
         (ctx: MySqlContext)
         (store: ConfigurationStore)
@@ -119,3 +121,56 @@ module StoreOperations =
                 : FailureResult)
                 |> Error)
         |> ActionResult.fromResult
+
+    let addAllTableVersions
+        (ctx: MySqlContext)
+        (store: ConfigurationStore)
+        (failOnError: bool)
+        (subscription: Records.Subscription)
+        =
+        // NOTE
+        let result =
+            Fetch.tablesBySubscriptionId ctx subscription.Id
+            |> FetchResult.toResult
+            |> Result.map (fun ts ->
+                ts
+                |> List.collect (fun t ->
+                    Fetch.tableVersionsByTableId ctx t.Id
+                    |> expandResult
+                    |> List.map (fun tv ->
+
+                        let columns =
+                            Fetch.tableColumns ctx tv.Id
+                            |> expandResult
+                            |> List.map (fun tc ->
+                                ({ Id = IdType.Specific tc.Reference
+                                   Name = tc.Name
+                                   DataType = tc.DataType
+                                   Optional = tc.Optional
+                                   ImportHandler = tc.ImportHandlerJson }
+                                : Tables.NewColumn))
+
+                        store.AddTableVersion(
+                            IdType.Specific tv.Reference,
+                            t.Name,
+                            columns,
+                            ItemVersion.Specific tv.Version
+                        ))))
+
+        match result with
+        | Ok rs ->
+            match rs |> FPype.Core.Common.flattenResultList with
+            | Ok _ -> ActionResult.Success()
+            | Error e ->
+                match failOnError with
+                | true ->
+                    ({ Message = $"Aggregated failure message: {e}"
+                       DisplayMessage = "Failed to add table versions"
+                       Exception = None }
+                    : FailureResult)
+                    |> ActionResult.Failure
+                | false -> ActionResult.Success()
+        | Error f ->
+            match failOnError with
+            | true -> ActionResult.Failure f
+            | false -> ActionResult.Success()

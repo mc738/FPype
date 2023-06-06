@@ -44,9 +44,10 @@ module Shared =
             Error(
                 { Message = exn.Message
                   DisplayMessage = "Failed to serialize object."
-                  Exception = Some exn }: FailureResult
+                  Exception = Some exn }
+                : FailureResult
             )
-    
+
     let fromJson<'T> (json: string) =
         try
             JsonSerializer.Deserialize<'T> json |> Ok
@@ -54,5 +55,39 @@ module Shared =
             Error(
                 { Message = exn.Message
                   DisplayMessage = "Failed to deserialize object."
-                  Exception = Some exn }: FailureResult
+                  Exception = Some exn }
+                : FailureResult
             )
+
+    let collectFetchResults<'T> (failOnError: bool) (results: FetchResult<'T> list) =
+        results
+        |> List.fold
+            (fun (r: Result<'T list, FailureResult>) (fr) ->
+
+                match r with
+                | Ok acc ->
+                    match fr with
+                    | FetchResult.Success v -> v :: acc |> Ok
+                    | FetchResult.Failure f ->
+                        match failOnError with
+                        | true -> Error f
+                        | false -> Ok acc
+                | Error f -> Error f)
+            (Ok [])
+
+    let expandResult<'T> (results: FetchResult<'T list>) =
+        match results with
+        | FetchResult.Success v -> v
+        | FetchResult.Failure f -> []
+
+    
+    
+
+    let chooseFetchResults<'T> (errorFn: FailureResult -> unit) (results: FetchResult<'T> list) =
+        results
+        |> List.choose (fun r ->
+            match r with
+            | FetchResult.Success v -> Some v
+            | FetchResult.Failure f ->
+                errorFn f
+                None)

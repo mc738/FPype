@@ -39,7 +39,7 @@ module Fetch =
                Exception = Some ex })
             |> FetchResult.Failure
 
-    
+
     let user (ctx: MySqlContext) (reference: string) =
         try
             Operations.selectUserRecord ctx [ "WHERE reference = @0;" ] [ reference ]
@@ -141,7 +141,7 @@ module Fetch =
                DisplayMessage = "Error fetching pipeline version"
                Exception = Some ex })
             |> FetchResult.Failure
-    
+
     let pipelineVersionById (ctx: MySqlContext) (id: int) =
         try
             Operations.selectPipelineVersionRecord ctx [ "WHERE id = @0" ] [ id ]
@@ -157,7 +157,7 @@ module Fetch =
                DisplayMessage = "Error fetching pipeline version"
                Exception = Some ex })
             |> FetchResult.Failure
-    
+
     let pipelineResourceByReference (ctx: MySqlContext) (reference: string) =
         try
             Operations.selectPipelineResourceRecord ctx [ "WHERE reference = @0" ] [ reference ]
@@ -173,7 +173,7 @@ module Fetch =
                DisplayMessage = "Error fetching pipeline resource"
                Exception = Some ex })
             |> FetchResult.Failure
-            
+
     let pipelineArgByReference (ctx: MySqlContext) (reference: string) =
         try
             Operations.selectPipelineArgRecord ctx [ "WHERE reference = @0" ] [ reference ]
@@ -189,7 +189,7 @@ module Fetch =
                DisplayMessage = "Error fetching pipeline arg"
                Exception = Some ex })
             |> FetchResult.Failure
-    
+
     let pipelineActionByReference (ctx: MySqlContext) (reference: string) =
         try
             Operations.selectPipelineActionRecord ctx [ "WHERE reference = @0" ] [ reference ]
@@ -205,7 +205,7 @@ module Fetch =
                DisplayMessage = "Error fetching pipeline action"
                Exception = Some ex })
             |> FetchResult.Failure
-    
+
     let pipelineActions (ctx: MySqlContext) (pipelineVersionId: int) =
         try
             Operations.selectPipelineActionRecords ctx [ "WHERE pipeline_version_id = @0" ] [ pipelineVersionId ]
@@ -231,8 +231,8 @@ module Fetch =
                DisplayMessage = "Error fetching action type"
                Exception = Some ex })
             |> FetchResult.Failure
-    
-    
+
+
     // Tables
     let table (ctx: MySqlContext) (reference: string) =
         try
@@ -260,6 +260,16 @@ module Fetch =
                    Exception = None }
                 : FailureResult)
                 |> FetchResult.Failure)
+        with ex ->
+            ({ Message = "Unhandled exception while fetching table"
+               DisplayMessage = "Error fetching table"
+               Exception = Some ex })
+            |> FetchResult.Failure
+
+    let tablesBySubscriptionId (ctx: MySqlContext) (subscriptionId: int) =
+        try
+            Operations.selectTableModelRecords ctx [ "WHERE subscription_id = @0" ] [ id ]
+            |> FetchResult.Success
         with ex ->
             ({ Message = "Unhandled exception while fetching table"
                DisplayMessage = "Error fetching table"
@@ -347,6 +357,16 @@ module Fetch =
                Exception = Some ex })
             |> FetchResult.Failure
 
+    let tableVersionsByTableId (ctx: MySqlContext) (id: int) =
+        try
+            Operations.selectTableModelVersionRecords ctx [ "WHERE table_id = @0;" ] [ id ]
+            |> FetchResult.Success
+        with ex ->
+            ({ Message = "Unhandled exception while fetching table version"
+               DisplayMessage = "Error fetching table version"
+               Exception = Some ex })
+            |> FetchResult.Failure
+
     let tableColumns (ctx: MySqlContext) (tableVersionId: int) =
         try
             Operations.selectTableColumnRecords ctx [ "WHERE table_version_id = @0" ] [ tableVersionId ]
@@ -372,7 +392,7 @@ module Fetch =
                DisplayMessage = "Error fetching table column"
                Exception = Some ex })
             |> FetchResult.Failure
-    
+
     // Queries
     let query (ctx: MySqlContext) (reference: string) =
         try
@@ -540,7 +560,7 @@ module Fetch =
                DisplayMessage = "Error fetching resource version"
                Exception = Some ex })
             |> FetchResult.Failure
-    
+
     let resourceVersionById (ctx: MySqlContext) (id: int) =
         try
             Operations.selectResourceVersionRecord ctx [ "WHERE id = @0;" ] [ id ]
