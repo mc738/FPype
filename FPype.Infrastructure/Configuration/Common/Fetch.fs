@@ -758,7 +758,7 @@ module Fetch =
                Exception = Some ex })
             |> FetchResult.Failure
 
-    let objectTableMapperBySubscriptionId (ctx: MySqlContext) (subscriptionId: int) =
+    let objectTableMappersBySubscriptionId (ctx: MySqlContext) (subscriptionId: int) =
         try
             Operations.selectObjectTableMapperRecords ctx [ "WHERE subscription_id = @0" ] [ subscriptionId ]
             |> FetchResult.Success
