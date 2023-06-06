@@ -758,6 +758,16 @@ module Fetch =
                Exception = Some ex })
             |> FetchResult.Failure
 
+    let objectTableMapperBySubscriptionId (ctx: MySqlContext) (subscriptionId: int) =
+        try
+            Operations.selectObjectTableMapperRecords ctx [ "WHERE subscription_id = @0" ] [ subscriptionId ]
+            |> FetchResult.Success
+        with ex ->
+            ({ Message = "Unhandled exception while fetching object table mappers"
+               DisplayMessage = "Error fetching object table mappers"
+               Exception = Some ex })
+            |> FetchResult.Failure
+    
     let objectTableMapperLatestVersion (ctx: MySqlContext) (objectTableMapperId: int) =
         try
             Operations.selectObjectTableMapperVersionRecord
@@ -809,5 +819,15 @@ module Fetch =
         with ex ->
             ({ Message = "Unhandled exception while fetching object table mapper version"
                DisplayMessage = "Error fetching object table mapper version"
+               Exception = Some ex })
+            |> FetchResult.Failure
+            
+    let objectTableMapperVersionByMapperId (ctx: MySqlContext) (mapperId: int) =
+        try
+            Operations.selectObjectTableMapperVersionRecords ctx [ "WHERE object_table_mapper_id = @0;" ] [ mapperId ]
+            |> FetchResult.Success
+        with ex ->
+            ({ Message = "Unhandled exception while fetching object table mapper versions"
+               DisplayMessage = "Error fetching object table mapper versions"
                Exception = Some ex })
             |> FetchResult.Failure
