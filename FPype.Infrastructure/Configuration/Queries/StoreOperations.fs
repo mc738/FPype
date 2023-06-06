@@ -6,10 +6,10 @@ module StoreOperations =
     open Freql.MySql
     open FsToolbox.Core.Results
     open FPype.Configuration
-    open FPype.Infrastructure.Core.Persistence    
+    open FPype.Infrastructure.Core.Persistence
     open FPype.Infrastructure.Configuration.Common
     open FPype.Infrastructure.Core
-            
+
     let addQuery
         (ctx: MySqlContext)
         (store: ConfigurationStore)
@@ -37,7 +37,7 @@ module StoreOperations =
                 : FailureResult)
                 |> Error)
         |> ActionResult.fromResult
-        
+
     let addQueryVersion
         (ctx: MySqlContext)
         (store: ConfigurationStore)
@@ -58,7 +58,12 @@ module StoreOperations =
         |> Result.bind (fun (q, qv) ->
 
             match
-                store.AddQueryVersion(IdType.Specific qv.Reference, q.Name, qv.RawQuery, ItemVersion.Specific qv.Version)
+                store.AddQueryVersion(
+                    IdType.Specific qv.Reference,
+                    q.Name,
+                    qv.RawQuery,
+                    ItemVersion.Specific qv.Version
+                )
             with
             | Ok _ -> Ok()
             | Error e ->
@@ -68,3 +73,46 @@ module StoreOperations =
                 : FailureResult)
                 |> Error)
         |> ActionResult.fromResult
+
+    let addAllQueryVersions
+        (ctx: MySqlContext)
+        (store: ConfigurationStore)
+        (failOnError: bool)
+        (subscription: Records.Subscription)
+        =
+        // NOTE
+        let result =
+            Fetch.queriesBySubscriptionId ctx subscription.Id
+            |> FetchResult.toResult
+            |> Result.map (fun qs ->
+                qs
+                |> List.collect (fun q ->
+                    // NOTE - expandResults will "gloss over" an error in getting the versions. This may or may not be desirable.
+                    Fetch.queryVersionsByQueryId ctx q.Id
+                    |> expandResult
+                    |> List.map (fun qv ->
+
+                        store.AddQueryVersion(
+                            IdType.Specific qv.Reference,
+                            q.Name,
+                            qv.RawQuery,
+                            ItemVersion.Specific qv.Version
+                        ))))
+
+        match result with
+        | Ok rs ->
+            match rs |> FPype.Core.Common.flattenResultList with
+            | Ok _ -> ActionResult.Success()
+            | Error e ->
+                match failOnError with
+                | true ->
+                    ({ Message = $"Aggregated failure message: {e}"
+                       DisplayMessage = "Failed to add table versions"
+                       Exception = None }
+                    : FailureResult)
+                    |> ActionResult.Failure
+                | false -> ActionResult.Success()
+        | Error f ->
+            match failOnError with
+            | true -> ActionResult.Failure f
+            | false -> ActionResult.Success()

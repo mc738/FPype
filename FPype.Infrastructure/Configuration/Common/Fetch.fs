@@ -268,7 +268,7 @@ module Fetch =
 
     let tablesBySubscriptionId (ctx: MySqlContext) (subscriptionId: int) =
         try
-            Operations.selectTableModelRecords ctx [ "WHERE subscription_id = @0" ] [ id ]
+            Operations.selectTableModelRecords ctx [ "WHERE subscription_id = @0" ] [ subscriptionId ]
             |> FetchResult.Success
         with ex ->
             ({ Message = "Unhandled exception while fetching table"
@@ -323,7 +323,6 @@ module Fetch =
                DisplayMessage = "Error fetching table version"
                Exception = Some ex })
             |> FetchResult.Failure
-
 
     let tableVersionByReference (ctx: MySqlContext) (reference: string) =
         try
@@ -426,6 +425,16 @@ module Fetch =
                Exception = Some ex })
             |> FetchResult.Failure
 
+    let queriesBySubscriptionId (ctx: MySqlContext) (subscriptionId: int) =
+        try
+            Operations.selectQueryRecords ctx [ "WHERE subscription_id = @0" ] [ subscriptionId ]
+            |> FetchResult.Success
+        with ex ->
+            ({ Message = "Unhandled exception while fetching query"
+               DisplayMessage = "Error fetching query"
+               Exception = Some ex })
+            |> FetchResult.Failure
+    
     let queryLatestVersion (ctx: MySqlContext) (queryId: int) =
         try
             Operations.selectQueryVersionRecord ctx [ "WHERE query_id = @0 ORDER BY version DESC LIMIT 1;" ] [ queryId ]
@@ -468,6 +477,16 @@ module Fetch =
                    Exception = None }
                 : FailureResult)
                 |> FetchResult.Failure)
+        with ex ->
+            ({ Message = "Unhandled exception while fetching query version"
+               DisplayMessage = "Error fetching query version"
+               Exception = Some ex })
+            |> FetchResult.Failure
+            
+    let queryVersionsByQueryId (ctx: MySqlContext) (queryId: int) =
+        try
+            Operations.selectQueryVersionRecords ctx [ "WHERE query_id = @0;" ] [ queryId ]
+            |> FetchResult.Success
         with ex ->
             ({ Message = "Unhandled exception while fetching query version"
                DisplayMessage = "Error fetching query version"

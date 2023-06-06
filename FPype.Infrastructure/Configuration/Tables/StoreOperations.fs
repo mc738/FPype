@@ -128,13 +128,13 @@ module StoreOperations =
         (failOnError: bool)
         (subscription: Records.Subscription)
         =
-        // NOTE
         let result =
             Fetch.tablesBySubscriptionId ctx subscription.Id
             |> FetchResult.toResult
             |> Result.map (fun ts ->
                 ts
                 |> List.collect (fun t ->
+                    // NOTE - expandResults will "gloss over" an error in getting the versions. This may or may not be desirable.
                     Fetch.tableVersionsByTableId ctx t.Id
                     |> expandResult
                     |> List.map (fun tv ->
