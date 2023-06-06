@@ -81,3 +81,50 @@ module StoreOperations =
                     |> Error
             | ActionResult.Failure f -> Error f)
         |> ActionResult.fromResult
+
+    let addAllResourceVersions
+        (ctx: MySqlContext)
+        (store: ConfigurationStore)
+        (fileRepo: FileRepository)
+        (readArgs: FileReadOperationArguments)
+        (failOnError: bool)
+        (subscription: Records.Subscription)
+        =
+        let result =
+            Fetch.resourcesBySubscriptionId ctx subscription.Id
+            |> FetchResult.toResult
+            |> Result.map (fun rs ->
+                rs
+                |> List.collect (fun r ->
+                    // NOTE - expandResults will "gloss over" an error in getting the versions. This may or may not be desirable.
+                    Fetch.resourceVersionsByResourceId ctx r.Id
+                    |> expandResult
+                    |> List.map (fun rv ->
+                        match fileRepo.ReadAllBytes(rv.ResourcePath, readArgs) with
+                        | ActionResult.Success raw ->
+                            store.AddResourceVersion(
+                                IdType.Specific rv.Reference,
+                                r.Name,
+                                rv.ResourceType,
+                                raw,
+                                ItemVersion.Specific rv.Version
+                            )
+                        | ActionResult.Failure f -> Error f.Message)))
+
+        match result with
+        | Ok rs ->
+            match rs |> FPype.Core.Common.flattenResultList with
+            | Ok _ -> ActionResult.Success()
+            | Error e ->
+                match failOnError with
+                | true ->
+                    ({ Message = $"Aggregated failure message: {e}"
+                       DisplayMessage = "Failed to add table versions"
+                       Exception = None }
+                    : FailureResult)
+                    |> ActionResult.Failure
+                | false -> ActionResult.Success()
+        | Error f ->
+            match failOnError with
+            | true -> ActionResult.Failure f
+            | false -> ActionResult.Success()
