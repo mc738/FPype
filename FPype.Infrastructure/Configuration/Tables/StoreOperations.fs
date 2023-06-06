@@ -124,9 +124,9 @@ module StoreOperations =
 
     let addAllTableVersions
         (ctx: MySqlContext)
-        (store: ConfigurationStore)
         (failOnError: bool)
         (subscription: Records.Subscription)
+        (store: ConfigurationStore)
         =
         let result =
             Fetch.tablesBySubscriptionId ctx subscription.Id
@@ -160,7 +160,7 @@ module StoreOperations =
         match result with
         | Ok rs ->
             match rs |> FPype.Core.Common.flattenResultList with
-            | Ok _ -> ActionResult.Success()
+            | Ok _ -> ActionResult.Success store
             | Error e ->
                 match failOnError with
                 | true ->
@@ -169,8 +169,8 @@ module StoreOperations =
                        Exception = None }
                     : FailureResult)
                     |> ActionResult.Failure
-                | false -> ActionResult.Success()
+                | false -> ActionResult.Success store
         | Error f ->
             match failOnError with
             | true -> ActionResult.Failure f
-            | false -> ActionResult.Success()
+            | false -> ActionResult.Success store

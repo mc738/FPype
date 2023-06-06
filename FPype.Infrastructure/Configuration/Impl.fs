@@ -64,6 +64,9 @@ module Impl =
                 let cfg = ConfigurationStore.Initialize(path, additionActions, metadata)
 
                 // Add tables
+                Tables.StoreOperations.addTableVersion
+                                
+                
                 
 
                 
