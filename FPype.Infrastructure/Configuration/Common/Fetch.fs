@@ -526,6 +526,17 @@ module Fetch =
                Exception = Some ex })
             |> FetchResult.Failure
 
+    
+    let resourcesBySubscriptionId (ctx: MySqlContext) (subscriptionId: int) =
+        try
+            Operations.selectResourceRecords ctx [ "WHERE subscription_id = @0" ] [ id ]
+            |> FetchResult.Success
+        with ex ->
+            ({ Message = "Unhandled exception while fetching resource"
+               DisplayMessage = "Error fetching resource"
+               Exception = Some ex })
+            |> FetchResult.Failure
+    
     let resourceLatestVersion (ctx: MySqlContext) (resourceId: int) =
         try
             Operations.selectResourceVersionRecord
@@ -596,6 +607,17 @@ module Fetch =
                Exception = Some ex })
             |> FetchResult.Failure
 
+    let resourceVersionsByResourceId (ctx: MySqlContext) (resourceId: int) =
+        try
+            Operations.selectResourceVersionRecords ctx [ "WHERE resource_id = @0;" ] [ resourceId ]
+            |> FetchResult.Success
+        with ex ->
+            ({ Message = "Unhandled exception while fetching resource version"
+               DisplayMessage = "Error fetching resource version"
+               Exception = Some ex })
+            |> FetchResult.Failure
+
+    
 
     // Table object mappers
     let tableObjectMapper (ctx: MySqlContext) (reference: string) =
