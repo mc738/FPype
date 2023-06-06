@@ -2,14 +2,14 @@
 
 [<RequireQualifiedAccess>]
 module StoreOperations =
-   
+
     open Freql.MySql
     open FsToolbox.Core.Results
     open FPype.Configuration
-    open FPype.Infrastructure.Core.Persistence    
+    open FPype.Infrastructure.Core.Persistence
     open FPype.Infrastructure.Configuration.Common
     open FPype.Infrastructure.Core
-            
+
     let addTableObjectMapper
         (ctx: MySqlContext)
         (store: ConfigurationStore)
@@ -37,7 +37,7 @@ module StoreOperations =
                 : FailureResult)
                 |> Error)
         |> ActionResult.fromResult
-        
+
     let addTableObjectMapperVersion
         (ctx: MySqlContext)
         (store: ConfigurationStore)
@@ -58,16 +58,61 @@ module StoreOperations =
         |> Result.bind (fun (m, mv) ->
 
             match
-                store.AddTableObjectMapperVersion(IdType.Specific mv.Reference, m.Name, mv.MapperJson, ItemVersion.Specific mv.Version)
+                store.AddTableObjectMapperVersion(
+                    IdType.Specific mv.Reference,
+                    m.Name,
+                    mv.MapperJson,
+                    ItemVersion.Specific mv.Version
+                )
             with
             | Ok _ -> Ok()
             | Error e ->
                 ({ Message = e
-                   DisplayMessage = $"Failed to add table object mapper version `{mv.Reference}` ({m.Name}) to configuration store"
+                   DisplayMessage =
+                     $"Failed to add table object mapper version `{mv.Reference}` ({m.Name}) to configuration store"
                    Exception = None }
                 : FailureResult)
                 |> Error)
-        |> ActionResult.fromResult 
-    
-    
+        |> ActionResult.fromResult
 
+    let addAllTableObjectMapperVersions
+        (ctx: MySqlContext)
+        (store: ConfigurationStore)
+        (failOnError: bool)
+        (subscription: Records.Subscription)
+        =
+        let result =
+            Fetch.tableObjectMappersBySubscriptionId ctx subscription.Id
+            |> FetchResult.toResult
+            |> Result.map (fun ms ->
+                ms
+                |> List.collect (fun m ->
+                    // NOTE - expandResults will "gloss over" an error in getting the versions. This may or may not be desirable.
+                    Fetch.tableObjectMapperVersionByMapperId ctx m.Id
+                    |> expandResult
+                    |> List.map (fun mv ->
+
+                        store.AddTableObjectMapperVersion(
+                            IdType.Specific mv.Reference,
+                            m.Name,
+                            mv.MapperJson,
+                            ItemVersion.Specific mv.Version
+                        ))))
+
+        match result with
+        | Ok rs ->
+            match rs |> FPype.Core.Common.flattenResultList with
+            | Ok _ -> ActionResult.Success()
+            | Error e ->
+                match failOnError with
+                | true ->
+                    ({ Message = $"Aggregated failure message: {e}"
+                       DisplayMessage = "Failed to add table versions"
+                       Exception = None }
+                    : FailureResult)
+                    |> ActionResult.Failure
+                | false -> ActionResult.Success()
+        | Error f ->
+            match failOnError with
+            | true -> ActionResult.Failure f
+            | false -> ActionResult.Success()
