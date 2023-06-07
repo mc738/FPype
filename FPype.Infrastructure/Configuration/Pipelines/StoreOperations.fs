@@ -1,5 +1,7 @@
 ﻿namespace FPype.Infrastructure.Configuration.Pipelines
 
+open FPype.Configuration
+
 [<RequireQualifiedAccess>]
 module StoreOperations =
 
@@ -283,8 +285,31 @@ module StoreOperations =
                                 | false -> Ok())
                         |> Result.bind (fun _ ->
                             // Add args
+                            match Fetch.pipelineArgByVersionId ctx pv.Id with
+                            | FetchResult.Success pas ->
+                                let r =
+                                    pas
+                                    |> List.map (fun pa ->
+                                        store.AddPipelineArg(
+                                            IdType.Specific pa.Reference,
+                                            p.Name,
+                                            pa.Name,
+                                            pa.Required,
+                                            pa.DefaultValue,
+                                            ItemVersion.Specific pv.Version
+                                        ))
+                                    |> FPype.Core.Common.flattenResultList
 
-                            Ok()))))
+                                match r with
+                                | Ok _ -> Ok()
+                                | Error e ->
+                                    match failOnError with
+                                    | true -> Error $"Aggregated failure message: {e}"
+                                    | false -> Ok()
+                            | FetchResult.Failure f ->
+                                match failOnError with
+                                | true -> Error f.Message
+                                | false -> Ok()))))
 
         match result with
         | Ok rs ->
