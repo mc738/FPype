@@ -254,7 +254,29 @@ module StoreOperations =
                         |> Result.bind (fun _ ->
                             // Add resources
                             match Fetch.pipelineResourcesByPipelineVersionId ctx pv.Id with
-                            | FetchResult.Success prs -> Ok ()
+                            | FetchResult.Success prs ->
+                                let r =
+                                    prs
+                                    |> List.map (fun pr ->
+                                        match Fetch.resourceVersionById ctx pr.ResourceVersionId with
+                                        | FetchResult.Success rv ->
+                                            store.AddPipelineResource(
+                                                IdType.Specific pr.Reference,
+                                                pv.Reference,
+                                                rv.Reference
+                                            )
+                                        | FetchResult.Failure f ->
+                                            match failOnError with
+                                            | true -> Error f.Message
+                                            | false -> Ok())
+                                    |> FPype.Core.Common.flattenResultList
+
+                                match r with
+                                | Ok _ -> Ok()
+                                | Error e ->
+                                    match failOnError with
+                                    | true -> Error $"Aggregated failure message: {e}"
+                                    | false -> Ok()
                             | FetchResult.Failure f ->
                                 match failOnError with
                                 | true -> Error f.Message
