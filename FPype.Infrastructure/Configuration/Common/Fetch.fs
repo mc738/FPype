@@ -87,13 +87,13 @@ module Fetch =
               Exception = Some ex }
             |> FetchResult.Failure
 
-    let pipelineBySubscriptionId (ctx: MySqlContext) (subscriptionId: int) =
+    let pipelinesBySubscriptionId (ctx: MySqlContext) (subscriptionId: int) =
         try
             Operations.selectPipelineRecords ctx [ "WHERE subscription_id = @0;" ] [ subscriptionId ]
             |> FetchResult.Success
         with ex ->
-            { Message = "Unhandled exception while fetching pipeline"
-              DisplayMessage = "Error fetching pipeline"
+            { Message = "Unhandled exception while fetching pipelines"
+              DisplayMessage = "Error fetching pipelines"
               Exception = Some ex }
             |> FetchResult.Failure
     
