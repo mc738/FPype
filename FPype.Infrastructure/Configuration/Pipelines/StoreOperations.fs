@@ -253,13 +253,12 @@ module StoreOperations =
                                 | false -> Ok())
                         |> Result.bind (fun _ ->
                             // Add resources
-                            
-
-
-
-
-
-                            Ok())
+                            match Fetch.pipelineResourcesByPipelineVersionId ctx pv.Id with
+                            | FetchResult.Success prs -> Ok ()
+                            | FetchResult.Failure f ->
+                                match failOnError with
+                                | true -> Error f.Message
+                                | false -> Ok())
                         |> Result.bind (fun _ ->
                             // Add args
 
