@@ -170,7 +170,7 @@ module Fetch =
     let pipelineVersionsByPipelineId (ctx: MySqlContext) (pipelineId: int) =
         try
             Operations.selectPipelineVersionRecords ctx [ "WHERE pipeline_id = @0" ] [ pipelineId ]
-            |> Option.map FetchResult.Success
+            |> FetchResult.Success
         with ex ->
             { Message = "Unhandled exception while fetching pipeline version"
               DisplayMessage = "Error fetching pipeline version"
