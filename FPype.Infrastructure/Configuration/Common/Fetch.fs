@@ -87,6 +87,16 @@ module Fetch =
               Exception = Some ex }
             |> FetchResult.Failure
 
+    let pipelineBySubscriptionId (ctx: MySqlContext) (subscriptionId: int) =
+        try
+            Operations.selectPipelineRecords ctx [ "WHERE subscription_id = @0;" ] [ subscriptionId ]
+            |> FetchResult.Success
+        with ex ->
+            { Message = "Unhandled exception while fetching pipeline"
+              DisplayMessage = "Error fetching pipeline"
+              Exception = Some ex }
+            |> FetchResult.Failure
+    
     let pipelineLatestVersion (ctx: MySqlContext) (pipelineId: int) =
         try
             Operations.selectPipelineVersionRecord
@@ -151,6 +161,16 @@ module Fetch =
                    Exception = None }
                 : FailureResult)
                 |> FetchResult.Failure)
+        with ex ->
+            { Message = "Unhandled exception while fetching pipeline version"
+              DisplayMessage = "Error fetching pipeline version"
+              Exception = Some ex }
+            |> FetchResult.Failure
+
+    let pipelineVersionsByPipelineId (ctx: MySqlContext) (pipelineId: int) =
+        try
+            Operations.selectPipelineVersionRecords ctx [ "WHERE pipeline_id = @0" ] [ pipelineId ]
+            |> Option.map FetchResult.Success
         with ex ->
             { Message = "Unhandled exception while fetching pipeline version"
               DisplayMessage = "Error fetching pipeline version"
