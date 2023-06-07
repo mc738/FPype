@@ -18,9 +18,9 @@ module Fetch =
                 : FailureResult)
                 |> FetchResult.Failure)
         with ex ->
-            ({ Message = "Unhandled exception while fetching subscription"
-               DisplayMessage = "Error fetching subscription"
-               Exception = Some ex })
+            { Message = "Unhandled exception while fetching subscription"
+              DisplayMessage = "Error fetching subscription"
+              Exception = Some ex }
             |> FetchResult.Failure
 
     let subscriptionByReference (ctx: MySqlContext) (reference: string) =
@@ -34,11 +34,10 @@ module Fetch =
                 : FailureResult)
                 |> FetchResult.Failure)
         with ex ->
-            ({ Message = "Unhandled exception while fetching subscription"
-               DisplayMessage = "Error fetching subscription"
-               Exception = Some ex })
+            { Message = "Unhandled exception while fetching subscription"
+              DisplayMessage = "Error fetching subscription"
+              Exception = Some ex }
             |> FetchResult.Failure
-
 
     let user (ctx: MySqlContext) (reference: string) =
         try
@@ -51,9 +50,9 @@ module Fetch =
                 : FailureResult)
                 |> FetchResult.Failure)
         with ex ->
-            ({ Message = "Unhandled exception while fetching user"
-               DisplayMessage = "Error fetching user"
-               Exception = Some ex })
+            { Message = "Unhandled exception while fetching user"
+              DisplayMessage = "Error fetching user"
+              Exception = Some ex }
             |> FetchResult.Failure
 
     let pipeline (ctx: MySqlContext) (reference: string) =
@@ -67,9 +66,9 @@ module Fetch =
                 : FailureResult)
                 |> FetchResult.Failure)
         with ex ->
-            ({ Message = "Unhandled exception while fetching pipeline"
-               DisplayMessage = "Error fetching pipeline"
-               Exception = Some ex })
+            { Message = "Unhandled exception while fetching pipeline"
+              DisplayMessage = "Error fetching pipeline"
+              Exception = Some ex }
             |> FetchResult.Failure
 
     let pipelineById (ctx: MySqlContext) (id: int) =
@@ -83,9 +82,9 @@ module Fetch =
                 : FailureResult)
                 |> FetchResult.Failure)
         with ex ->
-            ({ Message = "Unhandled exception while fetching pipeline"
-               DisplayMessage = "Error fetching pipeline"
-               Exception = Some ex })
+            { Message = "Unhandled exception while fetching pipeline"
+              DisplayMessage = "Error fetching pipeline"
+              Exception = Some ex }
             |> FetchResult.Failure
 
     let pipelineLatestVersion (ctx: MySqlContext) (pipelineId: int) =
@@ -102,9 +101,9 @@ module Fetch =
                 : FailureResult)
                 |> FetchResult.Failure)
         with ex ->
-            ({ Message = "Unhandled exception while fetching latest pipeline version"
-               DisplayMessage = "Error fetching latest pipeline version"
-               Exception = Some ex })
+            { Message = "Unhandled exception while fetching latest pipeline version"
+              DisplayMessage = "Error fetching latest pipeline version"
+              Exception = Some ex }
             |> FetchResult.Failure
 
     let pipelineVersion (ctx: MySqlContext) (pipelineId: int) (version: int) =
@@ -121,9 +120,9 @@ module Fetch =
                 : FailureResult)
                 |> FetchResult.Failure)
         with ex ->
-            ({ Message = "Unhandled exception while fetching pipeline version"
-               DisplayMessage = "Error fetching latest pipeline version"
-               Exception = Some ex })
+            { Message = "Unhandled exception while fetching pipeline version"
+              DisplayMessage = "Error fetching latest pipeline version"
+              Exception = Some ex }
             |> FetchResult.Failure
 
     let pipelineVersionByReference (ctx: MySqlContext) (reference: string) =
@@ -137,9 +136,9 @@ module Fetch =
                 : FailureResult)
                 |> FetchResult.Failure)
         with ex ->
-            ({ Message = "Unhandled exception while fetching pipeline version"
-               DisplayMessage = "Error fetching pipeline version"
-               Exception = Some ex })
+            { Message = "Unhandled exception while fetching pipeline version"
+              DisplayMessage = "Error fetching pipeline version"
+              Exception = Some ex }
             |> FetchResult.Failure
 
     let pipelineVersionById (ctx: MySqlContext) (id: int) =
@@ -153,9 +152,9 @@ module Fetch =
                 : FailureResult)
                 |> FetchResult.Failure)
         with ex ->
-            ({ Message = "Unhandled exception while fetching pipeline version"
-               DisplayMessage = "Error fetching pipeline version"
-               Exception = Some ex })
+            { Message = "Unhandled exception while fetching pipeline version"
+              DisplayMessage = "Error fetching pipeline version"
+              Exception = Some ex }
             |> FetchResult.Failure
 
     let pipelineResourceByReference (ctx: MySqlContext) (reference: string) =
@@ -169,9 +168,9 @@ module Fetch =
                 : FailureResult)
                 |> FetchResult.Failure)
         with ex ->
-            ({ Message = "Unhandled exception while fetching pipeline resource"
-               DisplayMessage = "Error fetching pipeline resource"
-               Exception = Some ex })
+            { Message = "Unhandled exception while fetching pipeline resource"
+              DisplayMessage = "Error fetching pipeline resource"
+              Exception = Some ex }
             |> FetchResult.Failure
 
     let pipelineArgByReference (ctx: MySqlContext) (reference: string) =
@@ -185,9 +184,9 @@ module Fetch =
                 : FailureResult)
                 |> FetchResult.Failure)
         with ex ->
-            ({ Message = "Unhandled exception while fetching pipeline arg"
-               DisplayMessage = "Error fetching pipeline arg"
-               Exception = Some ex })
+            { Message = "Unhandled exception while fetching pipeline arg"
+              DisplayMessage = "Error fetching pipeline arg"
+              Exception = Some ex }
             |> FetchResult.Failure
 
     let pipelineActionByReference (ctx: MySqlContext) (reference: string) =
@@ -201,9 +200,9 @@ module Fetch =
                 : FailureResult)
                 |> FetchResult.Failure)
         with ex ->
-            ({ Message = "Unhandled exception while fetching pipeline action"
-               DisplayMessage = "Error fetching pipeline action"
-               Exception = Some ex })
+            { Message = "Unhandled exception while fetching pipeline action"
+              DisplayMessage = "Error fetching pipeline action"
+              Exception = Some ex }
             |> FetchResult.Failure
 
     let pipelineActions (ctx: MySqlContext) (pipelineVersionId: int) =
@@ -211,9 +210,9 @@ module Fetch =
             Operations.selectPipelineActionRecords ctx [ "WHERE pipeline_version_id = @0" ] [ pipelineVersionId ]
             |> FetchResult.Success
         with ex ->
-            ({ Message = "Unhandled exception while fetching pipeline actions"
-               DisplayMessage = "Error fetching pipeline actions"
-               Exception = Some ex })
+            { Message = "Unhandled exception while fetching pipeline actions"
+              DisplayMessage = "Error fetching pipeline actions"
+              Exception = Some ex }
             |> FetchResult.Failure
 
     let actionTypeById (ctx: MySqlContext) (id: int) =
@@ -227,11 +226,10 @@ module Fetch =
                 : FailureResult)
                 |> FetchResult.Failure)
         with ex ->
-            ({ Message = "Unhandled exception while fetching action type"
-               DisplayMessage = "Error fetching action type"
-               Exception = Some ex })
+            { Message = "Unhandled exception while fetching action type"
+              DisplayMessage = "Error fetching action type"
+              Exception = Some ex }
             |> FetchResult.Failure
-
 
     // Tables
     let table (ctx: MySqlContext) (reference: string) =
@@ -245,9 +243,9 @@ module Fetch =
                 : FailureResult)
                 |> FetchResult.Failure)
         with ex ->
-            ({ Message = "Unhandled exception while fetching table"
-               DisplayMessage = "Error fetching table"
-               Exception = Some ex })
+            { Message = "Unhandled exception while fetching table"
+              DisplayMessage = "Error fetching table"
+              Exception = Some ex }
             |> FetchResult.Failure
 
     let tableById (ctx: MySqlContext) (id: int) =
@@ -261,9 +259,9 @@ module Fetch =
                 : FailureResult)
                 |> FetchResult.Failure)
         with ex ->
-            ({ Message = "Unhandled exception while fetching table"
-               DisplayMessage = "Error fetching table"
-               Exception = Some ex })
+            { Message = "Unhandled exception while fetching table"
+              DisplayMessage = "Error fetching table"
+              Exception = Some ex }
             |> FetchResult.Failure
 
     let tablesBySubscriptionId (ctx: MySqlContext) (subscriptionId: int) =
@@ -271,9 +269,9 @@ module Fetch =
             Operations.selectTableModelRecords ctx [ "WHERE subscription_id = @0" ] [ subscriptionId ]
             |> FetchResult.Success
         with ex ->
-            ({ Message = "Unhandled exception while fetching table"
-               DisplayMessage = "Error fetching table"
-               Exception = Some ex })
+            { Message = "Unhandled exception while fetching table"
+              DisplayMessage = "Error fetching table"
+              Exception = Some ex }
             |> FetchResult.Failure
 
     let tableLatestVersion (ctx: MySqlContext) (tableId: int) =
@@ -290,9 +288,9 @@ module Fetch =
                 : FailureResult)
                 |> FetchResult.Failure)
         with ex ->
-            ({ Message = "Unhandled exception while fetching table latest version"
-               DisplayMessage = "Error fetching latest table version"
-               Exception = Some ex })
+            { Message = "Unhandled exception while fetching table latest version"
+              DisplayMessage = "Error fetching latest table version"
+              Exception = Some ex }
             |> FetchResult.Failure
 
     let tableVersion (ctx: MySqlContext) (tableId: int) (version: int) =
@@ -309,9 +307,9 @@ module Fetch =
                 : FailureResult)
                 |> FetchResult.Failure)
         with ex ->
-            ({ Message = "Unhandled exception while fetching table version"
-               DisplayMessage = "Error fetching table version"
-               Exception = Some ex })
+            { Message = "Unhandled exception while fetching table version"
+              DisplayMessage = "Error fetching table version"
+              Exception = Some ex }
             |> FetchResult.Failure
 
     let tableVersions (ctx: MySqlContext) (tableId: int) =
@@ -319,9 +317,9 @@ module Fetch =
             Operations.selectTableModelVersionRecords ctx [ "WHERE table_id = @0 AND version = @1;" ] [ tableId ]
             |> FetchResult.Success
         with ex ->
-            ({ Message = "Unhandled exception while fetching table version"
-               DisplayMessage = "Error fetching table version"
-               Exception = Some ex })
+            { Message = "Unhandled exception while fetching table version"
+              DisplayMessage = "Error fetching table version"
+              Exception = Some ex }
             |> FetchResult.Failure
 
     let tableVersionByReference (ctx: MySqlContext) (reference: string) =
@@ -335,9 +333,9 @@ module Fetch =
                 : FailureResult)
                 |> FetchResult.Failure)
         with ex ->
-            ({ Message = "Unhandled exception while fetching table version"
-               DisplayMessage = "Error fetching table version"
-               Exception = Some ex })
+            { Message = "Unhandled exception while fetching table version"
+              DisplayMessage = "Error fetching table version"
+              Exception = Some ex }
             |> FetchResult.Failure
 
     let tableVersionById (ctx: MySqlContext) (id: int) =
@@ -351,9 +349,9 @@ module Fetch =
                 : FailureResult)
                 |> FetchResult.Failure)
         with ex ->
-            ({ Message = "Unhandled exception while fetching table version"
-               DisplayMessage = "Error fetching table version"
-               Exception = Some ex })
+            { Message = "Unhandled exception while fetching table version"
+              DisplayMessage = "Error fetching table version"
+              Exception = Some ex }
             |> FetchResult.Failure
 
     let tableVersionsByTableId (ctx: MySqlContext) (id: int) =
@@ -361,9 +359,9 @@ module Fetch =
             Operations.selectTableModelVersionRecords ctx [ "WHERE table_id = @0;" ] [ id ]
             |> FetchResult.Success
         with ex ->
-            ({ Message = "Unhandled exception while fetching table version"
-               DisplayMessage = "Error fetching table version"
-               Exception = Some ex })
+            { Message = "Unhandled exception while fetching table version"
+              DisplayMessage = "Error fetching table version"
+              Exception = Some ex }
             |> FetchResult.Failure
 
     let tableColumns (ctx: MySqlContext) (tableVersionId: int) =
@@ -371,9 +369,9 @@ module Fetch =
             Operations.selectTableColumnRecords ctx [ "WHERE table_version_id = @0" ] [ tableVersionId ]
             |> FetchResult.Success
         with ex ->
-            ({ Message = "Unhandled exception while fetching table columns"
-               DisplayMessage = "Error fetching table columns"
-               Exception = Some ex })
+            { Message = "Unhandled exception while fetching table columns"
+              DisplayMessage = "Error fetching table columns"
+              Exception = Some ex }
             |> FetchResult.Failure
 
     let tableColumnByReference (ctx: MySqlContext) (reference: string) =
@@ -387,9 +385,9 @@ module Fetch =
                 : FailureResult)
                 |> FetchResult.Failure)
         with ex ->
-            ({ Message = "Unhandled exception while fetching table column"
-               DisplayMessage = "Error fetching table column"
-               Exception = Some ex })
+            { Message = "Unhandled exception while fetching table column"
+              DisplayMessage = "Error fetching table column"
+              Exception = Some ex }
             |> FetchResult.Failure
 
     // Queries
@@ -404,9 +402,9 @@ module Fetch =
                 : FailureResult)
                 |> FetchResult.Failure)
         with ex ->
-            ({ Message = "Unhandled exception while fetching query"
-               DisplayMessage = "Error fetching query"
-               Exception = Some ex })
+            { Message = "Unhandled exception while fetching query"
+              DisplayMessage = "Error fetching query"
+              Exception = Some ex }
             |> FetchResult.Failure
 
     let queryById (ctx: MySqlContext) (id: int) =
@@ -420,9 +418,9 @@ module Fetch =
                 : FailureResult)
                 |> FetchResult.Failure)
         with ex ->
-            ({ Message = "Unhandled exception while fetching query"
-               DisplayMessage = "Error fetching query"
-               Exception = Some ex })
+            { Message = "Unhandled exception while fetching query"
+              DisplayMessage = "Error fetching query"
+              Exception = Some ex }
             |> FetchResult.Failure
 
     let queriesBySubscriptionId (ctx: MySqlContext) (subscriptionId: int) =
@@ -430,9 +428,9 @@ module Fetch =
             Operations.selectQueryRecords ctx [ "WHERE subscription_id = @0" ] [ subscriptionId ]
             |> FetchResult.Success
         with ex ->
-            ({ Message = "Unhandled exception while fetching query"
-               DisplayMessage = "Error fetching query"
-               Exception = Some ex })
+            { Message = "Unhandled exception while fetching query"
+              DisplayMessage = "Error fetching query"
+              Exception = Some ex }
             |> FetchResult.Failure
     
     let queryLatestVersion (ctx: MySqlContext) (queryId: int) =
@@ -446,9 +444,9 @@ module Fetch =
                 : FailureResult)
                 |> FetchResult.Failure)
         with ex ->
-            ({ Message = "Unhandled exception while fetching query latest version"
-               DisplayMessage = "Error fetching latest query version"
-               Exception = Some ex })
+            { Message = "Unhandled exception while fetching query latest version"
+              DisplayMessage = "Error fetching latest query version"
+              Exception = Some ex }
             |> FetchResult.Failure
 
     let queryVersion (ctx: MySqlContext) (queryId: int) (version: int) =
@@ -462,9 +460,9 @@ module Fetch =
                 : FailureResult)
                 |> FetchResult.Failure)
         with ex ->
-            ({ Message = "Unhandled exception while fetching query version"
-               DisplayMessage = "Error fetching query version"
-               Exception = Some ex })
+            { Message = "Unhandled exception while fetching query version"
+              DisplayMessage = "Error fetching query version"
+              Exception = Some ex }
             |> FetchResult.Failure
 
     let queryVersionByReference (ctx: MySqlContext) (reference: string) =
@@ -478,9 +476,9 @@ module Fetch =
                 : FailureResult)
                 |> FetchResult.Failure)
         with ex ->
-            ({ Message = "Unhandled exception while fetching query version"
-               DisplayMessage = "Error fetching query version"
-               Exception = Some ex })
+            { Message = "Unhandled exception while fetching query version"
+              DisplayMessage = "Error fetching query version"
+              Exception = Some ex }
             |> FetchResult.Failure
             
     let queryVersionsByQueryId (ctx: MySqlContext) (queryId: int) =
@@ -488,9 +486,9 @@ module Fetch =
             Operations.selectQueryVersionRecords ctx [ "WHERE query_id = @0;" ] [ queryId ]
             |> FetchResult.Success
         with ex ->
-            ({ Message = "Unhandled exception while fetching query version"
-               DisplayMessage = "Error fetching query version"
-               Exception = Some ex })
+            { Message = "Unhandled exception while fetching query version"
+              DisplayMessage = "Error fetching query version"
+              Exception = Some ex }
             |> FetchResult.Failure
 
     // Resources
@@ -505,9 +503,9 @@ module Fetch =
                 : FailureResult)
                 |> FetchResult.Failure)
         with ex ->
-            ({ Message = "Unhandled exception while fetching resource"
-               DisplayMessage = "Error fetching resource"
-               Exception = Some ex })
+            { Message = "Unhandled exception while fetching resource"
+              DisplayMessage = "Error fetching resource"
+              Exception = Some ex }
             |> FetchResult.Failure
 
     let resourceById (ctx: MySqlContext) (id: int) =
@@ -521,20 +519,20 @@ module Fetch =
                 : FailureResult)
                 |> FetchResult.Failure)
         with ex ->
-            ({ Message = "Unhandled exception while fetching resource"
-               DisplayMessage = "Error fetching resource"
-               Exception = Some ex })
+            { Message = "Unhandled exception while fetching resource"
+              DisplayMessage = "Error fetching resource"
+              Exception = Some ex }
             |> FetchResult.Failure
 
     
     let resourcesBySubscriptionId (ctx: MySqlContext) (subscriptionId: int) =
         try
-            Operations.selectResourceRecords ctx [ "WHERE subscription_id = @0" ] [ id ]
+            Operations.selectResourceRecords ctx [ "WHERE subscription_id = @0" ] [ subscriptionId ]
             |> FetchResult.Success
         with ex ->
-            ({ Message = "Unhandled exception while fetching resource"
-               DisplayMessage = "Error fetching resource"
-               Exception = Some ex })
+            { Message = "Unhandled exception while fetching resource"
+              DisplayMessage = "Error fetching resource"
+              Exception = Some ex }
             |> FetchResult.Failure
     
     let resourceLatestVersion (ctx: MySqlContext) (resourceId: int) =
@@ -551,9 +549,9 @@ module Fetch =
                 : FailureResult)
                 |> FetchResult.Failure)
         with ex ->
-            ({ Message = "Unhandled exception while fetching resource latest version"
-               DisplayMessage = "Error fetching latest resource version"
-               Exception = Some ex })
+            { Message = "Unhandled exception while fetching resource latest version"
+              DisplayMessage = "Error fetching latest resource version"
+              Exception = Some ex }
             |> FetchResult.Failure
 
     let resourceVersion (ctx: MySqlContext) (resourceId: int) (version: int) =
@@ -570,9 +568,9 @@ module Fetch =
                 : FailureResult)
                 |> FetchResult.Failure)
         with ex ->
-            ({ Message = "Unhandled exception while fetching resource version"
-               DisplayMessage = "Error fetching resource version"
-               Exception = Some ex })
+            { Message = "Unhandled exception while fetching resource version"
+              DisplayMessage = "Error fetching resource version"
+              Exception = Some ex }
             |> FetchResult.Failure
 
     let resourceVersionByReference (ctx: MySqlContext) (reference: string) =
@@ -586,9 +584,9 @@ module Fetch =
                 : FailureResult)
                 |> FetchResult.Failure)
         with ex ->
-            ({ Message = "Unhandled exception while fetching resource version"
-               DisplayMessage = "Error fetching resource version"
-               Exception = Some ex })
+            { Message = "Unhandled exception while fetching resource version"
+              DisplayMessage = "Error fetching resource version"
+              Exception = Some ex }
             |> FetchResult.Failure
 
     let resourceVersionById (ctx: MySqlContext) (id: int) =
@@ -602,9 +600,9 @@ module Fetch =
                 : FailureResult)
                 |> FetchResult.Failure)
         with ex ->
-            ({ Message = "Unhandled exception while fetching resource version"
-               DisplayMessage = "Error fetching resource version"
-               Exception = Some ex })
+            { Message = "Unhandled exception while fetching resource version"
+              DisplayMessage = "Error fetching resource version"
+              Exception = Some ex }
             |> FetchResult.Failure
 
     let resourceVersionsByResourceId (ctx: MySqlContext) (resourceId: int) =
@@ -612,9 +610,9 @@ module Fetch =
             Operations.selectResourceVersionRecords ctx [ "WHERE resource_id = @0;" ] [ resourceId ]
             |> FetchResult.Success
         with ex ->
-            ({ Message = "Unhandled exception while fetching resource version"
-               DisplayMessage = "Error fetching resource version"
-               Exception = Some ex })
+            { Message = "Unhandled exception while fetching resource version"
+              DisplayMessage = "Error fetching resource version"
+              Exception = Some ex }
             |> FetchResult.Failure
 
     // Table object mappers
@@ -629,9 +627,9 @@ module Fetch =
                 : FailureResult)
                 |> FetchResult.Failure)
         with ex ->
-            ({ Message = "Unhandled exception while fetching table object mapper"
-               DisplayMessage = "Error fetching table object mapper"
-               Exception = Some ex })
+            { Message = "Unhandled exception while fetching table object mapper"
+              DisplayMessage = "Error fetching table object mapper"
+              Exception = Some ex }
             |> FetchResult.Failure
 
     let tableObjectMapperById (ctx: MySqlContext) (id: int) =
@@ -645,9 +643,9 @@ module Fetch =
                 : FailureResult)
                 |> FetchResult.Failure)
         with ex ->
-            ({ Message = "Unhandled exception while fetching table object mapper"
-               DisplayMessage = "Error fetching table object mapper"
-               Exception = Some ex })
+            { Message = "Unhandled exception while fetching table object mapper"
+              DisplayMessage = "Error fetching table object mapper"
+              Exception = Some ex }
             |> FetchResult.Failure
 
     let tableObjectMappersBySubscriptionId (ctx: MySqlContext) (subscriptionId: int) =
@@ -655,9 +653,9 @@ module Fetch =
             Operations.selectTableObjectMapperRecords ctx [ "WHERE subscription_id = @0" ] [ subscriptionId ]
             |> FetchResult.Success
         with ex ->
-            ({ Message = "Unhandled exception while fetching table object mapper"
-               DisplayMessage = "Error fetching table object mapper"
-               Exception = Some ex })
+            { Message = "Unhandled exception while fetching table object mapper"
+              DisplayMessage = "Error fetching table object mapper"
+              Exception = Some ex }
             |> FetchResult.Failure
     
     let tableObjectMapperLatestVersion (ctx: MySqlContext) (tableObjectMapperId: int) =
@@ -674,9 +672,9 @@ module Fetch =
                 : FailureResult)
                 |> FetchResult.Failure)
         with ex ->
-            ({ Message = "Unhandled exception while fetching table object mapper latest version"
-               DisplayMessage = "Error fetching latest table object mapper version"
-               Exception = Some ex })
+            { Message = "Unhandled exception while fetching table object mapper latest version"
+              DisplayMessage = "Error fetching latest table object mapper version"
+              Exception = Some ex }
             |> FetchResult.Failure
 
     let tableObjectMapperVersion (ctx: MySqlContext) (tableObjectMapperId: int) (version: int) =
@@ -693,9 +691,9 @@ module Fetch =
                 : FailureResult)
                 |> FetchResult.Failure)
         with ex ->
-            ({ Message = "Unhandled exception while fetching table object mapper version"
-               DisplayMessage = "Error fetching table object mapper version"
-               Exception = Some ex })
+            { Message = "Unhandled exception while fetching table object mapper version"
+              DisplayMessage = "Error fetching table object mapper version"
+              Exception = Some ex }
             |> FetchResult.Failure
 
     let tableObjectMapperVersionByReference (ctx: MySqlContext) (reference: string) =
@@ -709,9 +707,9 @@ module Fetch =
                 : FailureResult)
                 |> FetchResult.Failure)
         with ex ->
-            ({ Message = "Unhandled exception while fetching table object mapper version"
-               DisplayMessage = "Error fetching table object mapper version"
-               Exception = Some ex })
+            { Message = "Unhandled exception while fetching table object mapper version"
+              DisplayMessage = "Error fetching table object mapper version"
+              Exception = Some ex }
             |> FetchResult.Failure
 
     let tableObjectMapperVersionByMapperId (ctx: MySqlContext) (mapperId: int) =
@@ -719,9 +717,9 @@ module Fetch =
             Operations.selectTableObjectMapperVersionRecords ctx [ "WHERE table_object_mapper_id = @0;" ] [ mapperId ]
             |> FetchResult.Success
         with ex ->
-            ({ Message = "Unhandled exception while fetching table object mapper versions"
-               DisplayMessage = "Error fetching table object mapper versions"
-               Exception = Some ex })
+            { Message = "Unhandled exception while fetching table object mapper versions"
+              DisplayMessage = "Error fetching table object mapper versions"
+              Exception = Some ex }
             |> FetchResult.Failure
 
     
@@ -737,9 +735,9 @@ module Fetch =
                 : FailureResult)
                 |> FetchResult.Failure)
         with ex ->
-            ({ Message = "Unhandled exception while fetching object table mapper"
-               DisplayMessage = "Error fetching object table mapper"
-               Exception = Some ex })
+            { Message = "Unhandled exception while fetching object table mapper"
+              DisplayMessage = "Error fetching object table mapper"
+              Exception = Some ex }
             |> FetchResult.Failure
 
     let objectTableMapperById (ctx: MySqlContext) (id: int) =
@@ -753,9 +751,9 @@ module Fetch =
                 : FailureResult)
                 |> FetchResult.Failure)
         with ex ->
-            ({ Message = "Unhandled exception while fetching object table mapper"
-               DisplayMessage = "Error fetching object table mapper"
-               Exception = Some ex })
+            { Message = "Unhandled exception while fetching object table mapper"
+              DisplayMessage = "Error fetching object table mapper"
+              Exception = Some ex }
             |> FetchResult.Failure
 
     let objectTableMappersBySubscriptionId (ctx: MySqlContext) (subscriptionId: int) =
@@ -763,9 +761,9 @@ module Fetch =
             Operations.selectObjectTableMapperRecords ctx [ "WHERE subscription_id = @0" ] [ subscriptionId ]
             |> FetchResult.Success
         with ex ->
-            ({ Message = "Unhandled exception while fetching object table mappers"
-               DisplayMessage = "Error fetching object table mappers"
-               Exception = Some ex })
+            { Message = "Unhandled exception while fetching object table mappers"
+              DisplayMessage = "Error fetching object table mappers"
+              Exception = Some ex }
             |> FetchResult.Failure
     
     let objectTableMapperLatestVersion (ctx: MySqlContext) (objectTableMapperId: int) =
@@ -782,9 +780,9 @@ module Fetch =
                 : FailureResult)
                 |> FetchResult.Failure)
         with ex ->
-            ({ Message = "Unhandled exception while fetching object table mapper latest version"
-               DisplayMessage = "Error fetching latest object table mapper version"
-               Exception = Some ex })
+            { Message = "Unhandled exception while fetching object table mapper latest version"
+              DisplayMessage = "Error fetching latest object table mapper version"
+              Exception = Some ex }
             |> FetchResult.Failure
 
     let objectTableMapperVersion (ctx: MySqlContext) (objectTableMapperId: int) (version: int) =
@@ -801,9 +799,9 @@ module Fetch =
                 : FailureResult)
                 |> FetchResult.Failure)
         with ex ->
-            ({ Message = "Unhandled exception while fetching object table mapper version"
-               DisplayMessage = "Error fetching object table mapper version"
-               Exception = Some ex })
+            { Message = "Unhandled exception while fetching object table mapper version"
+              DisplayMessage = "Error fetching object table mapper version"
+              Exception = Some ex }
             |> FetchResult.Failure
 
     let objectTableMapperVersionByReference (ctx: MySqlContext) (reference: string) =
@@ -817,9 +815,9 @@ module Fetch =
                 : FailureResult)
                 |> FetchResult.Failure)
         with ex ->
-            ({ Message = "Unhandled exception while fetching object table mapper version"
-               DisplayMessage = "Error fetching object table mapper version"
-               Exception = Some ex })
+            { Message = "Unhandled exception while fetching object table mapper version"
+              DisplayMessage = "Error fetching object table mapper version"
+              Exception = Some ex }
             |> FetchResult.Failure
             
     let objectTableMapperVersionByMapperId (ctx: MySqlContext) (mapperId: int) =
@@ -827,7 +825,7 @@ module Fetch =
             Operations.selectObjectTableMapperVersionRecords ctx [ "WHERE object_table_mapper_id = @0;" ] [ mapperId ]
             |> FetchResult.Success
         with ex ->
-            ({ Message = "Unhandled exception while fetching object table mapper versions"
-               DisplayMessage = "Error fetching object table mapper versions"
-               Exception = Some ex })
+            { Message = "Unhandled exception while fetching object table mapper versions"
+              DisplayMessage = "Error fetching object table mapper versions"
+              Exception = Some ex }
             |> FetchResult.Failure

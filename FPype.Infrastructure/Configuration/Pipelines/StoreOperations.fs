@@ -188,3 +188,16 @@ module StoreOperations =
                 : FailureResult)
                 |> Error)
         |> ActionResult.fromResult
+
+    let addAllPipelineVersions
+        (ctx: MySqlContext)
+        (failOnError: bool)
+        (subscription: Records.Subscription)
+        (store: ConfigurationStore)
+        =
+        
+        
+        
+        ()
+    
+    
