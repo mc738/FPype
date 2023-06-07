@@ -219,6 +219,16 @@ module Fetch =
               Exception = Some ex }
             |> FetchResult.Failure
 
+    let pipelineArgByVersionId (ctx: MySqlContext) (versionId: int) =
+        try
+            Operations.selectPipelineArgRecords ctx [ "WHERE pipeline_version_id = @0" ] [ versionId ]
+            |> FetchResult.Success
+        with ex ->
+            { Message = "Unhandled exception while fetching pipeline args"
+              DisplayMessage = "Error fetching pipeline args"
+              Exception = Some ex }
+            |> FetchResult.Failure
+    
     let pipelineActionByReference (ctx: MySqlContext) (reference: string) =
         try
             Operations.selectPipelineActionRecord ctx [ "WHERE reference = @0" ] [ reference ]
