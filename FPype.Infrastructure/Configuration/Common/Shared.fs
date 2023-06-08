@@ -11,7 +11,7 @@ module Shared =
 
     let createReference () = Guid.NewGuid().ToString("n")
 
-    let timestamp () = DateTime.UtcNow
+    let getTimestamp () = DateTime.UtcNow
 
     let handleFetchResult = ()
 

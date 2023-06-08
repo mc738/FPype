@@ -2,6 +2,7 @@
 
 open System.Text
 open FsToolbox.Core
+open Microsoft.Extensions.Logging
 
 [<RequireQualifiedAccess>]
 module CreateOperations =
@@ -14,7 +15,7 @@ module CreateOperations =
     open FPype.Infrastructure.Core.Persistence
     open FPype.Infrastructure.Configuration.Common
 
-    let pipeline (ctx: MySqlContext) (userReference: string) (pipeline: NewPipeline) =
+    let pipeline (ctx: MySqlContext) (logger: ILogger) (userReference: string) (pipeline: NewPipeline) =
         ctx.ExecuteInTransaction(fun t ->
             // Fetch
             Fetch.user t userReference
@@ -32,6 +33,8 @@ module CreateOperations =
                     Operations.selectActionTypeRecords t [] []
                     |> List.map (fun atr -> atr.Name, atr.Id)
                     |> Map.ofList
+                    
+                let timestamp = getTimestamp ()
 
                 let pipelineId =
                     ({ Reference = pipeline.Name
@@ -42,17 +45,17 @@ module CreateOperations =
                     |> int
 
                 let versionId =
-                    ({ Reference = createReference ()
+                    ({ Reference = pipeline.Version.Reference
                        PipelineId = pipelineId
                        Version = 1
                        Description = pipeline.Version.Description
-                       CreatedOn = timestamp () }
+                       CreatedOn = timestamp }
                     : Parameters.NewPipelineVersion)
                     |> Operations.insertPipelineVersion t
                     |> int
 
                 pipeline.Version.Actions
-                |> List.iter (fun a ->
+                |> List.mapi (fun i a ->
                     match typeMap.TryFind(a.ActionType.ToLower()) with
                     | Some atId ->
                         ({ Reference = a.Reference
@@ -61,13 +64,33 @@ module CreateOperations =
                            ActionTypeId = atId
                            ActionJson = a.ActionData
                            Hash = a.ActionData.GetSHA256Hash()
-                           Step = 1 }
+                           Step = i + 1 }
                         : Parameters.NewPipelineAction)
                         |> Operations.insertPipelineAction t
                         |> ignore
+                        
+                        ({
+                            Reference = a.Reference
+                            VersionReference = pipeline.Version.Reference
+                            ActionName = a.Name 
+                        }: Events.PipelineActionAddedEvent)
                     | None ->
                         // TODO what to do if action type not found?
-                        ())))
+                        ())
+
+                [ ({ Reference = pipeline.Reference
+                     PipelineName = pipeline.Name }
+                  : Events.PipelineAddedEvent)
+                  |> Events.PipelineAdded
+
+                  ({ Reference = pipeline.Version.Reference
+                     PipelineReference = pipeline.Reference
+                     Version = 1
+                     Description = pipeline.Version.Description
+                     CreatedOnDateTime = timestamp }
+                  : Events.PipelineVersionAddedEvent)
+                  |> Events.PipelineVersionAdded ]
+                |> Events.addEvents t logger sr.Id ur.Id timestamp))
         |> toActionResult "Create pipeline"
 
     let pipelineVersion
@@ -159,7 +182,7 @@ module CreateOperations =
                        Name = action.Name
                        ActionTypeId = atr.Id
                        ActionJson = action.ActionData
-                       Hash = ""
+                       Hash = action.ActionData.GetSHA256Hash()
                        Step = action.Step }
                     : Parameters.NewPipelineAction)
                     |> Operations.insertPipelineAction t
