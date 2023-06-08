@@ -56,7 +56,7 @@ module CreateOperations =
 
                 let actionEvents =
                     pipeline.Version.Actions
-                    |> List.mapi (fun i a ->
+                    |> List.choose (fun a ->
                         match typeMap.TryFind(a.ActionType.ToLower()) with
                         | Some atId ->
                             let hash = a.ActionData.GetSHA256Hash()
@@ -68,7 +68,7 @@ module CreateOperations =
                                ActionTypeId = atId
                                ActionJson = a.ActionData
                                Hash = hash
-                               Step = i + 1 }
+                               Step = a.Step }
                             : Parameters.NewPipelineAction)
                             |> Operations.insertPipelineAction t
                             |> ignore
@@ -85,7 +85,6 @@ module CreateOperations =
                         | None ->
                             // TODO what to do if action type not found?
                             None)
-                    |> List.choose id
 
                 [ ({ Reference = pipeline.Reference
                      PipelineName = pipeline.Name }
@@ -105,6 +104,7 @@ module CreateOperations =
 
     let pipelineVersion
         (ctx: MySqlContext)
+        (logger: ILogger)
         (userReference: string)
         (pipelineReference: string)
         (version: NewPipelineVersion)
@@ -127,41 +127,69 @@ module CreateOperations =
                 VerificationResult.verify verifiers (ur, sr, pr, pvr))
             // Create
             |> Result.map (fun (ur, sr, pr, pvr) ->
+                let timestamp = getTimestamp ()
+
                 let typeMap =
                     Operations.selectActionTypeRecords t [] []
                     |> List.map (fun atr -> atr.Name, atr.Id)
                     |> Map.ofList
 
+                let versionNumber = pvr.Version + 1
+
                 let versionId =
                     ({ Reference = version.Reference
                        PipelineId = pr.Id
-                       Version = pvr.Version + 1
+                       Version = versionNumber
                        Description = version.Description
-                       CreatedOn = timestamp () }
+                       CreatedOn = timestamp }
                     : Parameters.NewPipelineVersion)
                     |> Operations.insertPipelineVersion t
 
-                version.Actions
-                |> List.iter (fun a ->
-                    match typeMap.TryFind(a.ActionType.ToLower()) with
-                    | Some atId ->
-                        ({ Reference = a.Reference
-                           PipelineVersionId = int versionId
-                           Name = a.Name
-                           ActionTypeId = atId
-                           ActionJson = a.ActionData
-                           Hash = a.ActionData.GetSHA256Hash()
-                           Step = 1 }
-                        : Parameters.NewPipelineAction)
-                        |> Operations.insertPipelineAction t
-                        |> ignore
-                    | None ->
-                        // TODO what to do if action type not found?
-                        ())))
+                let actionEvents =
+                    version.Actions
+                    |> List.choose (fun a ->
+                        match typeMap.TryFind(a.ActionType.ToLower()) with
+                        | Some atId ->
+                            let hash = a.ActionData.GetSHA256Hash()
+
+                            ({ Reference = a.Reference
+                               PipelineVersionId = int versionId
+                               Name = a.Name
+                               ActionTypeId = atId
+                               ActionJson = a.ActionData
+                               Hash = hash
+                               Step = a.Step }
+                            : Parameters.NewPipelineAction)
+                            |> Operations.insertPipelineAction t
+                            |> ignore
+
+                            ({ Reference = a.Reference
+                               VersionReference = version.Reference
+                               ActionName = a.Name
+                               ActionType = a.ActionType
+                               Hash = hash
+                               Step = a.Step }
+                            : Events.PipelineActionAddedEvent)
+                            |> Events.PipelineActionAdded
+                            |> Some
+                        | None ->
+                            // TODO what to do if action type not found?
+                            None)
+
+                [ ({ Reference = version.Reference
+                     PipelineReference = pr.Reference
+                     Version = versionNumber
+                     Description = version.Description
+                     CreatedOnDateTime = timestamp }
+                  : Events.PipelineVersionAddedEvent)
+                  |> Events.PipelineVersionAdded
+                  yield! actionEvents ]
+                |> Events.addEvents t logger sr.Id ur.Id timestamp))
         |> toActionResult "Create pipeline version"
 
     let pipelineActions
         (ctx: MySqlContext)
+        (logger: ILogger)
         (userReference: string)
         (versionReference: string)
         (action: NewPipelineAction)
@@ -187,16 +215,29 @@ module CreateOperations =
             |> Result.map (fun (ur, sr, pr, pvr) ->
                 match Operations.selectActionTypeRecord t [ "WHERE name = @0" ] [ action.ActionType.ToLower() ] with
                 | Some atr ->
+                    let hash = action.ActionData.GetSHA256Hash()
+                    let timestamp = getTimestamp ()
+                    
                     ({ Reference = action.Reference
                        PipelineVersionId = pvr.Id
                        Name = action.Name
                        ActionTypeId = atr.Id
                        ActionJson = action.ActionData
-                       Hash = action.ActionData.GetSHA256Hash()
+                       Hash = hash
                        Step = action.Step }
                     : Parameters.NewPipelineAction)
                     |> Operations.insertPipelineAction t
                     |> ignore
+
+                    [ ({ Reference = action.Reference
+                         VersionReference = action.Reference
+                         ActionName = action.Name
+                         ActionType = action.ActionType
+                         Hash = hash
+                         Step = action.Step }
+                      : Events.PipelineActionAddedEvent)
+                      |> Events.PipelineActionAdded ]
+                    |> Events.addEvents t logger sr.Id ur.Id timestamp
                 | None ->
                     // TODO how to handling missing action type?
                     ()))
