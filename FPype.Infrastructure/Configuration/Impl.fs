@@ -35,11 +35,16 @@ module Impl =
                 Pipelines.StoreOperations.addPipelineArg ctx store subscription data.Reference
             | TableAdded data ->
                 Tables.StoreOperations.addTable ctx store subscription data.Reference
-            | TableVersionAdded data -> failwith "todo"
-            | TableColumnAdded data -> failwith "todo"
-            | QueryAdded data -> failwith "todo"
-            | QueryVersionAdded data -> failwith "todo"
-            | ResourceAdded data -> failwith "todo"
+            | TableVersionAdded data ->
+                Tables.StoreOperations.addTableVersion ctx store subscription data.Reference
+            | TableColumnAdded data -> 
+                Tables.StoreOperations.addTableColumn ctx store subscription data.Reference
+            | QueryAdded data ->
+                Queries.StoreOperations.addQuery ctx store subscription data.Reference
+            | QueryVersionAdded data ->
+                Queries.StoreOperations.addQueryVersion ctx store subscription data.Reference
+            | ResourceAdded data ->
+                Resources.StoreOperations.addResource ctx store subscription data.Reference
             | ResourceVersionAdded data -> failwith "todo"
             | TableObjectMapperAdded data -> failwith "todo"
             | TableObjectMapperVersionAdded data -> failwith "todo"
