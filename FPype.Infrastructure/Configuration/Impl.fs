@@ -1,52 +1,17 @@
 ﻿namespace FPype.Infrastructure.Configuration
 
-open Armarium
-open FPype.Configuration
-open FPype.Infrastructure.Configuration.Common
-open FPype.Infrastructure.Configuration.Tables
-open FPype.Infrastructure.Core.Persistence
-open Freql.MySql
-open Freql.Sqlite
-open FsToolbox.Core.Results
-
 [<AutoOpen>]
 module Impl =
 
+    open Armarium
+    open FPype.Configuration
+    open FPype.Infrastructure.Configuration.Common
+    open Freql.MySql
+    open FsToolbox.Core.Results
+    
     module Internal =
-
-        let addTable
-            (ctx: MySqlContext)
-            (cfg: ConfigurationStore)
-            (subscription: Records.Subscription)
-            (tm: Records.TableModel)
-            =
-            Operations.selectTableModelVersionRecords ctx [ "WHERE table_model_id = @0" ] [ tm.Id ]
-            |> List.map (fun tv ->
-                Tables.StoreOperations.addTableVersion ctx cfg subscription tv.Reference
-
-                let tcs =
-                    Operations.selectTableColumnRecords ctx [ "WHERE table_model_version = @0" ] [ tv.Id ]
-                    |> List.map (fun tc ->
-                        ({ Id = IdType.Specific tc.Reference
-                           Name = tc.Name
-                           DataType = tc.DataType
-                           Optional = tc.Optional
-                           ImportHandler = tc.ImportHandlerJson }
-                        : Tables.NewColumn))
-
-                cfg.AddTableVersion(IdType.Specific tv.Reference, tm.Name, tcs, ItemVersion.Specific tv.Version))
-
-        let addQuery
-            (ctx: MySqlContext)
-            (cfg: ConfigurationStore)
-            (subscription: Records.Subscription)
-            (tm: Records.TableModel)
-            =
-            Operations.selectQueryVersionRecords ctx [ "WHERE query_id = @0" ] [ tm.Id ]
-            |> List.map (fun qv ->
-                // Double fetch?
-                Queries.StoreOperations.addQueryVersion ctx cfg subscription qv.Reference)
-
+        ()
+    
     let buildNewStore
         (ctx: MySqlContext)
         (fileRepo: FileRepository)
@@ -74,7 +39,6 @@ module Impl =
 
                     let cfg = ConfigurationStore.Initialize(path, additionActions, metadata)
 
-                    // Add tables
                     Tables.StoreOperations.addAllTableVersions t failOnError sub cfg
                     |> ActionResult.bind (Queries.StoreOperations.addAllQueryVersions t failOnError sub)
                     |> ActionResult.bind (
@@ -85,7 +49,8 @@ module Impl =
                     )
                     |> ActionResult.bind (
                         ObjectTableMappers.StoreOperations.addAllObjectTableMapperVersions t failOnError sub
-                    ))
+                    )
+                    |> ActionResult.bind (Pipelines.StoreOperations.addAllPipelineVersions t failOnError sub))
 
             match result with
             | Ok ar -> ar
@@ -95,7 +60,7 @@ module Impl =
                    Exception = None }
                 : FailureResult)
                 |> ActionResult.Failure)
-        
+
     let buildStoreFromSerial () = ()
 
 
