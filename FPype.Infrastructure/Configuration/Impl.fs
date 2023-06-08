@@ -1,5 +1,8 @@
 ﻿namespace FPype.Infrastructure.Configuration
 
+open FPype.Infrastructure.Configuration.Common.Events
+open FPype.Infrastructure.Core.Persistence
+
 [<AutoOpen>]
 module Impl =
 
@@ -8,10 +11,38 @@ module Impl =
     open FPype.Infrastructure.Configuration.Common
     open Freql.MySql
     open FsToolbox.Core.Results
-    
+
     module Internal =
-        ()
-    
+
+        let handleEvent
+            (ctx: MySqlContext)
+            (fileRepo: FileRepository)
+            (readArgs: FileReadOperationArguments)
+            (subscription: Records.Subscription)
+            (event: ConfigurationEvent)
+            (store: ConfigurationStore)
+
+            =
+            match event with
+            | PipelineAdded data -> Pipelines.StoreOperations.addPipeline ctx store subscription data.Reference
+            | PipelineVersionAdded data ->
+                Pipelines.StoreOperations.addPipelineVersion ctx store subscription data.Reference
+            | PipelineActionAdded data -> failwith "todo"
+            | PipelineResourceAdded data -> failwith "todo"
+            | PipelineArgAdded data -> failwith "todo"
+            | TableAdded data -> failwith "todo"
+            | TableVersionAdded data -> failwith "todo"
+            | TableColumnAdded data -> failwith "todo"
+            | QueryAdded data -> failwith "todo"
+            | QueryVersionAdded data -> failwith "todo"
+            | ResourceAdded data -> failwith "todo"
+            | ResourceVersionAdded data -> failwith "todo"
+            | TableObjectMapperAdded data -> failwith "todo"
+            | TableObjectMapperVersionAdded data -> failwith "todo"
+            | ObjectTableMapperAdded data -> failwith "todo"
+            | ObjectTableMapperVersionAdded data -> failwith "todo"
+
+
     let buildNewStore
         (ctx: MySqlContext)
         (fileRepo: FileRepository)
