@@ -27,10 +27,14 @@ module Impl =
             | PipelineAdded data -> Pipelines.StoreOperations.addPipeline ctx store subscription data.Reference
             | PipelineVersionAdded data ->
                 Pipelines.StoreOperations.addPipelineVersion ctx store subscription data.Reference
-            | PipelineActionAdded data -> failwith "todo"
-            | PipelineResourceAdded data -> failwith "todo"
-            | PipelineArgAdded data -> failwith "todo"
-            | TableAdded data -> failwith "todo"
+            | PipelineActionAdded data ->
+                Pipelines.StoreOperations.addPipelineAction ctx store subscription data.Reference
+            | PipelineResourceAdded data ->
+                Pipelines.StoreOperations.addPipelineResource ctx store subscription data.Reference
+            | PipelineArgAdded data ->
+                Pipelines.StoreOperations.addPipelineArg ctx store subscription data.Reference
+            | TableAdded data ->
+                Tables.StoreOperations.addTable ctx store subscription data.Reference
             | TableVersionAdded data -> failwith "todo"
             | TableColumnAdded data -> failwith "todo"
             | QueryAdded data -> failwith "todo"
