@@ -33,7 +33,7 @@ module CreateOperations =
                     Operations.selectActionTypeRecords t [] []
                     |> List.map (fun atr -> atr.Name, atr.Id)
                     |> Map.ofList
-                    
+
                 let timestamp = getTimestamp ()
 
                 let pipelineId =
@@ -54,29 +54,38 @@ module CreateOperations =
                     |> Operations.insertPipelineVersion t
                     |> int
 
-                pipeline.Version.Actions
-                |> List.mapi (fun i a ->
-                    match typeMap.TryFind(a.ActionType.ToLower()) with
-                    | Some atId ->
-                        ({ Reference = a.Reference
-                           PipelineVersionId = versionId
-                           Name = a.Name
-                           ActionTypeId = atId
-                           ActionJson = a.ActionData
-                           Hash = a.ActionData.GetSHA256Hash()
-                           Step = i + 1 }
-                        : Parameters.NewPipelineAction)
-                        |> Operations.insertPipelineAction t
-                        |> ignore
-                        
-                        ({
-                            Reference = a.Reference
-                            VersionReference = pipeline.Version.Reference
-                            ActionName = a.Name 
-                        }: Events.PipelineActionAddedEvent)
-                    | None ->
-                        // TODO what to do if action type not found?
-                        ())
+                let actionEvents =
+                    pipeline.Version.Actions
+                    |> List.mapi (fun i a ->
+                        match typeMap.TryFind(a.ActionType.ToLower()) with
+                        | Some atId ->
+                            let hash = a.ActionData.GetSHA256Hash()
+                            let step = i + 1
+
+                            ({ Reference = a.Reference
+                               PipelineVersionId = versionId
+                               Name = a.Name
+                               ActionTypeId = atId
+                               ActionJson = a.ActionData
+                               Hash = hash
+                               Step = i + 1 }
+                            : Parameters.NewPipelineAction)
+                            |> Operations.insertPipelineAction t
+                            |> ignore
+
+                            ({ Reference = a.Reference
+                               VersionReference = pipeline.Version.Reference
+                               ActionName = a.Name
+                               ActionType = a.ActionType
+                               Hash = hash
+                               Step = step }
+                            : Events.PipelineActionAddedEvent)
+                            |> Events.PipelineActionAdded
+                            |> Some
+                        | None ->
+                            // TODO what to do if action type not found?
+                            None)
+                    |> List.choose id
 
                 [ ({ Reference = pipeline.Reference
                      PipelineName = pipeline.Name }
@@ -89,7 +98,8 @@ module CreateOperations =
                      Description = pipeline.Version.Description
                      CreatedOnDateTime = timestamp }
                   : Events.PipelineVersionAddedEvent)
-                  |> Events.PipelineVersionAdded ]
+                  |> Events.PipelineVersionAdded
+                  yield! actionEvents ]
                 |> Events.addEvents t logger sr.Id ur.Id timestamp))
         |> toActionResult "Create pipeline"
 
