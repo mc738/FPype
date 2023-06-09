@@ -1,5 +1,7 @@
 ﻿namespace FPype.Infrastructure.Configuration.ObjectTableMappers
 
+open Microsoft.Extensions.Logging
+
 [<RequireQualifiedAccess>]
 module CreateOperations =
 
@@ -10,7 +12,7 @@ module CreateOperations =
     open FsToolbox.Extensions
     open FsToolbox.Core.Results
 
-    let query (ctx: MySqlContext) (userReference: string) (mapper: NewObjectTableMapper) =
+    let query (ctx: MySqlContext) (logger: ILogger) (userReference: string) (mapper: NewObjectTableMapper) =
         ctx.ExecuteInTransaction(fun t ->
             // Fetch
             Fetch.user t userReference
@@ -28,6 +30,8 @@ module CreateOperations =
                 VerificationResult.verify verifiers (ur, sr, tr, tvr))
             // Create
             |> Result.map (fun (ur, sr, tr, tvr) ->
+                let timestamp = getTimestamp ()
+                let hash = mapper.Version.MapperData.GetSHA256Hash()
 
                 let mapperId =
                     ({ Reference = mapper.Reference
@@ -43,9 +47,23 @@ module CreateOperations =
                    TableModelVersionId = tvr.Id
                    MapperJson = mapper.Version.MapperData
                    Hash = mapper.Version.MapperData.GetSHA256Hash()
-                   CreatedOn = timestamp () }
+                   CreatedOn = timestamp }
                 : Parameters.NewObjectTableMapperVersion)
                 |> Operations.insertObjectTableMapperVersion t
+                |> ignore
+                
+                [ ({ Reference = mapper.Reference
+                     MapperName = mapper.Name }
+                  : Events.ObjectTableMapperAddedEvent)
+                  |> Events.ObjectTableMapperAdded
+                  ({ Reference = mapper.Version.Reference
+                     MapperReference = mapper.Reference
+                     Version = 1
+                     Hash = hash
+                     CreatedOnDateTime = timestamp }
+                  : Events.ObjectTableMapperVersionAddedEvent)
+                  |> Events.ObjectTableMapperVersionAdded ]
+                |> Events.addEvents t logger sr.Id ur.Id timestamp
                 |> ignore))
         |> toActionResult "Create object table mapper"
 
