@@ -271,7 +271,7 @@ module Events =
         { [<JsonPropertyName("reference")>]
           Reference: string
           [<JsonPropertyName("mapperReference")>]
-          mapperReference: string
+          MapperReference: string
           [<JsonPropertyName("version")>]
           Version: int
           [<JsonPropertyName("hash")>]
@@ -293,7 +293,7 @@ module Events =
         { [<JsonPropertyName("reference")>]
           Reference: string
           [<JsonPropertyName("mapperReference")>]
-          mapperReference: string
+          MapperReference: string
           [<JsonPropertyName("version")>]
           Version: int
           [<JsonPropertyName("hash")>]

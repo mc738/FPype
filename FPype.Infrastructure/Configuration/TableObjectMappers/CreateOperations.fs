@@ -1,5 +1,7 @@
 ﻿namespace FPype.Infrastructure.Configuration.TableObjectMappers
 
+open Microsoft.Extensions.Logging
+
 [<RequireQualifiedAccess>]
 module CreateOperations =
     
@@ -10,7 +12,7 @@ module CreateOperations =
     open FsToolbox.Extensions
     open FsToolbox.Core.Results
 
-    let query (ctx: MySqlContext) (userReference: string) (mapper: NewTableObjectMapper) =
+    let query (ctx: MySqlContext) (logger: ILogger) (userReference: string) (mapper: NewTableObjectMapper) =
         ctx.ExecuteInTransaction(fun t ->
             // Fetch
             Fetch.user t userReference
@@ -24,7 +26,9 @@ module CreateOperations =
                 VerificationResult.verify verifiers (ur, sr))
             // Create
             |> Result.map (fun (ur, sr) ->
-
+                let timestamp = getTimestamp ()
+                let hash = mapper.Version.MapperData.GetSHA256Hash()
+                
                 let mapperId =
                     ({ Reference = mapper.Reference
                        SubscriptionId = sr.Id
@@ -37,14 +41,28 @@ module CreateOperations =
                    TableObjectMapperId = mapperId
                    Version = 1
                    MapperJson = mapper.Version.MapperData 
-                   Hash = mapper.Version.MapperData.GetSHA256Hash()
-                   CreatedOn = timestamp () }
+                   Hash = hash
+                   CreatedOn = timestamp }
                 : Parameters.NewTableObjectMapperVersion)
                 |> Operations.insertTableObjectMapperVersion t
+                |> ignore
+                
+                [ ({ Reference = mapper.Reference
+                     MapperName = mapper.Name }
+                  : Events.TableObjectMapperAddedEvent)
+                  |> Events.TableObjectMapperAdded
+                  ({ Reference = mapper.Version.Reference
+                     MapperReference = mapper.Reference
+                     Version = 1
+                     Hash = hash
+                     CreatedOnDateTime = timestamp }
+                  : Events.TableObjectMapperVersionAddedEvent)
+                  |> Events.TableObjectMapperVersionAdded ]
+                |> Events.addEvents t logger sr.Id ur.Id timestamp
                 |> ignore))
         |> toActionResult "Create table object mapper"
 
-    let queryVersion (ctx: MySqlContext) (userReference: string) (mapperReference: string) (version: NewTableObjectMapperVersion) =
+    let queryVersion (ctx: MySqlContext) (logger: ILogger) (userReference: string) (mapperReference: string) (version: NewTableObjectMapperVersion) =
         ctx.ExecuteInTransaction(fun t ->
             // Fetch
             Fetch.user t userReference
@@ -63,14 +81,27 @@ module CreateOperations =
                 VerificationResult.verify verifiers (ur, sr, mr, mvr))
             // Create
             |> Result.map (fun (ur, sr, mr, mvr) ->
+                let timestamp = getTimestamp ()
+                let hash = version.MapperData.GetSHA256Hash()
+                let versionNumber = mvr.Version + 1
 
                 ({ Reference = version.Reference
                    TableObjectMapperId = mr.Id
-                   Version = mvr.Version + 1
+                   Version = versionNumber
                    MapperJson = version.MapperData 
-                   Hash = version.MapperData.GetSHA256Hash()
-                   CreatedOn = timestamp () }
+                   Hash = hash
+                   CreatedOn = timestamp }
                 : Parameters.NewTableObjectMapperVersion)
                 |> Operations.insertTableObjectMapperVersion t
+                |> ignore
+                
+                [ ({ Reference = version.Reference
+                     MapperReference = mr.Reference
+                     Version = versionNumber
+                     Hash = hash
+                     CreatedOnDateTime = timestamp }
+                  : Events.TableObjectMapperVersionAddedEvent)
+                  |> Events.TableObjectMapperVersionAdded ]
+                |> Events.addEvents t logger sr.Id ur.Id timestamp
                 |> ignore))
         |> toActionResult "Create table object mapper version"
