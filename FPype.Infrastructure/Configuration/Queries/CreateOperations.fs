@@ -1,5 +1,7 @@
 ﻿namespace FPype.Infrastructure.Configuration.Queries
 
+open Microsoft.Extensions.Logging
+
 [<RequireQualifiedAccess>]
 module CreateOperations =
 
@@ -10,7 +12,7 @@ module CreateOperations =
     open FsToolbox.Extensions
     open FsToolbox.Core.Results
 
-    let query (ctx: MySqlContext) (userReference: string) (query: NewQuery) =
+    let query (ctx: MySqlContext) (logger: ILogger) (userReference: string) (query: NewQuery) =
         ctx.ExecuteInTransaction(fun t ->
             // Fetch
             Fetch.user t userReference
@@ -24,6 +26,8 @@ module CreateOperations =
                 VerificationResult.verify verifiers (ur, sr))
             // Create
             |> Result.map (fun (ur, sr) ->
+                let timestamp = getTimestamp ()
+                let hash = query.Version.RawQuery.GetSHA256Hash()
 
                 let queryId =
                     ({ Reference = query.Reference
@@ -37,14 +41,34 @@ module CreateOperations =
                    QueryId = queryId
                    Version = 1
                    RawQuery = query.Version.RawQuery
-                   Hash = query.Version.RawQuery.GetSHA256Hash()
-                   CreatedOn = timestamp () }
+                   Hash = hash
+                   CreatedOn = timestamp }
                 : Parameters.NewQueryVersion)
                 |> Operations.insertQueryVersion t
+                |> ignore
+
+                [ ({ Reference = query.Reference
+                     QueryName = query.Name }
+                  : Events.QueryAddedEvent)
+                  |> Events.QueryAdded
+                  ({ Reference = query.Version.Reference
+                     QueryReference = query.Reference
+                     Version = 1
+                     Hash = hash
+                     CreatedOnDateTime = timestamp }
+                  : Events.QueryVersionAddedEvent)
+                  |> Events.QueryVersionAdded ]
+                |> Events.addEvents t logger sr.Id ur.Id timestamp
                 |> ignore))
         |> toActionResult "Create query"
 
-    let queryVersion (ctx: MySqlContext) (userReference: string) (queryReference: string) (version: NewQueryVersion) =
+    let queryVersion
+        (ctx: MySqlContext)
+        (logger: ILogger)
+        (userReference: string)
+        (queryReference: string)
+        (version: NewQueryVersion)
+        =
         ctx.ExecuteInTransaction(fun t ->
             // Fetch
             Fetch.user t userReference
@@ -63,14 +87,27 @@ module CreateOperations =
                 VerificationResult.verify verifiers (ur, sr, qr, qvr))
             // Create
             |> Result.map (fun (ur, sr, qr, qvr) ->
+                let timestamp = getTimestamp ()
+                let hash = version.RawQuery.GetSHA256Hash()
+                let versionNumber = qvr.Version + 1
+
 
                 ({ Reference = version.Reference
                    QueryId = qr.Id
-                   Version = qvr.Version + 1
+                   Version = versionNumber
                    RawQuery = version.RawQuery
-                   Hash = version.RawQuery.GetSHA256Hash()
-                   CreatedOn = timestamp () }
+                   Hash = hash
+                   CreatedOn = timestamp }
                 : Parameters.NewQueryVersion)
                 |> Operations.insertQueryVersion t
-                |> ignore))
+                |> ignore
+
+                [ ({ Reference = version.Reference
+                     QueryReference = qr.Reference
+                     Version = 1
+                     Hash = hash
+                     CreatedOnDateTime = timestamp }
+                  : Events.QueryVersionAddedEvent)
+                  |> Events.QueryVersionAdded ]
+                |> Events.addEvents t logger sr.Id ur.Id timestamp))
         |> toActionResult "Create query version"
