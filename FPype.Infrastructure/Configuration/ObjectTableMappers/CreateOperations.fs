@@ -69,6 +69,7 @@ module CreateOperations =
 
     let queryVersion
         (ctx: MySqlContext)
+        (logger: ILogger)
         (userReference: string)
         (mapperReference: string)
         (version: NewObjectTableMapperVersion)
@@ -98,15 +99,28 @@ module CreateOperations =
                 VerificationResult.verify verifiers (ur, sr, mr, mvr, tr, tvr))
             // Create
             |> Result.map (fun (ur, sr, mr, mvr, tr, tvr) ->
+                let timestamp = getTimestamp ()
+                let hash = version.MapperData.GetSHA256Hash()
+                let versionNumber = mvr.Version + 1 
 
                 ({ Reference = version.Reference
                    ObjectTableMapperId = mr.Id
-                   Version = mvr.Version + 1
+                   Version = versionNumber
                    TableModelVersionId = tvr.Id
                    MapperJson = version.MapperData
-                   Hash = version.MapperData.GetSHA256Hash()
-                   CreatedOn = timestamp () }
+                   Hash = hash
+                   CreatedOn = timestamp }
                 : Parameters.NewObjectTableMapperVersion)
                 |> Operations.insertObjectTableMapperVersion t
+                |> ignore
+                
+                [ ({ Reference = version.Reference
+                     MapperReference = mr.Reference
+                     Version = versionNumber
+                     Hash = hash
+                     CreatedOnDateTime = timestamp }
+                  : Events.ObjectTableMapperVersionAddedEvent)
+                  |> Events.ObjectTableMapperVersionAdded ]
+                |> Events.addEvents t logger sr.Id ur.Id timestamp
                 |> ignore))
         |> toActionResult "Create object table mapper version"
