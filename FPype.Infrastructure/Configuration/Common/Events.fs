@@ -350,8 +350,12 @@ module Events =
         |> Option.map (fun er -> er.Id)
         |> Option.defaultValue 0
 
-    let selectEvents (ctx: MySqlContext) (subscriptionId: int) (previousTip: int) =
-        selectEventRecords ctx subscriptionId previousTip
+    let deserializeRecords (events: Records.ConfigurationEvent list) =
+        events
         |> List.map (fun ce ->
             ConfigurationEvent.TryDeserialize(ce.EventType, ce.EventData)
             |> FetchResult.fromResult)
+
+    let selectEvents (ctx: MySqlContext) (subscriptionId: int) (previousTip: int) =
+        selectEventRecords ctx subscriptionId previousTip
+        |> deserializeRecords

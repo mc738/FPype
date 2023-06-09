@@ -1,6 +1,7 @@
 ﻿namespace FPype.Infrastructure.Configuration
 
 open System
+open FPype.Data.Store
 open FPype.Infrastructure.Configuration.Common.Events
 open FPype.Infrastructure.Core.Persistence
 
@@ -122,13 +123,31 @@ module Impl =
             
             match cfgSubscriptionId with
             | Some sid when sid = sub.Reference ->
-                let events = Events.selectEventRecords ctx sub.Id cfgTip
+                let eventRecords = Events.selectEventRecords ctx sub.Id cfgTip
                 
+                let events = Events.deserializeRecords eventRecords
+                let newTip = eventRecords |> List.maxBy (fun er -> er.Id) |> fun er -> er.Id
+                
+                events
+                |> List.fold (fun (r: ActionResult<unit>) er ->
+                    match er, r with
+                    | FetchResult.Success e,  ActionResult.Success _ ->
+                        match Internal.handleEvent ctx fileRepo readArgs sub e cfg with
+                        | ActionResult.Success _ -> ActionResult.Success ()
+                        | ActionResult.Failure f when failOnError ->
+                            // TODO log error?
+                            ActionResult.Success ()
+                        | ActionResult.Failure f -> ActionResult.Failure f
+                    | FetchResult.Failure f, _ ->
+                        match failOnError with
+                        | true -> ActionResult.Failure f
+                        | false ->
+                            // TODO log error?
+                            ActionResult.Success ()
+                    | _, ActionResult.Failure f -> r) (ActionResult.Success ())
+                |> ActionResult.map (fun _ -> cfg.AddMetadataItem("serial_tip", string newTip, true))
                 
                 // Set the new serial tip
-                cfg.AddMetadataItem("serial_tip", string 0, true)
-                
-                ActionResult.Success ()
             | Some sid ->
                 ({ Message = $"Configuration store subscription (`{sid}`) does not match requested subscription `{sub.Reference}`"
                    DisplayMessage = "Subscription mismatch"
