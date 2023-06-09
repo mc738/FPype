@@ -1,5 +1,7 @@
 ﻿namespace FPype.Infrastructure.Configuration.Tables
 
+open Microsoft.Extensions.Logging
+
 [<RequireQualifiedAccess>]
 module CreateOperations =
 
@@ -9,7 +11,7 @@ module CreateOperations =
     open Freql.MySql
     open FsToolbox.Core.Results
 
-    let table (ctx: MySqlContext) (userReference: string) (table: NewTable) =
+    let table (ctx: MySqlContext) (logger: ILogger) (userReference: string) (table: NewTable) =
         ctx.ExecuteInTransaction(fun t ->
             // Fetch
             Fetch.user t userReference
@@ -24,6 +26,8 @@ module CreateOperations =
             // Create
             |> Result.map (fun (ur, sr) ->
 
+                let timestamp = getTimestamp ()
+
                 let tableId =
                     ({ Reference = table.Reference
                        SubscriptionId = sr.Id
@@ -36,23 +40,51 @@ module CreateOperations =
                     ({ Reference = table.Version.Reference
                        TableModelId = tableId
                        Version = 1
-                       CreatedOn = timestamp () }
+                       CreatedOn = timestamp }
                     : Parameters.NewTableModelVersion)
                     |> Operations.insertTableModelVersion t
                     |> int
 
-                table.Version.Columns
-                |> List.iter (fun c ->
-                    ({ Reference = c.Reference
-                       TableVersionId = versionId
-                       Name = c.Name
-                       DataType = c.Type.Serialize()
-                       Optional = c.Optional
-                       ImportHandlerJson = c.ImportHandlerData
-                       ColumnIndex = c.Index }
-                    : Parameters.NewTableColumn)
-                    |> Operations.insertTableColumn t
-                    |> ignore)))
+                let columnEvents =
+                    table.Version.Columns
+                    |> List.map (fun c ->
+                        let dataType = c.Type.Serialize()
+
+                        ({ Reference = c.Reference
+                           TableVersionId = versionId
+                           Name = c.Name
+                           DataType = dataType
+                           Optional = c.Optional
+                           ImportHandlerJson = c.ImportHandlerData
+                           ColumnIndex = c.Index }
+                        : Parameters.NewTableColumn)
+                        |> Operations.insertTableColumn t
+                        |> ignore
+
+                        ({ Reference = c.Reference
+                           VersionReference = table.Version.Reference
+                           ColumnName = c.Name
+                           DataType = dataType
+                           Optional = c.Optional
+                           ColumnIndex = c.Index }
+                        : Events.TableColumnAddedEvent)
+                        |> Events.TableColumnAdded)
+
+                [ ({ Reference = table.Reference
+                     TableName = table.Name }
+                  : Events.TableAddedEvent)
+                  |> Events.TableAdded
+                  ({ Reference = table.Version.Reference
+                     TableReference = table.Reference
+                     Version = 1
+                     CreatedOnDateTime = timestamp }
+                  : Events.TableVersionAddedEvent)
+                  |> Events.TableVersionAdded
+                  yield! columnEvents ]
+                |> Events.addEvents t logger sr.Id ur.Id timestamp
+                |> ignore
+
+            ))
         |> toActionResult "Create table"
 
     let tableVersion (ctx: MySqlContext) (userReference: string) (tableReference: string) (version: NewTableVersion) =

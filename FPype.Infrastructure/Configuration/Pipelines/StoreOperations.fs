@@ -30,7 +30,7 @@ module StoreOperations =
             VerificationResult.verify verifiers p)
         |> Result.bind (fun p ->
 
-            match store.AddTable(p.Name) with
+            match store.AddPipeline(p.Name) with
             | Ok _ -> Ok()
             | Error e ->
                 ({ Message = e

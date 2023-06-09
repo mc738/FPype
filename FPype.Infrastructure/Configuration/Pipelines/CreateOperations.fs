@@ -99,7 +99,8 @@ module CreateOperations =
                   : Events.PipelineVersionAddedEvent)
                   |> Events.PipelineVersionAdded
                   yield! actionEvents ]
-                |> Events.addEvents t logger sr.Id ur.Id timestamp))
+                |> Events.addEvents t logger sr.Id ur.Id timestamp
+                |> ignore))
         |> toActionResult "Create pipeline"
 
     let pipelineVersion
@@ -184,7 +185,8 @@ module CreateOperations =
                   : Events.PipelineVersionAddedEvent)
                   |> Events.PipelineVersionAdded
                   yield! actionEvents ]
-                |> Events.addEvents t logger sr.Id ur.Id timestamp))
+                |> Events.addEvents t logger sr.Id ur.Id timestamp
+                |> ignore))
         |> toActionResult "Create pipeline version"
 
     let pipelineActions
@@ -238,6 +240,7 @@ module CreateOperations =
                       : Events.PipelineActionAddedEvent)
                       |> Events.PipelineActionAdded ]
                     |> Events.addEvents t logger sr.Id ur.Id timestamp
+                    |> ignore
                 | None ->
                     // TODO how to handling missing action type?
                     ()))
