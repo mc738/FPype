@@ -82,12 +82,16 @@ module CreateOperations =
                   |> Events.TableVersionAdded
                   yield! columnEvents ]
                 |> Events.addEvents t logger sr.Id ur.Id timestamp
-                |> ignore
-
-            ))
+                |> ignore))
         |> toActionResult "Create table"
 
-    let tableVersion (ctx: MySqlContext) (userReference: string) (tableReference: string) (version: NewTableVersion) =
+    let tableVersion
+        (ctx: MySqlContext)
+        (logger: ILogger)
+        (userReference: string)
+        (tableReference: string)
+        (version: NewTableVersion)
+        =
         ctx.ExecuteInTransaction(fun t ->
             // Fetch
             Fetch.user t userReference
@@ -106,31 +110,62 @@ module CreateOperations =
                 VerificationResult.verify verifiers (ur, sr, tr, tvr))
             // Create
             |> Result.map (fun (ur, sr, tr, tvr) ->
+                let timestamp = getTimestamp ()
+                let versionNumber = tvr.Version + 1
+
 
                 let versionId =
                     ({ Reference = version.Reference
                        TableModelId = tr.Id
-                       Version = tvr.Version + 1
-                       CreatedOn = timestamp () }
+                       Version = versionNumber
+                       CreatedOn = timestamp }
                     : Parameters.NewTableModelVersion)
                     |> Operations.insertTableModelVersion t
                     |> int
 
-                version.Columns
-                |> List.iter (fun c ->
-                    ({ Reference = c.Reference
-                       TableVersionId = versionId
-                       Name = c.Name
-                       DataType = c.Type.Serialize()
-                       Optional = c.Optional
-                       ImportHandlerJson = c.ImportHandlerData
-                       ColumnIndex = c.Index }
-                    : Parameters.NewTableColumn)
-                    |> Operations.insertTableColumn t
-                    |> ignore)))
+                let columnEvents =
+                    version.Columns
+                    |> List.map (fun c ->
+                        let dataType = c.Type.Serialize()
+
+                        ({ Reference = c.Reference
+                           TableVersionId = versionId
+                           Name = c.Name
+                           DataType = dataType
+                           Optional = c.Optional
+                           ImportHandlerJson = c.ImportHandlerData
+                           ColumnIndex = c.Index }
+                        : Parameters.NewTableColumn)
+                        |> Operations.insertTableColumn t
+                        |> ignore
+
+                        ({ Reference = c.Reference
+                           VersionReference = version.Reference
+                           ColumnName = c.Name
+                           DataType = dataType
+                           Optional = c.Optional
+                           ColumnIndex = c.Index }
+                        : Events.TableColumnAddedEvent)
+                        |> Events.TableColumnAdded)
+
+                [ ({ Reference = version.Reference
+                     TableReference = tr.Reference
+                     Version = versionNumber
+                     CreatedOnDateTime = timestamp }
+                  : Events.TableVersionAddedEvent)
+                  |> Events.TableVersionAdded
+                  yield! columnEvents ]
+                |> Events.addEvents t logger sr.Id ur.Id timestamp
+                |> ignore))
         |> toActionResult "Create table version"
 
-    let tableColumn (ctx: MySqlContext) (userReference: string) (versionReference: string) (column: NewTableColumn) =
+    let tableColumn
+        (ctx: MySqlContext)
+        (logger: ILogger)
+        (userReference: string)
+        (versionReference: string)
+        (column: NewTableColumn)
+        =
         ctx.ExecuteInTransaction(fun t ->
             // Fetch
             Fetch.user t userReference
@@ -147,15 +182,28 @@ module CreateOperations =
                       Verification.userSubscriptionMatches ur tr.SubscriptionId ]
 
                 VerificationResult.verify verifiers (ur, sr, tr, tvr))
-            |> Result.map (fun (ur, sr, pr, pvr) ->
+            |> Result.map (fun (ur, sr, tr, tvr) ->
+                let timestamp = getTimestamp ()
+                let dataType = column.Type.Serialize()
+
                 ({ Reference = column.Reference
-                   TableVersionId = pvr.Id
+                   TableVersionId = tvr.Id
                    Name = column.Name
-                   DataType = column.Type.Serialize()
+                   DataType = dataType
                    Optional = column.Optional
                    ImportHandlerJson = column.ImportHandlerData
                    ColumnIndex = column.Index }
                 : Parameters.NewTableColumn)
                 |> Operations.insertTableColumn t
-                |> ignore))
+                |> ignore
+
+                [ ({ Reference = column.Reference
+                     VersionReference = tvr.Reference
+                     ColumnName = column.Name
+                     DataType = dataType
+                     Optional = column.Optional
+                     ColumnIndex = column.Index }
+                  : Events.TableColumnAddedEvent)
+                  |> Events.TableColumnAdded ]
+                |> Events.addEvents t logger sr.Id ur.Id timestamp))
         |> toActionResult "Create table column"
