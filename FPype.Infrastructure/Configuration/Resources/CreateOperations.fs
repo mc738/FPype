@@ -1,8 +1,10 @@
 ﻿namespace FPype.Infrastructure.Configuration.Resources
 
+open Microsoft.Extensions.Logging
+
 [<RequireQualifiedAccess>]
 module CreateOperations =
-    
+
     open FPype.Infrastructure.Core
     open FPype.Infrastructure.Core.Persistence
     open FPype.Infrastructure.Configuration.Common
@@ -10,7 +12,7 @@ module CreateOperations =
     open FsToolbox.Extensions
     open FsToolbox.Core.Results
 
-    let resource (ctx: MySqlContext) (userReference: string) (resource: NewResource) =
+    let resource (ctx: MySqlContext) (logger: ILogger) (userReference: string) (resource: NewResource) =
         ctx.ExecuteInTransaction(fun t ->
             // Fetch
             Fetch.user t userReference
@@ -24,6 +26,7 @@ module CreateOperations =
                 VerificationResult.verify verifiers (ur, sr))
             // Create
             |> Result.map (fun (ur, sr) ->
+                let timestamp = getTimestamp ()
 
                 let resourceId =
                     ({ Reference = resource.Reference
@@ -37,15 +40,35 @@ module CreateOperations =
                    ResourceId = resourceId
                    Version = 1
                    ResourceType = resource.Version.Type
-                   ResourcePath =  resource.Version.Path
+                   ResourcePath = resource.Version.Path
                    Hash = resource.Version.Hash
-                   CreatedOn = timestamp () }
+                   CreatedOn = timestamp }
                 : Parameters.NewResourceVersion)
                 |> Operations.insertResourceVersion t
+                |> ignore
+
+                [ ({ Reference = resource.Reference
+                     ResourceName = resource.Name }
+                  : Events.ResourceAddedEvent)
+                  |> Events.ResourceAdded
+                  ({ Reference = resource.Version.Reference
+                     ResourceReference = resource.Reference
+                     Version = 1
+                     Hash = resource.Version.Hash
+                     CreatedOnDateTime = timestamp }
+                  : Events.ResourceVersionAddedEvent)
+                  |> Events.ResourceVersionAdded ]
+                |> Events.addEvents t logger sr.Id ur.Id timestamp
                 |> ignore))
         |> toActionResult "Create resource"
 
-    let resourceVersion (ctx: MySqlContext) (userReference: string) (resourceReference: string) (version: NewResourceVersion) =
+    let resourceVersion
+        (ctx: MySqlContext)
+        (logger: ILogger)
+        (userReference: string)
+        (resourceReference: string)
+        (version: NewResourceVersion)
+        =
         ctx.ExecuteInTransaction(fun t ->
             // Fetch
             Fetch.user t userReference
@@ -64,15 +87,27 @@ module CreateOperations =
                 VerificationResult.verify verifiers (ur, sr, rr, rvr))
             // Create
             |> Result.map (fun (ur, sr, rr, rvr) ->
-
+                let timestamp = getTimestamp ()
+                let versionNumber = rvr.Version + 1
+                
                 ({ Reference = version.Reference
                    ResourceId = rr.Id
-                   Version = rvr.Version + 1
+                   Version = versionNumber
                    ResourceType = version.Type
                    ResourcePath = version.Path
                    Hash = version.Hash
-                   CreatedOn = timestamp () }
+                   CreatedOn = timestamp }
                 : Parameters.NewResourceVersion)
                 |> Operations.insertResourceVersion t
+                |> ignore
+                
+                [ ({ Reference = version.Reference
+                     ResourceReference = rr.Reference
+                     Version = versionNumber
+                     Hash = version.Hash
+                     CreatedOnDateTime = timestamp }
+                  : Events.ResourceVersionAddedEvent)
+                  |> Events.ResourceVersionAdded ]
+                |> Events.addEvents t logger sr.Id ur.Id timestamp
                 |> ignore))
         |> toActionResult "Create resource version"
