@@ -1,6 +1,7 @@
 ﻿namespace FPype.Infrastructure.Configuration.Pipelines
 
 open FPype.Configuration
+open Microsoft.Extensions.Logging
 
 [<RequireQualifiedAccess>]
 module StoreOperations =
@@ -14,6 +15,7 @@ module StoreOperations =
 
     let addPipeline
         (ctx: MySqlContext)
+        (logger: ILogger)
         (store: ConfigurationStore)
         (subscription: Records.Subscription)
         (pipelineReference: string)
@@ -42,6 +44,7 @@ module StoreOperations =
 
     let addPipelineVersion
         (ctx: MySqlContext)
+        (logger: ILogger)
         (store: ConfigurationStore)
         (subscription: Records.Subscription)
         (versionReference: string)
@@ -79,6 +82,7 @@ module StoreOperations =
 
     let addPipelineResource
         (ctx: MySqlContext)
+        (logger: ILogger)
         (store: ConfigurationStore)
         (subscription: Records.Subscription)
         (pipelineResourceReference: string)
@@ -114,6 +118,7 @@ module StoreOperations =
 
     let addPipelineArg
         (ctx: MySqlContext)
+        (logger: ILogger)
         (store: ConfigurationStore)
         (subscription: Records.Subscription)
         (versionReference: string)
@@ -152,6 +157,7 @@ module StoreOperations =
 
     let addPipelineAction
         (ctx: MySqlContext)
+        (logger: ILogger)
         (store: ConfigurationStore)
         (subscription: Records.Subscription)
         (versionReference: string)
@@ -194,6 +200,7 @@ module StoreOperations =
 
     let addAllPipelineVersions
         (ctx: MySqlContext)
+        (logger: ILogger)
         (failOnError: bool)
         (subscription: Records.Subscription)
         (store: ConfigurationStore)

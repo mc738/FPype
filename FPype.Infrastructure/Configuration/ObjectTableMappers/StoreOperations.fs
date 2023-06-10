@@ -86,6 +86,7 @@ module StoreOperations =
 
     let addAllObjectTableMapperVersions
         (ctx: MySqlContext)
+        (logger: ILogger)
         (failOnError: bool)
         (subscription: Records.Subscription)
         (store: ConfigurationStore)
