@@ -115,6 +115,7 @@ module Impl =
         Fetch.subscriptionByReference ctx subscription
         |> FetchResult.toActionResult
         |> ActionResult.bind (fun sub ->
+            
             let cfg = ConfigurationStore.Load(path)
 
             let cfgSubscriptionId =
@@ -129,6 +130,8 @@ module Impl =
                     | false, _ -> None)
                 |> Option.defaultValue 0
 
+            logger.LogInformation($"Building configuration store for subscription {sub.Reference}. Current serial: {cfgTip}")
+            
             match cfgSubscriptionId with
             | Some sid when sid = sub.Reference ->
                 let eventRecords = Events.selectEventRecords ctx sub.Id cfgTip
@@ -136,6 +139,8 @@ module Impl =
                 let events = Events.deserializeRecords eventRecords
                 let newTip = eventRecords |> List.maxBy (fun er -> er.Id) |> (fun er -> er.Id)
 
+                logger.LogInformation($"Events to handle: {events.Length}")
+                
                 events
                 |> List.fold
                     (fun (r: ActionResult<unit>) er ->
@@ -144,29 +149,32 @@ module Impl =
                             match Internal.handleEvent ctx logger fileRepo readArgs sub e cfg with
                             | ActionResult.Success _ -> ActionResult.Success()
                             | ActionResult.Failure f when failOnError ->
-                                // TODO log error?
+                                // NOTE This uses the display message because the log is not fully internal (potentially).
+                                logger.LogWarning($"Failed to handle event. Reason: {f.DisplayMessage}. Skipping")
                                 ActionResult.Success()
                             | ActionResult.Failure f -> ActionResult.Failure f
                         | FetchResult.Failure f, _ ->
                             match failOnError with
                             | true -> ActionResult.Failure f
                             | false ->
-                                // TODO log error?
+                                // NOTE This uses the display message because the log is not fully internal (potentially).
+                                logger.LogWarning($"Failed to deserialize event. Reason: {f.DisplayMessage}. Skipping")
                                 ActionResult.Success()
                         | _, ActionResult.Failure f -> r)
                     (ActionResult.Success())
                 |> ActionResult.map (fun _ -> cfg.AddMetadataItem("serial_tip", string newTip, true))
-
-            // Set the new serial tip
             | Some sid ->
-                ({ Message =
-                    $"Configuration store subscription (`{sid}`) does not match requested subscription `{sub.Reference}`"
+                let msg = $"Configuration store subscription (`{sid}`) does not match requested subscription `{sub.Reference}`"
+                logger.LogError(msg)
+                ({ Message = msg
                    DisplayMessage = "Subscription mismatch"
                    Exception = None }
                 : FailureResult)
                 |> ActionResult.Failure
             | None ->
-                ({ Message = $"Configuration store subscription has no subscription id set"
+                let msg = "Configuration store subscription has no subscription id set"
+                logger.LogError(msg)
+                ({ Message = msg
                    DisplayMessage = "Subscription missing"
                    Exception = None }
                 : FailureResult)
