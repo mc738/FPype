@@ -1,6 +1,7 @@
 ﻿namespace FPype.Infrastructure.Configuration.Resources
 
 open Armarium
+open Microsoft.Extensions.Logging
 
 module StoreOperations =
 
@@ -13,6 +14,7 @@ module StoreOperations =
 
     let addResource
         (ctx: MySqlContext)
+        (logger: ILogger)
         (store: ConfigurationStore)
         (subscription: Records.Subscription)
         (resourceReference: string)
@@ -41,6 +43,7 @@ module StoreOperations =
 
     let addResourceVersion
         (ctx: MySqlContext)
+        (logger: ILogger)
         (store: ConfigurationStore)
         (fileRepo: FileRepository)
         (readArgs: FileReadOperationArguments)
@@ -84,6 +87,7 @@ module StoreOperations =
 
     let addAllResourceVersions
         (ctx: MySqlContext)
+        (logger: ILogger)
         (fileRepo: FileRepository)
         (readArgs: FileReadOperationArguments)
         (failOnError: bool)

@@ -1,5 +1,7 @@
 ﻿namespace FPype.Infrastructure.Configuration.Resources
 
+open Microsoft.Extensions.Logging
+
 [<RequireQualifiedAccess>]
 module ReadOperations =
 
@@ -11,7 +13,12 @@ module ReadOperations =
     open Freql.MySql
     open FsToolbox.Core.Results
 
-    let latestResourceVersion (ctx: MySqlContext) (userReference: string) (resourceReference: string) =
+    let latestResourceVersion
+        (ctx: MySqlContext)
+        (logger: ILogger)
+        (userReference: string)
+        (resourceReference: string)
+        =
         Fetch.user ctx userReference
         |> FetchResult.merge (fun ur sr -> ur, sr) (fun ur -> Fetch.subscriptionById ctx ur.Id)
         |> FetchResult.chain (fun (ur, sr) rr -> ur, sr, rr) (Fetch.resource ctx resourceReference)
@@ -41,7 +48,13 @@ module ReadOperations =
             : ResourceDetails))
         |> FetchResult.fromResult
 
-    let specificResourceVersion (ctx: MySqlContext) (userReference: string) (resourceReference: string) (version: int) =
+    let specificResourceVersion
+        (ctx: MySqlContext)
+        (logger: ILogger)
+        (userReference: string)
+        (resourceReference: string)
+        (version: int)
+        =
         Fetch.user ctx userReference
         |> FetchResult.merge (fun ur sr -> ur, sr) (fun ur -> Fetch.subscriptionById ctx ur.Id)
         |> FetchResult.chain (fun (ur, sr) rr -> ur, sr, rr) (Fetch.resource ctx resourceReference)
