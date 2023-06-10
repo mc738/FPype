@@ -1,5 +1,7 @@
 ﻿namespace FPype.Infrastructure.Configuration.ObjectTableMappers
 
+open Microsoft.Extensions.Logging
+
 [<RequireQualifiedAccess>]
 module ReadOperations =
 
@@ -10,7 +12,12 @@ module ReadOperations =
     open Freql.MySql
     open FsToolbox.Core.Results
 
-    let latestObjectTableMapperVersion (ctx: MySqlContext) (userReference: string) (mapperReference: string) =
+    let latestObjectTableMapperVersion
+        (ctx: MySqlContext)
+        (logger: ILogger)
+        (userReference: string)
+        (mapperReference: string)
+        =
         Fetch.user ctx userReference
         |> FetchResult.merge (fun ur sr -> ur, sr) (fun ur -> Fetch.subscriptionById ctx ur.Id)
         |> FetchResult.chain (fun (ur, sr) mr -> ur, sr, mr) (Fetch.objectTableMapper ctx mapperReference)
@@ -47,6 +54,7 @@ module ReadOperations =
 
     let specificObjectTableMapperVersion
         (ctx: MySqlContext)
+        (logger: ILogger)
         (userReference: string)
         (mapperReference: string)
         (version: int)
@@ -78,7 +86,7 @@ module ReadOperations =
                Version =
                  { Reference = mvr.Reference
                    Version = mvr.Version
-                   TableModelReference = tvr.Reference 
+                   TableModelReference = tvr.Reference
                    MapperData = mvr.MapperJson
                    Hash = mvr.Hash
                    CreatedOn = mvr.CreatedOn } }
