@@ -70,6 +70,8 @@ module Impl =
             // A transaction is used to "freeze" the database.
             // This might not be the best idea (?) but it is to ensure no updates happen while building the config
 
+            logger.LogInformation($"Build fresh configuration store for subscription {sub.Id}")
+            
             let result =
                 ctx.ExecuteInTransaction(fun t ->
 
