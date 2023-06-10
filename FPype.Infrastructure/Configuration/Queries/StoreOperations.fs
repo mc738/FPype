@@ -1,5 +1,7 @@
 ﻿namespace FPype.Infrastructure.Configuration.Queries
 
+open Microsoft.Extensions.Logging
+
 [<RequireQualifiedAccess>]
 module StoreOperations =
 
@@ -12,6 +14,7 @@ module StoreOperations =
 
     let addQuery
         (ctx: MySqlContext)
+        (logger: ILogger)
         (store: ConfigurationStore)
         (subscription: Records.Subscription)
         (queryReference: string)
@@ -40,6 +43,7 @@ module StoreOperations =
 
     let addQueryVersion
         (ctx: MySqlContext)
+        (logger: ILogger)
         (store: ConfigurationStore)
         (subscription: Records.Subscription)
         (versionReference: string)
@@ -76,6 +80,7 @@ module StoreOperations =
 
     let addAllQueryVersions
         (ctx: MySqlContext)
+        (logger: ILogger)
         (failOnError: bool)
         (subscription: Records.Subscription)
         (store: ConfigurationStore)
