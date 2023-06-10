@@ -1,5 +1,7 @@
 ﻿namespace FPype.Infrastructure.Configuration.TableObjectMappers
 
+open Microsoft.Extensions.Logging
+
 [<RequireQualifiedAccess>]
 module StoreOperations =
 
@@ -40,6 +42,7 @@ module StoreOperations =
 
     let addTableObjectMapperVersion
         (ctx: MySqlContext)
+        (logger: ILogger)
         (store: ConfigurationStore)
         (subscription: Records.Subscription)
         (versionReference: string)
@@ -77,6 +80,7 @@ module StoreOperations =
 
     let addAllTableObjectMapperVersions
         (ctx: MySqlContext)
+        (logger: ILogger)
         (failOnError: bool)
         (subscription: Records.Subscription)
         (store: ConfigurationStore)
