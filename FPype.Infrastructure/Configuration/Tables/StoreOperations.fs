@@ -1,6 +1,7 @@
 ﻿namespace FPype.Infrastructure.Configuration.Tables
 
 open System
+open Microsoft.Extensions.Logging
 
 [<RequireQualifiedAccess>]
 module StoreOperations =
@@ -14,6 +15,7 @@ module StoreOperations =
 
     let addTable
         (ctx: MySqlContext)
+        (logger: ILogger)
         (store: ConfigurationStore)
         (subscription: Records.Subscription)
         (tableReference: string)
@@ -42,6 +44,7 @@ module StoreOperations =
 
     let addTableVersion
         (ctx: MySqlContext)
+        (logger: ILogger)
         (store: ConfigurationStore)
         (subscription: Records.Subscription)
         (versionReference: string)
@@ -84,6 +87,7 @@ module StoreOperations =
 
     let addTableColumn
         (ctx: MySqlContext)
+        (logger: ILogger)
         (store: ConfigurationStore)
         (subscription: Records.Subscription)
         (columnReference: string)
@@ -124,6 +128,7 @@ module StoreOperations =
 
     let addAllTableVersions
         (ctx: MySqlContext)
+        (logger: ILogger)
         (failOnError: bool)
         (subscription: Records.Subscription)
         (store: ConfigurationStore)

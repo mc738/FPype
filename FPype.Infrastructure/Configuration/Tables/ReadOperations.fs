@@ -1,5 +1,7 @@
 ﻿namespace FPype.Infrastructure.Configuration.Tables
 
+open Microsoft.Extensions.Logging
+
 [<RequireQualifiedAccess>]
 module ReadOperations =
 
@@ -39,7 +41,7 @@ module ReadOperations =
                             |> Some
                         | FetchResult.Failure fr -> None)))
 
-    let latestTableVersion (ctx: MySqlContext) (userReference: string) (tableReference: string) =
+    let latestTableVersion (ctx: MySqlContext) (logger: ILogger) (userReference: string) (tableReference: string) =
         Fetch.user ctx userReference
         |> FetchResult.merge (fun ur sr -> ur, sr) (fun ur -> Fetch.subscriptionById ctx ur.Id)
         |> FetchResult.chain (fun (ur, sr) tr -> ur, sr, tr) (Fetch.table ctx tableReference)
@@ -78,7 +80,7 @@ module ReadOperations =
             | FetchResult.Failure fr -> None)
         |> optionalToFetchResult "Latest table version"
 
-    let specificTableVersion (ctx: MySqlContext) (userReference: string) (tableReference: string) (version: int) =
+    let specificTableVersion (ctx: MySqlContext) (logger: ILogger) (userReference: string) (tableReference: string) (version: int) =
         Fetch.user ctx userReference
         |> FetchResult.merge (fun ur sr -> ur, sr) (fun ur -> Fetch.subscriptionById ctx ur.Id)
         |> FetchResult.chain (fun (ur, sr) tr -> ur, sr, tr) (Fetch.table ctx tableReference)
