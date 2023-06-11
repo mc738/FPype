@@ -131,11 +131,6 @@ module ReadOperations =
             VerificationResult.verify verifiers (ur, sr, pr, pvrs))
         // Map
         |> Result.map (fun (ur, sr, pr, pvrs) ->
-            let typeMap =
-                Operations.selectActionTypeRecords ctx [] []
-                |> List.map (fun atr -> atr.Id, atr.Name)
-                |> Map.ofList
-
             pvrs
             |> List.map (fun pvr ->
                 ({ PipelineReference = pr.Reference

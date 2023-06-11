@@ -36,3 +36,9 @@ module Models =
           Optional: bool
           ImportHandlerData: string option
           Index: int }
+        
+    type TableVersionOverview =
+        { TableReference: string
+          Reference: string
+          Name: string
+          Version: int }

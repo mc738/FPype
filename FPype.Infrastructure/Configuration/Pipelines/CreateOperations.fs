@@ -60,7 +60,7 @@ module CreateOperations =
                         match typeMap.TryFind(a.ActionType.ToLower()) with
                         | Some atId ->
                             let hash = a.ActionData.GetSHA256Hash()
-                            let step = i + 1
+                            let step = a.Step
 
                             ({ Reference = a.Reference
                                PipelineVersionId = versionId

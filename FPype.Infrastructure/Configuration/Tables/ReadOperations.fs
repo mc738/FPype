@@ -118,3 +118,5 @@ module ReadOperations =
                 |> Some
             | FetchResult.Failure fr -> None)
         |> optionalToFetchResult "Specific table version"
+
+    
