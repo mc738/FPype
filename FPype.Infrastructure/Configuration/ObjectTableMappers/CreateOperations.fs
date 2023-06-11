@@ -12,7 +12,7 @@ module CreateOperations =
     open FsToolbox.Extensions
     open FsToolbox.Core.Results
 
-    let query (ctx: MySqlContext) (logger: ILogger) (userReference: string) (mapper: NewObjectTableMapper) =
+    let objectTableMapper (ctx: MySqlContext) (logger: ILogger) (userReference: string) (mapper: NewObjectTableMapper) =
         ctx.ExecuteInTransaction(fun t ->
             // Fetch
             Fetch.user t userReference
@@ -67,7 +67,7 @@ module CreateOperations =
                 |> ignore))
         |> toActionResult "Create object table mapper"
 
-    let queryVersion
+    let objectTableMapperVersion
         (ctx: MySqlContext)
         (logger: ILogger)
         (userReference: string)
