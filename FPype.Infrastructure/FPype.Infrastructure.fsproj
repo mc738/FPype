@@ -40,6 +40,7 @@
         <Compile Include="Configuration\Impl.fs" />
         <Folder Include="Pipelines\" />
         <Compile Include="Services\PipelineService.fs" />
+        <Compile Include="Services\ConfigurationService.fs" />
         <Compile Include="Services\Extensions.fs" />
     </ItemGroup>
 
