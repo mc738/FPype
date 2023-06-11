@@ -1,5 +1,7 @@
 ﻿namespace FPype.Infrastructure.Configuration.Pipelines
 
+open Microsoft.Extensions.Logging
+
 [<RequireQualifiedAccess>]
 module ReadOperations =
 
@@ -9,7 +11,7 @@ module ReadOperations =
     open Freql.MySql
     open FsToolbox.Core.Results
 
-    let latestPipelineVersion (ctx: MySqlContext) (userReference: string) (pipelineReference: string) =
+    let latestPipelineVersion (ctx: MySqlContext) (logger: ILogger) (userReference: string) (pipelineReference: string) =
         Fetch.user ctx userReference
         |> FetchResult.merge (fun ur sr -> ur, sr) (fun ur -> Fetch.subscriptionById ctx ur.Id)
         |> FetchResult.chain (fun (ur, sr) pr -> ur, sr, pr) (Fetch.pipeline ctx pipelineReference)
@@ -55,7 +57,7 @@ module ReadOperations =
             | FetchResult.Failure fr -> None)
         |> optionalToFetchResult "Latest pipeline version"
 
-    let specificPipelineVersion (ctx: MySqlContext) (userReference: string) (pipelineReference: string) (version: int) =
+    let specificPipelineVersion (ctx: MySqlContext) (logger: ILogger) (userReference: string) (pipelineReference: string) (version: int) =
         Fetch.user ctx userReference
         |> FetchResult.merge (fun ur sr -> ur, sr) (fun ur -> Fetch.subscriptionById ctx ur.Id)
         |> FetchResult.chain (fun (ur, sr) pr -> ur, sr, pr) (Fetch.pipeline ctx pipelineReference)
