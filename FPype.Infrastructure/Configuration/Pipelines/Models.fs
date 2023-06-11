@@ -35,3 +35,10 @@ module Models =
           ActionData: string
           Hash: string
           Step: int }
+
+    type PipelineVersionOverview =
+        { PipelineReference: string
+          VersionReference: string
+          Name: string
+          Description: string
+          Version: int }
