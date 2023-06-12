@@ -30,3 +30,10 @@ module Models =
           Hash: string
           CreatedOn: DateTime }
 
+    type ResourceVersionOverview =
+        { ResourceReference: string
+          Reference: string
+          Name: string
+          Version: int }
+
+    type ResourceOverview = { Reference: string; Name: string }

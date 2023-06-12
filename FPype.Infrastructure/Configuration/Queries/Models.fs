@@ -25,7 +25,7 @@ module Models =
           CreatedOn: DateTime }
     
     type QueryVersionOverview =
-        { TableReference: string
+        { QueryReference: string
           Reference: string
           Name: string
           Version: int }

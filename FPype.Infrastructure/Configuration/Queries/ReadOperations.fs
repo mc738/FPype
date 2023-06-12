@@ -79,7 +79,7 @@ module ReadOperations =
     let queryVersions (ctx: MySqlContext) (logger: ILogger) (userReference: string) (queryReference: string) =
         Fetch.user ctx userReference
         |> FetchResult.merge (fun ur sr -> ur, sr) (fun ur -> Fetch.subscriptionById ctx ur.Id)
-        |> FetchResult.chain (fun (ur, sr) qr -> ur, sr, qr) (Fetch.table ctx queryReference)
+        |> FetchResult.chain (fun (ur, sr) qr -> ur, sr, qr) (Fetch.query ctx queryReference)
         |> FetchResult.merge (fun (ur, sr, qr) qvr -> ur, sr, qr, qvr) (fun (_, _, qr) ->
             Fetch.queryVersionsByQueryId ctx qr.Id)
         |> FetchResult.toResult
@@ -95,7 +95,7 @@ module ReadOperations =
         |> Result.map (fun (ur, sr, qr, qvrs) ->
             qvrs
             |> List.map (fun qvr ->
-                ({ TableReference = qr.Reference
+                ({ QueryReference = qr.Reference
                    Reference = qvr.Reference
                    Name = qr.Name
                    Version = qvr.Version }
