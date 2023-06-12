@@ -93,7 +93,7 @@ module ReadOperations =
             : ObjectTableMapperDetails))
         |> FetchResult.fromResult
 
-    let tableObjectMapperVersions (ctx: MySqlContext) (logger: ILogger) (userReference: string) (mapperReference: string) =
+    let objectTableMapperVersions (ctx: MySqlContext) (logger: ILogger) (userReference: string) (mapperReference: string) =
         Fetch.user ctx userReference
         |> FetchResult.merge (fun ur sr -> ur, sr) (fun ur -> Fetch.subscriptionById ctx ur.Id)
         |> FetchResult.chain (fun (ur, sr) mr -> ur, sr, mr) (Fetch.tableObjectMapper ctx mapperReference)
@@ -119,7 +119,7 @@ module ReadOperations =
                 : ObjectTableMapperVersionOverview)))
         |> FetchResult.fromResult
     
-    let tableObjectMappers (ctx: MySqlContext) (logger: ILogger) (userReference: string) =
+    let objectTableMappers (ctx: MySqlContext) (logger: ILogger) (userReference: string) =
         Fetch.user ctx userReference
         |> FetchResult.merge (fun ur sr -> ur, sr) (fun ur -> Fetch.subscriptionById ctx ur.Id)
         |> FetchResult.merge (fun (ur, sr) mrs -> ur, sr, mrs) (fun (_, sr) ->

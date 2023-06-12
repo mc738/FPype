@@ -22,7 +22,13 @@ type ConfigurationService(ctx: MySqlContext, log: ILogger<ConfigurationService>)
 
     member _.GetSpecificPipelineVersion(userReference, pipelineReference, version) =
         Configuration.Pipelines.ReadOperations.specificPipelineVersion ctx log userReference pipelineReference version
-
+    
+    member _.GetPipelines(userReference) =
+        Configuration.Pipelines.ReadOperations.pipelines ctx log userReference
+    
+    member _.GetPipelineVersions(userReference, pipelineReference) =
+        Configuration.Pipelines.ReadOperations.pipelineVersions ctx log userReference pipelineReference
+    
     member _.AddTable(userReference, table) =
         Configuration.Tables.CreateOperations.table ctx log userReference table
 
@@ -35,6 +41,12 @@ type ConfigurationService(ctx: MySqlContext, log: ILogger<ConfigurationService>)
     member _.GetSpecificTableVersion(userReference, tableReference, version) =
         Configuration.Tables.ReadOperations.specificTableVersion ctx log userReference tableReference version
 
+    member _.GetTables(userReference) =
+        Configuration.Tables.ReadOperations.tables ctx log userReference
+    
+    member _.GetTableVersions(userReference, tableReference) =
+        Configuration.Tables.ReadOperations.tableVersions ctx log userReference tableReference
+    
     member _.AddQuery(userReference, query) =
         Configuration.Queries.CreateOperations.query ctx log userReference query
 
@@ -47,6 +59,12 @@ type ConfigurationService(ctx: MySqlContext, log: ILogger<ConfigurationService>)
     member _.GetSpecificQueryVersion(userReference, queryReference, version) =
         Configuration.Queries.ReadOperations.specificQueryVersion ctx log userReference queryReference version
 
+    member _.GetQueries(userReference) =
+        Configuration.Queries.ReadOperations.queries ctx log userReference
+    
+    member _.GetQueryVersions(userReference, queryReference) =
+        Configuration.Queries.ReadOperations.queryVersions ctx log userReference queryReference
+    
     member _.AddResource(userReference, resource) =
         Configuration.Resources.CreateOperations.resource ctx log userReference resource
 
@@ -59,7 +77,12 @@ type ConfigurationService(ctx: MySqlContext, log: ILogger<ConfigurationService>)
     member _.GetSpecificResourceVersion(userReference, resourceReference, version) =
         Configuration.Resources.ReadOperations.specificResourceVersion ctx log userReference resourceReference version
 
-
+    member _.GetResources(userReference) =
+        Configuration.Resources.ReadOperations.resources ctx log userReference
+    
+    member _.GetResourceVersions(userReference, resourceReference) =
+        Configuration.Resources.ReadOperations.resourceVersions ctx log userReference resourceReference
+    
     member _.AddTableObjectMapper(userReference, mapper) =
         Configuration.TableObjectMappers.CreateOperations.tableObjectMapper ctx log userReference mapper
 
@@ -88,7 +111,13 @@ type ConfigurationService(ctx: MySqlContext, log: ILogger<ConfigurationService>)
 
     member _.AddObjectTableMapper(userReference, mapper) =
         Configuration.ObjectTableMappers.CreateOperations.objectTableMapper ctx log userReference mapper
-
+    
+    member _.GetTableObjectMappers(userReference) =
+        Configuration.TableObjectMappers.ReadOperations.tableObjectMappers ctx log userReference
+    
+    member _.GetTableObjectMapperVersions(userReference, mapperReference) =
+        Configuration.TableObjectMappers.ReadOperations.tableObjectMapperVersions ctx log userReference mapperReference
+    
     member _.AddObjectTableMapperVersion(userReference, mapperReference, version) =
         Configuration.ObjectTableMappers.CreateOperations.objectTableMapperVersion
             ctx
@@ -111,3 +140,10 @@ type ConfigurationService(ctx: MySqlContext, log: ILogger<ConfigurationService>)
             userReference
             mapperReference
             version
+
+    member _.GetObjectTableMappers(userReference) =
+        Configuration.ObjectTableMappers.ReadOperations.objectTableMappers ctx log userReference
+    
+    member _.GetObjectTableMapperVersions(userReference, mapperReference) =
+        Configuration.ObjectTableMappers.ReadOperations.objectTableMapperVersions ctx log userReference mapperReference
+    
