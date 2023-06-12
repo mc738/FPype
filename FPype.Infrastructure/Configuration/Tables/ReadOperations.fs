@@ -145,4 +145,23 @@ module ReadOperations =
                 : TableVersionOverview)))
         |> FetchResult.fromResult
     
-    
+    let tables (ctx: MySqlContext) (logger: ILogger) (userReference: string) =
+        Fetch.user ctx userReference
+        |> FetchResult.merge (fun ur sr -> ur, sr) (fun ur -> Fetch.subscriptionById ctx ur.Id)
+        |> FetchResult.merge (fun (ur, sr) prs -> ur, sr, prs) (fun (_, sr) ->
+            Fetch.tablesBySubscriptionId ctx sr.Id)
+        |> FetchResult.toResult
+        // Verify
+        |> Result.bind (fun (ur, sr, trs) ->
+            let verifiers =
+                [ Verification.userIsActive ur; Verification.subscriptionIsActive sr ]
+
+            VerificationResult.verify verifiers (ur, sr, trs))
+        // Map
+        |> Result.map (fun (ur, sr, trs) ->
+            trs
+            |> List.map (fun pr ->
+                ({ Reference = pr.Reference
+                   Name = pr.Name }
+                : TableOverview)))
+        |> FetchResult.fromResult
