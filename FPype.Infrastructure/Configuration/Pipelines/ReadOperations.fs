@@ -140,3 +140,24 @@ module ReadOperations =
                    Version = pvr.Version }
                 : PipelineVersionOverview)))
         |> FetchResult.fromResult
+
+    let pipelines (ctx: MySqlContext) (logger: ILogger) (userReference: string) =
+        Fetch.user ctx userReference
+        |> FetchResult.merge (fun ur sr -> ur, sr) (fun ur -> Fetch.subscriptionById ctx ur.Id)
+        |> FetchResult.merge (fun (ur, sr) prs -> ur, sr, prs) (fun (_, sr) ->
+            Fetch.pipelinesBySubscriptionId ctx sr.Id)
+        |> FetchResult.toResult
+        // Verify
+        |> Result.bind (fun (ur, sr, prs) ->
+            let verifiers =
+                [ Verification.userIsActive ur; Verification.subscriptionIsActive sr ]
+
+            VerificationResult.verify verifiers (ur, sr, prs))
+        // Map
+        |> Result.map (fun (ur, sr, prs) ->
+            prs
+            |> List.map (fun pr ->
+                ({ Reference = pr.Reference
+                   Name = pr.Name }
+                : PipelineOverview)))
+        |> FetchResult.fromResult

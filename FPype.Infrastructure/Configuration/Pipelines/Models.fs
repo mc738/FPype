@@ -2,7 +2,7 @@
 
 [<AutoOpen>]
 module Models =
-    
+
     type NewPipeline =
         { Reference: string
           Name: string
@@ -42,3 +42,5 @@ module Models =
           Name: string
           Description: string
           Version: int }
+
+    type PipelineOverview = { Reference: string; Name: string }
