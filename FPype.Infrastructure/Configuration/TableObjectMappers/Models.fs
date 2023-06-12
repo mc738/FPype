@@ -24,7 +24,6 @@ module Models =
           Hash: string
           CreatedOn: DateTime }
         
-    
     type TableObjectMapperVersionOverview =
         { MapperReference: string
           Reference: string

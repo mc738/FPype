@@ -29,3 +29,10 @@ module Models =
           Hash: string
           CreatedOn: DateTime }
 
+    type ObjectTableMapperVersionOverview =
+        { MapperReference: string
+          Reference: string
+          Name: string
+          Version: int }
+
+    type ObjectTableMapperOverview = { Reference: string; Name: string }

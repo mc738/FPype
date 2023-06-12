@@ -86,7 +86,7 @@ module ReadOperations =
         |> FetchResult.merge (fun ur sr -> ur, sr) (fun ur -> Fetch.subscriptionById ctx ur.Id)
         |> FetchResult.chain (fun (ur, sr) mr -> ur, sr, mr) (Fetch.tableObjectMapper ctx mapperReference)
         |> FetchResult.merge (fun (ur, sr, mr) mvrs -> ur, sr, mr, mvrs) (fun (_, _, mr) ->
-            Fetch.tableVersionsByTableId ctx mr.Id)
+            Fetch.tableObjectMapperVersionByMapperId ctx mr.Id)
         |> FetchResult.toResult
         // Verify
         |> Result.bind (fun (ur, sr, mr, mvrs) ->
@@ -110,7 +110,7 @@ module ReadOperations =
     let tableObjectMappers (ctx: MySqlContext) (logger: ILogger) (userReference: string) =
         Fetch.user ctx userReference
         |> FetchResult.merge (fun ur sr -> ur, sr) (fun ur -> Fetch.subscriptionById ctx ur.Id)
-        |> FetchResult.merge (fun (ur, sr) prs -> ur, sr, prs) (fun (_, sr) ->
+        |> FetchResult.merge (fun (ur, sr) mrs -> ur, sr, mrs) (fun (_, sr) ->
             Fetch.tableObjectMappersBySubscriptionId ctx sr.Id)
         |> FetchResult.toResult
         // Verify

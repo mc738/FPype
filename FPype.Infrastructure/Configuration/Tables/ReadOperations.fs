@@ -148,7 +148,7 @@ module ReadOperations =
     let tables (ctx: MySqlContext) (logger: ILogger) (userReference: string) =
         Fetch.user ctx userReference
         |> FetchResult.merge (fun ur sr -> ur, sr) (fun ur -> Fetch.subscriptionById ctx ur.Id)
-        |> FetchResult.merge (fun (ur, sr) prs -> ur, sr, prs) (fun (_, sr) ->
+        |> FetchResult.merge (fun (ur, sr) trs -> ur, sr, trs) (fun (_, sr) ->
             Fetch.tablesBySubscriptionId ctx sr.Id)
         |> FetchResult.toResult
         // Verify
