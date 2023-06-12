@@ -23,3 +23,12 @@ module Models =
           RawQuery: string
           Hash: string
           CreatedOn: DateTime }
+    
+    type QueryVersionOverview =
+        { TableReference: string
+          Reference: string
+          Name: string
+          Version: int }
+
+    type QueryOverview = { Reference: string; Name: string }
+

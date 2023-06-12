@@ -75,3 +75,50 @@ module ReadOperations =
                    CreatedOn = qvr.CreatedOn } }
             : QueryDetails))
         |> FetchResult.fromResult
+
+    let queryVersions (ctx: MySqlContext) (logger: ILogger) (userReference: string) (queryReference: string) =
+        Fetch.user ctx userReference
+        |> FetchResult.merge (fun ur sr -> ur, sr) (fun ur -> Fetch.subscriptionById ctx ur.Id)
+        |> FetchResult.chain (fun (ur, sr) qr -> ur, sr, qr) (Fetch.table ctx queryReference)
+        |> FetchResult.merge (fun (ur, sr, qr) qvr -> ur, sr, qr, qvr) (fun (_, _, qr) ->
+            Fetch.queryVersionsByQueryId ctx qr.Id)
+        |> FetchResult.toResult
+        // Verify
+        |> Result.bind (fun (ur, sr, qr, qvrs) ->
+            let verifiers =
+                [ Verification.userIsActive ur
+                  Verification.subscriptionIsActive sr
+                  Verification.userSubscriptionMatches ur qr.SubscriptionId ]
+
+            VerificationResult.verify verifiers (ur, sr, qr, qvrs))
+        // Map
+        |> Result.map (fun (ur, sr, qr, qvrs) ->
+            qvrs
+            |> List.map (fun qvr ->
+                ({ TableReference = qr.Reference
+                   Reference = qvr.Reference
+                   Name = qr.Name
+                   Version = qvr.Version }
+                : QueryVersionOverview)))
+        |> FetchResult.fromResult
+    
+    let queries (ctx: MySqlContext) (logger: ILogger) (userReference: string) =
+        Fetch.user ctx userReference
+        |> FetchResult.merge (fun ur sr -> ur, sr) (fun ur -> Fetch.subscriptionById ctx ur.Id)
+        |> FetchResult.merge (fun (ur, sr) trs -> ur, sr, trs) (fun (_, sr) ->
+            Fetch.queriesBySubscriptionId ctx sr.Id)
+        |> FetchResult.toResult
+        // Verify
+        |> Result.bind (fun (ur, sr, qrs) ->
+            let verifiers =
+                [ Verification.userIsActive ur; Verification.subscriptionIsActive sr ]
+
+            VerificationResult.verify verifiers (ur, sr, qrs))
+        // Map
+        |> Result.map (fun (ur, sr, qrs) ->
+            qrs
+            |> List.map (fun qr ->
+                ({ Reference = qr.Reference
+                   Name = qr.Name }
+                : QueryOverview)))
+        |> FetchResult.fromResult
