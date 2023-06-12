@@ -160,8 +160,8 @@ module ReadOperations =
         // Map
         |> Result.map (fun (ur, sr, trs) ->
             trs
-            |> List.map (fun pr ->
-                ({ Reference = pr.Reference
-                   Name = pr.Name }
+            |> List.map (fun tr ->
+                ({ Reference = tr.Reference
+                   Name = tr.Name }
                 : TableOverview)))
         |> FetchResult.fromResult

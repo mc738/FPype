@@ -120,10 +120,10 @@ module ReadOperations =
 
             VerificationResult.verify verifiers (ur, sr, mrs))
         // Map
-        |> Result.map (fun (ur, sr, trs) ->
-            trs
-            |> List.map (fun pr ->
-                ({ Reference = pr.Reference
-                   Name = pr.Name }
+        |> Result.map (fun (ur, sr, mrs) ->
+            mrs
+            |> List.map (fun mr ->
+                ({ Reference = mr.Reference
+                   Name = mr.Name }
                 : TableObjectMapperOverview)))
         |> FetchResult.fromResult
