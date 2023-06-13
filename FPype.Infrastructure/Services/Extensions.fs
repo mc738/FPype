@@ -12,3 +12,4 @@ module Extensions =
             sc
                 .AddScoped<MySqlContext>(fun _ -> MySqlContext.Connect(connectionString))
                 .AddScoped<PipelineService>()
+                .AddScoped<ConfigurationService>()
