@@ -48,6 +48,7 @@ module Models =
         { TableReference: string
           Reference: string
           Name: string
-          Version: int }
+          Version: int
+          CreatedOn: DateTime }
 
     type TableOverview = { Reference: string; Name: string }
