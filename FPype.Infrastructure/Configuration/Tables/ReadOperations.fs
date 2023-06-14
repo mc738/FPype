@@ -78,15 +78,7 @@ module ReadOperations =
         |> Result.map (fun (ur, sr, tr, tvr) ->
 
             match Fetch.tableColumns ctx tvr.Id with
-            | FetchResult.Success tcs ->
-                ({ TableReference = tr.Reference
-                   Reference = tvr.Reference
-                   Name = tr.Name
-                   Version = tvr.Version
-                   CreatedOn = tvr.CreatedOn
-                   Columns = tcs |> List.map (Internal.createTableColumnDetails (Some BaseType.String)) }
-                : TableVersionDetails)
-                |> Some
+            | FetchResult.Success tcs -> TableVersionDetails.FromEntity(tr, tvr, tcs) |> Some
             | FetchResult.Failure fr -> None)
         |> optionalToFetchResult "Latest table version"
 
@@ -115,15 +107,7 @@ module ReadOperations =
         |> Result.map (fun (ur, sr, tr, tvr) ->
 
             match Fetch.tableColumns ctx tvr.Id with
-            | FetchResult.Success tcs ->
-                ({ TableReference = tr.Reference
-                   Reference = tvr.Reference
-                   Name = tr.Name
-                   Version = tvr.Version
-                   CreatedOn = tvr.CreatedOn
-                   Columns = tcs |> List.map (Internal.createTableColumnDetails (Some BaseType.String)) }
-                : TableVersionDetails)
-                |> Some
+            | FetchResult.Success tcs -> TableVersionDetails.FromEntity(tr, tvr, tcs) |> Some
             | FetchResult.Failure fr -> None)
         |> optionalToFetchResult "Specific table version"
 
@@ -143,15 +127,7 @@ module ReadOperations =
 
             VerificationResult.verify verifiers (ur, sr, tr, tvrs))
         // Map
-        |> Result.map (fun (ur, sr, tr, tvrs) ->
-            tvrs
-            |> List.map (fun tvr ->
-                ({ TableReference = tr.Reference
-                   Reference = tvr.Reference
-                   Name = tr.Name
-                   Version = tvr.Version
-                   CreatedOn = tvr.CreatedOn }
-                : TableVersionOverview)))
+        |> Result.map (fun (ur, sr, tr, tvrs) -> tvrs |> List.map (fun tvr -> TableVersionOverview.FromEntity(tr, tvr)))
         |> FetchResult.fromResult
 
     let table (ctx: MySqlContext) (logger: ILogger) (userReference: string) (tableReference: string) =
