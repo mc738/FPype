@@ -27,6 +27,7 @@ module ReadOperations =
                                Reference = tvr.Reference
                                Name = tr.Name
                                Version = tvr.Version
+                               CreatedOn = tvr.CreatedOn 
                                Columns =
                                  tcs
                                  |> List.map (fun c ->
@@ -65,6 +66,7 @@ module ReadOperations =
                    Reference = tvr.Reference
                    Name = tr.Name
                    Version = tvr.Version
+                   CreatedOn = tvr.CreatedOn  
                    Columns =
                      tcs
                      |> List.map (fun c ->
@@ -104,6 +106,7 @@ module ReadOperations =
                    Reference = tvr.Reference
                    Name = tr.Name
                    Version = tvr.Version
+                   CreatedOn = tvr.CreatedOn 
                    Columns =
                      tcs
                      |> List.map (fun c ->

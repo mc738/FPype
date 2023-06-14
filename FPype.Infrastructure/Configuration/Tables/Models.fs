@@ -1,5 +1,6 @@
 ﻿namespace FPype.Infrastructure.Configuration.Tables
 
+open System
 open FPype.Core.Types
 
 [<AutoOpen>]
@@ -27,6 +28,7 @@ module Models =
           Reference: string
           Name: string
           Version: int
+          CreatedOn: DateTime
           Columns: TableColumnDetails list }
 
     and TableColumnDetails =
