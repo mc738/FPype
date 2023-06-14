@@ -148,6 +148,32 @@ module ReadOperations =
                 : TableVersionOverview)))
         |> FetchResult.fromResult
     
+    let table (ctx: MySqlContext) (logger: ILogger) (userReference: string) (tableReference: string) =
+        Fetch.user ctx userReference
+        |> FetchResult.merge (fun ur sr -> ur, sr) (fun ur -> Fetch.subscriptionById ctx ur.Id)
+        |> FetchResult.chain (fun (ur, sr) tr -> ur, sr, tr) (Fetch.table ctx tableReference)
+        |> FetchResult.merge (fun (ur, sr, tr) tvr -> ur, sr, tr, tvr) (fun (_, _, tr) ->
+            Fetch.tableVersionsByTableId ctx tr.Id)
+        |> FetchResult.toResult
+        // Verify
+        |> Result.bind (fun (ur, sr, tr, tvrs) ->
+            let verifiers =
+                [ Verification.userIsActive ur
+                  Verification.subscriptionIsActive sr
+                  Verification.userSubscriptionMatches ur tr.SubscriptionId ]
+
+            VerificationResult.verify verifiers (ur, sr, tr, tvrs))
+        // Map
+        |> Result.map (fun (ur, sr, tr, tvrs) ->
+            tvrs
+            |> List.map (fun tvr ->
+                ({ TableReference = tr.Reference
+                   Reference = tvr.Reference
+                   Name = tr.Name
+                   Version = tvr.Version }
+                : TableVersionOverview)))
+        |> FetchResult.fromResult
+    
     let tables (ctx: MySqlContext) (logger: ILogger) (userReference: string) =
         Fetch.user ctx userReference
         |> FetchResult.merge (fun ur sr -> ur, sr) (fun ur -> Fetch.subscriptionById ctx ur.Id)
