@@ -147,22 +147,20 @@ module ReadOperations =
             VerificationResult.verify verifiers (ur, sr, tr, tvrs))
         // Map
         |> Result.map (fun (ur, sr, tr, tvrs) ->
-            tvrs
-            |> List.map (fun tvr ->
-                let columns =
-                    match Fetch.tableColumns ctx tvr.Id with
-                    | FetchResult.Success cs -> cs
-                    | FetchResult.Failure f ->
-                        // TODO log error
-                        []
+            ({ Reference = tr.Reference
+               Name = tr.Name
+               Versions =
+                 tvrs
+                 |> List.map (fun tvr ->
+                     let columns =
+                         match Fetch.tableColumns ctx tvr.Id with
+                         | FetchResult.Success cs -> cs
+                         | FetchResult.Failure f ->
+                             // TODO log error
+                             []
 
-                ({ TableReference = tr.Reference
-                   Reference = tvr.Reference
-                   Name = tr.Name
-                   Version = tvr.Version
-                   CreatedOn = tvr.CreatedOn
-                   Columns = columns |> List.map (Internal.createTableColumnDetails (Some BaseType.String)) }
-                : TableVersionDetails)))
+                     TableVersionDetails.FromEntity(tr, tvr, columns)) }
+            : TableDetails))
         |> FetchResult.fromResult
 
     let tables (ctx: MySqlContext) (logger: ILogger) (userReference: string) =
