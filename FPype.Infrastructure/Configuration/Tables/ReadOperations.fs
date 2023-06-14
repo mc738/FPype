@@ -149,7 +149,8 @@ module ReadOperations =
                 ({ TableReference = tr.Reference
                    Reference = tvr.Reference
                    Name = tr.Name
-                   Version = tvr.Version }
+                   Version = tvr.Version
+                   CreatedOn = tvr.CreatedOn }
                 : TableVersionOverview)))
         |> FetchResult.fromResult
 
