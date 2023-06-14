@@ -43,7 +43,10 @@ type ConfigurationService(ctx: MySqlContext, log: ILogger<ConfigurationService>)
 
     member _.GetTables(userReference) =
         Configuration.Tables.ReadOperations.tables ctx log userReference
-    
+
+    member _.GetTable(userReference, tableReference) =
+        Configuration.Tables.ReadOperations.table ctx log userReference tableReference
+        
     member _.GetTableVersions(userReference, tableReference) =
         Configuration.Tables.ReadOperations.tableVersions ctx log userReference tableReference
     
