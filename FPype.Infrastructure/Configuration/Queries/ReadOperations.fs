@@ -74,12 +74,7 @@ module ReadOperations =
         // Map
         |> Result.map (fun (ur, sr, qr, qvrs) ->
             qvrs
-            |> List.map (fun qvr ->
-                ({ QueryReference = qr.Reference
-                   Reference = qvr.Reference
-                   Name = qr.Name
-                   Version = qvr.Version }
-                : QueryVersionOverview)))
+            |> List.map (fun qvr -> QueryVersionOverview.FromEntity(qr, qvr)))
         |> FetchResult.fromResult
 
     let queries (ctx: MySqlContext) (logger: ILogger) (userReference: string) =

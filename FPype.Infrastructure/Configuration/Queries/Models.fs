@@ -43,7 +43,7 @@ module Models =
           Version: int
           CreatedOn: DateTime }
 
-        static member FromEntity(queryEntity: Records.TableModel, entity: Records.QueryVersion) =
+        static member FromEntity(queryEntity: Records.Query, entity: Records.QueryVersion) =
             { QueryReference = queryEntity.Reference
               Reference = entity.Reference
               Name = queryEntity.Name
