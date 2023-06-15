@@ -65,6 +65,9 @@ type ConfigurationService(ctx: MySqlContext, log: ILogger<ConfigurationService>)
     member _.GetQueries(userReference) =
         Configuration.Queries.ReadOperations.queries ctx log userReference
     
+    member _.GetQuery(userReference, queryReference) =
+        Configuration.Queries.ReadOperations.query ctx log userReference queryReference
+    
     member _.GetQueryVersions(userReference, queryReference) =
         Configuration.Queries.ReadOperations.queryVersions ctx log userReference queryReference
     
