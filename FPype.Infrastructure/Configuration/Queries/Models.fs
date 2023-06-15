@@ -16,17 +16,21 @@ module Models =
     type QueryDetails =
         { Reference: string
           Name: string
-          Version: QueryVersionDetails }
-
+          Versions: QueryVersionDetails list }
+        
     and QueryVersionDetails =
-        { Reference: string
+        { QueryReference: string
+          Reference: string
+          Name: string
           Version: int
           RawQuery: string
           Hash: string
           CreatedOn: DateTime }
 
-        static member FromEntity(entity: Records.QueryVersion) =
-            { Reference = entity.Reference
+        static member FromEntity(queryEntity: Records.TableModel, entity: Records.QueryVersion) =
+            { QueryReference = queryEntity.Reference
+              Reference = entity.Reference
+              Name = queryEntity.Name
               Version = entity.Version
               RawQuery = entity.RawQuery
               Hash = entity.Hash
@@ -38,6 +42,13 @@ module Models =
           Name: string
           Version: int
           CreatedOn: DateTime }
+
+        static member FromEntity(queryEntity: Records.TableModel, entity: Records.QueryVersion) =
+            { QueryReference = queryEntity.Reference
+              Reference = entity.Reference
+              Name = queryEntity.Name
+              Version = entity.Version
+              CreatedOn = entity.CreatedOn }
 
     type QueryOverview =
 
