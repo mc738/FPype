@@ -1,6 +1,7 @@
 ﻿namespace FPype.Infrastructure.Configuration.Queries
 
 open System
+open FPype.Infrastructure.Core.Persistence
 
 [<AutoOpen>]
 module Models =
@@ -23,7 +24,14 @@ module Models =
           RawQuery: string
           Hash: string
           CreatedOn: DateTime }
-    
+
+        static member FromEntity(entity: Records.QueryVersion) =
+            { Reference = entity.Reference
+              Version = entity.Version
+              RawQuery = entity.RawQuery
+              Hash = entity.Hash
+              CreatedOn = entity.CreatedOn }
+
     type QueryVersionOverview =
         { QueryReference: string
           Reference: string
@@ -31,5 +39,11 @@ module Models =
           Version: int
           CreatedOn: DateTime }
 
-    type QueryOverview = { Reference: string; Name: string }
+    type QueryOverview =
 
+        { Reference: string
+          Name: string }
+
+        static member FromEntity(entity: Records.Query) =
+            { Reference = entity.Reference
+              Name = entity.Name }
