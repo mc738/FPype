@@ -28,7 +28,8 @@ module Models =
         { QueryReference: string
           Reference: string
           Name: string
-          Version: int }
+          Version: int
+          CreatedOn: DateTime }
 
     type QueryOverview = { Reference: string; Name: string }
 
