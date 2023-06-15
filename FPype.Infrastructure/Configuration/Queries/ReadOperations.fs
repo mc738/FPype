@@ -28,17 +28,7 @@ module ReadOperations =
 
             VerificationResult.verify verifiers (ur, sr, qr, qvr))
         // Map
-        |> Result.map (fun (ur, sr, qr, qvr) ->
-
-            ({ Reference = qr.Reference
-               Name = qr.Name
-               Version =
-                 { Reference = qvr.Reference
-                   Version = qvr.Version
-                   RawQuery = qvr.RawQuery
-                   Hash = qvr.Hash
-                   CreatedOn = qvr.CreatedOn } }
-            : QueryDetails))
+        |> Result.map (fun (ur, sr, qr, qvr) -> QueryVersionDetails.FromEntity(qr, qvr))
         |> FetchResult.fromResult
 
     let specificQueryVersion
@@ -63,17 +53,7 @@ module ReadOperations =
 
             VerificationResult.verify verifiers (ur, sr, qr, qvr))
         // Map
-        |> Result.map (fun (ur, sr, qr, qvr) ->
-
-            ({ Reference = qr.Reference
-               Name = qr.Name
-               Version =
-                 { Reference = qvr.Reference
-                   Version = qvr.Version
-                   RawQuery = qvr.RawQuery
-                   Hash = qvr.Hash
-                   CreatedOn = qvr.CreatedOn } }
-            : QueryDetails))
+        |> Result.map (fun (ur, sr, qr, qvr) -> QueryVersionDetails.FromEntity(qr, qvr))
         |> FetchResult.fromResult
 
     let queryVersions (ctx: MySqlContext) (logger: ILogger) (userReference: string) (queryReference: string) =
@@ -101,12 +81,11 @@ module ReadOperations =
                    Version = qvr.Version }
                 : QueryVersionOverview)))
         |> FetchResult.fromResult
-    
+
     let queries (ctx: MySqlContext) (logger: ILogger) (userReference: string) =
         Fetch.user ctx userReference
         |> FetchResult.merge (fun ur sr -> ur, sr) (fun ur -> Fetch.subscriptionById ctx ur.Id)
-        |> FetchResult.merge (fun (ur, sr) trs -> ur, sr, trs) (fun (_, sr) ->
-            Fetch.queriesBySubscriptionId ctx sr.Id)
+        |> FetchResult.merge (fun (ur, sr) trs -> ur, sr, trs) (fun (_, sr) -> Fetch.queriesBySubscriptionId ctx sr.Id)
         |> FetchResult.toResult
         // Verify
         |> Result.bind (fun (ur, sr, qrs) ->
