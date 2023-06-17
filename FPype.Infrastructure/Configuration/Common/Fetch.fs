@@ -318,7 +318,7 @@ module Fetch =
         try
             Operations.selectTableModelVersionRecord
                 ctx
-                [ "WHERE table_id = @0 ORDER BY version DESC LIMIT 1;" ]
+                [ "WHERE table_model_id = @0 ORDER BY version DESC LIMIT 1;" ]
                 [ tableId ]
             |> Option.map FetchResult.Success
             |> Option.defaultWith (fun _ ->
@@ -337,7 +337,7 @@ module Fetch =
         try
             Operations.selectTableModelVersionRecord
                 ctx
-                [ "WHERE table_id = @0 AND version = @1;" ]
+                [ "WHERE table_model_id = @0 AND version = @1;" ]
                 [ tableId; version ]
             |> Option.map FetchResult.Success
             |> Option.defaultWith (fun _ ->
@@ -354,7 +354,7 @@ module Fetch =
 
     let tableVersions (ctx: MySqlContext) (tableId: int) =
         try
-            Operations.selectTableModelVersionRecords ctx [ "WHERE table_id = @0 AND version = @1;" ] [ tableId ]
+            Operations.selectTableModelVersionRecords ctx [ "WHERE table_model_id = @0 AND version = @1;" ] [ tableId ]
             |> FetchResult.Success
         with ex ->
             { Message = "Unhandled exception while fetching table version"
@@ -396,7 +396,7 @@ module Fetch =
 
     let tableVersionsByTableId (ctx: MySqlContext) (id: int) =
         try
-            Operations.selectTableModelVersionRecords ctx [ "WHERE table_id = @0;" ] [ id ]
+            Operations.selectTableModelVersionRecords ctx [ "WHERE table_model_id = @0;" ] [ id ]
             |> FetchResult.Success
         with ex ->
             { Message = "Unhandled exception while fetching table version"
