@@ -2,6 +2,7 @@ namespace FPype.Infrastructure.Services
 
 open System
 open Microsoft.Extensions.Logging
+open FPype.Infrastructure
 open FPype.Infrastructure.Core.Persistence
 open Freql.MySql
 open FsToolbox.Core.Results
