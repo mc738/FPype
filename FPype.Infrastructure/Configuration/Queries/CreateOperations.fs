@@ -91,7 +91,6 @@ module CreateOperations =
                 let hash = version.RawQuery.GetSHA256Hash()
                 let versionNumber = qvr.Version + 1
 
-
                 ({ Reference = version.Reference
                    QueryId = qr.Id
                    Version = versionNumber
@@ -104,7 +103,7 @@ module CreateOperations =
 
                 [ ({ Reference = version.Reference
                      QueryReference = qr.Reference
-                     Version = 1
+                     Version = versionNumber
                      Hash = hash
                      CreatedOnDateTime = timestamp }
                   : Events.QueryVersionAddedEvent)

@@ -1,4 +1,4 @@
-module FPype.Infrastructure.Services
+namespace FPype.Infrastructure.Services
 
 open System
 open Microsoft.Extensions.Logging
