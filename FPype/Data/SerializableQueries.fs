@@ -35,10 +35,17 @@ module SerializableQueries =
         
     and WherePart =
         {
-            Name: string
+            Conditions: Condition list
         }
 
-    and Table = { Name: string; Alias: string }
+    and Table =
+        
+        { Name: string; Alias: string option }
+        
+        member t.ToSql() =
+            match t.Alias with
+            | Some alias -> $"`{t.Name}` `{alias}`"
+            | None -> $"`{t.Name}`"
 
     and [<RequireQualifiedAccess>] Condition =
         | Equals of Value * Value
@@ -78,7 +85,7 @@ module SerializableQueries =
             match v with
             | Literal s -> $"'{s}'"
             | Number decimal -> string decimal
-            | Field(tableName, fieldName) -> $"{tableName}.{fieldName}"
+            | Field(tableName, fieldName) -> $"`{tableName}`.`{fieldName}`"
         
         
     
