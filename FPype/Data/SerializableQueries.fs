@@ -10,38 +10,40 @@
 module SerializableQueries =
 
     type Query =
-        {
-            Select: SelectPart list
-            From: FromPart
-            Joins: JoinPart list
-            WherePart: WherePart list
-        }
-    
-    
-    and [<RequireQualifiedAccess>] SelectPart =
+        { Select: Select list
+          From: Table
+          Join: Join list
+          Where: Condition option }
+
+        member q.ToSql(?separator: string) =
+            let sep = separator |> Option.defaultValue ""
+
+            [ q.From.ToSql()
+
+              match q.Where with
+              | Some c -> $"WHERE {c.ToSql()}"
+              | None -> () ]
+            |> String.concat sep
+
+
+
+
+    and [<RequireQualifiedAccess>] Select =
         | Field of TableName: string * FieldName: string
         | Case
+
+    and Join = { Table: Table; Condition: Condition }
     
-    and FromPart =
-        {
-            Table: Table
-        }
-        
-    and JoinPart =
-        {
-            Table: Table
-            Condition
-        }
-        
-    and WherePart =
-        {
-            Conditions: Condition list
-        }
+    and JoinType =
+        | Inner
+        | Left
+        | Right
 
     and Table =
-        
-        { Name: string; Alias: string option }
-        
+
+        { Name: string
+          Alias: string option }
+
         member t.ToSql() =
             match t.Alias with
             | Some alias -> $"`{t.Name}` `{alias}`"
@@ -60,11 +62,11 @@ module SerializableQueries =
         | And of Condition * Condition
         | Or of Condition * Condition
         | Not of Condition
-        
+
         member c.ToSql() =
             match c with
-            | Equals (v1, v2) -> $"{v1.ToSql()} = {v2.ToSql()}"
-            | NotEquals (v1, v2) -> $"{v1.ToSql()} <> {v2.ToSql()}"
+            | Equals(v1, v2) -> $"{v1.ToSql()} = {v2.ToSql()}"
+            | NotEquals(v1, v2) -> $"{v1.ToSql()} <> {v2.ToSql()}"
             | GreaterThan(v1, v2) -> $"{v1.ToSql()} > {v2.ToSql()}"
             | GreatThanOrEquals(v1, v2) -> $"{v1.ToSql()} >= {v2.ToSql()}"
             | LessThan(v1, v2) -> $"{v1.ToSql()} < {v2.ToSql()}"
@@ -80,14 +82,11 @@ module SerializableQueries =
         | Literal of string
         | Number of decimal
         | Field of TableName: string * FieldName: string
-        
+        | Parameter of Name: string
+
         member v.ToSql() =
             match v with
             | Literal s -> $"'{s}'"
             | Number decimal -> string decimal
             | Field(tableName, fieldName) -> $"`{tableName}`.`{fieldName}`"
-        
-        
-    
-    
-    ()
+            | Parameter name -> $"@{name}"
