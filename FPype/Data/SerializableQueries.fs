@@ -42,6 +42,7 @@ module SerializableQueries =
 
     and [<RequireQualifiedAccess>] Condition =
         | Equals of Value * Value
+        | NotEquals of Value * Value
         | GreaterThan of Value * Value
         | GreatThanOrEquals of Value * Value
         | LessThan of Value * Value
@@ -51,10 +52,35 @@ module SerializableQueries =
         | Like of Value * Value
         | And of Condition * Condition
         | Or of Condition * Condition
+        | Not of Condition
+        
+        member c.ToSql() =
+            match c with
+            | Equals (v1, v2) -> $"{v1.ToSql()} = {v2.ToSql()}"
+            | NotEquals (v1, v2) -> $"{v1.ToSql()} <> {v2.ToSql()}"
+            | GreaterThan(v1, v2) -> $"{v1.ToSql()} > {v2.ToSql()}"
+            | GreatThanOrEquals(v1, v2) -> $"{v1.ToSql()} >= {v2.ToSql()}"
+            | LessThan(v1, v2) -> $"{v1.ToSql()} < {v2.ToSql()}"
+            | LessThanOrEquals(v1, v2) -> $"{v1.ToSql()} <= {v2.ToSql()}"
+            | IsNull v -> $"{v.ToSql()} IS NULL"
+            | IsNotNull v -> $"{v.ToSql()} IS NOT NULL"
+            | Like(v1, v2) -> $"{v1.ToSql()} LIKE {v2.ToSql()}"
+            | And(c1, c2) -> $"({c1.ToSql()} AND {c2.ToSql()})"
+            | Or(c1, c2) -> $"({c1.ToSql()} OR {c2.ToSql()})"
+            | Not c -> $"NOT {c.ToSql()}"
 
     and [<RequireQualifiedAccess>] Value =
         | Literal of string
+        | Number of decimal
         | Field of TableName: string * FieldName: string
+        
+        member v.ToSql() =
+            match v with
+            | Literal s -> $"'{s}'"
+            | Number decimal -> string decimal
+            | Field(tableName, fieldName) -> $"{tableName}.{fieldName}"
+        
+        
     
     
     ()
