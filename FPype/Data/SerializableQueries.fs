@@ -53,7 +53,7 @@ module SerializableQueries =
         { Name: string
           Alias: string option }
 
-        member t.Serialize() =
+        member t.Serialize() : string =
             match t.Alias with
             | Some alias -> $"`{t.Name}` `{alias}`"
             | None -> $"`{t.Name}`"
@@ -99,3 +99,42 @@ module SerializableQueries =
             | Number decimal -> string decimal
             | Field(tableName, fieldName) -> $"`{tableName}`.`{fieldName}`"
             | Parameter name -> $"@{name}"
+
+
+module Dsl =
+
+    let query
+        (select: SerializableQueries.Select list)
+        (from: SerializableQueries.Table)
+        (joins: SerializableQueries.Join list)
+        (where: SerializableQueries.Condition option)
+        =
+        ({ Select = select
+           From = from
+           Joins = joins
+           Where = where }
+        : SerializableQueries.Query)
+
+    let select (fields: SerializableQueries.Select list) = ()
+
+    let field tableName fieldName =
+        SerializableQueries.Select.Field(tableName, fieldName)
+
+    let ``and`` = ()
+
+    let ``or`` = ()
+
+    let ``>=`` = ()
+
+    let (>@) (v1: SerializableQueries.Value) (v2: SerializableQueries.Value) =
+        SerializableQueries.Condition.GreaterThan(v1, v2)
+
+    let literal (str: string) = SerializableQueries.Value.Literal str
+
+    let test _ =
+
+        query
+        <| [ field "t" "foo"; field "t" "bar" ]
+        <| { Name = "test"; Alias = Some "t" }
+        <| []
+        <| Some(literal "a" >@ literal "b")
