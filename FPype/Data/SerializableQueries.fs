@@ -12,39 +12,48 @@ module SerializableQueries =
     type Query =
         { Select: Select list
           From: Table
-          Join: Join list
+          Joins: Join list
           Where: Condition option }
 
         member q.ToSql(?separator: string) =
             let sep = separator |> Option.defaultValue ""
 
-            [ q.From.ToSql()
-
+            [ q.From.Serialize()
+              yield! q.Joins |> List.map (fun j -> j.Serialize())
               match q.Where with
-              | Some c -> $"WHERE {c.ToSql()}"
+              | Some c -> $"WHERE {c.Serialize()}"
               | None -> () ]
             |> String.concat sep
-
-
-
 
     and [<RequireQualifiedAccess>] Select =
         | Field of TableName: string * FieldName: string
         | Case
 
-    and Join = { Table: Table; Condition: Condition }
-    
+    and Join =
+        { Type: JoinType
+          Table: Table
+          Condition: Condition }
+
+        member j.Serialize() =
+            $"{j.Type.Serialize()} {j.Table.Serialize()} ON {j.Condition.Serialize()}"
+
     and JoinType =
         | Inner
-        | Left
-        | Right
+        | Outer
+        | Cross
+
+        member jt.Serialize() =
+            match jt with
+            | Inner -> "JOIN"
+            | Outer -> "OUTER JOIN"
+            | Cross -> "CROSS JOIN"
 
     and Table =
 
         { Name: string
           Alias: string option }
 
-        member t.ToSql() =
+        member t.Serialize() =
             match t.Alias with
             | Some alias -> $"`{t.Name}` `{alias}`"
             | None -> $"`{t.Name}`"
@@ -63,20 +72,20 @@ module SerializableQueries =
         | Or of Condition * Condition
         | Not of Condition
 
-        member c.ToSql() =
+        member c.Serialize() =
             match c with
-            | Equals(v1, v2) -> $"{v1.ToSql()} = {v2.ToSql()}"
-            | NotEquals(v1, v2) -> $"{v1.ToSql()} <> {v2.ToSql()}"
-            | GreaterThan(v1, v2) -> $"{v1.ToSql()} > {v2.ToSql()}"
-            | GreatThanOrEquals(v1, v2) -> $"{v1.ToSql()} >= {v2.ToSql()}"
-            | LessThan(v1, v2) -> $"{v1.ToSql()} < {v2.ToSql()}"
-            | LessThanOrEquals(v1, v2) -> $"{v1.ToSql()} <= {v2.ToSql()}"
-            | IsNull v -> $"{v.ToSql()} IS NULL"
-            | IsNotNull v -> $"{v.ToSql()} IS NOT NULL"
-            | Like(v1, v2) -> $"{v1.ToSql()} LIKE {v2.ToSql()}"
-            | And(c1, c2) -> $"({c1.ToSql()} AND {c2.ToSql()})"
-            | Or(c1, c2) -> $"({c1.ToSql()} OR {c2.ToSql()})"
-            | Not c -> $"NOT {c.ToSql()}"
+            | Equals(v1, v2) -> $"{v1.Serialize()} = {v2.Serialize()}"
+            | NotEquals(v1, v2) -> $"{v1.Serialize()} <> {v2.Serialize()}"
+            | GreaterThan(v1, v2) -> $"{v1.Serialize()} > {v2.Serialize()}"
+            | GreatThanOrEquals(v1, v2) -> $"{v1.Serialize()} >= {v2.Serialize()}"
+            | LessThan(v1, v2) -> $"{v1.Serialize()} < {v2.Serialize()}"
+            | LessThanOrEquals(v1, v2) -> $"{v1.Serialize()} <= {v2.Serialize()}"
+            | IsNull v -> $"{v.Serialize()} IS NULL"
+            | IsNotNull v -> $"{v.Serialize()} IS NOT NULL"
+            | Like(v1, v2) -> $"{v1.Serialize()} LIKE {v2.Serialize()}"
+            | And(c1, c2) -> $"({c1.Serialize()} AND {c2.Serialize()})"
+            | Or(c1, c2) -> $"({c1.Serialize()} OR {c2.Serialize()})"
+            | Not c -> $"NOT {c.Serialize()}"
 
     and [<RequireQualifiedAccess>] Value =
         | Literal of string
@@ -84,7 +93,7 @@ module SerializableQueries =
         | Field of TableName: string * FieldName: string
         | Parameter of Name: string
 
-        member v.ToSql() =
+        member v.Serialize() =
             match v with
             | Literal s -> $"'{s}'"
             | Number decimal -> string decimal
