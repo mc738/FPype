@@ -118,9 +118,10 @@ module Dsl =
            Joins = joins
            Where = where }
         : SerializableQueries.Query)
-
-    let select (fields: SerializableQueries.Select list) = ()
-
+    
+    let selectFields (fields: SerializableQueries.TableField list) =
+        fields |> List.map SerializableQueries.Select.Field
+    
     let field tableName fieldName =
         ({ TableName = tableName
            Field = fieldName }
@@ -151,9 +152,6 @@ module Dsl =
 
     let (%||) (c1: SerializableQueries.Condition) (c2: SerializableQueries.Condition) =
         SerializableQueries.Condition.Or(c1, c2)
-
-    let selectFields (fields: SerializableQueries.TableField list) =
-        fields |> List.map SerializableQueries.Select.Field
 
     let isNull (v: SerializableQueries.Value) = SerializableQueries.Condition.IsNull v
 
