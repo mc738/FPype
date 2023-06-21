@@ -1,5 +1,7 @@
 ﻿namespace FPype.Data
 
+open FPype.Data.Models
+
 /// <summary>
 /// Serializable queries allow for clients to define queries via dsl that
 /// can be easily serialized and converted to rendered to sql.
@@ -26,7 +28,7 @@ module SerializableQueries =
             |> String.concat sep
 
     and [<RequireQualifiedAccess>] Select =
-        | Field of TableName: string * FieldName: string
+        | Field of TableField
         | Case
 
     and Join =
@@ -57,6 +59,8 @@ module SerializableQueries =
             match t.Alias with
             | Some alias -> $"`{t.Name}` `{alias}`"
             | None -> $"`{t.Name}`"
+
+    and TableField = { TableName: string; Field: string }
 
     and [<RequireQualifiedAccess>] Condition =
         | Equals of Value * Value
@@ -90,14 +94,14 @@ module SerializableQueries =
     and [<RequireQualifiedAccess>] Value =
         | Literal of string
         | Number of decimal
-        | Field of TableName: string * FieldName: string
+        | Field of TableField
         | Parameter of Name: string
 
         member v.Serialize() =
             match v with
             | Literal s -> $"'{s}'"
             | Number decimal -> string decimal
-            | Field(tableName, fieldName) -> $"`{tableName}`.`{fieldName}`"
+            | Field field -> $"`{field.TableName}`.`{field.Field}`"
             | Parameter name -> $"@{name}"
 
 
@@ -118,8 +122,11 @@ module Dsl =
     let select (fields: SerializableQueries.Select list) = ()
 
     let field tableName fieldName =
-        SerializableQueries.Select.Field(tableName, fieldName)
-
+        ({ TableName = tableName
+           Field = fieldName }
+        : SerializableQueries.TableField)
+ 
+    
     let (%==) (v1: SerializableQueries.Value) (v2: SerializableQueries.Value) =
         SerializableQueries.Condition.Equals(v1, v2)
 
@@ -127,29 +134,39 @@ module Dsl =
         SerializableQueries.Condition.GreaterThan(v1, v2)
 
     let (%>=) (v1: SerializableQueries.Value) (v2: SerializableQueries.Value) =
-            SerializableQueries.Condition.GreatThanOrEquals(v1, v2)
-            
+        SerializableQueries.Condition.GreatThanOrEquals(v1, v2)
+
     let (%<) (v1: SerializableQueries.Value) (v2: SerializableQueries.Value) =
         SerializableQueries.Condition.LessThan(v1, v2)
 
     let (%<=) (v1: SerializableQueries.Value) (v2: SerializableQueries.Value) =
-            SerializableQueries.Condition.LessThanOrEquals(v1, v2)
+        SerializableQueries.Condition.LessThanOrEquals(v1, v2)
 
     let (%?) (v1: SerializableQueries.Value) (v2: SerializableQueries.Value) =
-            SerializableQueries.Condition.Like(v1, v2)
+        SerializableQueries.Condition.Like(v1, v2)
+
+    let (%!) (c: SerializableQueries.Condition) = SerializableQueries.Condition.Not c
     
-    let (%!) (c: SerializableQueries.Condition) =
-            SerializableQueries.Condition.Not c
-            
-            
+    let (%&&) (c1: SerializableQueries.Condition) (c2: SerializableQueries.Condition) =
+        SerializableQueries.Condition.And (c1, c2)
+
+    let (%||) (c1: SerializableQueries.Condition) (c2: SerializableQueries.Condition) =
+        SerializableQueries.Condition.Or (c1, c2)
+
     
+    let isNull (v: SerializableQueries.Value) =
+        SerializableQueries.Condition.IsNull v
+       
+    let isNotNull (v: SerializableQueries.Value) =
+        SerializableQueries.Condition.IsNotNull v
+     
     let literal (str: string) = SerializableQueries.Value.Literal str
-    
-    
+
+
     let toSql (query: SerializableQueries.Query) = query.ToSql()
 
     let test _ =
-        
+
 
         query
         <| [ field "t" "foo"; field "t" "bar" ]
