@@ -125,8 +125,7 @@ module Dsl =
         ({ TableName = tableName
            Field = fieldName }
         : SerializableQueries.TableField)
- 
-    
+
     let (%==) (v1: SerializableQueries.Value) (v2: SerializableQueries.Value) =
         SerializableQueries.Condition.Equals(v1, v2)
 
@@ -146,30 +145,31 @@ module Dsl =
         SerializableQueries.Condition.Like(v1, v2)
 
     let (%!) (c: SerializableQueries.Condition) = SerializableQueries.Condition.Not c
-    
+
     let (%&&) (c1: SerializableQueries.Condition) (c2: SerializableQueries.Condition) =
-        SerializableQueries.Condition.And (c1, c2)
+        SerializableQueries.Condition.And(c1, c2)
 
     let (%||) (c1: SerializableQueries.Condition) (c2: SerializableQueries.Condition) =
-        SerializableQueries.Condition.Or (c1, c2)
+        SerializableQueries.Condition.Or(c1, c2)
 
-    
-    let isNull (v: SerializableQueries.Value) =
-        SerializableQueries.Condition.IsNull v
-       
+    let selectFields (fields: SerializableQueries.TableField list) =
+        fields |> List.map SerializableQueries.Select.Field
+
+    let isNull (v: SerializableQueries.Value) = SerializableQueries.Condition.IsNull v
+
     let isNotNull (v: SerializableQueries.Value) =
         SerializableQueries.Condition.IsNotNull v
-     
+
     let literal (str: string) = SerializableQueries.Value.Literal str
 
+    let where (condition: SerializableQueries.Condition) = Some condition
 
     let toSql (query: SerializableQueries.Query) = query.ToSql()
 
     let test _ =
 
-
         query
-        <| [ field "t" "foo"; field "t" "bar" ]
+        <| selectFields [ field "t" "foo"; field "t" "bar" ]
         <| { Name = "test"; Alias = Some "t" }
         <| []
-        <| Some(literal "a" %> literal "b")
+        <| where ((literal "a" %> literal "b") %&& (literal "a" %> literal "b"))
