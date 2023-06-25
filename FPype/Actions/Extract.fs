@@ -1,5 +1,8 @@
 ﻿namespace FPype.Actions
 
+open FPype.Data.Models
+open FPype.ML
+
 [<RequireQualifiedAccess>]
 module Extract =
 
@@ -33,7 +36,6 @@ module Extract =
         type ParseResults =
             { Rows: TableRow list
               Errors: ErrorMessage list }
-
 
         let createRows (columns: TableColumn list) (lines: string array) =
             lines
@@ -142,6 +144,13 @@ module Extract =
             |> (fun (s, e) ->
                 { Rows = s |> List.rev
                   Errors = e |> List.rev })
+            
+        let createXlsxRows (columns: TableColumn list) (rows: DocumentFormat.OpenXml.Spreadsheet.Row seq) =
+            
+            
+            
+            
+            ()
 
     [<RequireQualifiedAccess>]
     module ``parse-csv`` =

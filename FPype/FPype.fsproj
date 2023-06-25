@@ -66,9 +66,10 @@
     </ItemGroup>
 
     <ItemGroup>
-      <PackageReference Include="Freql.Csv" Version="0.9.1" />
-      <PackageReference Include="freql.mysql" Version="0.9.1" />
-      <PackageReference Include="Freql.Sqlite" Version="0.9.1" />
+      <PackageReference Include="Freql.Csv" Version="0.9.2" />
+      <PackageReference Include="freql.mysql" Version="0.9.2" />
+      <PackageReference Include="Freql.Sqlite" Version="0.9.2" />
+      <PackageReference Include="Freql.Xlsx" Version="0.9.2" />
       <PackageReference Include="FSharp.Compiler.Service" Version="41.0.7" />
       <PackageReference Include="FsToolbox" Version="0.5.0" />
       <PackageReference Include="FsToolbox.S3" Version="0.5.0" />
