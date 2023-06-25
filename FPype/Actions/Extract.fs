@@ -1,5 +1,6 @@
 ﻿namespace FPype.Actions
 
+open FPype.Core.Types
 open FPype.Data.Models
 open FPype.ML
 
@@ -146,19 +147,39 @@ module Extract =
                   Errors = e |> List.rev })
             
         let createXlsxRows (columns: TableColumn list) (rows: DocumentFormat.OpenXml.Spreadsheet.Row seq) =
-            let createRow (row: DocumentFormat.OpenXml.Spreadsheet.Row seq) =
+            let createRow (row: DocumentFormat.OpenXml.Spreadsheet.Row) =
                 columns
                 |> List.map (fun tc ->
-                    Freql.Xlsx.Common.getCellFromRow "" row
-                        
-                    ())
+                    // TODO get column name...
+                    match Freql.Xlsx.Common.getCellFromRow row "" with
+                    | Some c ->
+                        let rec handle (bt: BaseType) =
+                            match tc.Type with
+                            | BaseType.Boolean ->
+                                match Freql.Xlsx.Common.cellToBool c with
+                                | Some v -> Value.Boolean v |> Ok
+                                | None -> Error ""
+                            | BaseType.Byte -> failwith "todo"
+                            | BaseType.Char -> failwith "todo"
+                            | BaseType.Decimal -> failwith "todo"
+                            | BaseType.Double -> failwith "todo"
+                            | BaseType.Float -> failwith "todo"
+                            | BaseType.Int -> failwith "todo"
+                            | BaseType.Short -> failwith "todo"
+                            | BaseType.Long -> failwith "todo"
+                            | BaseType.String -> failwith "todo"
+                            | BaseType.DateTime -> failwith "todo"
+                            | BaseType.Guid -> failwith "todo"
+                            | BaseType.Option ibt -> handle ibt
+                            
+                        handle tc.Type
+                    | None ->
+                        match tc.Type with
+                        | BaseType.Option _ -> Ok <| Value.Option None
+                        | _ -> Error "")
                 
                 
                  
-                
-                
-                ()
-            
             
             //rows
             //|> 
