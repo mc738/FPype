@@ -146,6 +146,22 @@ module Extract =
                   Errors = e |> List.rev })
             
         let createXlsxRows (columns: TableColumn list) (rows: DocumentFormat.OpenXml.Spreadsheet.Row seq) =
+            let createRow (row: DocumentFormat.OpenXml.Spreadsheet.Row seq) =
+                columns
+                |> List.map (fun tc ->
+                    Freql.Xlsx.Common.getCellFromRow "" row
+                        
+                    ())
+                
+                
+                 
+                
+                
+                ()
+            
+            
+            //rows
+            //|> 
             
             
             
