@@ -291,6 +291,7 @@ module Extract =
         let createAction stepName parameters =
             run parameters stepName |> createAction name stepName
 
+    [<RequireQualifiedAccess>]
     module ``query-sqlite-database`` =
 
         let name = "query_sqlite_database"
@@ -331,10 +332,13 @@ module Extract =
             | _, None -> Error "Missing table property"
         *)
 
+    [<RequireQualifiedAccess>]
     module ``extract-from-xlsx`` =
 
         [<AutoOpen>]
         module private Internal =
+
+            open Freql.Xlsx.Common
 
             type ErrorMessage = { Message: string; LineNumber: int }
 
@@ -351,18 +355,27 @@ module Extract =
                 { Column: TableColumn
                   ColumnName: string }
 
+            let mapTableColumns (startIndex: int) (table: TableModel) (columnMap: Map<string, string>) =
+                table.Columns
+                |> List.mapi (fun i tc ->
+                    match columnMap.TryFind tc.Name with
+                    | Some cn -> { Column = tc; ColumnName = cn }
+                    | None ->
+                        { Column = tc
+                          ColumnName = indexToColumnName (i + startIndex) })
+
             let createXlsxRows (columns: MappedTableColumn list) (rows: DocumentFormat.OpenXml.Spreadsheet.Row seq) =
                 rows
                 |> List.ofSeq
                 |> List.mapi (fun rowI row ->
                     columns
                     |> List.map (fun tc ->
-                        match Freql.Xlsx.Common.getCellFromRow row tc.ColumnName with
+                        match getCellFromRow row tc.ColumnName with
                         | Some c ->
                             let rec handle (bt: BaseType) =
                                 match bt with
                                 | BaseType.Boolean ->
-                                    match Freql.Xlsx.Common.cellToBool c with
+                                    match cellToBool c with
                                     | Some v -> Value.Boolean v |> Ok
                                     | None ->
                                         Error(
@@ -372,7 +385,7 @@ module Extract =
                                             tc.ColumnName
                                         )
                                 | BaseType.Byte ->
-                                    match Freql.Xlsx.Common.cellToInt c |> Option.map byte with
+                                    match cellToInt c |> Option.map byte with
                                     | Some v -> Value.Byte v |> Ok
                                     | None ->
                                         Error(
@@ -382,7 +395,7 @@ module Extract =
                                             tc.ColumnName
                                         )
                                 | BaseType.Char ->
-                                    match Freql.Xlsx.Common.cellToString c |> Seq.tryItem 0 with
+                                    match cellToString c |> Seq.tryItem 0 with
                                     | Some v -> Value.Char v |> Ok
                                     | None ->
                                         Error(
@@ -392,7 +405,7 @@ module Extract =
                                             tc.ColumnName
                                         )
                                 | BaseType.Decimal ->
-                                    match Freql.Xlsx.Common.cellToDecimal c with
+                                    match cellToDecimal c with
                                     | Some v -> Value.Decimal v |> Ok
                                     | None ->
                                         Error(
@@ -402,7 +415,7 @@ module Extract =
                                             tc.ColumnName
                                         )
                                 | BaseType.Double ->
-                                    match Freql.Xlsx.Common.cellToDouble c with
+                                    match cellToDouble c with
                                     | Some v -> Value.Double v |> Ok
                                     | None ->
                                         Error(
@@ -412,7 +425,7 @@ module Extract =
                                             tc.ColumnName
                                         )
                                 | BaseType.Float ->
-                                    match Freql.Xlsx.Common.cellToDouble c |> Option.map float32 with
+                                    match cellToDouble c |> Option.map float32 with
                                     | Some v -> Value.Float v |> Ok
                                     | None ->
                                         Error(
@@ -422,7 +435,7 @@ module Extract =
                                             tc.ColumnName
                                         )
                                 | BaseType.Int ->
-                                    match Freql.Xlsx.Common.cellToInt c with
+                                    match cellToInt c with
                                     | Some v -> Value.Int v |> Ok
                                     | None ->
                                         Error(
@@ -432,7 +445,7 @@ module Extract =
                                             tc.ColumnName
                                         )
                                 | BaseType.Short ->
-                                    match Freql.Xlsx.Common.cellToInt c |> Option.map int16 with
+                                    match cellToInt c |> Option.map int16 with
                                     | Some v -> Value.Short v |> Ok
                                     | None ->
                                         Error(
@@ -442,7 +455,7 @@ module Extract =
                                             tc.ColumnName
                                         )
                                 | BaseType.Long ->
-                                    match Freql.Xlsx.Common.cellToInt c |> Option.map int64 with
+                                    match cellToInt c |> Option.map int64 with
                                     | Some v -> Value.Long v |> Ok
                                     | None ->
                                         Error(
@@ -451,9 +464,9 @@ module Extract =
                                             tc.Column.Name,
                                             tc.ColumnName
                                         )
-                                | BaseType.String -> Freql.Xlsx.Common.cellToString c |> Value.String |> Ok
+                                | BaseType.String -> cellToString c |> Value.String |> Ok
                                 | BaseType.DateTime ->
-                                    match Freql.Xlsx.Common.cellToOADateTime c with
+                                    match cellToOADateTime c with
                                     | Some v -> Value.DateTime v |> Ok
                                     | None ->
                                         Error(
@@ -463,7 +476,7 @@ module Extract =
                                             tc.ColumnName
                                         )
                                 | BaseType.Guid ->
-                                    match Guid.TryParse(Freql.Xlsx.Common.cellToString c) with
+                                    match Guid.TryParse(cellToString c) with
                                     | true, v -> Value.Guid v |> Ok
                                     | false, _ ->
                                         Error(
@@ -500,9 +513,13 @@ module Extract =
 
                             { Message =
                                 f
-                                |> List.map (fun (m, ln, fn, cn) -> $"{m} [field: {fn} column: {cn}]")
+                                |> List.map (fun (m, _, fn, cn) -> $"{m} [field: {fn} column: {cn}]")
                                 |> String.concat "; "
                               LineNumber = ln }
                             |> ParseResult.Failure)
+
+        let name = "extract_from_xlsx"
+
+
 
         ()
