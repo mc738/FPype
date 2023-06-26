@@ -22,7 +22,6 @@ module Extract =
 
     module Internal =
 
-
         type ErrorMessage =
             { Message: string
               LineNumber: int
@@ -149,9 +148,9 @@ module Extract =
         let createXlsxRows (columns: TableColumn list) (rows: DocumentFormat.OpenXml.Spreadsheet.Row seq) =
             rows
             |> List.ofSeq
-            |> List.map (fun row ->
+            |> List.mapi (fun rowI row ->
                 columns
-                |> List.map (fun tc ->
+                |> List.mapi (fun tci tc ->
                     // TODO get column name...
                     match Freql.Xlsx.Common.getCellFromRow row "" with
                     | Some c ->
@@ -160,7 +159,7 @@ module Extract =
                             | BaseType.Boolean ->
                                 match Freql.Xlsx.Common.cellToBool c with
                                 | Some v -> Value.Boolean v |> Ok
-                                | None -> Error "Value could not be extracted as type bool"
+                                | None -> Error("Value could not be extracted as type bool", rowI, tci)
                             | BaseType.Byte ->
                                 match Freql.Xlsx.Common.cellToInt c |> Option.map byte with
                                 | Some v -> Value.Byte v |> Ok
@@ -208,7 +207,24 @@ module Extract =
                     | None ->
                         match tc.Type with
                         | BaseType.Option _ -> Ok <| Value.Option None
-                        | _ -> Error ""))
+                        | _ -> Error "")
+                |> List.fold
+                    (fun (s, f) r ->
+                        match r with
+                        | Ok fv -> s @ [ fv ], f
+                        | Error(message, rowIndex, field) -> s, f @ [ message, rowIndex, field ])
+                    ([], [])
+                |> fun (s, f) ->
+                    match f.Length = 0 with
+                    | true -> { Values = s } |> ParseResult.Success
+                    | false ->
+                        let (m, ln, i) = f.Head
+
+                        { Message = m
+                          LineNumber = ln
+                          ColumnNumber = i
+                          Line = "" }
+                        |> ParseResult.Failure)
 
     [<RequireQualifiedAccess>]
     module ``parse-csv`` =
@@ -383,7 +399,7 @@ module Extract =
         let createAction stepName parameters =
             run parameters stepName |> createAction name stepName
 
-(*
+    (*
         let deserialize (element: JsonElement) =
             match Json.tryGetStringProperty "source" element, Json.tryGetStringProperty "table" element with
             | Some source, Some tableName ->
@@ -395,3 +411,133 @@ module Extract =
             | None, _ -> Error "Missing source property"
             | _, None -> Error "Missing table property"
         *)
+
+    module ``extract-from-xlsx`` =
+
+        [<AutoOpen>]
+        module private Internal =
+
+            type ErrorMessage = { Message: string; LineNumber: int }
+
+            type ParseResult =
+                | Success of TableRow
+                | Warning of TableRow
+                | Failure of ErrorMessage
+
+            type ParseResults =
+                { Rows: TableRow list
+                  Errors: ErrorMessage list }
+
+
+            let createXlsxRows (columns: TableColumn list) (rows: DocumentFormat.OpenXml.Spreadsheet.Row seq) =
+                rows
+                |> List.ofSeq
+                |> List.mapi (fun rowI row ->
+                    columns
+                    |> List.map (fun tc ->
+                        // TODO get column name...
+                        let columnName = ""
+
+                        match Freql.Xlsx.Common.getCellFromRow row columnName with
+                        | Some c ->
+                            let rec handle (bt: BaseType) =
+                                match bt with
+                                | BaseType.Boolean ->
+                                    match Freql.Xlsx.Common.cellToBool c with
+                                    | Some v -> Value.Boolean v |> Ok
+                                    | None ->
+                                        Error("Value could not be extracted as type bool", rowI, tc.Name, columnName)
+                                | BaseType.Byte ->
+                                    match Freql.Xlsx.Common.cellToInt c |> Option.map byte with
+                                    | Some v -> Value.Byte v |> Ok
+                                    | None ->
+                                        Error("Value could not be extracted as type byte", rowI, tc.Name, columnName)
+                                | BaseType.Char ->
+                                    match Freql.Xlsx.Common.cellToString c |> Seq.tryItem 0 with
+                                    | Some v -> Value.Char v |> Ok
+                                    | None ->
+                                        Error("Value could not be extracted as type char", rowI, tc.Name, columnName)
+                                | BaseType.Decimal ->
+                                    match Freql.Xlsx.Common.cellToDecimal c with
+                                    | Some v -> Value.Decimal v |> Ok
+                                    | None ->
+                                        Error(
+                                            "Value could not be extracted as type decimal",
+                                            rowI,
+                                            tc.Name,
+                                            columnName
+                                        )
+                                | BaseType.Double ->
+                                    match Freql.Xlsx.Common.cellToDouble c with
+                                    | Some v -> Value.Double v |> Ok
+                                    | None ->
+                                        Error(
+                                            "Value could not be extracted as type double",
+                                            rowI,
+                                            tc.Name,
+                                            columnName
+                                        )
+                                | BaseType.Float ->
+                                    match Freql.Xlsx.Common.cellToDouble c |> Option.map float32 with
+                                    | Some v -> Value.Float v |> Ok
+                                    | None ->
+                                        Error("Value could not be extracted as type float", rowI, tc.Name, columnName)
+                                | BaseType.Int ->
+                                    match Freql.Xlsx.Common.cellToInt c with
+                                    | Some v -> Value.Int v |> Ok
+                                    | None ->
+                                        Error("Value could not be extracted as type int", rowI, tc.Name, columnName)
+                                | BaseType.Short ->
+                                    match Freql.Xlsx.Common.cellToInt c |> Option.map int16 with
+                                    | Some v -> Value.Short v |> Ok
+                                    | None ->
+                                        Error("Value could not be extracted as type short", rowI, tc.Name, columnName)
+                                | BaseType.Long ->
+                                    match Freql.Xlsx.Common.cellToInt c |> Option.map int64 with
+                                    | Some v -> Value.Long v |> Ok
+                                    | None ->
+                                        Error("Value could not be extracted as type long", rowI, tc.Name, columnName)
+                                | BaseType.String -> Freql.Xlsx.Common.cellToString c |> Value.String |> Ok
+                                | BaseType.DateTime ->
+                                    match Freql.Xlsx.Common.cellToOADateTime c with
+                                    | Some v -> Value.DateTime v |> Ok
+                                    | None ->
+                                        Error(
+                                            "Value could not be extracted as type datetime",
+                                            rowI,
+                                            tc.Name,
+                                            columnName
+                                        )
+                                | BaseType.Guid ->
+                                    match Guid.TryParse(Freql.Xlsx.Common.cellToString c) with
+                                    | true, v -> Value.Guid v |> Ok
+                                    | false, _ ->
+                                        Error("Value could not be extracted as type guid", rowI, tc.Name, columnName)
+                                | BaseType.Option ibt -> handle ibt |> Result.map (Some >> Value.Option)
+
+                            handle tc.Type
+                        | None ->
+                            match tc.Type with
+                            | BaseType.Option _ -> Ok <| Value.Option None
+                            | _ -> Error("Value could not be extracted as type guid", rowI, tc.Name, columnName))
+                    |> List.fold
+                        (fun (s, f) r ->
+                            match r with
+                            | Ok fv -> s @ [ fv ], f
+                            | Error(message, rowIndex, field, column) -> s, f @ [ message, rowIndex, field, column ])
+                        ([], [])
+                    |> fun (s, f) ->
+                        match f.Length = 0 with
+                        | true -> { Values = s } |> ParseResult.Success
+                        | false ->
+
+                            let (_, ln, _, _) = f.Head
+
+                            { Message =
+                                f
+                                |> List.map (fun (m, ln, fn, cn) -> $"{m} [field: {fn} column: {cn}]")
+                                |> String.concat "; "
+                              LineNumber = ln }
+                            |> ParseResult.Failure)
+
+        ()
