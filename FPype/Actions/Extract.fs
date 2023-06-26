@@ -145,7 +145,7 @@ module Extract =
             |> (fun (s, e) ->
                 { Rows = s |> List.rev
                   Errors = e |> List.rev })
-            
+
         let createXlsxRows (columns: TableColumn list) (rows: DocumentFormat.OpenXml.Spreadsheet.Row seq) =
             let createRow (row: DocumentFormat.OpenXml.Spreadsheet.Row) =
                 columns
@@ -154,39 +154,69 @@ module Extract =
                     match Freql.Xlsx.Common.getCellFromRow row "" with
                     | Some c ->
                         let rec handle (bt: BaseType) =
-                            match tc.Type with
+                            match bt with
                             | BaseType.Boolean ->
                                 match Freql.Xlsx.Common.cellToBool c with
                                 | Some v -> Value.Boolean v |> Ok
-                                | None -> Error ""
-                            | BaseType.Byte -> failwith "todo"
-                            | BaseType.Char -> failwith "todo"
-                            | BaseType.Decimal -> failwith "todo"
-                            | BaseType.Double -> failwith "todo"
-                            | BaseType.Float -> failwith "todo"
-                            | BaseType.Int -> failwith "todo"
-                            | BaseType.Short -> failwith "todo"
-                            | BaseType.Long -> failwith "todo"
-                            | BaseType.String -> failwith "todo"
-                            | BaseType.DateTime -> failwith "todo"
-                            | BaseType.Guid -> failwith "todo"
-                            | BaseType.Option ibt -> handle ibt
-                            
+                                | None -> Error "Value could not be extracted as type bool"
+                            | BaseType.Byte ->
+                                match Freql.Xlsx.Common.cellToInt c |> Option.map byte with
+                                | Some v -> Value.Byte v |> Ok
+                                | None -> Error "Value could not be extracted as type byte"
+                            | BaseType.Char ->
+                                match Freql.Xlsx.Common.cellToString c |> Seq.tryItem 0 with
+                                | Some v -> Value.Char v |> Ok
+                                | None -> Error "Value could not be extracted as type char"
+                            | BaseType.Decimal ->
+                                match Freql.Xlsx.Common.cellToDecimal c with
+                                | Some v -> Value.Decimal v |> Ok
+                                | None -> Error "Value could not be extracted as type decimal"
+                            | BaseType.Double ->
+                                match Freql.Xlsx.Common.cellToDouble c with
+                                | Some v -> Value.Double v |> Ok
+                                | None -> Error "Value could not be extracted as type double"
+                            | BaseType.Float ->
+                                match Freql.Xlsx.Common.cellToDouble c |> Option.map float32 with
+                                | Some v -> Value.Float v |> Ok
+                                | None -> Error "Value could not be extracted as type float"
+                            | BaseType.Int ->
+                                match Freql.Xlsx.Common.cellToInt c with
+                                | Some v -> Value.Int v |> Ok
+                                | None -> Error "Value could not be extracted as type int"
+                            | BaseType.Short ->
+                                match Freql.Xlsx.Common.cellToInt c |> Option.map int16 with
+                                | Some v -> Value.Short v |> Ok
+                                | None -> Error "Value could not be extracted as type short"
+                            | BaseType.Long ->
+                                match Freql.Xlsx.Common.cellToInt c |> Option.map int64 with
+                                | Some v -> Value.Long v |> Ok
+                                | None -> Error "Value could not be extracted as type long"
+                            | BaseType.String -> Freql.Xlsx.Common.cellToString c |> Value.String |> Ok
+                            | BaseType.DateTime ->
+                                match Freql.Xlsx.Common.cellToOADateTime c with
+                                | Some v -> Value.DateTime v |> Ok
+                                | None -> Error "Value could not be extracted as type datetime"
+                            | BaseType.Guid ->
+                                match Guid.TryParse(Freql.Xlsx.Common.cellToString c) with
+                                | true, v -> Value.Guid v |> Ok
+                                | false, _ -> Error "Value could not be extracted as type guid"
+                            | BaseType.Option ibt -> handle ibt |> Result.map (Some >> Value.Option)
+
                         handle tc.Type
                     | None ->
                         match tc.Type with
                         | BaseType.Option _ -> Ok <| Value.Option None
                         | _ -> Error "")
-                
-                
-                 
-            
+
+
+
+
             //rows
-            //|> 
-            
-            
-            
-            
+            //|>
+
+
+
+
             ()
 
     [<RequireQualifiedAccess>]
@@ -218,7 +248,8 @@ module Extract =
                 store.Log(stepName, name, $"Imported {r.Length} row(s) to table `{parameters.Table.Name}`.")
                 store)
 
-        let createAction stepName parameters = run parameters stepName |> createAction name stepName
+        let createAction stepName parameters =
+            run parameters stepName |> createAction name stepName
 
     [<RequireQualifiedAccess>]
     module ``parse-csv-collection`` =
@@ -244,7 +275,12 @@ module Extract =
 
                         r.Errors
                         |> List.map (fun e ->
-                            store.AddImportError(stepName, name, e.Message, $"{e.LineNumber}:{e.ColumnNumber} - {e.Line}"))
+                            store.AddImportError(
+                                stepName,
+                                name,
+                                e.Message,
+                                $"{e.LineNumber}:{e.ColumnNumber} - {e.Line}"
+                            ))
                         |> ignore
                     | false -> ()
 
@@ -262,7 +298,8 @@ module Extract =
             |> flattenResultList
             |> Result.map (fun _ -> store)
 
-        let createAction stepName parameters = run parameters stepName |> createAction name stepName
+        let createAction stepName parameters =
+            run parameters stepName |> createAction name stepName
 
     /// Split a source into individual chucks for processing.
     /// This is essentially a preprocessing action.
@@ -325,7 +362,8 @@ module Extract =
                 store.Log(stepName, name, $"Imported {r.Length} row(s) to table `{parameters.Table.Name}`.")
                 store)
 
-        let createAction stepName parameters = run parameters stepName |> createAction name stepName
+        let createAction stepName parameters =
+            run parameters stepName |> createAction name stepName
 
     module ``query-sqlite-database`` =
 
@@ -339,7 +377,7 @@ module Extract =
 
         let run (parameters: Parameters) (stepName: string) (store: PipelineStore) =
             let fullPath = store.SubstituteValues parameters.Path
-            
+
             // Select rows from external database
             Sqlite.selectBespoke fullPath parameters.Table parameters.Sql parameters.Parameters
             // Set the rows in the model...
@@ -351,7 +389,8 @@ module Extract =
 
                 store)
 
-        let createAction stepName parameters = run parameters stepName |> createAction name stepName
+        let createAction stepName parameters =
+            run parameters stepName |> createAction name stepName
 
 (*
         let deserialize (element: JsonElement) =
