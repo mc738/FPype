@@ -428,8 +428,11 @@ module Extract =
                 { Rows: TableRow list
                   Errors: ErrorMessage list }
 
-
-            let createXlsxRows (columns: TableColumn list) (rows: DocumentFormat.OpenXml.Spreadsheet.Row seq) =
+            type MappedTableColumn =
+                { Column: TableColumn
+                  ColumnName: string }
+            
+            let createXlsxRows (columns: MappedTableColumn list) (rows: DocumentFormat.OpenXml.Spreadsheet.Row seq) =
                 rows
                 |> List.ofSeq
                 |> List.mapi (fun rowI row ->
@@ -438,7 +441,7 @@ module Extract =
                         // TODO get column name...
                         let columnName = ""
 
-                        match Freql.Xlsx.Common.getCellFromRow row columnName with
+                        match Freql.Xlsx.Common.getCellFromRow row tc.ColumnName with
                         | Some c ->
                             let rec handle (bt: BaseType) =
                                 match bt with
@@ -446,17 +449,17 @@ module Extract =
                                     match Freql.Xlsx.Common.cellToBool c with
                                     | Some v -> Value.Boolean v |> Ok
                                     | None ->
-                                        Error("Value could not be extracted as type bool", rowI, tc.Name, columnName)
+                                        Error("Value could not be extracted as type bool", rowI, tc.Column.Name, columnName)
                                 | BaseType.Byte ->
                                     match Freql.Xlsx.Common.cellToInt c |> Option.map byte with
                                     | Some v -> Value.Byte v |> Ok
                                     | None ->
-                                        Error("Value could not be extracted as type byte", rowI, tc.Name, columnName)
+                                        Error("Value could not be extracted as type byte", rowI, tc.Column.Name, columnName)
                                 | BaseType.Char ->
                                     match Freql.Xlsx.Common.cellToString c |> Seq.tryItem 0 with
                                     | Some v -> Value.Char v |> Ok
                                     | None ->
-                                        Error("Value could not be extracted as type char", rowI, tc.Name, columnName)
+                                        Error("Value could not be extracted as type char", rowI, tc.Column.Name, columnName)
                                 | BaseType.Decimal ->
                                     match Freql.Xlsx.Common.cellToDecimal c with
                                     | Some v -> Value.Decimal v |> Ok
@@ -464,7 +467,7 @@ module Extract =
                                         Error(
                                             "Value could not be extracted as type decimal",
                                             rowI,
-                                            tc.Name,
+                                            tc.Column.Name,
                                             columnName
                                         )
                                 | BaseType.Double ->
@@ -474,29 +477,29 @@ module Extract =
                                         Error(
                                             "Value could not be extracted as type double",
                                             rowI,
-                                            tc.Name,
+                                            tc.Column.Name,
                                             columnName
                                         )
                                 | BaseType.Float ->
                                     match Freql.Xlsx.Common.cellToDouble c |> Option.map float32 with
                                     | Some v -> Value.Float v |> Ok
                                     | None ->
-                                        Error("Value could not be extracted as type float", rowI, tc.Name, columnName)
+                                        Error("Value could not be extracted as type float", rowI, tc.Column.Name, columnName)
                                 | BaseType.Int ->
                                     match Freql.Xlsx.Common.cellToInt c with
                                     | Some v -> Value.Int v |> Ok
                                     | None ->
-                                        Error("Value could not be extracted as type int", rowI, tc.Name, columnName)
+                                        Error("Value could not be extracted as type int", rowI, tc.Column.Name, columnName)
                                 | BaseType.Short ->
                                     match Freql.Xlsx.Common.cellToInt c |> Option.map int16 with
                                     | Some v -> Value.Short v |> Ok
                                     | None ->
-                                        Error("Value could not be extracted as type short", rowI, tc.Name, columnName)
+                                        Error("Value could not be extracted as type short", rowI, tc.Column.Name, columnName)
                                 | BaseType.Long ->
                                     match Freql.Xlsx.Common.cellToInt c |> Option.map int64 with
                                     | Some v -> Value.Long v |> Ok
                                     | None ->
-                                        Error("Value could not be extracted as type long", rowI, tc.Name, columnName)
+                                        Error("Value could not be extracted as type long", rowI, tc.Column.Name, columnName)
                                 | BaseType.String -> Freql.Xlsx.Common.cellToString c |> Value.String |> Ok
                                 | BaseType.DateTime ->
                                     match Freql.Xlsx.Common.cellToOADateTime c with
@@ -505,21 +508,21 @@ module Extract =
                                         Error(
                                             "Value could not be extracted as type datetime",
                                             rowI,
-                                            tc.Name,
+                                            tc.Column.Name,
                                             columnName
                                         )
                                 | BaseType.Guid ->
                                     match Guid.TryParse(Freql.Xlsx.Common.cellToString c) with
                                     | true, v -> Value.Guid v |> Ok
                                     | false, _ ->
-                                        Error("Value could not be extracted as type guid", rowI, tc.Name, columnName)
+                                        Error("Value could not be extracted as type guid", rowI, tc.Column.Name, columnName)
                                 | BaseType.Option ibt -> handle ibt |> Result.map (Some >> Value.Option)
 
-                            handle tc.Type
+                            handle tc.Column.Type
                         | None ->
-                            match tc.Type with
+                            match tc.Column.Type with
                             | BaseType.Option _ -> Ok <| Value.Option None
-                            | _ -> Error("Value could not be extracted as type guid", rowI, tc.Name, columnName))
+                            | _ -> Error("Value could not be extracted as type guid", rowI, tc.Column.Name, columnName))
                     |> List.fold
                         (fun (s, f) r ->
                             match r with
