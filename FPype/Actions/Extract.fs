@@ -147,7 +147,9 @@ module Extract =
                   Errors = e |> List.rev })
 
         let createXlsxRows (columns: TableColumn list) (rows: DocumentFormat.OpenXml.Spreadsheet.Row seq) =
-            let createRow (row: DocumentFormat.OpenXml.Spreadsheet.Row) =
+            rows
+            |> List.ofSeq
+            |> List.map (fun row ->
                 columns
                 |> List.map (fun tc ->
                     // TODO get column name...
@@ -206,18 +208,7 @@ module Extract =
                     | None ->
                         match tc.Type with
                         | BaseType.Option _ -> Ok <| Value.Option None
-                        | _ -> Error "")
-
-
-
-
-            //rows
-            //|>
-
-
-
-
-            ()
+                        | _ -> Error ""))
 
     [<RequireQualifiedAccess>]
     module ``parse-csv`` =
