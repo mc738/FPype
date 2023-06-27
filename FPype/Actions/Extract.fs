@@ -526,7 +526,12 @@ module Extract =
               Sql: string
               ColumnMap: Map<string, string> }
 
+        let run (parameters: Parameters) (stepName: string) (store: PipelineStore) =
+            
+            Ok store
+
         
-        
+        let createAction stepName parameters =
+            run parameters stepName |> createAction name stepName
 
         ()
