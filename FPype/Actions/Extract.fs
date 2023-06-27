@@ -335,7 +335,7 @@ module Extract =
 
     [<RequireQualifiedAccess>]
     module ``extract-from-xlsx`` =
-        
+
         open Freql.Xlsx.Common
 
         [<AutoOpen>]
@@ -518,7 +518,18 @@ module Extract =
                                 |> String.concat "; "
                               LineNumber = ln }
                             |> ParseResult.Failure)
-
+                |> List.fold
+                    (fun (s, f) r ->
+                        // PERFORMANCE this used append and then rev because it performs better.
+                        match r with
+                        | ParseResult.Success tr -> tr :: s, f
+                        | ParseResult.Warning tr -> tr :: s, f
+                        | ParseResult.Failure em -> s, em :: f)
+                    ([], [])
+                |> (fun (s, e) ->
+                    { Rows = s |> List.rev
+                      Errors = e |> List.rev })
+                
         let name = "extract_from_xlsx"
 
         type Parameters =
@@ -535,21 +546,45 @@ module Extract =
                 // NOTE this could be changed with a tryExec function in Freql.Xlsx (removing the need for the try/with).
                 try
                     let fn (spreadsheet: SpreadsheetDocument) =
-                        
-                        ()
-                    
+                        match getSheet parameters.WorksheetName spreadsheet with
+                        | Some s ->
+                            let worksheetPart = getWorksheet s spreadsheet
+
+                            getRows
+                                worksheetPart
+                                (parameters.StartRowIndex |> Option.map uint32)
+                                (parameters.EndRowIndex |> Option.map uint32)
+                            |> Ok
+                        | None -> Error $"Worksheet `{parameters.WorksheetName}` not found"
+
+
                     exec fn true path
                     
-                    mapTableColumns
-                    
-                    
-                    createXlsxRows
-                    
-                    
-                    Ok store
-                with
-                | exn -> Error $"Error handling xlsx file: {exn}")
+                with exn ->
+                    Error $"Error handling xlsx file: {exn}")
+            |> Result.bind (fun rows ->
+                
+
+                let mappedColumns = mapTableColumns 0 parameters.Table parameters.ColumnMap
+
+
+                let r = createXlsxRows mappedColumns rows
+
+                match r.Errors |> List.isEmpty |> not with
+                | true ->
+                    store.LogWarning(stepName, name, $"Error parsing {r.Errors.Length} row(s)")
+
+                    r.Errors
+                    |> List.map (fun e ->
+                        store.AddImportError(stepName, name, e.Message, $"{e.LineNumber}:{e.Message}"))
+                    |> ignore
+                | false -> ()
+
+                store.CreateTable(parameters.Table)
+                |> fun t -> { t with Rows = r.Rows }
+                |> store.InsertRows)
             
+
         let createAction stepName parameters =
             run parameters stepName |> createAction name stepName
 
