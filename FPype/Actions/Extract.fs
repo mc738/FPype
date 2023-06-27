@@ -1,5 +1,6 @@
 ﻿namespace FPype.Actions
 
+open DocumentFormat.OpenXml.Packaging
 open FPype.Core.Types
 open FPype.Data.Models
 open FPype.ML
@@ -334,11 +335,11 @@ module Extract =
 
     [<RequireQualifiedAccess>]
     module ``extract-from-xlsx`` =
+        
+        open Freql.Xlsx.Common
 
         [<AutoOpen>]
         module private Internal =
-
-            open Freql.Xlsx.Common
 
             type ErrorMessage = { Message: string; LineNumber: int }
 
@@ -523,14 +524,32 @@ module Extract =
         type Parameters =
             { DataSource: string
               Table: TableModel
-              Sql: string
+              WorksheetName: string
+              StartRowIndex: int option
+              EndRowIndex: int option
               ColumnMap: Map<string, string> }
 
         let run (parameters: Parameters) (stepName: string) (store: PipelineStore) =
+            getDataSourceAsFileUri store parameters.DataSource true
+            |> Result.bind (fun path ->
+                // NOTE this could be changed with a tryExec function in Freql.Xlsx (removing the need for the try/with).
+                try
+                    let fn (spreadsheet: SpreadsheetDocument) =
+                        
+                        ()
+                    
+                    exec fn true path
+                    
+                    mapTableColumns
+                    
+                    
+                    createXlsxRows
+                    
+                    
+                    Ok store
+                with
+                | exn -> Error $"Error handling xlsx file: {exn}")
             
-            Ok store
-
-        
         let createAction stepName parameters =
             run parameters stepName |> createAction name stepName
 
