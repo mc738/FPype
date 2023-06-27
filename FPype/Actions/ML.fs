@@ -25,7 +25,7 @@ module ML =
         let run (parameters: Parameters) (stepName: string) (store: PipelineStore) =
             let mlCtx = createCtx parameters.ContextSeed
 
-            getDataSourceAsFileUri store parameters.ModelName
+            getDataSourceAsFileUri store parameters.ModelName true
             |> Result.bind (
                 BinaryClassification.train mlCtx (store.SubstituteValues parameters.ModelSavePath) parameters.TrainingSettings
             )
@@ -60,7 +60,7 @@ module ML =
         let run (parameters: Parameters) (stepName: string) (store: PipelineStore) =
             let mlCtx = createCtx parameters.ContextSeed
 
-            getDataSourceAsFileUri store parameters.ModelName
+            getDataSourceAsFileUri store parameters.ModelName true
             |> Result.bind (
                 MulticlassClassification.train
                     mlCtx
@@ -98,7 +98,7 @@ module ML =
         let run (parameters: Parameters) (stepName: string) (store: PipelineStore) =
             let mlCtx = createCtx parameters.ContextSeed
 
-            getDataSourceAsFileUri store parameters.ModelName
+            getDataSourceAsFileUri store parameters.ModelName true
             |> Result.bind (
                 Regression.train mlCtx (store.SubstituteValues parameters.ModelSavePath) parameters.TrainingSettings
             )
@@ -130,7 +130,7 @@ module ML =
         let run (parameters: Parameters) (stepName: string) (store: PipelineStore) =
             let mlCtx = createCtx parameters.ContextSeed
 
-            getDataSourceAsFileUri store parameters.ModelName
+            getDataSourceAsFileUri store parameters.ModelName true
             |> Result.bind (
                 MatrixFactorization.train mlCtx (store.SubstituteValues parameters.ModelSavePath) parameters.TrainingSettings
             )

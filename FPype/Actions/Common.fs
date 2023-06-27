@@ -48,27 +48,47 @@ module Common =
             | Some DataSourceType.Artifact ->
                 store.GetArtifact(dataSource.Name)
                 |> Option.map (fun a -> String.FromUtfBytes(a.Data.ToBytes()).Split(Environment.NewLine) |> Ok)
-                |> Option.defaultWith (fun _ -> Error $"Artifact `{dataSource.Name}` not found.")
+                |> Option.defaultWith (fun _ -> Error $"Artifact `{dataSource.Name}` not found")
             | None -> Error $"Unsupported source type: `{dataSource.Type}`"
     
     let getDataSourceAsStringByName (store: PipelineStore) (sourceName: string) =
         store.GetDataSource sourceName
         |> Option.map (getDataSourceAsString store)
-        |> Option.defaultWith (fun _ -> Error $"Data source `{sourceName}` not found.")
+        |> Option.defaultWith (fun _ -> Error $"Data source `{sourceName}` not found")
 
     let getDataSourceAsLinesByName (store: PipelineStore) (sourceName: string) =
         store.GetDataSource sourceName
         |> Option.map (getDataSourceAsLines store)
-        |> Option.defaultWith (fun _ -> Error $"Data source `{sourceName}` not found.")
+        |> Option.defaultWith (fun _ -> Error $"Data source `{sourceName}` not found")
         
-    let getDataSourceAsFileUri (store: PipelineStore) (sourceName: string) =
+    let getDataSourceAsFileUri (store: PipelineStore) (sourceName: string) (createTempFile: bool) =
         store.GetDataSource sourceName
         |> Option.map (fun ds ->
             match DataSourceType.Deserialize  ds.Type with
             | Some DataSourceType.File -> ds.Uri |> Ok
             | Some DataSourceType.Artifact ->
-                // NOTE when not a file create a temporary file to hold it or load from another source?
-                Error "Artifact data sources to be implemented"
+                match createTempFile with
+                | true ->
+                    match store.GetArtifact(ds.Name) with
+                    | Some a ->
+                        let tmpPath = store.GetTmpPath() |> Option.defaultValue store.DefaultTmpPath
+                        let path = Path.Combine(tmpPath, $"{a.Name}.{a.Type}")
+                        
+                        match File.Exists path with
+                        | true ->
+                            // If the file already exists create a new one.
+                            // This is basically a no-op.
+                            Ok ()
+                        | false ->
+                            try
+                                use fs = new FileStream(path, FileMode.Create)
+                                a.Data.Value.CopyTo(fs)
+                                fs.Flush() |> Ok
+                            with
+                            | exn -> Error $"Error creating file `{path}`: {exn.Message}"
+                        |> Result.map (fun _ -> path)
+                    | None -> Error $"Artifact `{ds.Name}` not found"
+                | false -> Error "Data source is an artifact and `createTempFile` is set to false"
             | None -> Error "Unknown data source type")
         |> Option.defaultWith (fun _ -> Error $"Data source `{sourceName}` not found")
         
