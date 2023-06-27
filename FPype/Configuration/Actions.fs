@@ -1,5 +1,6 @@
 ﻿namespace FPype.Configuration
 
+open DocumentFormat.OpenXml.Spreadsheet
 open FPype.Actions
 open FPype.Actions.ML
 open FPype.Visualizations.Charts.LineCharts
@@ -75,7 +76,7 @@ module Actions =
             [ Utils.``create-directory``.name; Utils.``create-sqlite-database``.name ]
 
         let all ctx =
-            [ Utils.``create-directory``.name, ``create-directory``.deserialize 
+            [ Utils.``create-directory``.name, ``create-directory``.deserialize
               Utils.``create-sqlite-database``.name, create_sqlite_database.deserialize ctx ]
 
     module Import =
@@ -141,7 +142,7 @@ module Actions =
               Import.``chunk-file``.name
               Import.``http-get``.name ]
 
-        let all  =
+        let all =
             [ Import.``import-file``.name, ``import-file``.deserialize
               Import.``chunk-file``.name, ``chunk-file``.deserialize
               Import.``http-get``.name, ``http-get``.deserialize ]
@@ -224,17 +225,54 @@ module Actions =
                 | _, Error e, _ -> Error $"Error creating query: {e}"
                 | _, _, Error e -> Error $"Error creating table: {e}"
 
+        module ``extract-from-xlsx`` =
+            let deserialize (ctx: SqliteContext) (stepName: string) (json: JsonElement) =
+                match
+                    Json.tryGetStringProperty "source" json,
+                    TableVersion.TryCreate json,
+                    Json.tryGetStringProperty "worksheet" json
+                with
+                | Some source, Ok tableVersion, Some worksheet ->
+                    Tables.tryCreateTableModel ctx tableVersion.Name tableVersion.Version
+                    |> Result.map (fun t ->
+                        ({ DataSource = source
+                           Table = t
+                           WorksheetName = worksheet
+                           StartRowIndex = Json.tryGetIntProperty "startRowIndex" json
+                           EndRowIndex = Json.tryGetIntProperty "endRowIndex" json
+                           ColumnMap =
+                             Json.tryGetArrayProperty "columnMap" json
+                             |> Option.map (fun els ->
+                                 els
+                                 |> List.choose (fun el ->
+                                     match
+                                         Json.tryGetStringProperty "tableColumn" el,
+                                         Json.tryGetStringProperty "columnReference" el
+                                     with
+                                     | Some fn, Some cn -> Some(fn, cn)
+                                     | None, _
+                                     | _, None -> None)
+                                 |> Map.ofList)
+                             |> Option.defaultValue Map.empty }
+                        : Extract.``extract-from-xlsx``.Parameters)
+                        |> Extract.``extract-from-xlsx``.createAction stepName)
+                | None, _, _ -> Error "Missing source property"
+                | _, Error e, _ -> Error $"Error creating table: {e}"
+                | _, _, None -> Error "Missing worksheet property"
+
         let names =
             [ Extract.``parse-csv``.name
               Extract.``parse-csv-collection``.name
               Extract.``grok``.name
-              Extract.``query-sqlite-database``.name ]
+              Extract.``query-sqlite-database``.name
+              Extract.``extract-from-xlsx``.name ]
 
         let all (ctx: SqliteContext) =
             [ Extract.``parse-csv``.name, ``parse-csv``.deserialize ctx
               Extract.``parse-csv-collection``.name, ``parse-csv``.deserialize ctx
               Extract.``grok``.name, ``grok``.deserialize ctx
-              Extract.``query-sqlite-database``.name, ``query-sqlite-database``.deserialize ctx ]
+              Extract.``query-sqlite-database``.name, ``query-sqlite-database``.deserialize ctx
+              Extract.``extract-from-xlsx``.name, ``extract-from-xlsx``.deserialize ctx ]
 
     module Transform =
 
@@ -487,7 +525,7 @@ module Actions =
 
         let all (ctx: SqliteContext) =
             [ ML.``train-binary-classification-model``.name, ``train-binary-classification-model``.deserialize ctx
-              ML.``train-multiclass-classification-model``.name, 
+              ML.``train-multiclass-classification-model``.name,
               ``train-multiclass-classification-model``.deserialize ctx
               ML.``train-regression-model``.name, ``train-regression-model``.deserialize ctx
               ML.``train-matrix-factorization-model``.name, ``train-matrix-factorization-model``.deserialize ctx ]
@@ -615,15 +653,15 @@ module Actions =
           yield! ML.all ctx
           yield! Visualizations.all ctx ]
 
-    
+
     type ActionCollection = SqliteContext -> (string * (string -> JsonElement -> Result<PipelineAction, string>)) list
-    
+
     let createAction
         (actionsMap: Map<string, string -> JsonElement -> Result<PipelineAction, string>>)
         (action: Records.PipelineAction)
         =
         let actionData = action.ActionBlob |> blobToString |> toJson
-        
+
         try
             actionsMap.TryFind action.ActionType
             |> Option.map (fun b -> b action.Name actionData)
@@ -631,7 +669,12 @@ module Actions =
         with exn ->
             Error $"Failed to create action. Exception: {exn.Message}"
 
-    let createActions (ctx: SqliteContext) (pipelineId: string) (additionActions: ActionCollection option) (version: ItemVersion) =
+    let createActions
+        (ctx: SqliteContext)
+        (pipelineId: string)
+        (additionActions: ActionCollection option)
+        (version: ItemVersion)
+        =
         match version with
         | ItemVersion.Latest ->
             Operations.selectPipelineVersionRecord
@@ -646,7 +689,7 @@ module Actions =
                 | Some aa -> all ctx @ aa ctx
                 | None -> all ctx
                 |> Map.ofList
-                
+
             Operations.selectPipelineActionRecords ctx [ "WHERE pipeline_version_id = @0" ] [ pv.Id ]
             |> List.sortBy (fun pa -> pa.Step)
             |> List.map (createAction actionMap)

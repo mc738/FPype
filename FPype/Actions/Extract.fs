@@ -557,16 +557,13 @@ module Extract =
                             |> Ok
                         | None -> Error $"Worksheet `{parameters.WorksheetName}` not found"
 
-
                     exec fn true path
                     
                 with exn ->
                     Error $"Error handling xlsx file: {exn}")
             |> Result.bind (fun rows ->
                 
-
                 let mappedColumns = mapTableColumns 0 parameters.Table parameters.ColumnMap
-
 
                 let r = createXlsxRows mappedColumns rows
 
