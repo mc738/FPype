@@ -520,6 +520,13 @@ module Extract =
 
         let name = "extract_from_xlsx"
 
+        type Parameters =
+            { DataSource: string
+              Table: TableModel
+              Sql: string
+              ColumnMap: Map<string, string> }
 
+        
+        
 
         ()
