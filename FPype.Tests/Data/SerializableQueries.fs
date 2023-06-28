@@ -25,21 +25,24 @@ type SerializableQueryTests() =
     [<TestMethod>]
     member _.``Basic join serialization test``() =
         let expected = "JOIN `b_table` `b` ON `a`.`id` = `b`.`a_id`"
-        
+
         let actual =
             ({ Type = SerializableQueries.JoinType.Inner
                Table = { Name = "b_table"; Alias = Some "b" }
                Condition =
-                SerializableQueries.Condition.Equals(
-                    SerializableQueries.Value.Field { Field = "id"; TableName = "a" },
-                    SerializableQueries.Value.Field { Field = "a_id"; TableName = "b" }
-                ) }: SerializableQueries.Join).Serialize()
-        
+                 SerializableQueries.Condition.Equals(
+                     SerializableQueries.Value.Field { Field = "id"; TableName = "a" },
+                     SerializableQueries.Value.Field { Field = "a_id"; TableName = "b" }
+                 ) }
+            : SerializableQueries.Join)
+                .Serialize()
+
         Assert.AreEqual(expected, actual)
-    
+
     [<TestMethod>]
     member _.``Basic select query with join``() =
-        let expected = "SELECT `a`.`foo`, `a`.`bar`, `b`.`baz` FROM `a_table` `a` JOIN `b_table` `b` ON `a`.`id` = `b`.`a_id`"
+        let expected =
+            "SELECT `a`.`foo`, `a`.`bar`, `b`.`baz` FROM `a_table` `a` JOIN `b_table` `b` ON `a`.`id` = `b`.`a_id`"
 
         let actual =
             ({ Select =
@@ -60,3 +63,16 @@ type SerializableQueryTests() =
                 .ToSql()
 
         Assert.AreEqual(expected, actual)
+
+    [<TestMethod>]
+    member _.``Condition.Equals serialization``() =
+        let expected = "`a`.`id` = `b`.`a_id`"
+
+        let actual =
+            SerializableQueries.Condition.Equals(
+                SerializableQueries.Value.Field { Field = "id"; TableName = "a" },
+                SerializableQueries.Value.Field { Field = "a_id"; TableName = "b" }
+            ).Serialize()
+
+        Assert.AreEqual(expected, actual)
+        
