@@ -76,3 +76,16 @@ type SerializableQueryTests() =
 
         Assert.AreEqual(expected, actual)
         
+    
+    [<TestMethod>]
+    member _.``Condition.GreaterThan serialization``() =
+        let expected = "`a`.`id` > `b`.`a_id`"
+
+        let actual =
+            SerializableQueries.Condition.GreaterThan(
+                SerializableQueries.Value.Field { Field = "id"; TableName = "a" },
+                SerializableQueries.Value.Field { Field = "a_id"; TableName = "b" }
+            ).Serialize()
+
+        Assert.AreEqual(expected, actual)
+        
