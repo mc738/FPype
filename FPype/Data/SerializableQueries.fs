@@ -74,7 +74,7 @@ module SerializableQueries =
         | Equals of Value * Value
         | NotEquals of Value * Value
         | GreaterThan of Value * Value
-        | GreatThanOrEquals of Value * Value
+        | GreaterThanOrEquals of Value * Value
         | LessThan of Value * Value
         | LessThanOrEquals of Value * Value
         | IsNull of Value
@@ -89,7 +89,7 @@ module SerializableQueries =
             | Equals(v1, v2) -> $"{v1.Serialize()} = {v2.Serialize()}"
             | NotEquals(v1, v2) -> $"{v1.Serialize()} <> {v2.Serialize()}"
             | GreaterThan(v1, v2) -> $"{v1.Serialize()} > {v2.Serialize()}"
-            | GreatThanOrEquals(v1, v2) -> $"{v1.Serialize()} >= {v2.Serialize()}"
+            | GreaterThanOrEquals(v1, v2) -> $"{v1.Serialize()} >= {v2.Serialize()}"
             | LessThan(v1, v2) -> $"{v1.Serialize()} < {v2.Serialize()}"
             | LessThanOrEquals(v1, v2) -> $"{v1.Serialize()} <= {v2.Serialize()}"
             | IsNull v -> $"{v.Serialize()} IS NULL"
@@ -141,7 +141,7 @@ module Dsl =
         SerializableQueries.Condition.GreaterThan(v1, v2)
 
     let (%>=) (v1: SerializableQueries.Value) (v2: SerializableQueries.Value) =
-        SerializableQueries.Condition.GreatThanOrEquals(v1, v2)
+        SerializableQueries.Condition.GreaterThanOrEquals(v1, v2)
 
     let (%<) (v1: SerializableQueries.Value) (v2: SerializableQueries.Value) =
         SerializableQueries.Condition.LessThan(v1, v2)
