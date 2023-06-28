@@ -18,9 +18,10 @@ module SerializableQueries =
           Where: Condition option }
 
         member q.ToSql(?separator: string) =
-            let sep = separator |> Option.defaultValue ""
+            let sep = separator |> Option.defaultValue " "
 
-            [ q.From.Serialize()
+            [ q.Select |> List.map (fun s -> s.Serialize()) |> String.concat ", " |> fun s -> $"SELECT {s}"
+              $"FROM {q.From.Serialize()}" 
               yield! q.Joins |> List.map (fun j -> j.Serialize())
               match q.Where with
               | Some c -> $"WHERE {c.Serialize()}"
@@ -30,6 +31,13 @@ module SerializableQueries =
     and [<RequireQualifiedAccess>] Select =
         | Field of TableField
         | Case
+        
+        member s.Serialize() =
+            match s with
+            | Field tf -> $"`{tf.TableName}`.`{tf.Field}`"
+            | Case ->
+                // TODO implement `Case`.
+                failwith "Need to implement"
 
     and Join =
         { Type: JoinType
