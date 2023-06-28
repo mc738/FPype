@@ -14,7 +14,7 @@
         <Compile Include="Core\Paths.fs" />
         <Compile Include="Core\JPath.fs" />
         <Compile Include="Core\Mapping.fs" />
-        <Compile Include="Tests.fs" />
+        <Compile Include="Data\SerializableQueries.fs" />
         <Compile Include="Program.fs" />
     </ItemGroup>
 

@@ -104,7 +104,6 @@ module SerializableQueries =
             | Field field -> $"`{field.TableName}`.`{field.Field}`"
             | Parameter name -> $"@{name}"
 
-
 module Dsl =
 
     let query
