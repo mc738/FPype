@@ -51,12 +51,18 @@ type ConfigurationService(ctx: MySqlContext, log: ILogger<ConfigurationService>)
     member _.GetTableVersions(userReference, tableReference) =
         Configuration.Tables.ReadOperations.tableVersions ctx log userReference tableReference
     
-    member _.AddQuery(userReference, query) =
-        Configuration.Queries.CreateOperations.query ctx log userReference query
-
-    member _.AddQueryVersion(userReference, queryReference, version) =
-        Configuration.Queries.CreateOperations.queryVersion ctx log userReference queryReference version
-
+    member _.AddRawQuery(userReference, query) =
+        Configuration.Queries.CreateOperations.rawQuery ctx log userReference query
+    
+    member _.AddSerializedQuery(userReference, query) =
+        Configuration.Queries.CreateOperations.serializedQuery ctx log userReference query
+    
+    member _.AddRawQueryVersion(userReference, queryReference, version) =
+        Configuration.Queries.CreateOperations.rawQueryVersion ctx log userReference queryReference version
+    
+    member _.AddSerializedQueryVersion(userReference, queryReference, version) =
+        Configuration.Queries.CreateOperations.serializedQueryVersion ctx log userReference queryReference version
+    
     member _.GetLatestQueryVersion(userReference, queryReference) =
         Configuration.Queries.ReadOperations.latestQueryVersion ctx log userReference queryReference
 
