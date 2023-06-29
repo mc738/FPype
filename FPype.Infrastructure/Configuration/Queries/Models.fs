@@ -1,18 +1,26 @@
 ﻿namespace FPype.Infrastructure.Configuration.Queries
 
 open System
+open FPype.Data
 open FPype.Infrastructure.Core.Persistence
 
 [<AutoOpen>]
 module Models =
 
-    type NewQuery =
+    type NewRawQuery =
         { Reference: string
           Name: string
-          Version: NewQueryVersion }
+          Version: NewRawQueryVersion }
 
-    and NewQueryVersion = { Reference: string; RawQuery: string }
+    and NewRawQueryVersion = { Reference: string; RawQuery: string }
 
+    type NewSerializedQuery =
+        { Reference: string
+          Name: string
+          Version: NewSerializedQueryVersion }
+    
+    and NewSerializedQueryVersion = { Reference: string; SerializedQuery: SerializableQueries.Query }
+    
     type QueryDetails =
         { Reference: string
           Name: string
@@ -36,6 +44,8 @@ module Models =
               Hash = entity.Hash
               CreatedOn = entity.CreatedOn }
 
+        
+    
     type QueryVersionOverview =
         { QueryReference: string
           Reference: string

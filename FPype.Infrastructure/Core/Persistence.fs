@@ -5,7 +5,7 @@ open System.Text.Json.Serialization
 open Freql.Core.Common
 open Freql.MySql
 
-/// Module generated on 04/06/2023 10:34:39 (utc) via Freql.Tools.
+/// Module generated on 28/06/2023 19:11:30 (utc) via Freql.Tools.
 [<RequireQualifiedAccess>]
 module Records =
     /// A record representing a row in the table `cfg_action_types`.
@@ -68,7 +68,7 @@ module Records =
   KEY `cfg_events_FK_1` (`user_id`),
   CONSTRAINT `cfg_events_FK` FOREIGN KEY (`subscription_id`) REFERENCES `subscriptions` (`id`),
   CONSTRAINT `cfg_events_FK_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci
+) ENGINE=InnoDB AUTO_INCREMENT=27 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci
         """
     
         static member SelectSql() = """
@@ -444,6 +444,7 @@ module Records =
           [<JsonPropertyName("version")>] Version: int
           [<JsonPropertyName("rawQuery")>] RawQuery: string
           [<JsonPropertyName("hash")>] Hash: string
+          [<JsonPropertyName("isSerialized")>] IsSerialized: byte
           [<JsonPropertyName("createdOn")>] CreatedOn: DateTime }
     
         static member Blank() =
@@ -453,6 +454,7 @@ module Records =
               Version = 0
               RawQuery = String.Empty
               Hash = String.Empty
+              IsSerialized = 0uy
               CreatedOn = DateTime.UtcNow }
     
         static member CreateTableSql() = """
@@ -463,6 +465,7 @@ module Records =
   `version` int NOT NULL,
   `raw_query` text NOT NULL,
   `hash` varchar(100) NOT NULL,
+  `is_serialized` tinyint(1) NOT NULL,
   `created_on` datetime NOT NULL,
   PRIMARY KEY (`id`),
   UNIQUE KEY `cfg_query_versions_UN` (`reference`),
@@ -479,6 +482,7 @@ module Records =
               cfg_query_versions.`version`,
               cfg_query_versions.`raw_query`,
               cfg_query_versions.`hash`,
+              cfg_query_versions.`is_serialized`,
               cfg_query_versions.`created_on`
         FROM cfg_query_versions
         """
@@ -611,7 +615,7 @@ module Records =
   UNIQUE KEY `cfg_table_columns_UN_1` (`table_version_id`,`name`),
   UNIQUE KEY `cfg_table_columns_UN_2` (`table_version_id`,`column_index`),
   CONSTRAINT `cfg_table_columns_FK` FOREIGN KEY (`table_version_id`) REFERENCES `cfg_table_model_versions` (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci
+) ENGINE=InnoDB AUTO_INCREMENT=33 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci
         """
     
         static member SelectSql() = """
@@ -655,7 +659,7 @@ module Records =
   UNIQUE KEY `cfg_table_model_versions_UN` (`reference`),
   UNIQUE KEY `cfg_table_model_versions_UN_1` (`table_model_id`,`version`),
   CONSTRAINT `cfg_table_model_versions_FK` FOREIGN KEY (`table_model_id`) REFERENCES `cfg_table_models` (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci
+) ENGINE=InnoDB AUTO_INCREMENT=11 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci
         """
     
         static member SelectSql() = """
@@ -693,7 +697,7 @@ module Records =
   UNIQUE KEY `cfg_table_models_UN` (`reference`),
   UNIQUE KEY `cfg_table_models_UN_1` (`subscription_id`,`name`),
   CONSTRAINT `cfg_table_models_FK` FOREIGN KEY (`subscription_id`) REFERENCES `subscriptions` (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci
+) ENGINE=InnoDB AUTO_INCREMENT=9 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci
         """
     
         static member SelectSql() = """
@@ -876,7 +880,7 @@ module Records =
   `active` tinyint(1) NOT NULL,
   PRIMARY KEY (`id`),
   UNIQUE KEY `subscriptions_UN` (`reference`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci
+) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci
         """
     
         static member SelectSql() = """
@@ -915,7 +919,7 @@ module Records =
   UNIQUE KEY `users_UN` (`reference`),
   UNIQUE KEY `users_UN_1` (`subscription_id`,`username`),
   CONSTRAINT `users_FK` FOREIGN KEY (`subscription_id`) REFERENCES `subscriptions` (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci
+) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci
         """
     
         static member SelectSql() = """
@@ -931,7 +935,7 @@ module Records =
         static member TableName() = "users"
     
 
-/// Module generated on 04/06/2023 10:34:39 (utc) via Freql.Tools.
+/// Module generated on 28/06/2023 19:11:30 (utc) via Freql.Tools.
 [<RequireQualifiedAccess>]
 module Parameters =
     /// A record representing a new row in the table `cfg_action_types`.
@@ -1087,6 +1091,7 @@ module Parameters =
           [<JsonPropertyName("version")>] Version: int
           [<JsonPropertyName("rawQuery")>] RawQuery: string
           [<JsonPropertyName("hash")>] Hash: string
+          [<JsonPropertyName("isSerialized")>] IsSerialized: byte
           [<JsonPropertyName("createdOn")>] CreatedOn: DateTime }
     
         static member Blank() =
@@ -1095,6 +1100,7 @@ module Parameters =
               Version = 0
               RawQuery = String.Empty
               Hash = String.Empty
+              IsSerialized = 0uy
               CreatedOn = DateTime.UtcNow }
     
     
@@ -1254,7 +1260,7 @@ module Parameters =
               Active = false }
     
     
-/// Module generated on 04/06/2023 10:34:39 (utc) via Freql.Tools.
+/// Module generated on 28/06/2023 19:11:30 (utc) via Freql.Tools.
 [<RequireQualifiedAccess>]
 module Operations =
 
