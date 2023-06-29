@@ -1,5 +1,6 @@
 ﻿namespace FPype.Infrastructure.Configuration.Queries
 
+open FPype.Data
 open Microsoft.Extensions.Logging
 
 [<RequireQualifiedAccess>]
@@ -61,14 +62,23 @@ module StoreOperations =
             VerificationResult.verify verifiers (q, qv))
         |> Result.bind (fun (q, qv) ->
 
-            match
-                store.AddQueryVersion(
-                    IdType.Specific qv.Reference,
-                    q.Name,
-                    qv.RawQuery,
-                    ItemVersion.Specific qv.Version
-                )
-            with
+            let result =
+                // If the query is a serialized query then deserialize it and convert to sql.
+                // If not the query is already sql.
+                match qv.IsSerialized with
+                | true ->
+                    SerializableQueries.Query.Deserialize(qv.RawQuery)
+                    |> Result.map (fun q -> q.ToSql())
+                | false -> Ok qv.RawQuery
+                |> Result.bind (fun rq ->
+                    store.AddQueryVersion(
+                        IdType.Specific qv.Reference,
+                        q.Name,
+                        rq,
+                        ItemVersion.Specific qv.Version
+                    ))
+
+            match result with
             | Ok _ -> Ok()
             | Error e ->
                 ({ Message = e
@@ -96,13 +106,20 @@ module StoreOperations =
                     Fetch.queryVersionsByQueryId ctx q.Id
                     |> expandResult
                     |> List.map (fun qv ->
-
-                        store.AddQueryVersion(
-                            IdType.Specific qv.Reference,
-                            q.Name,
-                            qv.RawQuery,
-                            ItemVersion.Specific qv.Version
-                        ))))
+                        // If the query is a serialized query then deserialize it and convert to sql.
+                        // If not the query is already sql.
+                        match qv.IsSerialized with
+                        | true ->
+                            SerializableQueries.Query.Deserialize(qv.RawQuery)
+                            |> Result.map (fun q -> q.ToSql())
+                        | false -> Ok qv.RawQuery
+                        |> Result.bind (fun rq ->
+                            store.AddQueryVersion(
+                                IdType.Specific qv.Reference,
+                                q.Name,
+                                rq,
+                                ItemVersion.Specific qv.Version
+                            )))))
 
         match result with
         | Ok rs ->

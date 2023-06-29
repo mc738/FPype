@@ -1,5 +1,6 @@
 ﻿namespace FPype.Data
 
+open System.Text.Json
 open FPype.Data.Models
 
 /// <summary>
@@ -17,6 +18,17 @@ module SerializableQueries =
           Joins: Join list
           Where: Condition option }
 
+        static member Deserialize(str: string) =
+            try
+                let json = JsonDocument.Parse(str).RootElement
+                
+                Ok { Select = []; From = { Name = ""; Alias = None }; Joins = []; Where = None }
+                
+            with
+            | exn -> Error $"Unhandled exception while deserialized query: {exn.Message}"
+            
+            
+        
         member q.ToSql(?separator: string) =
             let sep = separator |> Option.defaultValue " "
 
