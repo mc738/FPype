@@ -33,6 +33,7 @@ module Models =
           Version: int
           RawQuery: string
           Hash: string
+          IsSerialized: bool
           CreatedOn: DateTime }
 
         static member FromEntity(queryEntity: Records.Query, entity: Records.QueryVersion) =
@@ -42,10 +43,9 @@ module Models =
               Version = entity.Version
               RawQuery = entity.RawQuery
               Hash = entity.Hash
+              IsSerialized = entity.IsSerialized 
               CreatedOn = entity.CreatedOn }
 
-        
-    
     type QueryVersionOverview =
         { QueryReference: string
           Reference: string

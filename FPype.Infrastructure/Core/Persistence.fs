@@ -5,7 +5,7 @@ open System.Text.Json.Serialization
 open Freql.Core.Common
 open Freql.MySql
 
-/// Module generated on 28/06/2023 19:11:30 (utc) via Freql.Tools.
+/// Module generated on 29/06/2023 18:25:09 (utc) via Freql.Tools.
 [<RequireQualifiedAccess>]
 module Records =
     /// A record representing a row in the table `cfg_action_types`.
@@ -444,7 +444,7 @@ module Records =
           [<JsonPropertyName("version")>] Version: int
           [<JsonPropertyName("rawQuery")>] RawQuery: string
           [<JsonPropertyName("hash")>] Hash: string
-          [<JsonPropertyName("isSerialized")>] IsSerialized: byte
+          [<JsonPropertyName("isSerialized")>] IsSerialized: bool
           [<JsonPropertyName("createdOn")>] CreatedOn: DateTime }
     
         static member Blank() =
@@ -454,7 +454,7 @@ module Records =
               Version = 0
               RawQuery = String.Empty
               Hash = String.Empty
-              IsSerialized = 0uy
+              IsSerialized = false
               CreatedOn = DateTime.UtcNow }
     
         static member CreateTableSql() = """
@@ -935,7 +935,7 @@ module Records =
         static member TableName() = "users"
     
 
-/// Module generated on 28/06/2023 19:11:30 (utc) via Freql.Tools.
+/// Module generated on 29/06/2023 18:25:09 (utc) via Freql.Tools.
 [<RequireQualifiedAccess>]
 module Parameters =
     /// A record representing a new row in the table `cfg_action_types`.
@@ -1091,7 +1091,7 @@ module Parameters =
           [<JsonPropertyName("version")>] Version: int
           [<JsonPropertyName("rawQuery")>] RawQuery: string
           [<JsonPropertyName("hash")>] Hash: string
-          [<JsonPropertyName("isSerialized")>] IsSerialized: byte
+          [<JsonPropertyName("isSerialized")>] IsSerialized: bool
           [<JsonPropertyName("createdOn")>] CreatedOn: DateTime }
     
         static member Blank() =
@@ -1100,7 +1100,7 @@ module Parameters =
               Version = 0
               RawQuery = String.Empty
               Hash = String.Empty
-              IsSerialized = 0uy
+              IsSerialized = false
               CreatedOn = DateTime.UtcNow }
     
     
@@ -1260,7 +1260,7 @@ module Parameters =
               Active = false }
     
     
-/// Module generated on 28/06/2023 19:11:30 (utc) via Freql.Tools.
+/// Module generated on 29/06/2023 18:25:09 (utc) via Freql.Tools.
 [<RequireQualifiedAccess>]
 module Operations =
 

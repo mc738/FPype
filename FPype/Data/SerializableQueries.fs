@@ -27,6 +27,10 @@ module SerializableQueries =
               | Some c -> $"WHERE {c.Serialize()}"
               | None -> () ]
             |> String.concat sep
+            
+        member q.Serialize() =
+            ""
+            
 
     and [<RequireQualifiedAccess>] Select =
         | Field of TableField

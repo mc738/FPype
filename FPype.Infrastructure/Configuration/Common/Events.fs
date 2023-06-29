@@ -232,6 +232,8 @@ module Events =
           Version: int
           [<JsonPropertyName("hash")>]
           Hash: string
+          [<JsonPropertyName("isSerialized")>]
+          IsSerialized: bool
           [<JsonPropertyName("createdOn")>]
           CreatedOnDateTime: DateTime }
 
