@@ -27,16 +27,14 @@ module SerializableQueries =
             with
             | exn -> Error $"Unhandled exception while deserialized query: {exn.Message}"
             
-            
-        
         member q.ToSql(?separator: string) =
             let sep = separator |> Option.defaultValue " "
 
-            [ q.Select |> List.map (fun s -> s.Serialize()) |> String.concat ", " |> fun s -> $"SELECT {s}"
-              $"FROM {q.From.Serialize()}" 
-              yield! q.Joins |> List.map (fun j -> j.Serialize())
+            [ q.Select |> List.map (fun s -> s.ToSql()) |> String.concat ", " |> fun s -> $"SELECT {s}"
+              $"FROM {q.From.ToSql()}" 
+              yield! q.Joins |> List.map (fun j -> j.ToSql())
               match q.Where with
-              | Some c -> $"WHERE {c.Serialize()}"
+              | Some c -> $"WHERE {c.ToSql()}"
               | None -> () ]
             |> String.concat sep
             
@@ -48,7 +46,7 @@ module SerializableQueries =
         | Field of TableField
         | Case
         
-        member s.Serialize() =
+        member s.ToSql() =
             match s with
             | Field tf -> $"`{tf.TableName}`.`{tf.Field}`"
             | Case ->
@@ -60,15 +58,15 @@ module SerializableQueries =
           Table: Table
           Condition: Condition }
 
-        member j.Serialize() =
-            $"{j.Type.Serialize()} {j.Table.Serialize()} ON {j.Condition.Serialize()}"
+        member j.ToSql() =
+            $"{j.Type.ToSql()} {j.Table.ToSql()} ON {j.Condition.ToSql()}"
 
     and JoinType =
         | Inner
         | Outer
         | Cross
 
-        member jt.Serialize() =
+        member jt.ToSql() =
             match jt with
             | Inner -> "JOIN"
             | Outer -> "OUTER JOIN"
@@ -79,7 +77,7 @@ module SerializableQueries =
         { Name: string
           Alias: string option }
 
-        member t.Serialize() : string =
+        member t.ToSql() : string =
             match t.Alias with
             | Some alias -> $"`{t.Name}` `{alias}`"
             | None -> $"`{t.Name}`"
@@ -100,20 +98,20 @@ module SerializableQueries =
         | Or of Condition * Condition
         | Not of Condition
 
-        member c.Serialize() =
+        member c.ToSql() =
             match c with
-            | Equals(v1, v2) -> $"{v1.Serialize()} = {v2.Serialize()}"
-            | NotEquals(v1, v2) -> $"{v1.Serialize()} <> {v2.Serialize()}"
-            | GreaterThan(v1, v2) -> $"{v1.Serialize()} > {v2.Serialize()}"
-            | GreaterThanOrEquals(v1, v2) -> $"{v1.Serialize()} >= {v2.Serialize()}"
-            | LessThan(v1, v2) -> $"{v1.Serialize()} < {v2.Serialize()}"
-            | LessThanOrEquals(v1, v2) -> $"{v1.Serialize()} <= {v2.Serialize()}"
-            | IsNull v -> $"{v.Serialize()} IS NULL"
-            | IsNotNull v -> $"{v.Serialize()} IS NOT NULL"
-            | Like(v1, v2) -> $"{v1.Serialize()} LIKE {v2.Serialize()}"
-            | And(c1, c2) -> $"({c1.Serialize()} AND {c2.Serialize()})"
-            | Or(c1, c2) -> $"({c1.Serialize()} OR {c2.Serialize()})"
-            | Not c -> $"NOT {c.Serialize()}"
+            | Equals(v1, v2) -> $"{v1.ToSql()} = {v2.ToSql()}"
+            | NotEquals(v1, v2) -> $"{v1.ToSql()} <> {v2.ToSql()}"
+            | GreaterThan(v1, v2) -> $"{v1.ToSql()} > {v2.ToSql()}"
+            | GreaterThanOrEquals(v1, v2) -> $"{v1.ToSql()} >= {v2.ToSql()}"
+            | LessThan(v1, v2) -> $"{v1.ToSql()} < {v2.ToSql()}"
+            | LessThanOrEquals(v1, v2) -> $"{v1.ToSql()} <= {v2.ToSql()}"
+            | IsNull v -> $"{v.ToSql()} IS NULL"
+            | IsNotNull v -> $"{v.ToSql()} IS NOT NULL"
+            | Like(v1, v2) -> $"{v1.ToSql()} LIKE {v2.ToSql()}"
+            | And(c1, c2) -> $"({c1.ToSql()} AND {c2.ToSql()})"
+            | Or(c1, c2) -> $"({c1.ToSql()} OR {c2.ToSql()})"
+            | Not c -> $"NOT {c.ToSql()}"
 
     and [<RequireQualifiedAccess>] Value =
         | Literal of string
@@ -121,7 +119,7 @@ module SerializableQueries =
         | Field of TableField
         | Parameter of Name: string
 
-        member v.Serialize() =
+        member v.ToSql() =
             match v with
             | Literal s -> $"'{s}'"
             | Number decimal -> string decimal
