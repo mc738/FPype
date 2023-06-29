@@ -35,7 +35,7 @@ type SerializableQueryTests() =
                      SerializableQueries.Value.Field { Field = "a_id"; TableName = "b" }
                  ) }
             : SerializableQueries.Join)
-                .Serialize()
+                .ToSql()
 
         Assert.AreEqual(expected, actual)
 
@@ -72,7 +72,7 @@ type SerializableQueryTests() =
             SerializableQueries.Condition.Equals(
                 SerializableQueries.Value.Field { Field = "id"; TableName = "a" },
                 SerializableQueries.Value.Field { Field = "a_id"; TableName = "b" }
-            ).Serialize()
+            ).ToSql()
 
         Assert.AreEqual(expected, actual)
         
@@ -85,7 +85,7 @@ type SerializableQueryTests() =
             SerializableQueries.Condition.GreaterThan(
                 SerializableQueries.Value.Field { Field = "id"; TableName = "a" },
                 SerializableQueries.Value.Field { Field = "a_id"; TableName = "b" }
-            ).Serialize()
+            ).ToSql()
 
         Assert.AreEqual(expected, actual)
         
@@ -98,6 +98,6 @@ type SerializableQueryTests() =
             SerializableQueries.Condition.GreaterThanOrEquals(
                 SerializableQueries.Value.Field { Field = "id"; TableName = "a" },
                 SerializableQueries.Value.Field { Field = "a_id"; TableName = "b" }
-            ).Serialize()
+            ).ToSql()
 
         Assert.AreEqual(expected, actual)
