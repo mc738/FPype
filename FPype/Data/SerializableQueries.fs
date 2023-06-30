@@ -78,7 +78,7 @@ module SerializableQueries =
         { Name: string
           Alias: string option }
 
-        static member Deserialize(json: JsonElement) =
+        static member FromJson(json: JsonElement) =
             match Json.tryGetStringProperty "name" json with
             | Some name -> { Name = name; Alias = Json.tryGetStringProperty "alias" json } |> Ok
             | None -> Error "Missing name propery"
@@ -91,8 +91,12 @@ module SerializableQueries =
     and TableField =
         { TableName: string; Field: string }
         
-        static member Deserialize() =
-            ()
+        static member FromJson(json: JsonElement) =
+            match Json.tryGetStringProperty "tableName" json, Json.tryGetStringProperty "field" json with
+            | Some tableName, Some field -> Ok { TableName = tableName; Field = field }
+            | None, _ -> Error "Missing tableName property"
+            | _, None -> Error "Missing field property"
+            
 
     and [<RequireQualifiedAccess>] Condition =
         | Equals of Value * Value
