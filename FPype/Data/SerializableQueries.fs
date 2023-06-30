@@ -4,6 +4,7 @@ open System.Text.Json
 open DocumentFormat.OpenXml.Spreadsheet
 open FsToolbox.Core
 open FPype.Data.Models
+open K4os.Compression.LZ4.Internal
 
 /// <summary>
 /// Serializable queries allow for clients to define queries via dsl that
@@ -23,31 +24,37 @@ module SerializableQueries =
         static member Deserialize(str: string) =
             try
                 let json = JsonDocument.Parse(str).RootElement
-                
-                Ok { Select = []; From = { Name = ""; Alias = None }; Joins = []; Where = None }
-                
-            with
-            | exn -> Error $"Unhandled exception while deserialized query: {exn.Message}"
-            
+
+                Ok
+                    { Select = []
+                      From = { Name = ""; Alias = None }
+                      Joins = []
+                      Where = None }
+
+            with exn ->
+                Error $"Unhandled exception while deserialized query: {exn.Message}"
+
         member q.ToSql(?separator: string) =
             let sep = separator |> Option.defaultValue " "
 
-            [ q.Select |> List.map (fun s -> s.ToSql()) |> String.concat ", " |> fun s -> $"SELECT {s}"
-              $"FROM {q.From.ToSql()}" 
+            [ q.Select
+              |> List.map (fun s -> s.ToSql())
+              |> String.concat ", "
+              |> fun s -> $"SELECT {s}"
+              $"FROM {q.From.ToSql()}"
               yield! q.Joins |> List.map (fun j -> j.ToSql())
               match q.Where with
               | Some c -> $"WHERE {c.ToSql()}"
               | None -> () ]
             |> String.concat sep
-            
-        member q.Serialize() =
-            ""
-            
+
+        member q.Serialize() = ""
+
 
     and [<RequireQualifiedAccess>] Select =
         | Field of TableField
         | Case
-        
+
         member s.ToSql() =
             match s with
             | Field tf -> $"`{tf.TableName}`.`{tf.Field}`"
@@ -81,23 +88,32 @@ module SerializableQueries =
 
         static member FromJson(json: JsonElement) =
             match Json.tryGetStringProperty "name" json with
-            | Some name -> { Name = name; Alias = Json.tryGetStringProperty "alias" json } |> Ok
+            | Some name ->
+                { Name = name
+                  Alias = Json.tryGetStringProperty "alias" json }
+                |> Ok
             | None -> Error "Missing name property"
-        
+
         member t.ToSql() : string =
             match t.Alias with
             | Some alias -> $"`{t.Name}` `{alias}`"
             | None -> $"`{t.Name}`"
 
     and TableField =
-        { TableName: string; Field: string }
-        
+        { TableName: string
+          Field: string }
+
         static member FromJson(json: JsonElement) =
             match Json.tryGetStringProperty "tableName" json, Json.tryGetStringProperty "field" json with
             | Some tableName, Some field -> Ok { TableName = tableName; Field = field }
             | None, _ -> Error "Missing tableName property"
             | _, None -> Error "Missing field property"
-            
+
+        member tf.WriteToJson(writer: Utf8JsonWriter) =
+            writer.WriteStartObject()
+            writer.WriteString("tableName", tf.TableName)
+            writer.WriteString("field", tf.Field)
+            writer.WriteEndObject()
 
     and [<RequireQualifiedAccess>] Condition =
         | Equals of Value * Value
@@ -155,17 +171,17 @@ module SerializableQueries =
                 | None -> Error "Missing name property"
             | Some t -> Error $"Unknown value type: `{t}`"
             | None -> Error "Missing type property"
-        
+
         member v.ToSql() =
             match v with
             | Literal s -> $"'{s}'"
             | Number decimal -> string decimal
             | Field field -> $"`{field.TableName}`.`{field.Field}`"
             | Parameter name -> $"@{name}"
-            
+
         member v.WriteToJson(writer: Utf8JsonWriter) =
             writer.WriteStartObject()
-            
+
             match v with
             | Literal value ->
                 writer.WriteString("type", "literal")
@@ -175,14 +191,15 @@ module SerializableQueries =
                 writer.WriteNumber("value", value)
             | Field field ->
                 writer.WriteString("type", "field")
-                Json.writePropertyObject (fun w -> ()) "field" writer
+                writer.WritePropertyName("field")
+                field.WriteToJson(writer)
             | Parameter name ->
                 writer.WriteString("type", "parameter")
                 writer.WriteString("name", name)
-                
-            
-            
-            
+
+
+
+
             writer.WriteEndObject()
 
 module Dsl =
@@ -198,10 +215,10 @@ module Dsl =
            Joins = joins
            Where = where }
         : SerializableQueries.Query)
-    
+
     let selectFields (fields: SerializableQueries.TableField list) =
         fields |> List.map SerializableQueries.Select.Field
-    
+
     let field tableName fieldName =
         ({ TableName = tableName
            Field = fieldName }
