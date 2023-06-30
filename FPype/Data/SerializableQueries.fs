@@ -129,6 +129,131 @@ module SerializableQueries =
         | Or of Condition * Condition
         | Not of Condition
 
+        static member FromJson(json: JsonElement) =
+            match Json.tryGetStringProperty "type" json with
+            | Some "equals" ->
+                match
+                    Json.tryGetProperty "value1" json
+                    |> Option.map Value.FromJson
+                    |> Option.defaultValue (Error "Missing value1 property"),
+                    Json.tryGetProperty "value2" json
+                    |> Option.map Value.FromJson
+                    |> Option.defaultValue (Error "Missing value2 property")
+                with
+                | Ok v1, Ok v2 -> Equals(v1, v2) |> Ok
+                | Error e, _ -> Error $"Error deserializing value 1. {e}"
+                | _, Error e -> Error $"Error deserializing value 2. {e}"
+            | Some "greater_than" ->
+                match
+                    Json.tryGetProperty "value1" json
+                    |> Option.map Value.FromJson
+                    |> Option.defaultValue (Error "Missing value1 property"),
+                    Json.tryGetProperty "value2" json
+                    |> Option.map Value.FromJson
+                    |> Option.defaultValue (Error "Missing value2 property")
+                with
+                | Ok v1, Ok v2 -> GreaterThan(v1, v2) |> Ok
+                | Error e, _ -> Error $"Error deserializing value 1. {e}"
+                | _, Error e -> Error $"Error deserializing value 2. {e}"
+            | Some "greater_than_or_equals" ->
+                match
+                    Json.tryGetProperty "value1" json
+                    |> Option.map Value.FromJson
+                    |> Option.defaultValue (Error "Missing value1 property"),
+                    Json.tryGetProperty "value2" json
+                    |> Option.map Value.FromJson
+                    |> Option.defaultValue (Error "Missing value2 property")
+                with
+                | Ok v1, Ok v2 -> GreaterThanOrEquals(v1, v2) |> Ok
+                | Error e, _ -> Error $"Error deserializing value 1. {e}"
+                | _, Error e -> Error $"Error deserializing value 2. {e}"
+            | Some "less_than" ->
+                match
+                    Json.tryGetProperty "value1" json
+                    |> Option.map Value.FromJson
+                    |> Option.defaultValue (Error "Missing value1 property"),
+                    Json.tryGetProperty "value2" json
+                    |> Option.map Value.FromJson
+                    |> Option.defaultValue (Error "Missing value2 property")
+                with
+                | Ok v1, Ok v2 -> LessThan(v1, v2) |> Ok
+                | Error e, _ -> Error $"Error deserializing value 1. {e}"
+                | _, Error e -> Error $"Error deserializing value 2. {e}"
+            | Some "less_than_or_equals" ->
+                match
+                    Json.tryGetProperty "value1" json
+                    |> Option.map Value.FromJson
+                    |> Option.defaultValue (Error "Missing value1 property"),
+                    Json.tryGetProperty "value2" json
+                    |> Option.map Value.FromJson
+                    |> Option.defaultValue (Error "Missing value2 property")
+                with
+                | Ok v1, Ok v2 -> LessThanOrEquals(v1, v2) |> Ok
+                | Error e, _ -> Error $"Error deserializing value 1. {e}"
+                | _, Error e -> Error $"Error deserializing value 2. {e}"
+            | Some "is_null" ->
+                match    
+                    Json.tryGetProperty "value" json
+                    |> Option.map Value.FromJson
+                    |> Option.defaultValue (Error "Missing value property")
+                with
+                | Ok value -> IsNull value |> Ok
+                | Error e -> Error $"Error deserializing value. {e}"
+            | Some "is_not_null" ->
+                match    
+                    Json.tryGetProperty "value" json
+                    |> Option.map Value.FromJson
+                    |> Option.defaultValue (Error "Missing value property")
+                with
+                | Ok value -> IsNotNull value |> Ok
+                | Error e -> Error $"Error deserializing value. {e}"
+            | Some "like" ->
+                match
+                    Json.tryGetProperty "value1" json
+                    |> Option.map Value.FromJson
+                    |> Option.defaultValue (Error "Missing value1 property"),
+                    Json.tryGetProperty "value2" json
+                    |> Option.map Value.FromJson
+                    |> Option.defaultValue (Error "Missing value2 property")
+                with
+                | Ok v1, Ok v2 -> Like(v1, v2) |> Ok
+                | Error e, _ -> Error $"Error deserializing value 1. {e}"
+                | _, Error e -> Error $"Error deserializing value 2. {e}"
+            | Some "and" ->
+                match
+                    Json.tryGetProperty "condition1" json
+                    |> Option.map Condition.FromJson
+                    |> Option.defaultValue (Error "Missing condition1 property"),
+                    Json.tryGetProperty "condition2" json
+                    |> Option.map Condition.FromJson
+                    |> Option.defaultValue (Error "Missing condition2 property")
+                with
+                | Ok c1, Ok c2 -> And(c1, c2) |> Ok
+                | Error e, _ -> Error $"Error deserializing condition 1. {e}"
+                | _, Error e -> Error $"Error deserializing condition 2. {e}"
+            | Some "or" ->
+                match
+                    Json.tryGetProperty "condition1" json
+                    |> Option.map Condition.FromJson
+                    |> Option.defaultValue (Error "Missing condition1 property"),
+                    Json.tryGetProperty "condition2" json
+                    |> Option.map Condition.FromJson
+                    |> Option.defaultValue (Error "Missing condition2 property")
+                with
+                | Ok c1, Ok c2 -> Or(c1, c2) |> Ok
+                | Error e, _ -> Error $"Error deserializing condition 1. {e}"
+                | _, Error e -> Error $"Error deserializing condition 2. {e}"
+            | Some "no" ->
+                match
+                    Json.tryGetProperty "condition" json
+                    |> Option.map Condition.FromJson
+                    |> Option.defaultValue (Error "Missing condition property")
+                with
+                | Ok c -> Not c |> Ok
+                | Error e -> Error $"Error deserializing condition. {e}"
+            | Some t -> Error $"Unknown condition type: `{t}`"
+            | None -> Error "Missing type property"
+
         member c.ToSql() =
             match c with
             | Equals(v1, v2) -> $"{v1.ToSql()} = {v2.ToSql()}"
@@ -196,9 +321,6 @@ module SerializableQueries =
             | Parameter name ->
                 writer.WriteString("type", "parameter")
                 writer.WriteString("name", name)
-
-
-
 
             writer.WriteEndObject()
 
