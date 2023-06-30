@@ -81,7 +81,7 @@ module SerializableQueries =
         static member FromJson(json: JsonElement) =
             match Json.tryGetStringProperty "name" json with
             | Some name -> { Name = name; Alias = Json.tryGetStringProperty "alias" json } |> Ok
-            | None -> Error "Missing name propery"
+            | None -> Error "Missing name property"
         
         member t.ToSql() : string =
             match t.Alias with
@@ -133,7 +133,7 @@ module SerializableQueries =
         | Field of TableField
         | Parameter of Name: string
 
-        static member Deserialize(json: JsonElement) =
+        static member FromJson(json: JsonElement) =
             match Json.tryGetStringProperty "type" json with
             | Some "literal" ->
                 match Json.tryGetStringProperty "value" json with
@@ -144,14 +144,14 @@ module SerializableQueries =
                 | Some value -> Number value |> Ok
                 | None -> Error "Missing value property"
             | Some "field" ->
-                //match Json.tryGetProperty "field" json with
-                //| ()
-                
-                
-                ()
+                Json.tryGetProperty "field" json
+                |> Option.map TableField.FromJson
+                |> Option.defaultValue (Error "Missing field property")
+                |> Result.map Field
             | Some "parameter" ->
-                
-                ()
+                match Json.tryGetStringProperty "name" json with
+                | Some name -> Parameter name |> Ok
+                | None -> Error "Missing name property"
             | Some t -> Error $"Unknown value type: `{t}`"
             | None -> Error "Missing type property"
         
