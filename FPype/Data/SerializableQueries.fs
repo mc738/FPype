@@ -143,6 +143,18 @@ module SerializableQueries =
                 | Ok v1, Ok v2 -> Equals(v1, v2) |> Ok
                 | Error e, _ -> Error $"Error deserializing value 1. {e}"
                 | _, Error e -> Error $"Error deserializing value 2. {e}"
+            | Some "not_equals" ->
+                match
+                    Json.tryGetProperty "value1" json
+                    |> Option.map Value.FromJson
+                    |> Option.defaultValue (Error "Missing value1 property"),
+                    Json.tryGetProperty "value2" json
+                    |> Option.map Value.FromJson
+                    |> Option.defaultValue (Error "Missing value2 property")
+                with
+                | Ok v1, Ok v2 -> NotEquals(v1, v2) |> Ok
+                | Error e, _ -> Error $"Error deserializing value 1. {e}"
+                | _, Error e -> Error $"Error deserializing value 2. {e}"
             | Some "greater_than" ->
                 match
                     Json.tryGetProperty "value1" json
@@ -268,6 +280,79 @@ module SerializableQueries =
             | And(c1, c2) -> $"({c1.ToSql()} AND {c2.ToSql()})"
             | Or(c1, c2) -> $"({c1.ToSql()} OR {c2.ToSql()})"
             | Not c -> $"NOT {c.ToSql()}"
+            
+        member c.WriteToJson(writer: Utf8JsonWriter) =
+            writer.WriteStartObject()
+            
+            match c with
+            | Equals (value1, value2) ->
+                writer.WriteString("type", "equals")
+                writer.WritePropertyName("value1")
+                value1.WriteToJson(writer)
+                writer.WritePropertyName("value2")
+                value2.WriteToJson(writer)
+            | NotEquals(value1, value2) ->
+                writer.WriteString("type", "not_equals")
+                writer.WritePropertyName("value1")
+                value1.WriteToJson(writer)
+                writer.WritePropertyName("value2")
+                value2.WriteToJson(writer)
+            | GreaterThan(value1, value2) ->
+                writer.WriteString("type", "greater_than")
+                writer.WritePropertyName("value1")
+                value1.WriteToJson(writer)
+                writer.WritePropertyName("value2")
+                value2.WriteToJson(writer)
+            | GreaterThanOrEquals(value1, value2) ->
+                writer.WriteString("type", "greater_than_or_equals")
+                writer.WritePropertyName("value1")
+                value1.WriteToJson(writer)
+                writer.WritePropertyName("value2")
+                value2.WriteToJson(writer)
+            | LessThan(value1, value2) ->
+                writer.WriteString("type", "less_than")
+                writer.WritePropertyName("value1")
+                value1.WriteToJson(writer)
+                writer.WritePropertyName("value2")
+                value2.WriteToJson(writer)
+            | LessThanOrEquals(value1, value2) ->
+                writer.WriteString("type", "less_than_or_equals")
+                writer.WritePropertyName("value1")
+                value1.WriteToJson(writer)
+                writer.WritePropertyName("value2")
+                value2.WriteToJson(writer)
+            | IsNull value ->
+                writer.WriteString("type", "is_null")
+                writer.WritePropertyName("value")
+                value.WriteToJson(writer)
+            | IsNotNull value ->
+                writer.WriteString("type", "is_not_null")
+                writer.WritePropertyName("value")
+                value.WriteToJson(writer)
+            | Like(value1, value2) ->
+                writer.WriteString("type", "like")
+                writer.WritePropertyName("value1")
+                value1.WriteToJson(writer)
+                writer.WritePropertyName("value2")
+                value2.WriteToJson(writer)
+            | And(condition1, condition2) ->
+                writer.WriteString("type", "and")
+                writer.WritePropertyName("condition1")
+                condition1.WriteToJson(writer)
+                writer.WritePropertyName("condition2")
+                condition2.WriteToJson(writer)
+            | Or(condition1, condition2) ->
+                writer.WriteString("type", "or")
+                writer.WritePropertyName("condition1")
+                condition1.WriteToJson(writer)
+                writer.WritePropertyName("condition2")
+                condition2.WriteToJson(writer)
+            | Not condition ->
+                writer.WriteString("type", "not")
+                writer.WritePropertyName("condition")
+                condition.WriteToJson(writer)
+            
+            writer.WriteEndObject()
 
     and [<RequireQualifiedAccess>] Value =
         | Literal of string
