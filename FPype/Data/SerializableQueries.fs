@@ -1,6 +1,7 @@
 ﻿namespace FPype.Data
 
 open System.Text.Json
+open DocumentFormat.OpenXml.Spreadsheet
 open FsToolbox.Core
 open FPype.Data.Models
 
@@ -162,7 +163,27 @@ module SerializableQueries =
             | Field field -> $"`{field.TableName}`.`{field.Field}`"
             | Parameter name -> $"@{name}"
             
-        
+        member v.WriteToJson(writer: Utf8JsonWriter) =
+            writer.WriteStartObject()
+            
+            match v with
+            | Literal value ->
+                writer.WriteString("type", "literal")
+                writer.WriteString("value", value)
+            | Number value ->
+                writer.WriteString("type", "value")
+                writer.WriteNumber("value", value)
+            | Field field ->
+                writer.WriteString("type", "field")
+                Json.writePropertyObject (fun w -> ()) "field" writer
+            | Parameter name ->
+                writer.WriteString("type", "parameter")
+                writer.WriteString("name", name)
+                
+            
+            
+            
+            writer.WriteEndObject()
 
 module Dsl =
 
