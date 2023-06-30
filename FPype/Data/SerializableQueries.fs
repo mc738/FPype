@@ -1,6 +1,7 @@
 ﻿namespace FPype.Data
 
 open System.Text.Json
+open FsToolbox.Core
 open FPype.Data.Models
 
 /// <summary>
@@ -77,12 +78,21 @@ module SerializableQueries =
         { Name: string
           Alias: string option }
 
+        static member Deserialize(json: JsonElement) =
+            match Json.tryGetStringProperty "name" json with
+            | Some name -> { Name = name; Alias = Json.tryGetStringProperty "alias" json } |> Ok
+            | None -> Error "Missing name propery"
+        
         member t.ToSql() : string =
             match t.Alias with
             | Some alias -> $"`{t.Name}` `{alias}`"
             | None -> $"`{t.Name}`"
 
-    and TableField = { TableName: string; Field: string }
+    and TableField =
+        { TableName: string; Field: string }
+        
+        static member Deserialize() =
+            ()
 
     and [<RequireQualifiedAccess>] Condition =
         | Equals of Value * Value
@@ -119,12 +129,36 @@ module SerializableQueries =
         | Field of TableField
         | Parameter of Name: string
 
+        static member Deserialize(json: JsonElement) =
+            match Json.tryGetStringProperty "type" json with
+            | Some "literal" ->
+                match Json.tryGetStringProperty "value" json with
+                | Some value -> Literal value |> Ok
+                | None -> Error "Missing value property"
+            | Some "number" ->
+                match Json.tryGetDecimalProperty "value" json with
+                | Some value -> Number value |> Ok
+                | None -> Error "Missing value property"
+            | Some "field" ->
+                //match Json.tryGetProperty "field" json with
+                //| ()
+                
+                
+                ()
+            | Some "parameter" ->
+                
+                ()
+            | Some t -> Error $"Unknown value type: `{t}`"
+            | None -> Error "Missing type property"
+        
         member v.ToSql() =
             match v with
             | Literal s -> $"'{s}'"
             | Number decimal -> string decimal
             | Field field -> $"`{field.TableName}`.`{field.Field}`"
             | Parameter name -> $"@{name}"
+            
+        
 
 module Dsl =
 
