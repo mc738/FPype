@@ -23,16 +23,41 @@ module SerializableQueries =
 
         static member Deserialize(str: string) =
             try
-                let json = JsonDocument.Parse(str).RootElement
-
-                Ok
-                    { Select = []
-                      From = { Name = ""; Alias = None }
-                      Joins = []
-                      Where = None }
-
+                JsonDocument.Parse(str).RootElement |> Query.FromJson
             with exn ->
                 Error $"Unhandled exception while deserialized query: {exn.Message}"
+
+        static member FromJson(json: JsonElement) =
+            match
+                Json.tryGetArrayProperty "select" json,
+                Json.tryGetProperty "from" json
+                |> Option.map Table.FromJson
+                |> Option.defaultValue (Error "Missing from property")
+            with
+            | Some select, Ok from ->
+                match select |> List.map Select.FromJson |> FPype.Core.Common.flattenResultList with
+                | Ok selects ->
+                    { Select = selects
+                      From = from
+                      Joins =
+                        // NOTE check this behaviour is correct. Failed joins will just be ignored.
+                        match
+                            Json.tryGetArrayProperty "joins" json
+                            |> Option.map (List.map Join.FromJson >> FPype.Core.Common.chooseResults)
+                        with
+                        | Some joins -> joins
+                        | None -> []
+                      Where =
+                        match Json.tryGetProperty "where" json |> Option.map Condition.FromJson with
+                        | Some(Ok condition) -> Some condition
+                        | Some(Error e) -> None
+                        | None -> None }
+                    |> Ok
+                | Error e -> Error $"Error deserializing from. {e}"
+            | None, _ -> Error "Missing select property"
+            | _, Error e -> Error $"Error deserializing from. {e}"
+
+
 
         member q.ToSql(?separator: string) =
             let sep = separator |> Option.defaultValue " "
@@ -174,8 +199,8 @@ module SerializableQueries =
             writer
             |> Json.writeObject (fun w ->
                 w.WriteString("name", t.Name)
-                t.Alias |> Option.iter (fun a -> w.WriteString("alias", a))#)
-            
+                t.Alias |> Option.iter (fun a -> w.WriteString("alias", a)))
+
     and TableField =
         { TableName: string
           Field: string }
@@ -428,6 +453,7 @@ module SerializableQueries =
                     w.WriteString("type", "not")
                     w.WritePropertyName("condition")
                     condition.WriteToJson(w))
+
     and [<RequireQualifiedAccess>] Value =
         | Literal of string
         | Number of decimal
@@ -465,7 +491,7 @@ module SerializableQueries =
 
         member v.WriteToJson(writer: Utf8JsonWriter) =
             writer.WriteStartObject()
-            
+
             writer
             |> Json.writeObject (fun w ->
                 match v with
