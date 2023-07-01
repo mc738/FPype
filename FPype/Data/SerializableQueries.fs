@@ -97,6 +97,22 @@ module SerializableQueries =
 
         member j.ToSql() =
             $"{j.Type.ToSql()} {j.Table.ToSql()} ON {j.Condition.ToSql()}"
+            
+        member j.WriteToJson(writer: Utf8JsonWriter) =
+            writer.WriteStartObject()
+            
+            match j.Type with
+            | Inner -> writer.WriteString("type", "inner")
+            | Outer -> writer.WriteString("type", "outer")
+            | Cross -> writer.WriteString("type", "cross")
+            
+            writer.WritePropertyName("table")
+            j.Table.WriteToJson(writer)
+            
+            writer.WritePropertyName("condition")
+            j.Condition.WriteToJson(writer)
+            
+            writer.WriteEndObject()
 
     and JoinType =
         | Inner
