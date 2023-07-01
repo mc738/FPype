@@ -1,6 +1,9 @@
 ﻿namespace FPype.Data
 
+open System.IO
+open System.Text
 open System.Text.Json
+open System.Text.Unicode
 open DocumentFormat.OpenXml.Spreadsheet
 open FsToolbox.Core
 open FPype.Data.Models
@@ -70,8 +73,28 @@ module SerializableQueries =
               | Some c -> $"WHERE {c.ToSql()}"
               | None -> () ]
             |> String.concat sep
+        
+        member q.Serialize(?options: JsonWriterOptions, ?indented: bool) =
+            use ms = new MemoryStream()
 
-        member q.Serialize() = ""
+            let opts =
+                options
+                |> Option.defaultWith (fun _ ->
+                    let mutable opts = JsonWriterOptions()
+                    opts.Indented <- indented |> Option.defaultValue true
+                    opts)
+
+            use writer = new Utf8JsonWriter(ms, opts)
+
+            writer.WriteStartArray()
+
+            let objs = q.WriteToJson writer
+
+            writer.WriteEndArray()
+
+            writer.Flush()
+            
+            ms.ToArray() |> Encoding.UTF8.GetString
 
         member q.WriteToJson(writer: Utf8JsonWriter) =
             writer
