@@ -67,6 +67,34 @@ module SerializableQueries =
           Table: Table
           Condition: Condition }
 
+        static member FromJson(json: JsonElement) =
+            match
+                Json.tryGetStringProperty "type" json,
+                Json.tryGetProperty "table" json
+                |> Option.map Table.FromJson
+                |> Option.defaultValue (Error "Missing table property"),
+                Json.tryGetProperty "condition" json
+                |> Option.map Condition.FromJson
+                |> Option.defaultValue (Error "Missing condition property")
+            with
+            | Some joinType, Ok table, Ok condition ->
+                match joinType with
+                | "inner"
+                | "join"
+                | "inner_join" -> Ok JoinType.Inner
+                | "outer"
+                | "outer_join" -> Ok JoinType.Outer
+                | "cross"
+                | "cross_join" -> Ok JoinType.Cross
+                | jt -> Error $"Unknown join type: `{jt}`"
+                |> Result.map (fun jt ->
+                    { Type = jt
+                      Table = table
+                      Condition = condition })
+            | None, _, _ -> Error "Missing type property"
+            | _, Error e, _ -> Error $"Error deserializing table. {e}"
+            | _, _, Error e -> Error $"Error deserializing condition. {e}"
+
         member j.ToSql() =
             $"{j.Type.ToSql()} {j.Table.ToSql()} ON {j.Condition.ToSql()}"
 
@@ -98,16 +126,16 @@ module SerializableQueries =
             match t.Alias with
             | Some alias -> $"`{t.Name}` `{alias}`"
             | None -> $"`{t.Name}`"
-            
+
         member t.WriteToJson(writer: Utf8JsonWriter) =
             writer.WriteStartObject()
-            
+
             writer.WriteString("name", t.Name)
-            
+
             t.Alias |> Option.iter (fun a -> writer.WriteString("alias", a))
-            
+
             writer.WriteEndObject()
-            
+
 
     and TableField =
         { TableName: string
