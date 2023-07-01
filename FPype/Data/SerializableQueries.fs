@@ -57,8 +57,6 @@ module SerializableQueries =
             | None, _ -> Error "Missing select property"
             | _, Error e -> Error $"Error deserializing from. {e}"
 
-
-
         member q.ToSql(?separator: string) =
             let sep = separator |> Option.defaultValue " "
 
@@ -74,6 +72,24 @@ module SerializableQueries =
             |> String.concat sep
 
         member q.Serialize() = ""
+
+        member q.WriteToJson(writer: Utf8JsonWriter) =
+            writer
+            |> Json.writeObject (fun w ->
+                w.WritePropertyName "select"
+                Json.writeArray (fun w -> q.Select |> List.iter (fun s -> s.WriteToJson w)) "select" w
+                w.WritePropertyName "from"
+                q.From.WriteToJson w
+
+                match q.Joins.IsEmpty with
+                | true -> ()
+                | false -> Json.writeArray (fun w -> q.Joins |> List.iter (fun j -> j.WriteToJson w)) "joins" w
+
+                match q.Where with
+                | Some c ->
+                    w.WritePropertyName("where")
+                    c.WriteToJson w
+                | None -> ())
 
 
     and [<RequireQualifiedAccess>] Select =
