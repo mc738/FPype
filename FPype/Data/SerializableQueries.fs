@@ -70,13 +70,24 @@ module SerializableQueries =
                 | t -> Error $"Unknown select type: `{t}`"
             | None -> Error $"Missing type property"
 
-
         member s.ToSql() =
             match s with
             | Field tf -> $"`{tf.TableName}`.`{tf.Field}`"
             | Case ->
                 // TODO implement `Case`.
                 failwith "Need to implement"
+
+        member s.WriteToJson(writer: Utf8JsonWriter) =
+            writer
+            |> Json.writeObject (fun w ->
+                match s with
+                | Field field ->
+                    w.WriteString("type", "select")
+                    w.WritePropertyName("field")
+                    field.WriteToJson(w)
+                | Case ->
+                    // TODO implement `Case`.
+                    failwith "Need to implement")
 
 
 
