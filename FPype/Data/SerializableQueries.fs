@@ -128,20 +128,18 @@ module SerializableQueries =
             $"{j.Type.ToSql()} {j.Table.ToSql()} ON {j.Condition.ToSql()}"
 
         member j.WriteToJson(writer: Utf8JsonWriter) =
-            writer.WriteStartObject()
+            writer
+            |> Json.writeObject (fun w ->
+                match j.Type with
+                | Inner -> w.WriteString("type", "inner")
+                | Outer -> w.WriteString("type", "outer")
+                | Cross -> w.WriteString("type", "cross")
 
-            match j.Type with
-            | Inner -> writer.WriteString("type", "inner")
-            | Outer -> writer.WriteString("type", "outer")
-            | Cross -> writer.WriteString("type", "cross")
+                w.WritePropertyName("table")
+                j.Table.WriteToJson(w)
 
-            writer.WritePropertyName("table")
-            j.Table.WriteToJson(writer)
-
-            writer.WritePropertyName("condition")
-            j.Condition.WriteToJson(writer)
-
-            writer.WriteEndObject()
+                w.WritePropertyName("condition")
+                j.Condition.WriteToJson(w))
 
     and JoinType =
         | Inner
@@ -173,15 +171,11 @@ module SerializableQueries =
             | None -> $"`{t.Name}`"
 
         member t.WriteToJson(writer: Utf8JsonWriter) =
-            writer.WriteStartObject()
-
-            writer.WriteString("name", t.Name)
-
-            t.Alias |> Option.iter (fun a -> writer.WriteString("alias", a))
-
-            writer.WriteEndObject()
-
-
+            writer
+            |> Json.writeObject (fun w ->
+                w.WriteString("name", t.Name)
+                t.Alias |> Option.iter (fun a -> w.WriteString("alias", a))#)
+            
     and TableField =
         { TableName: string
           Field: string }
@@ -193,10 +187,10 @@ module SerializableQueries =
             | _, None -> Error "Missing field property"
 
         member tf.WriteToJson(writer: Utf8JsonWriter) =
-            writer.WriteStartObject()
-            writer.WriteString("tableName", tf.TableName)
-            writer.WriteString("field", tf.Field)
-            writer.WriteEndObject()
+            writer
+            |> Json.writeObject (fun w ->
+                w.WriteString("tableName", tf.TableName)
+                w.WriteString("field", tf.Field))
 
     and [<RequireQualifiedAccess>] Condition =
         | Equals of Value * Value
@@ -365,78 +359,75 @@ module SerializableQueries =
             | Not c -> $"NOT {c.ToSql()}"
 
         member c.WriteToJson(writer: Utf8JsonWriter) =
-            writer.WriteStartObject()
-
-            match c with
-            | Equals(value1, value2) ->
-                writer.WriteString("type", "equals")
-                writer.WritePropertyName("value1")
-                value1.WriteToJson(writer)
-                writer.WritePropertyName("value2")
-                value2.WriteToJson(writer)
-            | NotEquals(value1, value2) ->
-                writer.WriteString("type", "not_equals")
-                writer.WritePropertyName("value1")
-                value1.WriteToJson(writer)
-                writer.WritePropertyName("value2")
-                value2.WriteToJson(writer)
-            | GreaterThan(value1, value2) ->
-                writer.WriteString("type", "greater_than")
-                writer.WritePropertyName("value1")
-                value1.WriteToJson(writer)
-                writer.WritePropertyName("value2")
-                value2.WriteToJson(writer)
-            | GreaterThanOrEquals(value1, value2) ->
-                writer.WriteString("type", "greater_than_or_equals")
-                writer.WritePropertyName("value1")
-                value1.WriteToJson(writer)
-                writer.WritePropertyName("value2")
-                value2.WriteToJson(writer)
-            | LessThan(value1, value2) ->
-                writer.WriteString("type", "less_than")
-                writer.WritePropertyName("value1")
-                value1.WriteToJson(writer)
-                writer.WritePropertyName("value2")
-                value2.WriteToJson(writer)
-            | LessThanOrEquals(value1, value2) ->
-                writer.WriteString("type", "less_than_or_equals")
-                writer.WritePropertyName("value1")
-                value1.WriteToJson(writer)
-                writer.WritePropertyName("value2")
-                value2.WriteToJson(writer)
-            | IsNull value ->
-                writer.WriteString("type", "is_null")
-                writer.WritePropertyName("value")
-                value.WriteToJson(writer)
-            | IsNotNull value ->
-                writer.WriteString("type", "is_not_null")
-                writer.WritePropertyName("value")
-                value.WriteToJson(writer)
-            | Like(value1, value2) ->
-                writer.WriteString("type", "like")
-                writer.WritePropertyName("value1")
-                value1.WriteToJson(writer)
-                writer.WritePropertyName("value2")
-                value2.WriteToJson(writer)
-            | And(condition1, condition2) ->
-                writer.WriteString("type", "and")
-                writer.WritePropertyName("condition1")
-                condition1.WriteToJson(writer)
-                writer.WritePropertyName("condition2")
-                condition2.WriteToJson(writer)
-            | Or(condition1, condition2) ->
-                writer.WriteString("type", "or")
-                writer.WritePropertyName("condition1")
-                condition1.WriteToJson(writer)
-                writer.WritePropertyName("condition2")
-                condition2.WriteToJson(writer)
-            | Not condition ->
-                writer.WriteString("type", "not")
-                writer.WritePropertyName("condition")
-                condition.WriteToJson(writer)
-
-            writer.WriteEndObject()
-
+            writer
+            |> Json.writeObject (fun w ->
+                match c with
+                | Equals(value1, value2) ->
+                    w.WriteString("type", "equals")
+                    w.WritePropertyName("value1")
+                    value1.WriteToJson(w)
+                    w.WritePropertyName("value2")
+                    value2.WriteToJson(w)
+                | NotEquals(value1, value2) ->
+                    w.WriteString("type", "not_equals")
+                    w.WritePropertyName("value1")
+                    value1.WriteToJson(w)
+                    w.WritePropertyName("value2")
+                    value2.WriteToJson(w)
+                | GreaterThan(value1, value2) ->
+                    w.WriteString("type", "greater_than")
+                    w.WritePropertyName("value1")
+                    value1.WriteToJson(w)
+                    w.WritePropertyName("value2")
+                    value2.WriteToJson(w)
+                | GreaterThanOrEquals(value1, value2) ->
+                    w.WriteString("type", "greater_than_or_equals")
+                    w.WritePropertyName("value1")
+                    value1.WriteToJson(w)
+                    w.WritePropertyName("value2")
+                    value2.WriteToJson(w)
+                | LessThan(value1, value2) ->
+                    w.WriteString("type", "less_than")
+                    w.WritePropertyName("value1")
+                    value1.WriteToJson(w)
+                    w.WritePropertyName("value2")
+                    value2.WriteToJson(w)
+                | LessThanOrEquals(value1, value2) ->
+                    w.WriteString("type", "less_than_or_equals")
+                    w.WritePropertyName("value1")
+                    value1.WriteToJson(w)
+                    w.WritePropertyName("value2")
+                    value2.WriteToJson(w)
+                | IsNull value ->
+                    w.WriteString("type", "is_null")
+                    w.WritePropertyName("value")
+                    value.WriteToJson(w)
+                | IsNotNull value ->
+                    w.WriteString("type", "is_not_null")
+                    w.WritePropertyName("value")
+                    value.WriteToJson(w)
+                | Like(value1, value2) ->
+                    w.WriteString("type", "like")
+                    w.WritePropertyName("value1")
+                    value1.WriteToJson(w)
+                    w.WritePropertyName("value2")
+                    value2.WriteToJson(w)
+                | And(condition1, condition2) ->
+                    w.WriteString("type", "and")
+                    w.WritePropertyName("condition1")
+                    condition1.WriteToJson(w)
+                    w.WritePropertyName("condition2")
+                    condition2.WriteToJson(w)
+                | Or(condition1, condition2) ->
+                    w.WriteString("type", "or")
+                    w.WritePropertyName("condition1")
+                    condition1.WriteToJson(w)
+                    w.WritePropertyName("condition2")
+                    condition2.WriteToJson(w)
+                | Not condition ->
+                    w.WriteString("type", "not")
+                    w.WritePropertyName("condition")
+                    condition.WriteToJson(w))
     and [<RequireQualifiedAccess>] Value =
         | Literal of string
         | Number of decimal
@@ -474,23 +465,23 @@ module SerializableQueries =
 
         member v.WriteToJson(writer: Utf8JsonWriter) =
             writer.WriteStartObject()
-
-            match v with
-            | Literal value ->
-                writer.WriteString("type", "literal")
-                writer.WriteString("value", value)
-            | Number value ->
-                writer.WriteString("type", "value")
-                writer.WriteNumber("value", value)
-            | Field field ->
-                writer.WriteString("type", "field")
-                writer.WritePropertyName("field")
-                field.WriteToJson(writer)
-            | Parameter name ->
-                writer.WriteString("type", "parameter")
-                writer.WriteString("name", name)
-
-            writer.WriteEndObject()
+            
+            writer
+            |> Json.writeObject (fun w ->
+                match v with
+                | Literal value ->
+                    w.WriteString("type", "literal")
+                    w.WriteString("value", value)
+                | Number value ->
+                    w.WriteString("type", "value")
+                    w.WriteNumber("value", value)
+                | Field field ->
+                    w.WriteString("type", "field")
+                    w.WritePropertyName("field")
+                    field.WriteToJson(w)
+                | Parameter name ->
+                    w.WriteString("type", "parameter")
+                    w.WriteString("name", name))
 
 module Dsl =
 
