@@ -55,12 +55,30 @@ module SerializableQueries =
         | Field of TableField
         | Case
 
+        static member FromJson(json: JsonElement) =
+            match Json.tryGetStringProperty "type" json with
+            | Some selectType ->
+                match selectType with
+                | "select" ->
+                    Json.tryGetProperty "field" json
+                    |> Option.map TableField.FromJson
+                    |> Option.defaultValue (Error "Missing field property")
+                    |> Result.map Select.Field
+                | "case" ->
+                    // TODO implement `Case`.
+                    Error "Case select types not yet implemented"
+                | t -> Error $"Unknown select type: `{t}`"
+            | None -> Error $"Missing type property"
+
+
         member s.ToSql() =
             match s with
             | Field tf -> $"`{tf.TableName}`.`{tf.Field}`"
             | Case ->
                 // TODO implement `Case`.
                 failwith "Need to implement"
+
+
 
     and Join =
         { Type: JoinType
@@ -97,21 +115,21 @@ module SerializableQueries =
 
         member j.ToSql() =
             $"{j.Type.ToSql()} {j.Table.ToSql()} ON {j.Condition.ToSql()}"
-            
+
         member j.WriteToJson(writer: Utf8JsonWriter) =
             writer.WriteStartObject()
-            
+
             match j.Type with
             | Inner -> writer.WriteString("type", "inner")
             | Outer -> writer.WriteString("type", "outer")
             | Cross -> writer.WriteString("type", "cross")
-            
+
             writer.WritePropertyName("table")
             j.Table.WriteToJson(writer)
-            
+
             writer.WritePropertyName("condition")
             j.Condition.WriteToJson(writer)
-            
+
             writer.WriteEndObject()
 
     and JoinType =
