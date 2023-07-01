@@ -98,6 +98,16 @@ module SerializableQueries =
             match t.Alias with
             | Some alias -> $"`{t.Name}` `{alias}`"
             | None -> $"`{t.Name}`"
+            
+        member t.WriteToJson(writer: Utf8JsonWriter) =
+            writer.WriteStartObject()
+            
+            writer.WriteString("name", t.Name)
+            
+            t.Alias |> Option.iter (fun a -> writer.WriteString("alias", a))
+            
+            writer.WriteEndObject()
+            
 
     and TableField =
         { TableName: string
@@ -204,7 +214,7 @@ module SerializableQueries =
                 | Error e, _ -> Error $"Error deserializing value 1. {e}"
                 | _, Error e -> Error $"Error deserializing value 2. {e}"
             | Some "is_null" ->
-                match    
+                match
                     Json.tryGetProperty "value" json
                     |> Option.map Value.FromJson
                     |> Option.defaultValue (Error "Missing value property")
@@ -212,7 +222,7 @@ module SerializableQueries =
                 | Ok value -> IsNull value |> Ok
                 | Error e -> Error $"Error deserializing value. {e}"
             | Some "is_not_null" ->
-                match    
+                match
                     Json.tryGetProperty "value" json
                     |> Option.map Value.FromJson
                     |> Option.defaultValue (Error "Missing value property")
@@ -280,12 +290,12 @@ module SerializableQueries =
             | And(c1, c2) -> $"({c1.ToSql()} AND {c2.ToSql()})"
             | Or(c1, c2) -> $"({c1.ToSql()} OR {c2.ToSql()})"
             | Not c -> $"NOT {c.ToSql()}"
-            
+
         member c.WriteToJson(writer: Utf8JsonWriter) =
             writer.WriteStartObject()
-            
+
             match c with
-            | Equals (value1, value2) ->
+            | Equals(value1, value2) ->
                 writer.WriteString("type", "equals")
                 writer.WritePropertyName("value1")
                 value1.WriteToJson(writer)
@@ -351,7 +361,7 @@ module SerializableQueries =
                 writer.WriteString("type", "not")
                 writer.WritePropertyName("condition")
                 condition.WriteToJson(writer)
-            
+
             writer.WriteEndObject()
 
     and [<RequireQualifiedAccess>] Value =
