@@ -130,7 +130,15 @@ type SerializableQueryTests() =
 
         Assert.AreEqual(expected, actual)
 
-    //member _.``Convert table field to and from json``() =
+    member _.``Convert table field to and from json``() =
+        let tf = ({ TableName = "table_1"; Field = "foo" }: SerializableQueries.TableField)
+        
+        let expected: Result<SerializableQueries.TableField, string> = Ok tf
+        
+        let actual =
+            writeToJson tf.WriteToJson |> loadJson |> SerializableQueries.TableField.FromJson
+        
+        Assert.AreEqual(expected, actual)
         
     
     [<TestMethod>]
@@ -155,7 +163,6 @@ type SerializableQueryTests() =
             
         Assert.AreEqual(expected, actual)
         
-    
     [<TestMethod>]
     member _.``Convert field value to and from json``() =
         let value = SerializableQueries.Value.Field { TableName = "table_1"; Field = "foo" }
