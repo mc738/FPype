@@ -86,11 +86,7 @@ module SerializableQueries =
 
             use writer = new Utf8JsonWriter(ms, opts)
 
-            writer.WriteStartArray()
-
-            let objs = q.WriteToJson writer
-
-            writer.WriteEndArray()
+            q.WriteToJson writer
 
             writer.Flush()
             
@@ -529,8 +525,6 @@ module SerializableQueries =
             | Parameter name -> $"@{name}"
 
         member v.WriteToJson(writer: Utf8JsonWriter) =
-            writer.WriteStartObject()
-
             writer
             |> Json.writeObject (fun w ->
                 match v with

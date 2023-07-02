@@ -1,7 +1,29 @@
 ﻿module FPype.Tests.Data
 
+open System.IO
+open System.Text
+open System.Text.Json
 open FPype.Data
 open Microsoft.VisualStudio.TestTools.UnitTesting
+
+[<AutoOpen>]
+module private Utils =
+
+    let writeToJson (fn: Utf8JsonWriter -> unit) =
+        use ms = new MemoryStream()
+
+        let mutable opts = JsonWriterOptions()
+        opts.Indented <- true
+
+        use writer = new Utf8JsonWriter(ms, opts)
+
+        fn writer
+
+        writer.Flush()
+
+        ms.ToArray() |> Encoding.UTF8.GetString
+
+    let loadJson (str: string) = (JsonDocument.Parse str).RootElement
 
 [<TestClass>]
 type SerializableQueryTests() =
@@ -69,35 +91,52 @@ type SerializableQueryTests() =
         let expected = "`a`.`id` = `b`.`a_id`"
 
         let actual =
-            SerializableQueries.Condition.Equals(
-                SerializableQueries.Value.Field { Field = "id"; TableName = "a" },
-                SerializableQueries.Value.Field { Field = "a_id"; TableName = "b" }
-            ).ToSql()
+            SerializableQueries.Condition
+                .Equals(
+                    SerializableQueries.Value.Field { Field = "id"; TableName = "a" },
+                    SerializableQueries.Value.Field { Field = "a_id"; TableName = "b" }
+                )
+                .ToSql()
 
         Assert.AreEqual(expected, actual)
-        
-    
+
+
     [<TestMethod>]
     member _.``Condition.GreaterThan serialization``() =
         let expected = "`a`.`id` > `b`.`a_id`"
 
         let actual =
-            SerializableQueries.Condition.GreaterThan(
-                SerializableQueries.Value.Field { Field = "id"; TableName = "a" },
-                SerializableQueries.Value.Field { Field = "a_id"; TableName = "b" }
-            ).ToSql()
+            SerializableQueries.Condition
+                .GreaterThan(
+                    SerializableQueries.Value.Field { Field = "id"; TableName = "a" },
+                    SerializableQueries.Value.Field { Field = "a_id"; TableName = "b" }
+                )
+                .ToSql()
 
         Assert.AreEqual(expected, actual)
-        
-    
+
+
     [<TestMethod>]
     member _.``Condition.GreaterThanOrEquals serialization``() =
         let expected = "`a`.`id` >= `b`.`a_id`"
 
         let actual =
-            SerializableQueries.Condition.GreaterThanOrEquals(
-                SerializableQueries.Value.Field { Field = "id"; TableName = "a" },
-                SerializableQueries.Value.Field { Field = "a_id"; TableName = "b" }
-            ).ToSql()
+            SerializableQueries.Condition
+                .GreaterThanOrEquals(
+                    SerializableQueries.Value.Field { Field = "id"; TableName = "a" },
+                    SerializableQueries.Value.Field { Field = "a_id"; TableName = "b" }
+                )
+                .ToSql()
 
+        Assert.AreEqual(expected, actual)
+
+    [<TestMethod>]
+    member _.``Convert literal value to and from json``() =
+        let value = SerializableQueries.Value.Literal "Hello, World!"
+
+        let expected: Result<SerializableQueries.Value, string> = Ok value
+
+        let actual =
+            writeToJson value.WriteToJson |> loadJson |> SerializableQueries.Value.FromJson
+            
         Assert.AreEqual(expected, actual)
