@@ -130,6 +130,9 @@ type SerializableQueryTests() =
 
         Assert.AreEqual(expected, actual)
 
+    //member _.``Convert table field to and from json``() =
+        
+    
     [<TestMethod>]
     member _.``Convert literal value to and from json``() =
         let value = SerializableQueries.Value.Literal "Hello, World!"
@@ -144,6 +147,18 @@ type SerializableQueryTests() =
     [<TestMethod>]
     member _.``Convert number value to and from json``() =
         let value = SerializableQueries.Value.Number 42m
+
+        let expected: Result<SerializableQueries.Value, string> = Ok value
+
+        let actual =
+            writeToJson value.WriteToJson |> loadJson |> SerializableQueries.Value.FromJson
+            
+        Assert.AreEqual(expected, actual)
+        
+    
+    [<TestMethod>]
+    member _.``Convert field value to and from json``() =
+        let value = SerializableQueries.Value.Field { TableName = "table_1"; Field = "foo" }
 
         let expected: Result<SerializableQueries.Value, string> = Ok value
 
