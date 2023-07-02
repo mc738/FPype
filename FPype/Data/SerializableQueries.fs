@@ -532,7 +532,7 @@ module SerializableQueries =
                     w.WriteString("type", "literal")
                     w.WriteString("value", value)
                 | Number value ->
-                    w.WriteString("type", "value")
+                    w.WriteString("type", "number")
                     w.WriteNumber("value", value)
                 | Field field ->
                     w.WriteString("type", "field")
