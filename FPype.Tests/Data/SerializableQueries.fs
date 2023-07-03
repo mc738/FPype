@@ -184,6 +184,18 @@ type SerializableQueryTests() =
             writeToJson value.WriteToJson |> loadJson |> SerializableQueries.Value.FromJson
             
         Assert.AreEqual(expected, actual)
+    
+    [<TestMethod>]
+    member _.``Convert boolean value to and from json``() =
+        let value = SerializableQueries.Value.Boolean true
+
+        let expected: Result<SerializableQueries.Value, string> = Ok value
+
+        let actual =
+            writeToJson value.WriteToJson |> loadJson |> SerializableQueries.Value.FromJson
+            
+        Assert.AreEqual(expected, actual)
+        
         
     [<TestMethod>]
     member _.``Convert field value to and from json``() =
