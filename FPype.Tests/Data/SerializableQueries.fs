@@ -274,3 +274,18 @@ type SerializableQueryTests() =
             writeToJson condition.WriteToJson |> loadJson |> SerializableQueries.Condition.FromJson
             
         Assert.AreEqual(expected, actual)
+        
+    
+    [<TestMethod>]
+    member _.``Convert less than or equals condition to and from json``() =
+        let condition =
+            SerializableQueries.Condition.LessThanOrEquals(
+                SerializableQueries.Value.Field { TableName = "test_table"; Field = "foo" },
+                SerializableQueries.Value.Boolean true)
+        
+        let expected: Result<SerializableQueries.Condition, string> = Ok condition
+        
+        let actual =
+            writeToJson condition.WriteToJson |> loadJson |> SerializableQueries.Condition.FromJson
+            
+        Assert.AreEqual(expected, actual)
