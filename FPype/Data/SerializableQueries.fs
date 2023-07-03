@@ -492,6 +492,7 @@ module SerializableQueries =
     and [<RequireQualifiedAccess>] Value =
         | Literal of string
         | Number of decimal
+        | Boolean of bool
         | Field of TableField
         | Parameter of Name: string
 
@@ -504,6 +505,10 @@ module SerializableQueries =
             | Some "number" ->
                 match Json.tryGetDecimalProperty "value" json with
                 | Some value -> Number value |> Ok
+                | None -> Error "Missing value property"
+            | Some "bool" ->
+                match Json.tryGetBoolProperty "value" json with
+                | Some value -> Boolean value |> Ok
                 | None -> Error "Missing value property"
             | Some "field" ->
                 Json.tryGetProperty "field" json
@@ -534,6 +539,9 @@ module SerializableQueries =
                 | Number value ->
                     w.WriteString("type", "number")
                     w.WriteNumber("value", value)
+                | Boolean value ->
+                    w.WriteString("type", "bool")
+                    w.WriteBoolean("value", value)
                 | Field field ->
                     w.WriteString("type", "field")
                     w.WritePropertyName("field")
