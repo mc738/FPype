@@ -133,36 +133,38 @@ type SerializableQueryTests() =
     [<TestMethod>]
     member _.``Convert table field to and from json``() =
         let tf = ({ TableName = "table_1"; Field = "foo" }: SerializableQueries.TableField)
-        
+
         let expected: Result<SerializableQueries.TableField, string> = Ok tf
-        
+
         let actual =
-            writeToJson tf.WriteToJson |> loadJson |> SerializableQueries.TableField.FromJson
-        
+            writeToJson tf.WriteToJson
+            |> loadJson
+            |> SerializableQueries.TableField.FromJson
+
         Assert.AreEqual(expected, actual)
 
-    [<TestMethod>]        
+    [<TestMethod>]
     member _.``Convert table to and from json (no alias)``() =
         let t = ({ Name = "table_1"; Alias = None }: SerializableQueries.Table)
-        
+
         let expected: Result<SerializableQueries.Table, string> = Ok t
-        
+
         let actual =
             writeToJson t.WriteToJson |> loadJson |> SerializableQueries.Table.FromJson
-        
+
         Assert.AreEqual(expected, actual)
-        
-    [<TestMethod>]        
+
+    [<TestMethod>]
     member _.``Convert table to and from json (with alias)``() =
         let t = ({ Name = "table_1"; Alias = Some "t" }: SerializableQueries.Table)
-        
+
         let expected: Result<SerializableQueries.Table, string> = Ok t
-        
+
         let actual =
             writeToJson t.WriteToJson |> loadJson |> SerializableQueries.Table.FromJson
-        
+
         Assert.AreEqual(expected, actual)
-    
+
     [<TestMethod>]
     member _.``Convert literal value to and from json``() =
         let value = SerializableQueries.Value.Literal "Hello, World!"
@@ -171,9 +173,9 @@ type SerializableQueryTests() =
 
         let actual =
             writeToJson value.WriteToJson |> loadJson |> SerializableQueries.Value.FromJson
-            
+
         Assert.AreEqual(expected, actual)
-        
+
     [<TestMethod>]
     member _.``Convert number value to and from json``() =
         let value = SerializableQueries.Value.Number 42m
@@ -182,9 +184,9 @@ type SerializableQueryTests() =
 
         let actual =
             writeToJson value.WriteToJson |> loadJson |> SerializableQueries.Value.FromJson
-            
+
         Assert.AreEqual(expected, actual)
-    
+
     [<TestMethod>]
     member _.``Convert boolean value to and from json``() =
         let value = SerializableQueries.Value.Boolean true
@@ -193,10 +195,10 @@ type SerializableQueryTests() =
 
         let actual =
             writeToJson value.WriteToJson |> loadJson |> SerializableQueries.Value.FromJson
-            
+
         Assert.AreEqual(expected, actual)
-        
-        
+
+
     [<TestMethod>]
     member _.``Convert field value to and from json``() =
         let value = SerializableQueries.Value.Field { TableName = "table_1"; Field = "foo" }
@@ -205,9 +207,9 @@ type SerializableQueryTests() =
 
         let actual =
             writeToJson value.WriteToJson |> loadJson |> SerializableQueries.Value.FromJson
-            
+
         Assert.AreEqual(expected, actual)
-        
+
     [<TestMethod>]
     member _.``Convert parameter value to and from json``() =
         let value = SerializableQueries.Value.Parameter "foo"
@@ -216,76 +218,118 @@ type SerializableQueryTests() =
 
         let actual =
             writeToJson value.WriteToJson |> loadJson |> SerializableQueries.Value.FromJson
-            
+
         Assert.AreEqual(expected, actual)
-   
+
     [<TestMethod>]
     member _.``Convert equals condition to and from json``() =
         let condition =
             SerializableQueries.Condition.Equals(
-                SerializableQueries.Value.Field { TableName = "test_table"; Field = "foo" },
-                SerializableQueries.Value.Boolean true)
-        
+                SerializableQueries.Value.Field
+                    { TableName = "test_table"
+                      Field = "foo" },
+                SerializableQueries.Value.Boolean true
+            )
+
         let expected: Result<SerializableQueries.Condition, string> = Ok condition
-        
+
         let actual =
-            writeToJson condition.WriteToJson |> loadJson |> SerializableQueries.Condition.FromJson
-            
+            writeToJson condition.WriteToJson
+            |> loadJson
+            |> SerializableQueries.Condition.FromJson
+
         Assert.AreEqual(expected, actual)
-    
+
     [<TestMethod>]
     member _.``Convert greater than condition to and from json``() =
         let condition =
             SerializableQueries.Condition.GreaterThan(
-                SerializableQueries.Value.Field { TableName = "test_table"; Field = "foo" },
-                SerializableQueries.Value.Boolean true)
-        
+                SerializableQueries.Value.Field
+                    { TableName = "test_table"
+                      Field = "foo" },
+                SerializableQueries.Value.Boolean true
+            )
+
         let expected: Result<SerializableQueries.Condition, string> = Ok condition
-        
+
         let actual =
-            writeToJson condition.WriteToJson |> loadJson |> SerializableQueries.Condition.FromJson
-            
+            writeToJson condition.WriteToJson
+            |> loadJson
+            |> SerializableQueries.Condition.FromJson
+
         Assert.AreEqual(expected, actual)
-    
+
     [<TestMethod>]
     member _.``Convert greater than or equals condition to and from json``() =
         let condition =
             SerializableQueries.Condition.GreaterThanOrEquals(
-                SerializableQueries.Value.Field { TableName = "test_table"; Field = "foo" },
-                SerializableQueries.Value.Boolean true)
-        
+                SerializableQueries.Value.Field
+                    { TableName = "test_table"
+                      Field = "foo" },
+                SerializableQueries.Value.Boolean true
+            )
+
         let expected: Result<SerializableQueries.Condition, string> = Ok condition
-        
+
         let actual =
-            writeToJson condition.WriteToJson |> loadJson |> SerializableQueries.Condition.FromJson
-            
+            writeToJson condition.WriteToJson
+            |> loadJson
+            |> SerializableQueries.Condition.FromJson
+
         Assert.AreEqual(expected, actual)
-        
+
     [<TestMethod>]
     member _.``Convert less than condition to and from json``() =
         let condition =
             SerializableQueries.Condition.LessThan(
-                SerializableQueries.Value.Field { TableName = "test_table"; Field = "foo" },
-                SerializableQueries.Value.Boolean true)
-        
+                SerializableQueries.Value.Field
+                    { TableName = "test_table"
+                      Field = "foo" },
+                SerializableQueries.Value.Boolean true
+            )
+
         let expected: Result<SerializableQueries.Condition, string> = Ok condition
-        
+
         let actual =
-            writeToJson condition.WriteToJson |> loadJson |> SerializableQueries.Condition.FromJson
-            
+            writeToJson condition.WriteToJson
+            |> loadJson
+            |> SerializableQueries.Condition.FromJson
+
         Assert.AreEqual(expected, actual)
-        
-    
+
     [<TestMethod>]
     member _.``Convert less than or equals condition to and from json``() =
         let condition =
             SerializableQueries.Condition.LessThanOrEquals(
-                SerializableQueries.Value.Field { TableName = "test_table"; Field = "foo" },
-                SerializableQueries.Value.Boolean true)
-        
+                SerializableQueries.Value.Field
+                    { TableName = "test_table"
+                      Field = "foo" },
+                SerializableQueries.Value.Boolean true
+            )
+
         let expected: Result<SerializableQueries.Condition, string> = Ok condition
-        
+
         let actual =
-            writeToJson condition.WriteToJson |> loadJson |> SerializableQueries.Condition.FromJson
-            
+            writeToJson condition.WriteToJson
+            |> loadJson
+            |> SerializableQueries.Condition.FromJson
+
+        Assert.AreEqual(expected, actual)
+
+    [<TestMethod>]
+    member _.``Convert is null condition to and from json``() =
+        let condition =
+            SerializableQueries.Condition.IsNull(
+                SerializableQueries.Value.Field
+                    { TableName = "test_table"
+                      Field = "foo" }
+            )
+
+        let expected: Result<SerializableQueries.Condition, string> = Ok condition
+
+        let actual =
+            writeToJson condition.WriteToJson
+            |> loadJson
+            |> SerializableQueries.Condition.FromJson
+
         Assert.AreEqual(expected, actual)
