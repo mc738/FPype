@@ -333,3 +333,21 @@ type SerializableQueryTests() =
             |> SerializableQueries.Condition.FromJson
 
         Assert.AreEqual(expected, actual)
+
+    [<TestMethod>]
+    member _.``Convert is not null condition to and from json``() =
+        let condition =
+            SerializableQueries.Condition.IsNotNull(
+                SerializableQueries.Value.Field
+                    { TableName = "test_table"
+                      Field = "foo" }
+            )
+
+        let expected: Result<SerializableQueries.Condition, string> = Ok condition
+
+        let actual =
+            writeToJson condition.WriteToJson
+            |> loadJson
+            |> SerializableQueries.Condition.FromJson
+
+        Assert.AreEqual(expected, actual)
