@@ -149,8 +149,6 @@ module SerializableQueries =
                     // TODO implement `Case`.
                     failwith "Need to implement")
 
-
-
     and Join =
         { Type: JoinType
           Table: Table
