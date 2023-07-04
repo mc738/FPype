@@ -392,7 +392,7 @@ module SerializableQueries =
                 | Ok c1, Ok c2 -> Or(c1, c2) |> Ok
                 | Error e, _ -> Error $"Error deserializing condition 1. {e}"
                 | _, Error e -> Error $"Error deserializing condition 2. {e}"
-            | Some "no" ->
+            | Some "not" ->
                 match
                     Json.tryGetProperty "condition" json
                     |> Option.map Condition.FromJson
