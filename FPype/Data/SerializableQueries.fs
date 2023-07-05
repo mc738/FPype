@@ -524,8 +524,13 @@ module SerializableQueries =
             match v with
             | Literal s -> $"'{s}'"
             | Number decimal -> string decimal
+            | Boolean b ->
+                match b with
+                | true -> "TRUE"
+                | false -> "FALSE"
             | Field field -> $"`{field.TableName}`.`{field.Field}`"
             | Parameter name -> $"@{name}"
+            
 
         member v.WriteToJson(writer: Utf8JsonWriter) =
             writer
