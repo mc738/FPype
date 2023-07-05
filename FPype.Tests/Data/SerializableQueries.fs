@@ -519,6 +519,7 @@ type SerializableQueryTests() =
 
         Assert.AreEqual(expected, actual)
         
+    [<TestMethod>]        
     member _.``Convert select to and from json``() =
         let select =
             SerializableQueries.Select.Field { TableName = "table_1"; Field = "foo" }
@@ -532,5 +533,3 @@ type SerializableQueryTests() =
 
         Assert.AreEqual(expected, actual)
 
-                    
-        ()
