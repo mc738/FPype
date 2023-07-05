@@ -95,7 +95,6 @@ module SerializableQueries =
         member q.WriteToJson(writer: Utf8JsonWriter) =
             writer
             |> Json.writeObject (fun w ->
-                w.WritePropertyName "select"
                 Json.writeArray (fun w -> q.Select |> List.iter (fun s -> s.WriteToJson w)) "select" w
                 w.WritePropertyName "from"
                 q.From.WriteToJson w
