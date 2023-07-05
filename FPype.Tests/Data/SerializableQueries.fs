@@ -518,3 +518,19 @@ type SerializableQueryTests() =
             |> SerializableQueries.Join.FromJson
 
         Assert.AreEqual(expected, actual)
+        
+    member _.``Convert select to and from json``() =
+        let select =
+            SerializableQueries.Select.Field { TableName = "table_1"; Field = "foo" }
+            
+        let expected: Result<SerializableQueries.Select, string> = Ok select
+
+        let actual =
+            writeToJson select.WriteToJson
+            |> loadJson
+            |> SerializableQueries.Select.FromJson
+
+        Assert.AreEqual(expected, actual)
+
+                    
+        ()
