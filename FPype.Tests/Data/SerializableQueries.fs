@@ -451,21 +451,15 @@ type SerializableQueryTests() =
                Table = { Name = "table_2"; Alias = None }
                Condition =
                  SerializableQueries.Condition.Equals(
-                     SerializableQueries.Value.Field
-                         { TableName = "table_1"
-                           Field = "foo" },
-                     SerializableQueries.Value.Field
-                         { TableName = "table_2"
-                           Field = "bar" }
+                     SerializableQueries.Value.Field { TableName = "table_1"; Field = "foo" },
+                     SerializableQueries.Value.Field { TableName = "table_2"; Field = "bar" }
                  ) }
             : SerializableQueries.Join)
 
         let expected: Result<SerializableQueries.Join, string> = Ok join
 
         let actual =
-            writeToJson join.WriteToJson
-            |> loadJson
-            |> SerializableQueries.Join.FromJson
+            writeToJson join.WriteToJson |> loadJson |> SerializableQueries.Join.FromJson
 
         Assert.AreEqual(expected, actual)
 
@@ -476,21 +470,15 @@ type SerializableQueryTests() =
                Table = { Name = "table_2"; Alias = None }
                Condition =
                  SerializableQueries.Condition.Equals(
-                     SerializableQueries.Value.Field
-                         { TableName = "table_1"
-                           Field = "foo" },
-                     SerializableQueries.Value.Field
-                         { TableName = "table_2"
-                           Field = "bar" }
+                     SerializableQueries.Value.Field { TableName = "table_1"; Field = "foo" },
+                     SerializableQueries.Value.Field { TableName = "table_2"; Field = "bar" }
                  ) }
             : SerializableQueries.Join)
 
         let expected: Result<SerializableQueries.Join, string> = Ok join
 
         let actual =
-            writeToJson join.WriteToJson
-            |> loadJson
-            |> SerializableQueries.Join.FromJson
+            writeToJson join.WriteToJson |> loadJson |> SerializableQueries.Join.FromJson
 
         Assert.AreEqual(expected, actual)
 
@@ -501,29 +489,23 @@ type SerializableQueryTests() =
                Table = { Name = "table_2"; Alias = None }
                Condition =
                  SerializableQueries.Condition.Equals(
-                     SerializableQueries.Value.Field
-                         { TableName = "table_1"
-                           Field = "foo" },
-                     SerializableQueries.Value.Field
-                         { TableName = "table_2"
-                           Field = "bar" }
+                     SerializableQueries.Value.Field { TableName = "table_1"; Field = "foo" },
+                     SerializableQueries.Value.Field { TableName = "table_2"; Field = "bar" }
                  ) }
             : SerializableQueries.Join)
 
         let expected: Result<SerializableQueries.Join, string> = Ok join
 
         let actual =
-            writeToJson join.WriteToJson
-            |> loadJson
-            |> SerializableQueries.Join.FromJson
+            writeToJson join.WriteToJson |> loadJson |> SerializableQueries.Join.FromJson
 
         Assert.AreEqual(expected, actual)
-        
-    [<TestMethod>]        
+
+    [<TestMethod>]
     member _.``Convert select to and from json``() =
         let select =
             SerializableQueries.Select.Field { TableName = "table_1"; Field = "foo" }
-            
+
         let expected: Result<SerializableQueries.Select, string> = Ok select
 
         let actual =
@@ -533,3 +515,20 @@ type SerializableQueryTests() =
 
         Assert.AreEqual(expected, actual)
 
+    [<TestMethod>]
+    member _.``Convert basic query to and from json``() =
+        let query =
+            ({ Select = [ SerializableQueries.Select.Field { TableName = "table_1"; Field = "foo" } ]
+               From = { Name = "table_1"; Alias = None }
+               Joins = []
+               Where = None }
+            : SerializableQueries.Query)
+
+        let expected: Result<SerializableQueries.Query, string> = Ok query
+
+        let actual =
+            writeToJson query.WriteToJson
+            |> loadJson
+            |> SerializableQueries.Query.FromJson
+
+        Assert.AreEqual(expected, actual)
