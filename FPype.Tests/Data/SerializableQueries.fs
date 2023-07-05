@@ -493,3 +493,28 @@ type SerializableQueryTests() =
             |> SerializableQueries.Join.FromJson
 
         Assert.AreEqual(expected, actual)
+
+    [<TestMethod>]
+    member _.``Convert join (cross) to and from json``() =
+        let join =
+            ({ Type = SerializableQueries.JoinType.Cross
+               Table = { Name = "table_2"; Alias = None }
+               Condition =
+                 SerializableQueries.Condition.Equals(
+                     SerializableQueries.Value.Field
+                         { TableName = "table_1"
+                           Field = "foo" },
+                     SerializableQueries.Value.Field
+                         { TableName = "table_2"
+                           Field = "bar" }
+                 ) }
+            : SerializableQueries.Join)
+
+        let expected: Result<SerializableQueries.Join, string> = Ok join
+
+        let actual =
+            writeToJson join.WriteToJson
+            |> loadJson
+            |> SerializableQueries.Join.FromJson
+
+        Assert.AreEqual(expected, actual)
