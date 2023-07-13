@@ -13,7 +13,15 @@ module Common =
         | Push
         | Pull
     
-    
+    type DataSinkSettings =
+        {
+            Id: string
+            SubscriptionId: string
+            StorePath: string
+            ModelType: DataSinkModelType
+            Type: DataSinkModelType
+            
+        }
     
     ()
 
