@@ -4,9 +4,16 @@
 module Common =
     
     [<RequireQualifiedAccess>]
-    type DataSinkType =
+    type DataSinkModelType =
         | Table
         | Object
+        
+    [<RequireQualifiedAccess>]
+    type DataSinkType =
+        | Push
+        | Pull
+    
+    
     
     ()
 
