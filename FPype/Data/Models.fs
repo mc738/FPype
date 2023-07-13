@@ -218,7 +218,7 @@ module Models =
             : TableSchema)
 
         member tm.GetSchemaJson() = tm.ToSchema().ToJson()
-        
+
         member tm.GetSchemaHash() = tm.ToSchema().GetHash()
 
 
@@ -457,6 +457,8 @@ module Models =
             let sv = tr.Values |> List.map (fun v -> v.Serialize()) |> Array.concat
 
             [| yield! BitConverter.GetBytes sv.Length; yield! sv |]
+
+        member tr.AppendValues(values: Value list) = { tr with Values = tr.Values @ values }
 
     /// <summary>
     /// A table schema is simplified representation of a TableModel.
