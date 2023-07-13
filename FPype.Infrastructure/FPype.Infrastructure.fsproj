@@ -42,6 +42,7 @@
         <Compile Include="Services\PipelineService.fs" />
         <Compile Include="Services\ConfigurationService.fs" />
         <Compile Include="Services\Extensions.fs" />
+        <Compile Include="DataSinks\Common.fs" />
     </ItemGroup>
 
     <ItemGroup>
