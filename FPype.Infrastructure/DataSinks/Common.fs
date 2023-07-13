@@ -2,10 +2,12 @@
 
 [<AutoOpen>]
 module Common =
-    
+
+    open FPype.Data.Models
+        
     [<RequireQualifiedAccess>]
     type DataSinkModelType =
-        | Table
+        | Table of TableModel
         | Object
         
     [<RequireQualifiedAccess>]

@@ -43,6 +43,7 @@
         <Compile Include="Services\ConfigurationService.fs" />
         <Compile Include="Services\Extensions.fs" />
         <Compile Include="DataSinks\Common.fs" />
+        <Compile Include="DataSinks\Tables.fs" />
     </ItemGroup>
 
     <ItemGroup>

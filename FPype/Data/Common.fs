@@ -8,7 +8,6 @@ module Common =
           Required: bool
           DefaultValue: string option }
 
-
     [<RequireQualifiedAccess>]
     type DataSourceType =
         | File
@@ -24,7 +23,6 @@ module Common =
             match ds with
             | File -> "file"
             | Artifact -> "artifact"
-
 
     type CsvExportSettings =
         { IncludeHeader: bool

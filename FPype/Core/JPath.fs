@@ -5,7 +5,6 @@ open System.Text.Json
 open System.Text.RegularExpressions
 open FPype.Core.Expressions
 open FPype.Core.Paths
-open Google.Protobuf.WellKnownTypes
 
 module JPath =
 
