@@ -1,5 +1,7 @@
 ﻿namespace FPype.Infrastructure.DataSinks
 
+open System
+open FPype.Configuration
 open FsToolbox.Core.Results
 
 
@@ -24,7 +26,10 @@ module Tables =
 
     let appendDataSinkColumns (table: TableModel) = table.AppendColumns dataSinkColumns
 
-    let appendDataSinkData (row: TableRow) = ()
+    let appendDataSinkData (idType: IdType option) (row: TableRow) =
+        [ Value.String(idType |> Option.defaultValue IdType.Generated |> (fun id -> id.Get()))
+          Value.DateTime DateTime.UtcNow ]
+        |> row.AppendValues
 
     let createTable (ctx: SqliteContext) (table: TableModel) = table.SqliteCreateTable ctx
 
@@ -33,7 +38,7 @@ module Tables =
 
         Directory.CreateDirectory dir |> ignore
         let fullPath = Path.Combine(dir, $"{id}.db")
-                
+
         match File.Exists fullPath with
         | true -> Ok()
         | false ->
@@ -54,7 +59,11 @@ module Tables =
                 |> Error
         |> ActionResult.fromResult
 
-    let insertRow (row: TableRow) =
+    let insertRow (idType: IdType option) (row: TableRow) =
+
+        row |> appendDataSinkData idType
+        
+        //row
 
 
         ()
