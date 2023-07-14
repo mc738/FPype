@@ -28,14 +28,17 @@ module Tables =
 
     let createTable (ctx: SqliteContext) (table: TableModel) = table.SqliteCreateTable ctx
 
-    let initialize (id: string) (path: string) (schema: TableSchema) =
-        let fullPath = Path.Combine(path, $"{id}.db")
+    let initialize (id: string) (subscriptionId: string) (path: string) (schema: TableSchema) =
+        let dir = Path.Combine(path, subscriptionId, id)
 
+        Directory.CreateDirectory dir |> ignore
+        let fullPath = Path.Combine(dir, $"{id}.db")
+                
         match File.Exists fullPath with
         | true -> Ok()
         | false ->
 
-            use ctx = SqliteContext.Create("")
+            use ctx = SqliteContext.Create(fullPath)
 
             try
                 TableModel.FromSchema schema
