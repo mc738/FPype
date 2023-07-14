@@ -19,11 +19,21 @@ module Tables =
 
     [<AutoOpen>]
     module private Internal =
-        
-        let metadataTableSql = """
 
+        let requestsTableSql =
+            """
+        CREATE TABLE __read_requests (
+            request_id TEXT NOT NULL,
+            requester TEXT NOT NULL,
+            request_timestamp TEXT NOT NULL,
+            was_successful INTEGER NOT NULL,
+            CONSTRAINT __resources_PK PRIMARY KEY (request_id)
+        );
         """
-        
+
+        let createDataSinkTables (ctx: SqliteContext) =
+            [ requestsTableSql ] |> List.map ctx.ExecuteSqlNonQuery |> ignore
+
         let dataSinkColumns =
             [ ({ Name = "ds__id"
                  Type = BaseType.String
@@ -64,6 +74,8 @@ module Tables =
                 |> appendDataSinkColumns
                 |> createTable ctx
                 |> ignore
+                
+                createDataSinkTables ctx
                 |> Ok
         with exn ->
             ({ Message = $"Error creating `({schema.Name})` table: {exn.Message}"
@@ -97,5 +109,4 @@ module Tables =
         |> ActionResult.fromResult
 
 
-    let selectRows (ctx: SqliteContext) (tableSchema: TableSchema) =
-        ()
+    let selectRows (ctx: SqliteContext) (tableSchema: TableSchema) = ()
