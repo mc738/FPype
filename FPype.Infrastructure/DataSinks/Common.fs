@@ -7,7 +7,7 @@ module Common =
         
     [<RequireQualifiedAccess>]
     type DataSinkModelType =
-        | Table of TableModel
+        | Table of TableSchema
         | Object
         
     [<RequireQualifiedAccess>]

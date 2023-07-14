@@ -2,6 +2,7 @@
 
 open System
 open FPype.Configuration
+open FPype.Data.Store
 open FsToolbox.Core.Results
 
 
@@ -23,6 +24,12 @@ module Tables =
           ({ Name = "ds__timestamp"
              Type = BaseType.DateTime
              ImportHandler = None }) ]
+
+    let tableFromSchema (schema: TableSchema) = TableModel.FromSchema schema
+
+    let appendRows (rows: TableRow list) (table: TableModel) = table.AppendRows rows
+
+    let appendRow (row: TableRow) (table: TableModel) = table.AppendRows([ row ])
 
     let appendDataSinkColumns (table: TableModel) = table.AppendColumns dataSinkColumns
 
@@ -59,11 +66,25 @@ module Tables =
                 |> Error
         |> ActionResult.fromResult
 
-    let insertRow (idType: IdType option) (row: TableRow) =
+    let insertRow (ctx: SqliteContext) (idType: IdType option) (tableSchema: TableSchema) (row: TableRow) =
 
-        row |> appendDataSinkData idType
-        
-        //row
+        try
+            let table =
+                tableFromSchema tableSchema |> appendRow (row |> appendDataSinkData idType)
 
+            match table.SqliteInsert(ctx) with
+            | Ok r -> Ok($"Successfully inserted {r.Length} row(s) into table {table.Name}")
+            | Error e ->
+                ({ Message = $"Failed to insert rows: {e}"
+                   DisplayMessage = "Failed to insert rows"
+                   Exception = None }
+                : FailureResult)
+                |> Error
+        with exn ->
+            ({ Message = $"Unhandled exception while inserting insert rows: {exn.Message}"
+               DisplayMessage = "Failed to insert rows"
+               Exception = Some exn }
+            : FailureResult)
+            |> Error
 
-        ()
+        |> ActionResult.fromResult
