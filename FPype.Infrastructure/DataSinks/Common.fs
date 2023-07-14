@@ -1,5 +1,8 @@
 ﻿namespace FPype.Infrastructure.DataSinks
 
+open System
+open FPype.Data.ModelExtensions
+
 [<AutoOpen>]
 module Common =
 
@@ -22,4 +25,8 @@ module Common =
           ModelType: DataSinkModelType
           Type: DataSinkModelType }
 
-    
+    type ReadRequest =
+        { RequestId: string
+          Requester: string
+          RequestTimestamp: DateTime
+          WasSuccessful: bool }
