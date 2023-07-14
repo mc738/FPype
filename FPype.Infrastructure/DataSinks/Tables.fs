@@ -41,29 +41,29 @@ module Tables =
     let createTable (ctx: SqliteContext) (table: TableModel) = table.SqliteCreateTable ctx
 
     let initialize (id: string) (subscriptionId: string) (path: string) (schema: TableSchema) =
-        let dir = Path.Combine(path, subscriptionId, id)
+        try
+            let dir = Path.Combine(path, subscriptionId, id)
 
-        Directory.CreateDirectory dir |> ignore
-        let fullPath = Path.Combine(dir, $"{id}.db")
+            Directory.CreateDirectory dir |> ignore
+            let fullPath = Path.Combine(dir, $"{id}.db")
 
-        match File.Exists fullPath with
-        | true -> Ok()
-        | false ->
+            match File.Exists fullPath with
+            | true -> Ok()
+            | false ->
 
-            use ctx = SqliteContext.Create(fullPath)
+                use ctx = SqliteContext.Create(fullPath)
 
-            try
                 TableModel.FromSchema schema
                 |> appendDataSinkColumns
                 |> createTable ctx
                 |> ignore
                 |> Ok
-            with exn ->
-                ({ Message = $"Error creating `({schema.Name})` table: {exn.Message}"
-                   DisplayMessage = $"Error creating `({schema.Name})` table"
-                   Exception = Some exn }
-                : FailureResult)
-                |> Error
+        with exn ->
+            ({ Message = $"Error creating `({schema.Name})` table: {exn.Message}"
+               DisplayMessage = $"Error creating `({schema.Name})` table"
+               Exception = Some exn }
+            : FailureResult)
+            |> Error
         |> ActionResult.fromResult
 
     let insertRow (ctx: SqliteContext) (idType: IdType option) (tableSchema: TableSchema) (row: TableRow) =
