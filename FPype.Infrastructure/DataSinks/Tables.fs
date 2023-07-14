@@ -17,28 +17,35 @@ module Tables =
     open FPype.Data.Models
     open FPype.Data.ModelExtensions.Sqlite
 
-    let dataSinkColumns =
-        [ ({ Name = "ds__id"
-             Type = BaseType.String
-             ImportHandler = None })
-          ({ Name = "ds__timestamp"
-             Type = BaseType.DateTime
-             ImportHandler = None }) ]
+    [<AutoOpen>]
+    module private Internal =
+        
+        let metadataTableSql = """
 
-    let tableFromSchema (schema: TableSchema) = TableModel.FromSchema schema
+        """
+        
+        let dataSinkColumns =
+            [ ({ Name = "ds__id"
+                 Type = BaseType.String
+                 ImportHandler = None })
+              ({ Name = "ds__timestamp"
+                 Type = BaseType.DateTime
+                 ImportHandler = None }) ]
 
-    let appendRows (rows: TableRow list) (table: TableModel) = table.AppendRows rows
+        let tableFromSchema (schema: TableSchema) = TableModel.FromSchema schema
 
-    let appendRow (row: TableRow) (table: TableModel) = table.AppendRows([ row ])
+        let appendRows (rows: TableRow list) (table: TableModel) = table.AppendRows rows
 
-    let appendDataSinkColumns (table: TableModel) = table.AppendColumns dataSinkColumns
+        let appendRow (row: TableRow) (table: TableModel) = table.AppendRows([ row ])
 
-    let appendDataSinkData (idType: IdType option) (row: TableRow) =
-        [ Value.String(idType |> Option.defaultValue IdType.Generated |> (fun id -> id.Get()))
-          Value.DateTime DateTime.UtcNow ]
-        |> row.AppendValues
+        let appendDataSinkColumns (table: TableModel) = table.AppendColumns dataSinkColumns
 
-    let createTable (ctx: SqliteContext) (table: TableModel) = table.SqliteCreateTable ctx
+        let appendDataSinkData (idType: IdType option) (row: TableRow) =
+            [ Value.String(idType |> Option.defaultValue IdType.Generated |> (fun id -> id.Get()))
+              Value.DateTime DateTime.UtcNow ]
+            |> row.AppendValues
+
+        let createTable (ctx: SqliteContext) (table: TableModel) = table.SqliteCreateTable ctx
 
     let initialize (id: string) (subscriptionId: string) (path: string) (schema: TableSchema) =
         try
@@ -88,3 +95,7 @@ module Tables =
             |> Error
 
         |> ActionResult.fromResult
+
+
+    let selectRows (ctx: SqliteContext) (tableSchema: TableSchema) =
+        ()
