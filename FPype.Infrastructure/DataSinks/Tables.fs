@@ -21,7 +21,8 @@ module Tables =
     module private Internal =
 
         let createDataSinkTables (ctx: SqliteContext) =
-            [ ReadRequest.CreateTableSql() ] |> List.map ctx.ExecuteSqlNonQuery |> ignore
+            [ ReadRequest.CreateTableSql()
+              Metadata.CreateTableSql() ] |> List.map ctx.ExecuteSqlNonQuery |> ignore
 
         let dataSinkColumns =
             [ ({ Name = "ds__id"
@@ -97,5 +98,7 @@ module Tables =
 
         |> ActionResult.fromResult
 
-
-    let selectRows (ctx: SqliteContext) (tableSchema: TableSchema) = ()
+    let selectRows (ctx: SqliteContext) (tableSchema: TableSchema) =
+        
+        
+        ()

@@ -25,6 +25,11 @@ module Common =
           ModelType: DataSinkModelType
           Type: DataSinkModelType }
 
+    type SelectOperation =
+        | All
+        | From of Timestamp: DateTime
+        | Between of FromTimestamp: DateTime * ToTimestamp: DateTime
+        | SinceLastRead
 
     type Metadata =
         { ItemId: string
