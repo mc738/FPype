@@ -25,17 +25,22 @@ module Common =
           ModelType: DataSinkModelType
           Type: DataSinkModelType }
 
-    
+
     type Metadata =
         { ItemId: string
           ItemKey: string
           ItemValue: string }
-       
+
         static member CreateTableSql() =
             """
+        CREATE TABLE __metadata (
+            item_id TEXT NOT NULL
+            item_key TEXT NOT NULL
+            item_value TEXT NOT NULL
+            CONSTRAINT __metadata_pk PRIMARY KEY (item_id, item_key)
+        );
+        """
 
-            """
-    
     type ReadRequest =
         { RequestId: string
           Requester: string
