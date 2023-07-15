@@ -64,6 +64,9 @@ module Tables =
                  """
 
             ctx.SelectSingleAnon<ReadRequest>(sql, [ requesterId ])
+            
+        let insertReadRequest (ctx:SqliteContext) (requestRequest: ReadRequest) =
+            ctx.Insert("__read_requests", requestRequest)
 
 
     let initialize (id: string) (subscriptionId: string) (path: string) (schema: TableSchema) =
@@ -117,9 +120,6 @@ module Tables =
         |> ActionResult.fromResult
 
     let selectRows (ctx: SqliteContext) (parameters: SelectOperationParameters) (tableSchema: TableSchema) =
-
-        // Build the query
-
         let table = TableModel.FromSchema tableSchema
 
         let (conditionSql, parameters) =
@@ -130,9 +130,6 @@ module Tables =
                 "WHERE DATETIME(ds__timestamp) > DATETIME(@0) AND DATETIME(ds__timestamp) <= DATETIME(@1)",
                 [ box fromTimestamp; box toTimestamp ]
             | SelectOperation.SinceLastRead cutOffTimestamp ->
-                // Query the `__read_request` table
-
-                //match ctx.sele
                 match getLatestReadRequest ctx parameters.RequesterId with
                 | Some rr -> "WHERE DATETIME(ds__timestamp) > DATETIME(@0)", [ rr.RequestTimestamp ]
                 | None ->
