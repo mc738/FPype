@@ -20,19 +20,8 @@ module Tables =
     [<AutoOpen>]
     module private Internal =
 
-        let requestsTableSql =
-            """
-        CREATE TABLE __read_requests (
-            request_id TEXT NOT NULL,
-            requester TEXT NOT NULL,
-            request_timestamp TEXT NOT NULL,
-            was_successful INTEGER NOT NULL,
-            CONSTRAINT __resources_PK PRIMARY KEY (request_id)
-        );
-        """
-
         let createDataSinkTables (ctx: SqliteContext) =
-            [ requestsTableSql ] |> List.map ctx.ExecuteSqlNonQuery |> ignore
+            [ ReadRequest.CreateTableSql() ] |> List.map ctx.ExecuteSqlNonQuery |> ignore
 
         let dataSinkColumns =
             [ ({ Name = "ds__id"
