@@ -30,7 +30,7 @@ module Common =
         | All
         | From of Timestamp: DateTime
         | Between of FromTimestamp: DateTime * ToTimestamp: DateTime
-        | SinceLastRead
+        | SinceLastRead of CutOffTimestamp : DateTime option
 
     type SelectOperationParameters =
         { Operation: SelectOperation

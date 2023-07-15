@@ -21,8 +21,9 @@ module Tables =
     module private Internal =
 
         let createDataSinkTables (ctx: SqliteContext) =
-            [ ReadRequest.CreateTableSql()
-              Metadata.CreateTableSql() ] |> List.map ctx.ExecuteSqlNonQuery |> ignore
+            [ ReadRequest.CreateTableSql(); Metadata.CreateTableSql() ]
+            |> List.map ctx.ExecuteSqlNonQuery
+            |> ignore
 
         let dataSinkColumns =
             [ ({ Name = "ds__id"
@@ -47,6 +48,24 @@ module Tables =
 
         let createTable (ctx: SqliteContext) (table: TableModel) = table.SqliteCreateTable ctx
 
+        let getLatestReadRequest (ctx: SqliteContext) (requesterId: string) =
+            let sql =
+                """
+                 SELECT
+                     request_id,
+                     requester,
+                     request_timestamp,
+                     was_successful
+                 FROM __read_requests
+                 WHERE
+                     requester = @0 AND was_successful = TRUE
+                 ORDER BY DATETIME(request_timestamp)
+                 LIMIT 1;
+                 """
+
+            ctx.SelectSingleAnon<ReadRequest>(sql, [ requesterId ])
+
+
     let initialize (id: string) (subscriptionId: string) (path: string) (schema: TableSchema) =
         try
             let dir = Path.Combine(path, subscriptionId, id)
@@ -64,9 +83,8 @@ module Tables =
                 |> appendDataSinkColumns
                 |> createTable ctx
                 |> ignore
-                
-                createDataSinkTables ctx
-                |> Ok
+
+                createDataSinkTables ctx |> Ok
         with exn ->
             ({ Message = $"Error creating `({schema.Name})` table: {exn.Message}"
                DisplayMessage = $"Error creating `({schema.Name})` table"
@@ -98,17 +116,29 @@ module Tables =
 
         |> ActionResult.fromResult
 
-    let selectRows (ctx: SqliteContext) (operation: SelectOperation) (requesterId: string) (tableSchema: TableSchema) =
-        
+    let selectRows (ctx: SqliteContext) (parameters: SelectOperationParameters) (tableSchema: TableSchema) =
+
         // Build the query
-        
-        
-        
-        
-        
-        
+
         let table = TableModel.FromSchema tableSchema
-        
-        
-        
-        ()
+
+        let (conditionSql, parameters) =
+            match parameters.Operation with
+            | SelectOperation.All -> String.Empty, []
+            | SelectOperation.From timestamp -> "WHERE DATETIME(ds__timestamp) > DATETIME(@0)", [ box timestamp ]
+            | SelectOperation.Between(fromTimestamp, toTimestamp) ->
+                "WHERE DATETIME(ds__timestamp) > DATETIME(@0) AND DATETIME(ds__timestamp) <= DATETIME(@1)",
+                [ box fromTimestamp; box toTimestamp ]
+            | SelectOperation.SinceLastRead cutOffTimestamp ->
+                // Query the `__read_request` table
+
+                //match ctx.sele
+                match getLatestReadRequest ctx parameters.RequesterId with
+                | Some rr -> "WHERE DATETIME(ds__timestamp) > DATETIME(@0)", [ rr.RequestTimestamp ]
+                | None ->
+                    match cutOffTimestamp with
+                    | Some cts -> "WHERE DATETIME(ds__timestamp) > DATETIME(@0)", [ box cts ]
+                    | None -> String.Empty, []
+
+        table.SqliteConditionalSelect(ctx, conditionSql, parameters)
+
