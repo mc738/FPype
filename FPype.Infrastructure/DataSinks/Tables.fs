@@ -64,8 +64,8 @@ module Tables =
                  """
 
             ctx.SelectSingleAnon<ReadRequest>(sql, [ requesterId ])
-            
-        let insertReadRequest (ctx:SqliteContext) (requestRequest: ReadRequest) =
+
+        let insertReadRequest (ctx: SqliteContext) (requestRequest: ReadRequest) =
             ctx.Insert("__read_requests", requestRequest)
 
 
@@ -139,3 +139,21 @@ module Tables =
 
         table.SqliteConditionalSelect(ctx, conditionSql, parameters)
 
+    let readRows (ctx: SqliteContext) (parameters: SelectOperationParameters) (tableSchema: TableSchema) =
+        // NOTE should this be passed into selectRows to ensure only rows up until this point are read?
+        let timestamp = DateTime.UtcNow
+        
+        let rows = selectRows ctx parameters tableSchema
+
+        match parameters.Operation with
+        | SelectOperation.SinceLastRead _ ->
+            // NOTE should this record the operation type?  
+            ({ RequestId = System.Guid.NewGuid().ToString("n")
+               Requester = parameters.RequesterId
+               RequestTimestamp = timestamp
+               WasSuccessful = true }
+            : ReadRequest)
+            |> insertReadRequest ctx
+        | _ -> ()
+        
+        rows
