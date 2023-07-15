@@ -25,11 +25,18 @@ module Common =
           ModelType: DataSinkModelType
           Type: DataSinkModelType }
 
+    [<RequireQualifiedAccess>]
     type SelectOperation =
         | All
         | From of Timestamp: DateTime
         | Between of FromTimestamp: DateTime * ToTimestamp: DateTime
         | SinceLastRead
+
+    type SelectOperationParameters =
+        { Operation: SelectOperation
+          RequesterId: string
+          IncludeDataSinkColumns: bool }
+
 
     type Metadata =
         { ItemId: string

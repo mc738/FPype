@@ -98,7 +98,17 @@ module Tables =
 
         |> ActionResult.fromResult
 
-    let selectRows (ctx: SqliteContext) (tableSchema: TableSchema) =
+    let selectRows (ctx: SqliteContext) (operation: SelectOperation) (requesterId: string) (tableSchema: TableSchema) =
+        
+        // Build the query
+        
+        
+        
+        
+        
+        
+        let table = TableModel.FromSchema tableSchema
+        
         
         
         ()
