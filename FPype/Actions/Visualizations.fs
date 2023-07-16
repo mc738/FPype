@@ -9,7 +9,6 @@ module Visualizations =
     open FPype.Data.Store
     open FPype.Visualizations.Charts.LineCharts
 
-
     module ``generate-time-series-chart-collection`` =
 
         open FPype.Visualizations.Charts.LineCharts
