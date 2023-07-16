@@ -43,10 +43,8 @@ module Tables =
 
         let appendDataSinkColumns (table: TableModel) = table.AppendColumns dataSinkColumns
 
-        let appendDataSinkData (idType: IdType option) (row: TableRow) =
-            [ Value.String(idType |> Option.defaultValue IdType.Generated |> (fun id -> id.Get()))
-              Value.DateTime DateTime.UtcNow ]
-            |> row.AppendValues
+        let appendDataSinkData (id: string) (row: TableRow) =
+            [ Value.String id; Value.DateTime DateTime.UtcNow ] |> row.AppendValues
 
         let createTable (ctx: SqliteContext) (table: TableModel) = table.SqliteCreateTable ctx
 
@@ -70,6 +68,12 @@ module Tables =
         let insertReadRequest (ctx: SqliteContext) (requestRequest: ReadRequest) =
             ctx.Insert("__read_requests", requestRequest)
 
+        let insertMetadata (ctx: SqliteContext) (id: string) (key: string) (value: string) =
+            ({ ItemId = id
+               ItemKey = key
+               ItemValue = value }
+            : Metadata)
+            |> fun md -> ctx.Insert("__metadata", md)
 
     let initialize (id: string) (subscriptionId: string) (path: string) (schema: TableSchema) =
         try
@@ -98,15 +102,30 @@ module Tables =
             |> Error
         |> ActionResult.fromResult
 
-    let insertRow (ctx: SqliteContext) (idType: IdType option) (tableSchema: TableSchema) (row: TableRow) =
+    let insertRow
+        (ctx: SqliteContext)
+        (idType: IdType option)
+        (tableSchema: TableSchema)
+        (metadata: Map<string, string>)
+        (row: TableRow)
+        =
 
         try
-            let table =
-                tableFromSchema tableSchema |> appendRow (row |> appendDataSinkData idType)
+            let id = idType |> Option.defaultValue IdType.Generated |> (fun id -> id.Get())
+
+            let table = tableFromSchema tableSchema |> appendRow (row |> appendDataSinkData id)
+
+            metadata
+            |> Map.iter (fun k v ->
+
+
+                ())
 
             match table.SqliteInsert(ctx) with
             | Ok r -> Ok($"Successfully inserted {r.Length} row(s) into table {table.Name}")
             | Error e ->
+
+
                 ({ Message = $"Failed to insert rows: {e}"
                    DisplayMessage = "Failed to insert rows"
                    Exception = None }
@@ -144,12 +163,12 @@ module Tables =
     let readRows (ctx: SqliteContext) (parameters: SelectOperationParameters) (tableSchema: TableSchema) =
         // NOTE should this be passed into selectRows to ensure only rows up until this point are read?
         let timestamp = DateTime.UtcNow
-        
+
         let rows = selectRows ctx parameters tableSchema
 
         match parameters.Operation with
         | SelectOperation.SinceLastRead _ ->
-            // NOTE should this record the operation type?  
+            // NOTE should this record the operation type?
             ({ RequestId = System.Guid.NewGuid().ToString("n")
                Requester = parameters.RequesterId
                RequestTimestamp = timestamp
@@ -157,5 +176,5 @@ module Tables =
             : ReadRequest)
             |> insertReadRequest ctx
         | _ -> ()
-        
+
         rows
