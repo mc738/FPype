@@ -31,7 +31,7 @@ module Common =
         | All
         | From of Timestamp: DateTime
         | Between of FromTimestamp: DateTime * ToTimestamp: DateTime
-        | SinceLastRead of CutOffTimestamp : DateTime option
+        | SinceLastRead of CutOffTimestamp: DateTime option
 
     type SelectOperationParameters =
         { Operation: SelectOperation
@@ -62,7 +62,7 @@ module Common =
 
         static member CreateTableSql() =
             """
-        CREATE TABLE __read_requests (
+        CREATE TABLE IF NOT EXISTS __read_requests (
             request_id TEXT NOT NULL,
             requester TEXT NOT NULL,
             request_timestamp TEXT NOT NULL,
@@ -72,8 +72,11 @@ module Common =
         """
 
     type InsertError =
-        {
-            ErrorMessage: string
-            DataTimestamp: DateTime
-            DataBlob: BlobField
-        }
+        { ErrorMessage: string
+          DataTimestamp: DateTime
+          DataBlob: BlobField }
+        
+        static member CreatedTableSql() =
+            """
+        CREATE TABLE __
+        """
