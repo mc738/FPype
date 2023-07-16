@@ -3,6 +3,7 @@
 open System
 open FPype.Configuration
 open FPype.Data.Store
+open Freql.Core.Common.Types
 open FsToolbox.Core.Results
 
 
@@ -75,6 +76,15 @@ module Tables =
             : Metadata)
             |> fun md -> ctx.Insert("__metadata", md)
 
+        let insertError (ctx: SqliteContext) (errorMessage: string) (data: byte array) =
+            use ms = new MemoryStream(data)
+
+            ({ ErrorMessage = errorMessage
+               DataTimestamp = DateTime.UtcNow
+               DataBlob = BlobField.FromStream ms }
+            : InsertError)
+            |> fun ie -> ctx.Insert("__insert_errors", ie)
+
     let initialize (id: string) (subscriptionId: string) (path: string) (schema: TableSchema) =
         try
             let dir = Path.Combine(path, subscriptionId, id)
@@ -115,16 +125,12 @@ module Tables =
 
             let table = tableFromSchema tableSchema |> appendRow (row |> appendDataSinkData id)
 
-            metadata
-            |> Map.iter (fun k v ->
-
-
-                ())
+            metadata |> Map.iter (insertMetadata ctx id)
 
             match table.SqliteInsert(ctx) with
             | Ok r -> Ok($"Successfully inserted {r.Length} row(s) into table {table.Name}")
             | Error e ->
-
+                // Insert the error
 
                 ({ Message = $"Failed to insert rows: {e}"
                    DisplayMessage = "Failed to insert rows"
