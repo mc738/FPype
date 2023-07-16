@@ -78,5 +78,9 @@ module Common =
         
         static member CreatedTableSql() =
             """
-        CREATE TABLE __
+        CREATE TABLE IF NOT EXISTS __insert_errors (
+            error_message TEXT NOT NULL,
+            data_timestamp TEXT NOT NULL,
+            data_blob BLOB NOT NULL
+        )
         """
