@@ -21,7 +21,9 @@ module Tables =
     module private Internal =
 
         let createDataSinkTables (ctx: SqliteContext) =
-            [ ReadRequest.CreateTableSql(); Metadata.CreateTableSql() ]
+            [ ReadRequest.CreateTableSql()
+              Metadata.CreateTableSql()
+              InsertError.CreatedTableSql() ]
             |> List.map ctx.ExecuteSqlNonQuery
             |> ignore
 
