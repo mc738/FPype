@@ -2,6 +2,7 @@
 
 open System
 open FPype.Data.ModelExtensions
+open Freql.Core.Common.Types
 
 [<AutoOpen>]
 module Common =
@@ -69,3 +70,10 @@ module Common =
             CONSTRAINT __resources_PK PRIMARY KEY (request_id)
         );
         """
+
+    type InsertError =
+        {
+            ErrorMessage: string
+            DataTimestamp: DateTime
+            DataBlob: BlobField
+        }
