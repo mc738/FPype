@@ -44,6 +44,8 @@ module Common =
           ItemKey: string
           ItemValue: string }
 
+        static member TableName() = "__metadata"
+        
         static member CreateTableSql() =
             """
         CREATE TABLE __metadata (
@@ -60,6 +62,8 @@ module Common =
           RequestTimestamp: DateTime
           WasSuccessful: bool }
 
+        static member TableName() = "__read_requests"
+        
         static member CreateTableSql() =
             """
         CREATE TABLE IF NOT EXISTS __read_requests (
@@ -75,6 +79,8 @@ module Common =
         { ErrorMessage: string
           DataTimestamp: DateTime
           DataBlob: BlobField }
+        
+        static member TableName() = "__insert_errors"
         
         static member CreatedTableSql() =
             """
