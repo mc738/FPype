@@ -30,7 +30,12 @@ module Objects =
             )
             """
 
-        ()
+        let createDataSinkTables (ctx: SqliteContext) =
+            [ ObjectSinkItem.CreateTableSql()
+              Metadata.CreateTableSql()
+              InsertError.CreatedTableSql() ]
+            |> List.map ctx.ExecuteSqlNonQuery
+            |> ignore
 
     let initialize (id: string) (subscriptionId: string) (path: string) =
         try
@@ -47,8 +52,8 @@ module Objects =
 
                 createDataSinkTables ctx |> Ok
         with exn ->
-            ({ Message = $"Error creating `({schema.Name})` table: {exn.Message}"
-               DisplayMessage = $"Error creating `({schema.Name})` table"
+            ({ Message = $"Error creating object table: {exn.Message}"
+               DisplayMessage = $"Error creating object table"
                Exception = Some exn }
             : FailureResult)
             |> Error
