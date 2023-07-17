@@ -38,7 +38,8 @@ module Common =
           RequesterId: string
           IncludeDataSinkColumns: bool }
 
-
+    
+    [<CLIMutable>]
     type Metadata =
         { ItemId: string
           ItemKey: string
@@ -56,6 +57,7 @@ module Common =
         );
         """
 
+    [<CLIMutable>]
     type ReadRequest =
         { RequestId: string
           Requester: string
@@ -75,6 +77,7 @@ module Common =
         );
         """
 
+    [<CLIMutable>]
     type InsertError =
         { ErrorMessage: string
           DataTimestamp: DateTime

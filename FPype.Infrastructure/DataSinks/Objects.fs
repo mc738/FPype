@@ -14,12 +14,15 @@ module Objects =
     [<AutoOpen>]
     module private Internal =
 
+        [<CLIMutable>]
         type ObjectSinkItem =
             { Id: string
               ReceivedTimestamp: DateTime
               RawBlob: BlobField
               Hash: string }
 
+            static member TableName() = "object_sink"
+            
             static member CreateTableSql() =
                 """
             CREATE TABLE IF NOT EXISTS object_sink (
