@@ -1,23 +1,18 @@
 ﻿namespace FPype.Infrastructure.DataSinks
 
-open System
-open FPype.Configuration
-open FPype.Data.Store
-open Freql.Core.Common.Types
-open FsToolbox.Core.Results
-
-
-
 [<RequireQualifiedAccess>]
 module Tables =
 
-
-    open System.IO
+    open System
+    open System.IO    
+    open Freql.Core.Common.Types
     open Freql.Sqlite
+    open FsToolbox.Core.Results
     open FPype.Core.Types
     open FPype.Data.Models
     open FPype.Data.ModelExtensions.Sqlite
-
+    open FPype.Configuration
+    
     [<AutoOpen>]
     module private Internal =
 
