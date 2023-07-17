@@ -44,6 +44,7 @@
         <Compile Include="Services\Extensions.fs" />
         <Compile Include="DataSinks\Common.fs" />
         <Compile Include="DataSinks\Tables.fs" />
+        <Compile Include="DataSinks\Objects.fs" />
     </ItemGroup>
 
     <ItemGroup>
