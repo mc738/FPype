@@ -62,14 +62,14 @@ module Tables =
             ctx.SelectSingleAnon<ReadRequest>(sql, [ requesterId ])
 
         let insertReadRequest (ctx: SqliteContext) (requestRequest: ReadRequest) =
-            ctx.Insert("__read_requests", requestRequest)
+            ctx.Insert(ReadRequest.TableName(), requestRequest)
 
         let insertMetadata (ctx: SqliteContext) (id: string) (key: string) (value: string) =
             ({ ItemId = id
                ItemKey = key
                ItemValue = value }
             : Metadata)
-            |> fun md -> ctx.Insert("__metadata", md)
+            |> fun md -> ctx.Insert(Metadata.TableName(), md)
 
         let insertError (ctx: SqliteContext) (errorMessage: string) (data: byte array) =
             use ms = new MemoryStream(data)
@@ -78,7 +78,7 @@ module Tables =
                DataTimestamp = DateTime.UtcNow
                DataBlob = BlobField.FromStream ms }
             : InsertError)
-            |> fun ie -> ctx.Insert("__insert_errors", ie)
+            |> fun ie -> ctx.Insert(InsertError.TableName(), ie)
 
     let initialize (id: string) (subscriptionId: string) (path: string) (schema: TableSchema) =
         try
