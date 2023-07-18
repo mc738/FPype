@@ -1,6 +1,7 @@
 ﻿namespace FPype.Infrastructure.DataSinks
 
 open System
+open FPype.Configuration
 open Freql.Core.Common.Types
 
 [<RequireQualifiedAccess>]
@@ -22,7 +23,7 @@ module Objects =
               Hash: string }
 
             static member TableName() = "object_sink"
-            
+
             static member CreateTableSql() =
                 """
             CREATE TABLE IF NOT EXISTS object_sink (
@@ -62,5 +63,22 @@ module Objects =
             |> Error
         |> ActionResult.fromResult
 
+    let insertObject
+        (ctx: SqliteContext)
+        (idType: IdType option)
+        (metadata: Map<string, string>)
+        (rawObject: byte array)
+        =
 
-    ()
+        try
+                
+
+
+
+            Ok()
+        with exn ->
+            ({ Message = $"Unhandled exception while inserting insert rows: {exn.Message}"
+               DisplayMessage = "Failed to insert rows"
+               Exception = Some exn }
+            : FailureResult)
+            |> Error
