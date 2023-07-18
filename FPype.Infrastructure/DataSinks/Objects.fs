@@ -41,21 +41,20 @@ module Objects =
               InsertError.CreatedTableSql() ]
             |> List.map ctx.ExecuteSqlNonQuery
             |> ignore
-            
-        let insertObjectSinkItem (id: string) (rawData: byte array) =
+
+        let insertObjectSinkItem (ctx: SqliteContext) (id: string) (rawData: byte array) =
             use ms = new MemoryStream(rawData)
-            
+
             let hash = ms.GetSHA256Hash()
-            
-            
-            ({
-                Id = id
-                ReceivedTimestamp = DateTime.UtcNow
-                RawBlob =  
-            }: ObjectSinkItem)
-            
-            
-            ()
+
+
+            ({ Id = id
+               ReceivedTimestamp = DateTime.UtcNow
+               RawData = BlobField.FromStream ms
+               Hash = hash }
+            : ObjectSinkItem)
+            |> fun osi -> ctx.Insert(ObjectSinkItem.TableName(), osi)
+
 
     let initialize (id: string) (subscriptionId: string) (path: string) =
         try
@@ -87,12 +86,20 @@ module Objects =
         =
 
         try
-            //    
-            
+            // NOTE - is the try/with needed now?
+            ctx.ExecuteInTransactionV2(fun t ->
+                let id = idType |> Option.defaultValue IdType.Generated |> (fun id -> id.Get())
+                
+                insertObjectSinkItem t id rawObject
+                
+                metadata |> Map.iter (insertMetadata ctx id)
 
-
-
-            Ok()
+                Ok())
+            |> Result.mapError (fun e ->
+                ({ Message = $"Failed to insert object: {e}"
+                   DisplayMessage = "Failed to insert object"
+                   Exception = None }
+                : FailureResult))
         with exn ->
             ({ Message = $"Unhandled exception while inserting insert rows: {exn.Message}"
                DisplayMessage = "Failed to insert rows"
