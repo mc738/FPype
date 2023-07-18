@@ -16,8 +16,6 @@ module Tables =
     [<AutoOpen>]
     module private Internal =
 
-        
-
         let dataSinkColumns =
             [ ({ Name = "ds__id"
                  Type = BaseType.String

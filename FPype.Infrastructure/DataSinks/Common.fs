@@ -93,15 +93,3 @@ module Common =
             data_blob BLOB NOT NULL
         )
         """
-
-
-    [<RequireQualifiedAccess>]
-    module Operations =
-        
-        let createDataSinkTables (ctx: SqliteContext) =
-            [ ReadRequest.CreateTableSql()
-              Metadata.CreateTableSql()
-              InsertError.CreatedTableSql() ]
-            |> List.map ctx.ExecuteSqlNonQuery
-            |> ignore
-        
