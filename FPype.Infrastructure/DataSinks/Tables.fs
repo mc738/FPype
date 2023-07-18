@@ -16,12 +16,7 @@ module Tables =
     [<AutoOpen>]
     module private Internal =
 
-        let createDataSinkTables (ctx: SqliteContext) =
-            [ ReadRequest.CreateTableSql()
-              Metadata.CreateTableSql()
-              InsertError.CreatedTableSql() ]
-            |> List.map ctx.ExecuteSqlNonQuery
-            |> ignore
+        
 
         let dataSinkColumns =
             [ ({ Name = "ds__id"

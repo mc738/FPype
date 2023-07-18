@@ -89,9 +89,9 @@ module Objects =
             // NOTE - is the try/with needed now?
             ctx.ExecuteInTransactionV2(fun t ->
                 let id = idType |> Option.defaultValue IdType.Generated |> (fun id -> id.Get())
-                
+
                 insertObjectSinkItem t id rawObject
-                
+
                 metadata |> Map.iter (insertMetadata ctx id)
 
                 Ok())
