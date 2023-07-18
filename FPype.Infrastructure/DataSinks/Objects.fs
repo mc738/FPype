@@ -3,6 +3,7 @@
 open System
 open FPype.Configuration
 open Freql.Core.Common.Types
+open FsToolbox.Core
 
 [<RequireQualifiedAccess>]
 module Objects =
@@ -10,7 +11,7 @@ module Objects =
     open System.IO
     open Freql.Sqlite
     open FsToolbox.Core.Results
-
+    open FsToolbox.Extensions.Streams
 
     [<AutoOpen>]
     module private Internal =
@@ -19,7 +20,7 @@ module Objects =
         type ObjectSinkItem =
             { Id: string
               ReceivedTimestamp: DateTime
-              RawBlob: BlobField
+              RawData: BlobField
               Hash: string }
 
             static member TableName() = "object_sink"
@@ -40,6 +41,21 @@ module Objects =
               InsertError.CreatedTableSql() ]
             |> List.map ctx.ExecuteSqlNonQuery
             |> ignore
+            
+        let insertObjectSinkItem (id: string) (rawData: byte array) =
+            use ms = new MemoryStream(rawData)
+            
+            let hash = ms.GetSHA256Hash()
+            
+            
+            ({
+                Id = id
+                ReceivedTimestamp = DateTime.UtcNow
+                RawBlob =  
+            }: ObjectSinkItem)
+            
+            
+            ()
 
     let initialize (id: string) (subscriptionId: string) (path: string) =
         try
@@ -71,7 +87,8 @@ module Objects =
         =
 
         try
-                
+            //    
+            
 
 
 
