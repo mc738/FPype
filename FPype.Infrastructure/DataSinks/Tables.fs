@@ -37,42 +37,6 @@ module Tables =
 
         let createTable (ctx: SqliteContext) (table: TableModel) = table.SqliteCreateTable ctx
 
-        let getLatestReadRequest (ctx: SqliteContext) (requesterId: string) =
-            let sql =
-                """
-                 SELECT
-                     request_id,
-                     requester,
-                     request_timestamp,
-                     was_successful
-                 FROM __read_requests
-                 WHERE
-                     requester = @0 AND was_successful = TRUE
-                 ORDER BY DATETIME(request_timestamp)
-                 LIMIT 1;
-                 """
-
-            ctx.SelectSingleAnon<ReadRequest>(sql, [ requesterId ])
-
-        let insertReadRequest (ctx: SqliteContext) (requestRequest: ReadRequest) =
-            ctx.Insert(ReadRequest.TableName(), requestRequest)
-
-        let insertMetadata (ctx: SqliteContext) (id: string) (key: string) (value: string) =
-            ({ ItemId = id
-               ItemKey = key
-               ItemValue = value }
-            : Metadata)
-            |> fun md -> ctx.Insert(Metadata.TableName(), md)
-
-        let insertError (ctx: SqliteContext) (errorMessage: string) (data: byte array) =
-            use ms = new MemoryStream(data)
-
-            ({ ErrorMessage = errorMessage
-               DataTimestamp = DateTime.UtcNow
-               DataBlob = BlobField.FromStream ms }
-            : InsertError)
-            |> fun ie -> ctx.Insert(InsertError.TableName(), ie)
-
     let initialize (id: string) (subscriptionId: string) (path: string) (schema: TableSchema) =
         try
             let dir = Path.Combine(path, subscriptionId, id)
