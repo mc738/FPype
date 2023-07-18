@@ -55,7 +55,7 @@ module Tables =
                 |> createTable ctx
                 |> ignore
 
-                createDataSinkTables ctx |> Ok
+                Operations.createDataSinkTables ctx |> Ok
         with exn ->
             ({ Message = $"Error creating `({schema.Name})` table: {exn.Message}"
                DisplayMessage = $"Error creating `({schema.Name})` table"
@@ -77,7 +77,7 @@ module Tables =
 
             let table = tableFromSchema tableSchema |> appendRow (row |> appendDataSinkData id)
 
-            metadata |> Map.iter (insertMetadata ctx id)
+            metadata |> Map.iter (Operations.insertMetadata ctx id)
 
             match table.SqliteInsert(ctx) with
             | Ok r -> Ok($"Successfully inserted {r.Length} row(s) into table {table.Name}")
@@ -109,7 +109,7 @@ module Tables =
                 "WHERE DATETIME(ds__timestamp) > DATETIME(@0) AND DATETIME(ds__timestamp) <= DATETIME(@1)",
                 [ box fromTimestamp; box toTimestamp ]
             | SelectOperation.SinceLastRead cutOffTimestamp ->
-                match getLatestReadRequest ctx parameters.RequesterId with
+                match Operations.getLatestReadRequest ctx parameters.RequesterId with
                 | Some rr -> "WHERE DATETIME(ds__timestamp) > DATETIME(@0)", [ rr.RequestTimestamp ]
                 | None ->
                     match cutOffTimestamp with
@@ -132,7 +132,7 @@ module Tables =
                RequestTimestamp = timestamp
                WasSuccessful = true }
             : ReadRequest)
-            |> insertReadRequest ctx
+            |> Operations.insertReadRequest ctx
         | _ -> ()
 
         rows
