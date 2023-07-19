@@ -1,5 +1,6 @@
 ﻿namespace FPype.Actions
 
+open System.IO
 open FPype.Data.Store
 
 
@@ -24,10 +25,12 @@ module ML =
 
         let run (parameters: Parameters) (stepName: string) (store: PipelineStore) =
             let mlCtx = createCtx parameters.ContextSeed
+            let savePath = Path.Combine(store.SubstituteValues parameters.ModelSavePath, $"{parameters.ModelName}.zip")
 
-            getDataSourceAsFileUri store parameters.ModelName true
+            // NOTE Check this is correct
+            getDataSourceAsFileUri store parameters.DataSource true
             |> Result.bind (
-                BinaryClassification.train mlCtx (store.SubstituteValues parameters.ModelSavePath) parameters.TrainingSettings
+                BinaryClassification.train mlCtx savePath parameters.TrainingSettings
             )
             |> Result.map (fun metrics ->
                 store.Log(stepName, name, $"Model saved to `{parameters.ModelSavePath}`.")
