@@ -100,10 +100,13 @@ module ML =
 
         let run (parameters: Parameters) (stepName: string) (store: PipelineStore) =
             let mlCtx = createCtx parameters.ContextSeed
+            
+            let savePath =
+                Path.Combine(store.SubstituteValues parameters.ModelSavePath, $"{parameters.ModelName}.zip")
 
-            getDataSourceAsFileUri store parameters.ModelName true
+            getDataSourceAsFileUri store parameters.DataSource true
             |> Result.bind (
-                Regression.train mlCtx (store.SubstituteValues parameters.ModelSavePath) parameters.TrainingSettings
+                Regression.train mlCtx savePath parameters.TrainingSettings
             )
             |> Result.map (fun metrics ->
                 store.Log(stepName, name, $"Model saved to `{parameters.ModelSavePath}`.")
