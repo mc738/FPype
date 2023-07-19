@@ -33,6 +33,7 @@
         <Compile Include="ML\MatrixFactorization.fs" />
         <Compile Include="Connectors\Common.fs" />
         <Compile Include="Connectors\Sqlite.fs" />
+        <Compile Include="Connectors\MySql.fs" />
         <Compile Include="Visualizations\Charts\Common.fs" />
         <Compile Include="Visualizations\Charts\LineCharts.fs" />
         <Compile Include="Visualizations\Charts\ScatterCharts.fs" />
