@@ -4,9 +4,7 @@ open Freql.MySql
 
 module MySql =
 
-    open FPype.Core.Types
     open FPype.Data.Models
-    open MySql.Data.MySqlClient
     open FPype.Data.ModelExtensions.MySql
 
     let select (connectionString: string) (table: TableModel) =
