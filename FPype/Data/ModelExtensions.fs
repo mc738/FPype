@@ -138,18 +138,18 @@ module ModelExtensions =
                 let nn = if notNull then " NOT NULL" else ""
 
                 match bt with
-                | BaseType.Boolean -> "INTEGER", nn
-                | BaseType.Byte -> "INTEGER", nn
-                | BaseType.Char -> "TEXT", nn
-                | BaseType.Decimal -> "INTEGER", nn
-                | BaseType.Double -> "INTEGER", nn
-                | BaseType.Float -> "INTEGER", nn
-                | BaseType.Int -> "INTEGER", nn
-                | BaseType.Short -> "INTEGER", nn
-                | BaseType.Long -> "INTEGER", nn
-                | BaseType.String -> "TEXT", nn
-                | BaseType.DateTime -> "TEXT", nn
-                | BaseType.Guid -> "TEXT", nn
+                | BaseType.Boolean -> "boolean", nn
+                | BaseType.Byte -> "tinyint", nn
+                | BaseType.Char -> "char", nn
+                | BaseType.Decimal -> "decimal", nn
+                | BaseType.Double -> "double", nn
+                | BaseType.Float -> "float", nn
+                | BaseType.Int -> "int", nn
+                | BaseType.Short -> "smallint", nn
+                | BaseType.Long -> "bigint", nn
+                | BaseType.String -> "text", nn
+                | BaseType.DateTime -> "datetime", nn
+                | BaseType.Guid -> "varchar(36)", nn
                 | BaseType.Option t -> typeName t false
 
 
