@@ -231,20 +231,20 @@ module ModelExtensions =
 
         type TableModel with
 
-            member tm.SqliteCreateTable(ctx: MySqlContext) =
+            member tm.MySqlCreateTable(ctx: MySqlContext) =
                 Internal.createTable ctx tm.Name tm.Columns
 
-            member tm.SqliteInsert(ctx: MySqlContext, ?createTable: bool) =
+            member tm.MySqlInsert(ctx: MySqlContext, ?createTable: bool) =
                 match createTable |> Option.defaultValue true with
-                | true -> tm.SqliteCreateTable ctx |> ignore
+                | true -> tm.MySqlCreateTable ctx |> ignore
                 | false -> ()
 
                 Internal.insert ctx tm
 
-            member tm.SqliteSelect(ctx: MySqlContext) = Internal.select ctx tm
+            member tm.MySqlSelect(ctx: MySqlContext) = Internal.select ctx tm
 
-            member tm.SqliteConditionalSelect(ctx: MySqlContext, conditions: string, parameters: obj list) =
+            member tm.MySqlConditionalSelect(ctx: MySqlContext, conditions: string, parameters: obj list) =
                 Internal.conditionalSelect ctx tm conditions parameters
 
-            member tm.SqliteBespokeSelect(ctx: MySqlContext, sql: string, parameters: obj list) =
+            member tm.MySqlBespokeSelect(ctx: MySqlContext, sql: string, parameters: obj list) =
                 Internal.bespokeSelect ctx tm sql parameters
