@@ -142,11 +142,11 @@ module Store =
         let initializedTimestamp = "__initialized_timestamp"
 
         let pipelineName = "__pipeline_name"
-        
+
         let pipelineVersion = "__pipeline_version"
-        
+
         let pipelineVersionId = "__pipeline_version_id"
-    
+
     (*
         let contextTableSql =
             """
@@ -321,8 +321,14 @@ module Store =
 
     let getImportErrors (ctx: SqliteContext) =
         ctx.SelectAnon<ImportError>("SELECT step, action_type, error, value FROM __import_errors", [])
-    
+
     let addLogItem (ctx: SqliteContext) (item: LogItem) = ctx.Insert("__log", item)
+
+    let getLog (ctx: SqliteContext) =
+        ctx.SelectAnon<LogItem>(
+            "SELECT step, action_type, message, is_error, is_warning, timestamp_utc FROM __log;",
+            []
+        )
 
     let addTableSchema (ctx: SqliteContext) (table: TableModel) =
         let schema = table.GetSchemaJson()
@@ -562,21 +568,24 @@ module Store =
             | Some _, false -> ()
             | None, _ -> ps.AddStateValue(StateNames.tmpPath, tmpPath)
 
-        member ps.GetPipelineName() = ps.GetStateValue(StateNames.pipelineName)
+        member ps.GetPipelineName() =
+            ps.GetStateValue(StateNames.pipelineName)
 
         member ps.SetPipelineName(name) =
             match ps.GetPipelineName() with
             | Some _ -> ()
             | None -> ps.AddStateValue(StateNames.pipelineName, name)
 
-        member ps.GetPipelineVersion() = ps.GetStateValueAsInt(StateNames.pipelineVersion)
+        member ps.GetPipelineVersion() =
+            ps.GetStateValueAsInt(StateNames.pipelineVersion)
 
         member ps.SetPipelineVersion(version: int) =
             match ps.GetPipelineName() with
             | Some _ -> ()
             | None -> ps.AddStateValue(StateNames.pipelineVersion, string version)
 
-        member ps.GetPipelineVersionId() = ps.GetStateValue(StateNames.pipelineVersionId)
+        member ps.GetPipelineVersionId() =
+            ps.GetStateValue(StateNames.pipelineVersionId)
 
         member ps.SetPipelineVersionId(id) =
             match ps.GetPipelineName() with
@@ -1018,20 +1027,17 @@ module Store =
             |> path.ReplaceMultiple
 
         member ps.GetTableListings() = getTableListing ctx
-        
+
         member ps.GetTableSchema(name: string) =
             getTableSchema ctx name
             |> Option.map (fun ts ->
-                
+
                 try
-                    let json =
-                        ts.SchemaBlob.ToBytes()
-                        |> Encoding.UTF8.GetString
-                        |> JsonDocument.Parse 
-                        
+                    let json = ts.SchemaBlob.ToBytes() |> Encoding.UTF8.GetString |> JsonDocument.Parse
+
                     Models.TableSchema.FromJson <| json.RootElement
-                with
-                | ex -> Error $"Failed to deserialize table schema. Error: {ex.Message}")
+                with ex ->
+                    Error $"Failed to deserialize table schema. Error: {ex.Message}")
             |> Option.defaultWith (fun _ -> Error $"Table `{name}` not found")
 
         member ps.SelectRawRows(table: TableModel) = table.SqliteSelect ctx
@@ -1054,5 +1060,5 @@ module Store =
             table.SqliteBespokeSelect(ctx, sql, parameters) |> table.AppendRows
 
         member ps.GetLogs() =
-            
+
             ()
