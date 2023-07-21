@@ -319,6 +319,9 @@ module Store =
 
     let addImportError (ctx: SqliteContext) (error: ImportError) = ctx.Insert("__import_errors", error)
 
+    let getImportErrors (ctx: SqliteContext) =
+        ctx.SelectAnon<ImportError>("SELECT step, action_type, error, value FROM __import_errors", [])
+    
     let addLogItem (ctx: SqliteContext) (item: LogItem) = ctx.Insert("__log", item)
 
     let addTableSchema (ctx: SqliteContext) (table: TableModel) =
@@ -580,8 +583,6 @@ module Store =
             | Some _ -> ()
             | None -> ps.AddStateValue(StateNames.pipelineVersionId, id)
 
-        
-        
         /// <summary>
         /// This is not really needed. ps.StorePath returns a non option version (the value should exist).
         /// However this does indicate if the store has been initialized.
