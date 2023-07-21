@@ -718,6 +718,8 @@ module Store =
                Value = value }
             : ImportError)
             |> addImportError ctx
+            
+        member ps.GetImportErrors() = getImportErrors ctx
 
         member ps.AddVariable(name: string, value: string, ?allowOverride: bool) =
             let n = $"%%{name}%%"
@@ -854,6 +856,11 @@ module Store =
             addLogItem ctx item
             logger.Handler item
 
+        member ps.GetLog() = getLog ctx
+        
+        member ps.GetLogErrors() = getLogErrors ctx
+        
+        member ps.GetLogWarnings() = getLogWarnings ctx
 
     /// <summary>
     /// A readonly connection to a pipeline store. This treats the store as immutable.
