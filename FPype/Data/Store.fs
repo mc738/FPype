@@ -336,6 +336,12 @@ module Store =
             []
         )
     
+    let getLogWarnings (ctx: SqliteContext) =
+        ctx.SelectAnon<LogItem>(
+            "SELECT step, action_type, message, is_error, is_warning, timestamp_utc FROM __log WHERE is_warning = TRUE;",
+            []
+        )
+   
     let addTableSchema (ctx: SqliteContext) (table: TableModel) =
         let schema = table.GetSchemaJson()
         use ms = new MemoryStream(schema.ToUtf8Bytes())
