@@ -1078,6 +1078,10 @@ module Store =
         member ps.BespokeSelectAndAppendRows(table: TableModel, sql, parameters) =
             table.SqliteBespokeSelect(ctx, sql, parameters) |> table.AppendRows
 
-        member ps.GetLogs() =
-
-            ()
+        member ps.GetImportErrors() = getImportErrors ctx
+        
+        member ps.GetLog() = getLog ctx
+        
+        member ps.GetLogErrors() = getLogErrors ctx
+        
+        member ps.GetLogWarnings() = getLogWarnings ctx
