@@ -5,8 +5,6 @@ open FPype.Data
 open FPype.Data.Store
 open FPype.Scripting.Core
 open FsToolbox.Core
-open Microsoft.VisualBasic
-open Microsoft.VisualBasic.CompilerServices
 
 // Start server should
 // 1. Create the message ctxs
@@ -51,7 +49,7 @@ module Server =
                     TableIterators = ss.TableIterators.Add(ti.Id, ti.Next()) }
             | None -> ss
     *)
-    
+
     let readMessage (stream: NamedPipeServerStream) =
         try
             let headerBuffer: byte array = Array.zeroCreate 8
@@ -139,9 +137,16 @@ module Server =
                 | None -> System.String.Empty
             |> IPC.ResponseMessage.String
         | IPC.RequestMessage.AddArtifact request ->
-            // TODO what if error?
-            store.AddArtifact(request.Name, request.Bucket, request.Type, Conversions.fromBase64 request.Base64Data)
-            IPC.ResponseMessage.Acknowledge
+            match
+                store.TryAddArtifact(
+                    request.Name,
+                    request.Bucket,
+                    request.Type,
+                    Conversions.fromBase64 request.Base64Data
+                )
+            with
+            | Ok _ -> IPC.ResponseMessage.Acknowledge
+            | Error e -> IPC.ResponseMessage.Error e
         | IPC.RequestMessage.GetArtifact request ->
             store.GetArtifact(request.Name)
             |> function
@@ -213,7 +218,7 @@ module Server =
         // NOTE - need a timeout?
         stream.WaitForConnection()
 
-        let rec run ((*state: ServerState*)) =
+        let rec run ( (*state: ServerState*) ) =
             try
                 match stream.IsConnected with
                 | true ->
@@ -246,11 +251,11 @@ module Server =
                             | IPC.RequestMessage.IteratorBreak ->
                                 let newState = state.BreakTableIterator ""
                                 failwith "todo"
-                            *)  
+                            *)
                             | _ -> handleRequest (*state*) store req |> sendResponse stream)
 
                     match cont, stream.IsConnected with
-                    | Ok true, true -> run ((*state*))
+                    | Ok true, true -> run ( (*state*) )
                     | Ok false, _
                     | _, false ->
                         printfn "Server complete. closing."
@@ -264,4 +269,4 @@ module Server =
             with ex ->
                 Error $"Server error - {ex}"
 
-        run ((*ServerState.Create()*))
+        run ( (*ServerState.Create()*) )
