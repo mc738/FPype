@@ -229,33 +229,10 @@ module Server =
                         |> Result.bind (fun req ->
                             match req with
                             | IPC.RequestMessage.Close -> Ok false
-                            (*
-                            | IPC.RequestMessage.SelectRows ->
-                                // Special handling for select rows -
-                                // * Add new iterator (if required)
-
-                                failwith "todo"
-                            | IPC.RequestMessage.SelectBespokeRows ->
-                                // Special handling for select rows -
-                                // * Add new iterator (if required)
-
-                                failwith "todo"
-                            
-                            | IPC.RequestMessage.IteratorNext ->
-                                // Special handling for next
-                                // push iterator forwards by one
-                                let newState = state.ProgressTableIterator ""
-
-
-                                failwith "todo"
-                            | IPC.RequestMessage.IteratorBreak ->
-                                let newState = state.BreakTableIterator ""
-                                failwith "todo"
-                            *)
-                            | _ -> handleRequest (*state*) store req |> sendResponse stream)
+                            | _ -> handleRequest store req |> sendResponse stream)
 
                     match cont, stream.IsConnected with
-                    | Ok true, true -> run ( (*state*) )
+                    | Ok true, true -> run ()
                     | Ok false, _
                     | _, false ->
                         printfn "Server complete. closing."
