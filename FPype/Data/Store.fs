@@ -189,7 +189,6 @@ module Store =
           Bucket: string
           Type: string }
 
-
     type Resource =
         { Name: string
           Type: string
@@ -269,8 +268,12 @@ module Store =
         ctx.SelectAnon<Artifact>("SELECT name, bucket, type, data FROM __artifacts WHERE bucket = @0;", [ box name ])
 
     let listArtifacts (ctx: SqliteContext) =
-        ctx.SelectAnon<ArtifactListItem>("SELECT name, bucket, type FROM __artifacts;", []);
-    
+        ctx.SelectAnon<ArtifactListItem>("SELECT name, bucket, type FROM __artifacts;", [])
+
+    let artifactExists (ctx: SqliteContext) (name: string) =
+        ctx.SelectSingleAnon<ArtifactListItem>("SELECT name, bucket, type FROM __artifacts WHERE name = @0;", [ name ])
+        |> Option.isSome
+
     let addResource (ctx: SqliteContext) (name: string) (resourceType: string) (data: byte array) =
         use ms = new MemoryStream(data)
         let hash = ms.GetSHA256Hash()
