@@ -184,6 +184,12 @@ module Store =
           Type: string
           Data: BlobField }
 
+    type ArtifactListItem =
+        { Name: string
+          Bucket: string
+          Type: string }
+
+
     type Resource =
         { Name: string
           Type: string
@@ -335,13 +341,13 @@ module Store =
             "SELECT step, action_type, message, is_error, is_warning, timestamp_utc FROM __log WHERE is_error = TRUE;",
             []
         )
-    
+
     let getLogWarnings (ctx: SqliteContext) =
         ctx.SelectAnon<LogItem>(
             "SELECT step, action_type, message, is_error, is_warning, timestamp_utc FROM __log WHERE is_warning = TRUE;",
             []
         )
-   
+
     let addTableSchema (ctx: SqliteContext) (table: TableModel) =
         let schema = table.GetSchemaJson()
         use ms = new MemoryStream(schema.ToUtf8Bytes())
@@ -718,7 +724,7 @@ module Store =
                Value = value }
             : ImportError)
             |> addImportError ctx
-            
+
         member ps.GetImportErrors() = getImportErrors ctx
 
         member ps.AddVariable(name: string, value: string, ?allowOverride: bool) =
@@ -857,9 +863,9 @@ module Store =
             logger.Handler item
 
         member ps.GetLog() = getLog ctx
-        
+
         member ps.GetLogErrors() = getLogErrors ctx
-        
+
         member ps.GetLogWarnings() = getLogWarnings ctx
 
     /// <summary>
@@ -1079,9 +1085,9 @@ module Store =
             table.SqliteBespokeSelect(ctx, sql, parameters) |> table.AppendRows
 
         member ps.GetImportErrors() = getImportErrors ctx
-        
+
         member ps.GetLog() = getLog ctx
-        
+
         member ps.GetLogErrors() = getLogErrors ctx
-        
+
         member ps.GetLogWarnings() = getLogWarnings ctx
