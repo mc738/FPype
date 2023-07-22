@@ -467,7 +467,7 @@ module Core =
                 | AddDataSource _ -> 15uy
                 | GetDataSource _ -> 16uy
                 | AddArtifact _ -> 17uy
-                // TODO Add TryAddArtifact? OR AddArtifact is effectively handled as TryAddArtifact under the hood.
+                // NOTE Internally this uses TryGetArtifact to handle errors with trying to add an artifact with the same name.
                 | GetArtifact _ -> 18uy
                 | GetArtifactBucket _ -> 19uy
                 | AddResource _ -> 20uy
