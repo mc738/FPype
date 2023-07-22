@@ -691,6 +691,19 @@ module Store =
             : Artifact)
             |> addArtifact ctx
 
+        /// <summary>
+        /// Try and add a artifact to the store.
+        /// This will check for a pre existing artifact with the same name first.
+        /// </summary>
+        /// <param name="name">The artifact name.</param>
+        /// <param name="bucket">The artifact bucket.</param>
+        /// <param name="artifactType">The type of artifact.</param>
+        /// <param name="data">The raw artifact data.</param>
+        member ps.TryAddArtifact(name, bucket, artifactType, data: byte array) =
+            match artifactExists ctx name with
+            | true -> Error $"Artifact `{name}` already exists"
+            | false -> ps.AddArtifact(name, bucket, artifactType, data) |> Ok
+
         member ps.GetArtifact(name) = getArtifact ctx name
 
         member ps.GetArtifactBucket(name) = getArtifactBucket ctx name
