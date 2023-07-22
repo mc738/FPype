@@ -694,6 +694,7 @@ module Store =
         /// <summary>
         /// Try and add a artifact to the store.
         /// This will check for a pre existing artifact with the same name first.
+        /// Going forwards (22/07/23) it is recommended to use this over AddArtifact for general use.
         /// </summary>
         /// <param name="name">The artifact name.</param>
         /// <param name="bucket">The artifact bucket.</param>

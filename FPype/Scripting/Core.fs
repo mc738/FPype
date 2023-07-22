@@ -232,23 +232,10 @@ module Core =
                     fn rows
                     run (i + settings.ChunkSize)
 
-            run (0)
-
-
-
-
-
-    // Notes
-    //
-    // Need to handle 2 types of response (?):
-    // Fixed length (with a length value)
-    // Streams (?) (with length value -1 - send data until 0uy reached)
+            run 0
 
     [<RequireQualifiedAccess>]
     module IPC =
-
-        open System.IO
-        open System.IO.Pipes
 
         let deserialize<'T> (data: byte array) =
             try
@@ -420,12 +407,12 @@ module Core =
                         // Get query
                         match data.Length >= 4 with
                         | true ->
-                            let (qlb, tail) = data |> Array.splitAt 4
+                            let qlb, tail = data |> Array.splitAt 4
                             let qLen = BitConverter.ToInt32 qlb
 
                             match tail.Length >= qLen with
                             | true ->
-                                let (qb, tail) = tail |> Array.splitAt qLen
+                                let qb, tail = tail |> Array.splitAt qLen
 
                                 Ok(table, Encoding.UTF8.GetString qb, tail)
                             | false -> Error "Unable to deserialize query: data too short"
@@ -435,7 +422,7 @@ module Core =
 
                         match data.Length >= 4 with
                         | true ->
-                            let (plb, tail) = data |> Array.splitAt 4
+                            let plb, tail = data |> Array.splitAt 4
                             let pCount = BitConverter.ToInt32 plb
 
                             let rec handler (acc, i, d) =
@@ -480,6 +467,7 @@ module Core =
                 | AddDataSource _ -> 15uy
                 | GetDataSource _ -> 16uy
                 | AddArtifact _ -> 17uy
+                // TODO Add TryAddArtifact? OR AddArtifact is effectively handled as TryAddArtifact under the hood.
                 | GetArtifact _ -> 18uy
                 | GetArtifactBucket _ -> 19uy
                 | AddResource _ -> 20uy
@@ -710,6 +698,7 @@ module Core =
             | Bool of Value: bool
             | Rows of Rows: TableRow list
             | Close
+            | Error of Message: string
 
             static member FromMessage(message: Message) =
                 match message.Header.MessageTypeByte with
@@ -733,12 +722,13 @@ module Core =
                             | true ->
                                 match TableRow.TryDeserialize(d) with
                                 | Ok(tr, tail) -> handle (acc @ [ tr ], i + 1, tail)
-                                | Error e -> Error e
-                            | false -> Ok acc
+                                | Result.Error e -> Result.Error e
+                            | false -> Result.Ok acc
 
                         handle ([], 0, d) |> Result.map ResponseMessage.Rows
-                    | false -> Error "Data length is too short"
-                | _ -> Error $"Unknown message type ({message})"
+                    | false -> Result.Error "Data length is too short"
+                | 255uy -> message.Body |> Encoding.UTF8.GetString |> ResponseMessage.Error |> Ok
+                | _ -> Result.Error $"Unknown message type ({message})"
 
             member rm.GetMessageTypeByte() =
                 match rm with
@@ -749,6 +739,7 @@ module Core =
                 | String _ -> 4uy
                 | Bool _ -> 5uy
                 | Rows _ -> 6uy
+                | Error _ -> 255uy
 
             member rm.ToMessage() =
                 let mbt = rm.GetMessageTypeByte()
@@ -764,5 +755,6 @@ module Core =
                     [| yield! rows.Length |> BitConverter.GetBytes
                        yield! rows |> List.map (fun r -> r.Serialize()) |> Array.concat |]
                     |> fun d -> Message.Create(d, mbt)
+                | Error value -> Message.Create(value, mbt)
 
             member rm.Serialize() = rm.ToMessage().Serialize()
