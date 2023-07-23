@@ -283,7 +283,14 @@ module Store =
 
     let listResources (ctx: SqliteContext) =
         ctx.SelectAnon<ResourceListItem>("SELECT name, type, data, hash FROM __resources;", [])
-    
+
+    let resourceExists (ctx: SqliteContext) (name: string) =
+        ctx.SelectSingleAnon<ResourceListItem>(
+            "SELECT name, type, data, hash FROM __resources WHERE name = @0;",
+            [ box name ]
+        )
+        |> Option.isSome
+
     let deleteCacheItem (ctx: SqliteContext) (key: string) =
         ctx.ExecuteVerbatimNonQueryAnon("DELETE FROM __cache WHERE item_key = @0;", [ key ])
         |> ignore
@@ -706,11 +713,11 @@ module Store =
         member ps.GetArtifactBucket(name) = getArtifactBucket ctx name
 
         member ps.ListArtifacts() = listArtifacts ctx
-        
+
         member ps.AddResource(name, resourceType, data: byte array) = addResource ctx name resourceType data
-        
+
         member ps.ListResources() = listResources ctx
-        
+
         member ps.GetResourceEntity(name) = getResource ctx name
 
         member ps.GetResource(name) =
