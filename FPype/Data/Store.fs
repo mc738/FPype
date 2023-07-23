@@ -195,6 +195,11 @@ module Store =
           Data: BlobField
           Hash: string }
 
+    type ResourceListItem =
+        { Name: string
+          Type: string
+          Hash: string }
+
     type CacheItem =
         { ItemKey: string
           ItemValue: BlobField
@@ -710,7 +715,7 @@ module Store =
         member ps.GetArtifactBucket(name) = getArtifactBucket ctx name
 
         member ps.ListArtifacts() = listArtifacts ctx
-        
+
         member ps.AddResource(name, resourceType, data: byte array) = addResource ctx name resourceType data
 
         member ps.GetResourceEntity(name) = getResource ctx name
@@ -1034,9 +1039,9 @@ module Store =
         member ps.GetArtifactBucket(name) = getArtifactBucket ctx name
 
         member ps.ListArtifacts() = listArtifacts ctx
-        
+
         member ps.ArtifactExists(name) = artifactExists ctx name
-        
+
         member ps.GetResourceEntity(name) = getResource ctx name
 
         member ps.GetResource(name) =
