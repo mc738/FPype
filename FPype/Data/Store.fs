@@ -706,9 +706,11 @@ module Store =
         member ps.GetArtifactBucket(name) = getArtifactBucket ctx name
 
         member ps.ListArtifacts() = listArtifacts ctx
-
+        
         member ps.AddResource(name, resourceType, data: byte array) = addResource ctx name resourceType data
-
+        
+        member ps.ListResources() = listResources ctx
+        
         member ps.GetResourceEntity(name) = getResource ctx name
 
         member ps.GetResource(name) =
