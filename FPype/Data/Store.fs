@@ -1035,6 +1035,8 @@ module Store =
 
         member ps.ListArtifacts() = listArtifacts ctx
         
+        member ps.ArtifactExists(name) = artifactExists ctx name
+        
         member ps.GetResourceEntity(name) = getResource ctx name
 
         member ps.GetResource(name) =
