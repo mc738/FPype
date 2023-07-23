@@ -147,18 +147,6 @@ module Store =
 
         let pipelineVersionId = "__pipeline_version_id"
 
-    (*
-        let contextTableSql =
-            """
-        CREATE TABLE __log (
-            step TEXT NOT NULL,
-            message TEXT NOT NULL,
-            is_error INTEGER NOT NULL,
-            is_warning INTEGER NOT NULL,
-            timestamp_utc TEXT NOT NULL
-        );
-        """
-        *)
     let initialize (ctx: SqliteContext) =
         [ Internal.stateTableSql
           Internal.runStateTableSql
