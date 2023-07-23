@@ -281,6 +281,9 @@ module Store =
     let getResource (ctx: SqliteContext) (name: string) =
         ctx.SelectSingleAnon<Resource>("SELECT name, type, data, hash FROM __resources WHERE name = @0;", [ box name ])
 
+    let listResources (ctx: SqliteContext) =
+        ctx.SelectAnon<ResourceListItem>("SELECT name, type, data, hash FROM __resources;", [])
+    
     let deleteCacheItem (ctx: SqliteContext) (key: string) =
         ctx.ExecuteVerbatimNonQueryAnon("DELETE FROM __cache WHERE item_key = @0;", [ key ])
         |> ignore
