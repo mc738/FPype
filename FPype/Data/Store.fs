@@ -732,6 +732,8 @@ module Store =
             | false -> ps.AddResource(name, resourceType, data) |> Ok
         
         member ps.ListResources() = listResources ctx
+        
+        member ps.ResourceExists(name) = resourceExists ctx name
 
         member ps.GetResourceEntity(name) = getResource ctx name
 
