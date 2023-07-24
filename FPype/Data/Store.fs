@@ -716,6 +716,19 @@ module Store =
 
         member ps.AddResource(name, resourceType, data: byte array) = addResource ctx name resourceType data
 
+        /// <summary>
+        /// Try and add a resource to the store.
+        /// This will check for a pre existing resource with the same name first.
+        /// Going forwards (22/07/23) it is recommended to use this over AddResource for general use.
+        /// </summary>
+        /// <param name="name">The resource name.</param>
+        /// <param name="resourceType">The resource type.</param>
+        /// <param name="data">The raw resource data.</param>
+        member ps.TryAddResource(name, resourceType, data: byte array) =
+            match resourceExists ctx name with
+            | true -> Error $"Resource `{name}` already exists"
+            | false -> ps.AddResource(name, resourceType, data) |> Ok
+        
         member ps.ListResources() = listResources ctx
 
         member ps.GetResourceEntity(name) = getResource ctx name
