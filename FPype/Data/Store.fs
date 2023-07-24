@@ -1060,6 +1060,8 @@ module Store =
         member ps.ArtifactExists(name) = artifactExists ctx name
 
         member ps.GetResourceEntity(name) = getResource ctx name
+        
+        member ps.ListResources() = listResources ctx
 
         member ps.GetResource(name) =
             getResource ctx name |> Option.map (fun r -> r.Data.ToBytes())
