@@ -158,9 +158,9 @@ module Server =
             |> fun ab -> (Models.ArtifactBucket.FromEntities ab).Serialize()
             |> IPC.ResponseMessage.String
         | IPC.RequestMessage.AddResource request ->
-            // TODO what if error?
-            store.AddResource(request.Name, request.Type, Conversions.fromBase64 request.Base64Data)
-            IPC.ResponseMessage.Acknowledge
+            match store.TryAddResource(request.Name, request.Type, Conversions.fromBase64 request.Base64Data) with
+            | Ok _ -> IPC.ResponseMessage.Acknowledge
+            | Error e -> IPC.ResponseMessage.Error e
         | IPC.RequestMessage.GetResource request ->
             store.GetResourceEntity(request.Name)
             |> function
