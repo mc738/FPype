@@ -1062,6 +1062,8 @@ module Store =
         member ps.GetResourceEntity(name) = getResource ctx name
         
         member ps.ListResources() = listResources ctx
+        
+        member ps.ResourceExists(name) = resourceExists ctx name
 
         member ps.GetResource(name) =
             getResource ctx name |> Option.map (fun r -> r.Data.ToBytes())
