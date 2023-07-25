@@ -53,6 +53,7 @@ module FSharp =
             |> Client.sendRequest ctx
             |> Result.bind (function
                 | IPC.ResponseMessage.Acknowledge -> Ok()
+                | IPC.ResponseMessage.Error e -> Error $"Error while adding resource: `{e}`"
                 | r -> Error $"Invalid response type `{r}`.")
 
         member _.UpdateStateValue(key, value) =
