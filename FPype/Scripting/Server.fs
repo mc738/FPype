@@ -76,7 +76,7 @@ module Server =
         with ex ->
             Error $"Unhandled exception while writing response: {ex.Message}"
 
-    let handleRequest (*(state: ServerState)*) (store: PipelineStore) (request: IPC.RequestMessage) =
+    let handleRequest (store: PipelineStore) (request: IPC.RequestMessage) =
         match request with
         | IPC.RequestMessage.RawMessage body -> failwith "todo"
         | IPC.RequestMessage.AddStateValue request ->
