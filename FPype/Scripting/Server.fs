@@ -80,8 +80,9 @@ module Server =
         match request with
         | IPC.RequestMessage.RawMessage body -> failwith "todo"
         | IPC.RequestMessage.AddStateValue request ->
-            store.AddStateValue(request.Key, request.Value)
-            IPC.ResponseMessage.Acknowledge
+            match store.TryAddStateValue(request.Key, request.Value) with
+            | Ok _ -> IPC.ResponseMessage.Acknowledge
+            | Error e -> IPC.ResponseMessage.Error e
         | IPC.RequestMessage.UpdateStateValue request ->
             store.UpdateStateValue(request.Key, request.Value) |> ignore
             IPC.ResponseMessage.Acknowledge
