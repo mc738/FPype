@@ -810,6 +810,9 @@ module Store =
               | None -> () ]
             |> path.ReplaceMultiple
 
+        
+        member ps.GetTableListings() = getTableListing ctx
+        
         member ps.CreateTable(name, columns) =
             let model =
                 ({ Name = name
