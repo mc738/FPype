@@ -813,6 +813,18 @@ module Store =
         
         member ps.GetTableListings() = getTableListing ctx
         
+        member ps.GetTableSchema(name: string) =
+            getTableSchema ctx name
+            |> Option.map (fun ts ->
+
+                try
+                    let json = ts.SchemaBlob.ToBytes() |> Encoding.UTF8.GetString |> JsonDocument.Parse
+
+                    Models.TableSchema.FromJson <| json.RootElement
+                with ex ->
+                    Error $"Failed to deserialize table schema. Error: {ex.Message}")
+            |> Option.defaultWith (fun _ -> Error $"Table `{name}` not found")
+        
         member ps.CreateTable(name, columns) =
             let model =
                 ({ Name = name
