@@ -456,9 +456,11 @@ module Store =
         member ps.AddStateValue(name, value) =
             addStateValue ctx { Name = name; Value = value }
 
-        member ps.TryAddState(name, value) = ()
-            //match get
-        
+        member ps.TryAddStateValue(name, value) =
+            match stateValueExist ctx name with
+            | true -> Error $"State value `{name}` already exists"
+            | false -> ps.AddStateValue(name, value) |> Ok
+            
         member ps.UpdateStateValue(name, value) = updateStateValue ctx name value
 
         member ps.GetState() = getState ctx
@@ -466,10 +468,7 @@ module Store =
         member ps.GetStateValue(key) =
             getStateValue ctx key |> Option.map (fun sv -> sv.Value)
 
-        member ps.StateValueExists(key) =
-            match ps.GetStateValue key with
-            | Some _ -> true
-            | None -> false
+        member ps.StateValueExists(key) = stateValueExist ctx key
 
         member ps.GetStateValueAsValue(key, baseType: BaseType, ?format: string) =
             ps.GetStateValue key
