@@ -235,6 +235,8 @@ module Store =
     let getStateValue (ctx: SqliteContext) (key: string) =
         ctx.SelectSingleAnon<StateValue>("SELECT * FROM __state WHERE name = @0", [ key ])
 
+    let stateValueExist (ctx: SqliteContext) (key: string) =  getStateValue ctx key |> Option.isSome
+    
     let addDataSource (ctx: SqliteContext) (source: DataSource) = ctx.Insert("__data_sources", source)
 
     let getDataSource (ctx: SqliteContext) (name: string) =
@@ -454,6 +456,9 @@ module Store =
         member ps.AddStateValue(name, value) =
             addStateValue ctx { Name = name; Value = value }
 
+        member ps.TryAddState(name, value) = ()
+            //match get
+        
         member ps.UpdateStateValue(name, value) = updateStateValue ctx name value
 
         member ps.GetState() = getState ctx
