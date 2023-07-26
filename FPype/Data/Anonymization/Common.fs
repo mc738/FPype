@@ -2,6 +2,7 @@
 
 open System
 
+[<AutoOpen>]
 module Common =
 
     type AnonymizationContext =
