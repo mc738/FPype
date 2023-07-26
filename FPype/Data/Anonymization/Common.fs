@@ -14,6 +14,12 @@ module Common =
         member ctx.NextRandom(min, max) = ctx.RNG.Next(min, max)
 
         member ctx.NextChance(value: float) = ctx.RNG.NextDouble() <= value
+        
+    [<RequireQualifiedAccess>]
+    type IncludeType =
+        | Always
+        | Never
+        | Sometimes of Chance: float
     
     
     ()
