@@ -20,6 +20,41 @@ module Common =
         | Always
         | Never
         | Sometimes of Chance: float
+        
+    type WeightedValue<'T> = { Value: 'T; Weight: int }
+
+    type WeightedList<'T> =
+        { Items: WeightedListItem<'T> list
+          Minimum: int
+          Maximum: int }
+
+        static member Create<'T>(values: WeightedValue<'T> list) =
+            let (items, max) =
+                values
+                |> List.fold
+                    (fun (acc, prev) v ->
+                        let next = prev + v.Weight
+
+                        acc
+                        @ [ { Value = v.Value
+                              From = prev
+                              To = next } ],
+                        next)
+                    ([], 0)
+
+            { Items = items
+              Minimum = 0
+              Maximum = max }
+
+        member wvl.GetRandom(ctx: AnonymizationContext) =
+            let v =
+                ctx.NextRandom(wvl.Minimum, wvl.Maximum)
+
+            wvl.Items
+            |> List.find (fun i -> i.From <= v && v < i.To)
+            |> fun v -> v.Value
+
+    and WeightedListItem<'T> = { From: int; To: int; Value: 'T }
     
     
     ()
