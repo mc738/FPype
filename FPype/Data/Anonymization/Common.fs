@@ -3,7 +3,7 @@
 open System
 
 module Common =
-    
+
     type AnonymizationContext =
         { RNG: Random }
 
@@ -14,13 +14,13 @@ module Common =
         member ctx.NextRandom(min, max) = ctx.RNG.Next(min, max)
 
         member ctx.NextChance(value: float) = ctx.RNG.NextDouble() <= value
-        
+
     [<RequireQualifiedAccess>]
     type IncludeType =
         | Always
         | Never
         | Sometimes of Chance: float
-        
+
     type WeightedValue<'T> = { Value: 'T; Weight: int }
 
     type WeightedList<'T> =
@@ -47,15 +47,19 @@ module Common =
               Maximum = max }
 
         member wvl.GetRandom(ctx: AnonymizationContext) =
-            let v =
-                ctx.NextRandom(wvl.Minimum, wvl.Maximum)
+            let v = ctx.NextRandom(wvl.Minimum, wvl.Maximum)
 
-            wvl.Items
-            |> List.find (fun i -> i.From <= v && v < i.To)
-            |> fun v -> v.Value
+            wvl.Items |> List.find (fun i -> i.From <= v && v < i.To) |> (fun v -> v.Value)
 
     and WeightedListItem<'T> = { From: int; To: int; Value: 'T }
-    
-    
-    ()
 
+    type NonWeightedList<'T> =
+        { Values: 'T List }
+
+        static member Create(values: 'T list) = { Values = values }
+
+        member nwl.GetRandom(ctx: AnonymizationContext) =
+            nwl.Values[ctx.NextRandom(0, nwl.Values.Length)]
+
+
+    ()
