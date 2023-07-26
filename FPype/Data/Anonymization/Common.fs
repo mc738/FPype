@@ -14,6 +14,22 @@ module Common =
         member ctx.NextRandom(min, max) = ctx.RNG.Next(min, max)
 
         member ctx.NextChance(value: float) = ctx.RNG.NextDouble() <= value
+        
+        /// <summary>
+        /// Encrypts and packs a byte array with the generated salt.
+        /// The salt is prefixed to resulting array.
+        /// </summary>
+        /// <param name="data">The data to be encrypted.</param>
+        /// <param name="key">The encryption key.</param>
+        member ctx.EncryptBytesUsingAes(data: byte array, key: byte array) =
+            let salt = FsToolbox.Core.Encryption.generateSalt ()
+            
+            FsToolbox.Core.Encryption.encryptBytesAes key salt data
+            |> FsToolbox.Core.Encryption.pack
+            
+        member ctx.TryUnpackEncryptedAesBytes(data: byte array) =
+            FsToolbox.Core.Encryption.unpack data
+            
 
     [<RequireQualifiedAccess>]
     type IncludeType =

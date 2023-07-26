@@ -29,7 +29,6 @@ module Common =
             []
         |> List.rev
 
-
     [<AutoOpen>]
     module Extensions =
 
@@ -37,3 +36,4 @@ module Common =
 
             member str.ReplaceMultiple(replacements: (string * string) list) =
                 replacements |> List.fold (fun (s:string) -> s.Replace) str
+                
