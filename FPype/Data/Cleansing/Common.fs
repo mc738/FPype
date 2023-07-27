@@ -1,16 +1,17 @@
 ﻿namespace FPype.Data.Cleansing
 
-open System
-open System.Text.RegularExpressions
-
 [<AutoOpen>]
 module Common =
 
+    open System
+    open System.Text.RegularExpressions
+
     [<AutoOpen>]
     module private Internal =
-        
-        let compare (strA: string) (strB: string) = String.Equals(strA, strB, StringComparison.Ordinal)
-    
+
+        let compare (strA: string) (strB: string) =
+            String.Equals(strA, strB, StringComparison.Ordinal)
+
     [<RequireQualifiedAccess>]
     type CleansingResult =
         | Untouched of string
@@ -27,6 +28,12 @@ module Common =
         | RemoveCharacters of Characters: char list
         | StringReplace of Value: string * Replacement: string
         | RegexReplace of Pattern: string * Replacement: string
+        | ToUpper
+        | ToLower
+        | Trim
+        | TrimStart
+        | TrimEnd
+        | Insert of Position: int * Value: string
         | Bespoke of Handler: (string -> string)
 
         member ts.Handle(input: CleansingResult) =
@@ -43,8 +50,16 @@ module Common =
                             System.String.Join(System.String.Empty, str.Split(characters |> Array.ofList))
                     | StringReplace(value, replacement) -> str.Replace(value, replacement)
                     | RegexReplace(pattern, replacement) -> Regex.Replace(str, pattern, replacement)
-                    | Bespoke handler ->  handler str
-               
+                    | ToUpper -> str.ToUpper()
+                    | ToLower -> str.ToLower()
+                    | Trim -> str.Trim()
+                    | TrimStart -> str.TrimStart()
+                    | TrimEnd -> str.TrimEnd()
+                    | Insert(position, value) -> str.Insert(position, value)
+                    | Bespoke handler -> handler str
+
+
+
                 match compare str newStr with
                 | true -> input
                 | false -> CleansingResult.Modified str
