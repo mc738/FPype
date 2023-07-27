@@ -20,6 +20,7 @@
         <Compile Include="Data\Resources\Grok.fs" />
         <Compile Include="Data\Anonymization\Common.fs" />
         <Compile Include="Data\Anonymization\Names.fs" />
+        <Compile Include="Data\Cleansing\Common.fs" />
         <Compile Include="Data\Common.fs" />
         <Compile Include="Data\Models.fs" />
         <Compile Include="Data\ModelExtensions.fs" />
