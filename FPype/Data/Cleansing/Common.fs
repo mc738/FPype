@@ -1,8 +1,16 @@
 ﻿namespace FPype.Data.Cleansing
 
+open System
+open System.Text.RegularExpressions
+
 [<AutoOpen>]
 module Common =
 
+    [<AutoOpen>]
+    module private Internal =
+        
+        let compare (strA: string) (strB: string) = String.Equals(strA, strB, StringComparison.Ordinal)
+    
     [<RequireQualifiedAccess>]
     type CleansingResult =
         | Untouched of string
@@ -25,16 +33,21 @@ module Common =
             match input with
             | CleansingResult.Untouched str
             | CleansingResult.Modified str ->
-                match ts with
-                | RemoveCharacters characters ->
-                    match characters.Length with
-                    | 0 -> input
-                    
-                    
-                    CleansingResult.Modified ""
-                | StringReplace(value, replacement) -> failwith "todo"
-                | RegexReplace(pattern, replacement) -> failwith "todo"
-                | Bespoke handler -> failwith "todo"
+                let newStr =
+                    match ts with
+                    | RemoveCharacters characters ->
+                        match characters.Length with
+                        | 0 -> str
+                        | _ ->
+                            // PERFORMANCE It might not matter and needs to be tested but this could be the quickest method.
+                            System.String.Join(System.String.Empty, str.Split(characters |> Array.ofList))
+                    | StringReplace(value, replacement) -> str.Replace(value, replacement)
+                    | RegexReplace(pattern, replacement) -> Regex.Replace(str, pattern, replacement)
+                    | Bespoke handler ->  handler str
+               
+                match compare str newStr with
+                | true -> input
+                | false -> CleansingResult.Modified str
             | CleansingResult.Failure _ -> input
 
     and [<RequireQualifiedAccess>] ValidationStep =
