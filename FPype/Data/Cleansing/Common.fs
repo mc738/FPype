@@ -58,8 +58,6 @@ module Common =
                     | Insert(position, value) -> str.Insert(position, value)
                     | Bespoke handler -> handler str
 
-
-
                 match compare str newStr with
                 | true -> input
                 | false -> CleansingResult.Modified str
@@ -67,12 +65,32 @@ module Common =
 
     and [<RequireQualifiedAccess>] ValidationStep =
         | ContainsCharacters of Characters: char list
-        | Contains
+        | Contains of Value: string
         | RegexMatch of Pattern: string
         | Not of Step: ValidationStep
         | AnyOf of Steps: ValidationStep option
         | AllOf of Steps: ValidationStep option
         | Bespoke of Handler: (string -> bool)
+
+        member vs.Handle(input: CleansingResult) =
+            match input with
+            | CleansingResult.Untouched str
+            | CleansingResult.Modified str ->
+                let valid =
+                    match vs with
+                    | ContainsCharacters characters -> characters |> List.exists (fun c -> str.Contains c |> not)
+                    | Contains value -> str.Contains(value)
+                    | RegexMatch pattern -> failwith "todo"
+                    | Not step -> failwith "todo"
+                    | AnyOf steps -> failwith "todo"
+                    | AllOf steps -> failwith "todo"
+                    | Bespoke handler -> handler str
+
+                match valid with
+                | true -> input
+                | false ->
+                    CleansingResult.Failure ""
+            | CleansingResult.Failure _ -> input
 
 
     let cleanString (steps: CleansingStep) (str: string) =
