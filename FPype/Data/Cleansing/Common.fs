@@ -23,6 +23,10 @@ module Common =
         | Transform of Step: TransformationStep
         | Validate of Step: ValidationStep
 
+        member cs.Handle(input: CleansingResult) =
+            match cs with
+            | Transform ts -> ts.Handle input
+            | Validate vs -> vs.Handle input
 
     and [<RequireQualifiedAccess>] TransformationStep =
         | RemoveCharacters of Characters: char list
@@ -117,11 +121,5 @@ module Common =
                 | false -> CleansingResult.Failure ""
             | CleansingResult.Failure _ -> input
 
-
-    let cleanString (steps: CleansingStep) (str: string) =
-
-
-
-
-
-        ()
+    let cleanString (steps: CleansingStep list) (str: string) =
+        steps |> List.fold (fun r s -> s.Handle r) (CleansingResult.Untouched str)
