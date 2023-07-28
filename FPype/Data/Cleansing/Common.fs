@@ -66,6 +66,10 @@ module Common =
     and [<RequireQualifiedAccess>] ValidationStep =
         | ContainsCharacters of Characters: char list
         | Contains of Value: string
+        | ContainsLetters
+        | ContainsNumbers
+        | ContainsPunctuation
+        | ContainsWhiteSpace
         | RegexMatch of Pattern: string
         | Not of Step: ValidationStep
         | AnyOf of Steps: ValidationStep list
@@ -82,6 +86,10 @@ module Common =
                         match validation with
                         | ContainsCharacters characters -> characters |> List.exists (fun c -> str.Contains c |> not)
                         | Contains value -> str.Contains(value)
+                        | ContainsLetters -> str |> Seq.exists Char.IsLetter
+                        | ContainsNumbers -> str |> Seq.exists Char.IsNumber
+                        | ContainsPunctuation -> str |> Seq.exists Char.IsSeparator
+                        | ContainsWhiteSpace -> str |> Seq.exists Char.IsWhiteSpace
                         | RegexMatch pattern -> Regex.IsMatch(str, pattern)
                         | Not step -> handler step |> not
                         | AnyOf steps ->
