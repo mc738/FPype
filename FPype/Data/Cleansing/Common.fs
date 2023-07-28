@@ -77,15 +77,22 @@ module Common =
             | CleansingResult.Untouched str
             | CleansingResult.Modified str ->
                 let valid =
-                    match vs with
-                    | ContainsCharacters characters -> characters |> List.exists (fun c -> str.Contains c |> not)
-                    | Contains value -> str.Contains(value)
-                    | RegexMatch pattern -> failwith "todo"
-                    | Not step -> failwith "todo"
-                    | AnyOf steps -> failwith "todo"
-                    | AllOf steps -> failwith "todo"
-                    | Bespoke handler -> handler str
-
+                    let rec handler (validation: ValidationStep) =
+                        
+                        match validation with
+                        | ContainsCharacters characters -> characters |> List.exists (fun c -> str.Contains c |> not)
+                        | Contains value -> str.Contains(value)
+                        | RegexMatch pattern -> failwith "todo"
+                        | Not step ->
+                            
+                            
+                            failwith "todo"
+                        | AnyOf steps -> failwith "todo"
+                        | AllOf steps -> failwith "todo"
+                        | Bespoke handler -> handler str
+                    
+                    handler vs    
+                    
                 match valid with
                 | true -> input
                 | false ->
