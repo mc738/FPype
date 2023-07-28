@@ -68,8 +68,8 @@ module Common =
         | Contains of Value: string
         | RegexMatch of Pattern: string
         | Not of Step: ValidationStep
-        | AnyOf of Steps: ValidationStep option
-        | AllOf of Steps: ValidationStep option
+        | AnyOf of Steps: ValidationStep list
+        | AllOf of Steps: ValidationStep list
         | Bespoke of Handler: (string -> bool)
 
         member vs.Handle(input: CleansingResult) =
@@ -78,25 +78,35 @@ module Common =
             | CleansingResult.Modified str ->
                 let valid =
                     let rec handler (validation: ValidationStep) =
-                        
+
                         match validation with
                         | ContainsCharacters characters -> characters |> List.exists (fun c -> str.Contains c |> not)
                         | Contains value -> str.Contains(value)
                         | RegexMatch pattern -> failwith "todo"
-                        | Not step ->
-                            
-                            
-                            failwith "todo"
-                        | AnyOf steps -> failwith "todo"
-                        | AllOf steps -> failwith "todo"
+                        | Not step -> handler step |> not
+                        | AnyOf steps ->
+                            steps
+                            |> List.fold
+                                (fun r s ->
+                                    match r with
+                                    | true -> true
+                                    | false -> handler s)
+                                false
+                        | AllOf steps ->
+                            steps
+                            |> List.fold
+                                (fun r s ->
+                                    match r with
+                                    | true -> handler s
+                                    | false -> false)
+                                true
                         | Bespoke handler -> handler str
-                    
-                    handler vs    
-                    
+
+                    handler vs
+
                 match valid with
                 | true -> input
-                | false ->
-                    CleansingResult.Failure ""
+                | false -> CleansingResult.Failure ""
             | CleansingResult.Failure _ -> input
 
 
