@@ -82,7 +82,7 @@ module Common =
                         match validation with
                         | ContainsCharacters characters -> characters |> List.exists (fun c -> str.Contains c |> not)
                         | Contains value -> str.Contains(value)
-                        | RegexMatch pattern -> failwith "todo"
+                        | RegexMatch pattern -> Regex.IsMatch(str, pattern)
                         | Not step -> handler step |> not
                         | AnyOf steps ->
                             steps
