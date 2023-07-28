@@ -74,6 +74,7 @@ module Common =
         | ContainsNumbers
         | ContainsPunctuation
         | ContainsWhiteSpace
+        | IsNullOrWhiteSpace
         | IsNotNullOrWhiteSpace
         | Length of Minimum: int option * Maximum: int option
         | RegexMatch of Pattern: string
@@ -102,6 +103,7 @@ module Common =
                             | Some minV, None -> str.Length > minV
                             | None, Some maxV -> str.Length <= maxV
                             | None, None -> true
+                        | IsNullOrWhiteSpace -> String.IsNullOrWhiteSpace str
                         | IsNotNullOrWhiteSpace -> String.IsNullOrWhiteSpace str |> not
                         | RegexMatch pattern -> Regex.IsMatch(str, pattern)
                         | Not step -> handler step |> not
