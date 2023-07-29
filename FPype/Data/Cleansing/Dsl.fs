@@ -32,3 +32,13 @@ module Dsl =
 
     let doesNotContainNumbers =
         ValidationStep.ContainsNumbers |> ValidationStep.Not |> validate
+
+    let containsPunctuation = ValidationStep.ContainsPunctuation |> validate
+
+    let doesNotContainPunctuation =
+        ValidationStep.ContainsPunctuation |> ValidationStep.Not |> validate
+
+    let containsWhiteSpace = ValidationStep.ContainsWhiteSpace |> validate
+
+    let doesNotContainWhiteSpace =
+        ValidationStep.ContainsWhiteSpace |> ValidationStep.Not |> validate
