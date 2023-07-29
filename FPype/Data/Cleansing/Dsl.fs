@@ -42,3 +42,12 @@ module Dsl =
 
     let doesNotContainWhiteSpace =
         ValidationStep.ContainsWhiteSpace |> ValidationStep.Not |> validate
+
+    let isLength (minimum: int) (maximum: int) =
+        ValidationStep.Length(Some minimum, Some maximum) |> validate
+
+    let isMinimumLength (minimum: int) =
+        ValidationStep.Length(Some minimum, None) |> validate
+
+    let isMaximumLength (maximum: int) =
+        ValidationStep.Length(None, Some maximum) |> validate
