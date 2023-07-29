@@ -51,3 +51,9 @@ module Dsl =
 
     let isMaximumLength (maximum: int) =
         ValidationStep.Length(None, Some maximum) |> validate
+
+    let isRegexMatch (pattern: string) =
+        ValidationStep.RegexMatch pattern |> validate
+
+    let isNotRegexMatch (pattern: string) =
+        ValidationStep.RegexMatch pattern |> ValidationStep.Not |> validate
