@@ -96,6 +96,7 @@ module Actions =
             let deserialize (stepName: string) (json: JsonElement) =
                 match
                     Json.tryGetStringProperty "path" json,
+                    // TODO - should this be collectionName?
                     Json.tryGetStringProperty "name" json,
                     Json.tryGetIntProperty "size" json
                 with
