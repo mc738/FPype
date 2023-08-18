@@ -92,7 +92,7 @@ module Objects =
 
                 insertObjectSinkItem t id rawObject
 
-                metadata |> Map.iter (insertMetadata ctx id)
+                metadata |> Map.iter (Operations.insertMetadata ctx id)
 
                 Ok())
             |> Result.mapError (fun e ->
