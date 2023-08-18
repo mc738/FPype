@@ -88,7 +88,7 @@ module Extract =
             |> (fun (s, e) -> { Rows = s; Errors = e })
 
         let parseGrokPattern (str: string) =
-            match str.StartsWith('#') || String.IsNullOrWhiteSpace(str) with
+            match str.StartsWith('#') || str.IsNullOrWhiteSpace() with
             | true -> None
             | false ->
                 let i = str.IndexOf(' ')
