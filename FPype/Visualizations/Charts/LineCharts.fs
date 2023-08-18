@@ -134,6 +134,7 @@ module LineCharts =
             | Some n, Some vi, Ok color ->
                 { Name = n
                   ValueIndex = vi
+                  // TODO why hard coded??
                   StrokeWidth = 0.3
                   Color = color
                   LineType =
