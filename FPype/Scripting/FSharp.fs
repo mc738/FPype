@@ -3,6 +3,7 @@
 open FPype.Data
 open FPype.Scripting.Core
 open FsToolbox.Core
+open FsToolbox.Extensions.Strings
 
 [<RequireQualifiedAccess>]
 module FSharp =
@@ -15,9 +16,9 @@ module FSharp =
     module private Helpers =
 
         let deserializeOption<'T> (fn: string -> Result<'T, string>) (str: string) =
-            match String.IsNullOrWhiteSpace(str) with
-            | true -> Ok None
-            | false -> fn str |> Result.map Some
+            match str.IsNotNullOrWhiteSpace() with
+            | true -> fn str |> Result.map Some
+            | false ->  Ok None
 
     /// <summary>
     /// The script context.
