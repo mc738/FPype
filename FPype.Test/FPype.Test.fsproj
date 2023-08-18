@@ -7,7 +7,6 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <Compile Include="Actions.fs" />
         <Compile Include="Program.fs" />
     </ItemGroup>
 
@@ -16,10 +15,6 @@
         <Link>.dockerignore</Link>
       </Content>
       <Content Include="Dockerfile" />
-    </ItemGroup>
-
-    <ItemGroup>
-      <PackageReference Include="fstoolbox" Version="0.6.0" />
     </ItemGroup>
 
     <ItemGroup>
