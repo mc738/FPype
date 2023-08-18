@@ -3,6 +3,7 @@
 module Queries =
 
     open System
+    open FsToolbox.Extensions
 
     type QueryFragment =
         { Sql: string
@@ -145,7 +146,7 @@ module Queries =
 
             let concat (wrap: bool) (prefix: string option) (values: string list) =
                 values
-                |> List.filter (fun s -> String.IsNullOrWhiteSpace s |> not)
+                |> List.filter (fun s -> s.IsNotNullOrWhiteSpace())
                 |> String.concat " "
                 |> fun r ->
                     match wrap, prefix with
