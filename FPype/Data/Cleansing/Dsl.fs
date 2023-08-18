@@ -1,4 +1,4 @@
-﻿module FPype.Data.Cleansing
+﻿namespace FPype.Data.Cleansing
 
 open FPype.Data.Cleansing
 
