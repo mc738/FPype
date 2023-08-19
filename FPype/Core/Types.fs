@@ -134,6 +134,10 @@ module Types =
         /// </summary>
         | Option of BaseType
 
+        /// <summary>
+        /// Try and create a BaseType from a .net type name. For example System.String.
+        /// </summary>
+        /// <param name="name">The type name.</param>
         static member TryFromName(name: String) =
             match name with
             | t when t = TypeHelpers.boolName -> Ok BaseType.Boolean
@@ -156,6 +160,10 @@ module Types =
                 | Error e -> Error e
             | _ -> Error $"Type `{name}` not supported."
 
+        /// <summary>
+        /// Try from a .net type.
+        /// </summary>
+        /// <param name="typeInfo">The type.</param>
         static member TryFromType(typeInfo: Type) = BaseType.TryFromName(typeInfo.FullName)
 
         static member FromName(name: string) =
