@@ -145,25 +145,6 @@ module Types =
                 | true -> Option bt
                 | false -> bt)
 
-
-        (*
-        static member GetDataTypes() =
-            seq {
-                DataType("bool", "Boolean")
-                DataType("byte", "Byte")
-                DataType("char", "Character")
-                DataType("datetime", "Datetime")
-                DataType("decimal", "Decimal")
-                DataType("double", "Double")
-                DataType("float", "Float")
-                DataType("int", "Integer")
-                DataType("short", "Short")
-                DataType("long", "Long")
-                DataType("string", "String")
-                DataType("uuid", "Uuid")
-            }
-        *)
-
         static member FromId(id: string, optional: bool) =
             match id with
             | "bool" -> Some BaseType.Boolean
