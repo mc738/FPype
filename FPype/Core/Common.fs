@@ -5,6 +5,10 @@ module Common =
 
     open System
 
+    /// <summary>
+    /// Flatten a results list to a single result.
+    /// </summary>
+    /// <param name="r">The list of results</param>
     let flattenResultList (r: Result<'a, string> list) =
         r
         |> List.fold
