@@ -70,28 +70,68 @@ module Types =
                 .Match(name, "(?<=Microsoft.FSharp.Core.FSharpOption`1\[\[).+?(?=\,)")
                 .Value
 
-
         let convert (value: obj) (target: Type) =
             try
                 Convert.ChangeType(value, target) |> Ok
             with ex ->
                 Error ex.Message
 
+    /// <summary>
     /// An internal DU for representing base types.
+    /// </summary>
     [<RequireQualifiedAccess>]
     type BaseType =
+        /// <summary>
+        /// A boolean type. Equivalent to System.Boolean.
+        /// </summary>
         | Boolean
+        /// <summary>
+        /// A byte type. Equivalent to System.Byte.
+        /// </summary>
         | Byte
+        /// <summary>
+        /// A char type. Equivalent to System.Char.
+        /// </summary>
         | Char
+        /// <summary>
+        /// A decimal type. Equivalent to System.Decimal.
+        /// </summary>
         | Decimal
+        /// <summary>
+        /// A double type. Equivalent to System.Double.
+        /// </summary>
         | Double
+        /// <summary>
+        /// A float type. Equivalent to System.Single.
+        /// </summary>
         | Float
+        /// <summary>
+        /// A int type. Equivalent to System.Int32.
+        /// </summary>
         | Int
+        /// <summary>
+        /// A short int type. Equivalent to System.Int16.
+        /// </summary>
         | Short
+        /// <summary>
+        /// A long int type. Equivalent to System.Int64.
+        /// </summary>
         | Long
+        /// <summary>
+        /// A string type. Equivalent to System.String.
+        /// </summary>
         | String
+        /// <summary>
+        /// A datetime type. Equivalent to System.DateTime.
+        /// </summary>
         | DateTime
+        /// <summary>
+        /// A guid type. Equivalent to System.Guid.
+        /// </summary>
         | Guid
+        /// <summary>
+        /// An optional type.
+        /// </summary>
         | Option of BaseType
 
         static member TryFromName(name: String) =
