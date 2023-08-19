@@ -184,31 +184,6 @@ module Types =
                 | true -> BaseType.Option bt
                 | false -> bt)
 
-        (*   
-        static member FromDataType(dataType: DataType, optional: bool) =
-            BaseType.FromId(dataType.Id, optional)
-        *)
-
-        (*    
-        member bt.ToDateType() =
-            let rec get (t: BaseType) =
-                match t with
-                | BaseType.Boolean -> DataType("bool", "Boolean")
-                | BaseType.Byte ->  DataType("byte", "Byte")
-                | BaseType.Char -> DataType("char", "Character")
-                | BaseType.DateTime -> DataType("datetime", "Datetime")
-                | BaseType.Decimal -> DataType("decimal", "Decimal")
-                | BaseType.Double -> DataType("double", "Double")
-                | BaseType.Float -> DataType("float", "Float")
-                | BaseType.Int -> DataType("int", "Integer")
-                | BaseType.Short -> DataType("short", "Short")
-                | BaseType.Long -> DataType("long", "Long")
-                | BaseType.Guid -> DataType("uuid", "Uuid")
-                | BaseType.Option ibt -> get ibt
-                
-            get bt
-        *)
-
         member bt.IsOptionType() =
             match bt with
             | BaseType.Option _ -> true
