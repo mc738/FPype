@@ -166,6 +166,12 @@ module Types =
         /// <param name="typeInfo">The type.</param>
         static member TryFromType(typeInfo: Type) = BaseType.TryFromName(typeInfo.FullName)
 
+        /// <summary>
+        /// Create a base type from .net type name.
+        /// Internally this calls TryFromName().
+        /// If the call fails this defaults to BaseType.String
+        /// </summary>
+        /// <param name="name">The type name.</param>
         static member FromName(name: string) =
             match BaseType.TryFromName name with
             | Ok st -> st
