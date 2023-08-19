@@ -177,6 +177,12 @@ module Types =
             | Ok st -> st
             | Error _ -> BaseType.String
 
+        /// <summary>
+        /// Create a base type from .net type.
+        /// Internally this calls TryFromName().
+        /// If the call fails this defaults to BaseType.String
+        /// </summary>
+        /// <param name="typeInfo">The type.</param>
         static member FromType(typeInfo: Type) = BaseType.FromName(typeInfo.FullName)
 
         static member TryFromByte(value: byte, isOptional: bool) =
