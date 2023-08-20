@@ -77,11 +77,8 @@ module Impl =
 
                     let tip = Events.selectGlobalTip t
 
-                    let metadata =
-                        [ "subscription_id", subscription; "serial_tip", string tip ] |> Map.ofList
-
-                    let cfg = ConfigurationStore.Initialize(path, additionActions, metadata)
-
+                    let cfg = ConfigurationStore.Initialize(path, additionActions, subscriptionId = subscription, serialTip = tip)
+                    
                     Tables.StoreOperations.addAllTableVersions t logger failOnError sub cfg
                     |> ActionResult.bind (Queries.StoreOperations.addAllQueryVersions t logger failOnError sub)
                     |> ActionResult.bind (
@@ -120,16 +117,11 @@ module Impl =
             
             let cfg = ConfigurationStore.Load(path)
 
-            let cfgSubscriptionId =
-                cfg.GetMetadataItem "subscription_id" |> Option.map (fun sid -> sid.ItemValue)
-
+            let cfgSubscriptionId = cfg.GetSubscriptionId()
+            
             // NOTE Should this default to 0?
             let cfgTip =
-                cfg.GetMetadataItem "serial_tip"
-                |> Option.bind (fun st ->
-                    match Int32.TryParse st.ItemValue with
-                    | true, v -> Some v
-                    | false, _ -> None)
+                cfg.GetSerialTip()
                 |> Option.defaultValue 0
 
             logger.LogInformation($"Building configuration store for subscription {sub.Reference}. Current serial: {cfgTip}")
@@ -164,7 +156,7 @@ module Impl =
                                 ActionResult.Success()
                         | _, ActionResult.Failure f -> r)
                     (ActionResult.Success())
-                |> ActionResult.map (fun _ -> cfg.AddMetadataItem("serial_tip", string newTip, true))
+                |> ActionResult.map (fun _ -> cfg.SetSerialTip(newTip))
             | Some sid ->
                 let msg = $"Configuration store subscription (`{sid}`) does not match requested subscription `{sub.Reference}`"
                 logger.LogError(msg)
@@ -182,4 +174,15 @@ module Impl =
                 : FailureResult)
                 |> ActionResult.Failure)
 
-    let buildStore (ctx: MySql)
+    let buildStore
+        (ctx: MySqlContext)
+        (logger: ILogger)
+        (fileRepo: FileRepository)
+        (readArgs: FileReadOperationArguments)
+        (subscription: string)
+        (path: string)
+        (failOnError: bool)
+        (additionActions: string list)
+        =
+        
+        ()

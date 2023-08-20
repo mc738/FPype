@@ -16,7 +16,14 @@ module private Internal =
 
 type ConfigurationStore(ctx: SqliteContext) =
 
-    static member Initialize(path, ?additionActions: string list, ?metadata: Map<string, string>) =
+    static member Initialize
+        (
+            path,
+            ?additionActions: string list,
+            ?metadata: Map<string, string>,
+            ?subscriptionId: string,
+            ?serialTip: int
+        ) =
         match File.Exists path with
         | true ->
             let cfg = SqliteContext.Open path |> ConfigurationStore
@@ -59,6 +66,22 @@ type ConfigurationStore(ctx: SqliteContext) =
                     ({ ItemKey = k; ItemValue = v }: Parameters.NewMetadataItem)
                     |> Operations.insertMetadataItem ctx))
 
+            match subscriptionId with
+            | Some sid ->
+                ({ ItemKey = subscriptionIdKey
+                   ItemValue = sid }
+                : Parameters.NewMetadataItem)
+                |> Operations.insertMetadataItem ctx
+            | None -> ()
+            
+            match serialTip with
+            | Some t ->
+                ({ ItemKey = serialTipKey
+                   ItemValue = string t }
+                 : Parameters.NewMetadataItem)
+                |> Operations.insertMetadataItem ctx
+            | None -> ()
+                
             ConfigurationStore ctx
 
     static member Load(path) =
@@ -107,6 +130,12 @@ type ConfigurationStore(ctx: SqliteContext) =
             match Int32.TryParse st.ItemValue with
             | true, v -> Some v
             | false, _ -> None)
+
+    member pc.SetSerialTip(value: int) =
+        pc.AddMetadataItem(serialTipKey, string value, true)
+
+    member pc.SetSubscriptionId(id: string) =
+        pc.AddMetadataItem(subscriptionIdKey, id)
 
     member pc.GetSubscriptionId() =
         pc.GetMetadataItem subscriptionIdKey |> Option.map (fun md -> md.ItemValue)
