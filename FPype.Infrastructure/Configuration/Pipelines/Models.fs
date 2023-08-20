@@ -1,5 +1,7 @@
 ﻿namespace FPype.Infrastructure.Configuration.Pipelines
 
+open System
+
 [<AutoOpen>]
 module Models =
 
@@ -20,12 +22,18 @@ module Models =
           ActionData: string
           Step: int }
 
-    type PipelineVersionDetails =
+    type PipelineDetails =
+        { Reference: string
+          Name: string
+          Versions: PipelineVersionDetails list }
+    
+    and PipelineVersionDetails =
         { PipelineReference: string
           VersionReference: string
           Name: string
           Description: string
           Version: int
+          CreatedOn: DateTime
           Actions: PipelineActionDetails list }
 
     and PipelineActionDetails =
