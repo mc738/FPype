@@ -90,7 +90,7 @@ type PipelineContext =
     member p.Run() =
 
 
-        let executeAction (pa: PipelineAction) (store: PipelineStore) =
+        let executeAction (pa: PipelineAction) (serial: int) (store: PipelineStore) =
 
             let startTimestamp = DateTime.UtcNow
             store.Log(pa.StepName, pa.Name, "Started")
@@ -99,12 +99,17 @@ type PipelineContext =
             | Ok s ->
                 let endTimeStamp = DateTime.UtcNow
                 let offset = endTimeStamp - startTimestamp
+                let message = $"Complete ({offset.TotalSeconds}s)"
 
-                store.Log(pa.StepName, pa.Name, $"Complete ({offset.TotalSeconds}s)")
+                store.Log(pa.StepName, pa.Name, message)
 
+                store.AddRunStateItem(pa.StepName, message, true, startTimestamp, endTimeStamp, serial)
                 Ok s
             | Error e ->
+                let endTimeStamp = DateTime.UtcNow
+
                 store.LogError(pa.StepName, pa.Name, $"Failed. Error: {e}")
+                store.AddRunStateItem(pa.StepName, e, true, startTimestamp, endTimeStamp, serial)
 
                 Error e
 
@@ -116,7 +121,11 @@ type PipelineContext =
 
         let result =
             p.Actions
-            |> List.fold (fun r a -> r |> Result.bind (executeAction a)) (Ok p.Store)
+            |> List.fold
+                (fun (r: Result<PipelineStore * int, string>) a ->
+                    r
+                    |> Result.bind (fun (s, i) -> executeAction a i s |> Result.map (fun r -> r, i + 1)))
+                (Ok(p.Store, 0))
 
         let endTimestamp = DateTime.UtcNow
 

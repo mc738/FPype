@@ -38,6 +38,7 @@ module Store =
         CREATE TABLE __run_state (
             step TEXT NOT NULL,
             result TEXT NOT NULL,
+            is_success INTEGER NOT NULL,
             start_utc TEXT NOT NULL,
             end_utc TEXT NOT NULL,
             serial INTEGER
@@ -221,6 +222,14 @@ module Store =
           SchemaBlob: BlobField
           Hash: string }
 
+    type RunStateItem =
+        { Step: string
+          Result: string
+          IsSuccess: bool
+          StartUtc: DateTime
+          EndUtc: DateTime
+          Serial: int }
+
     type TableListingItem = { Name: string }
 
     type StateValue = { Name: string; Value: string }
@@ -235,8 +244,8 @@ module Store =
     let getStateValue (ctx: SqliteContext) (key: string) =
         ctx.SelectSingleAnon<StateValue>("SELECT * FROM __state WHERE name = @0", [ key ])
 
-    let stateValueExist (ctx: SqliteContext) (key: string) =  getStateValue ctx key |> Option.isSome
-    
+    let stateValueExist (ctx: SqliteContext) (key: string) = getStateValue ctx key |> Option.isSome
+
     let addDataSource (ctx: SqliteContext) (source: DataSource) = ctx.Insert("__data_sources", source)
 
     let getDataSource (ctx: SqliteContext) (name: string) =
@@ -378,6 +387,11 @@ module Store =
     let getTableListing (ctx: SqliteContext) =
         ctx.SelectAnon<TableListingItem>("SELECT name, schema_blob, hash FROM __table_schemas", [])
 
+    let addRunStateItem (ctx: SqliteContext) (item: RunStateItem) = ctx.Insert("__run_state", item)
+
+    let getRunState (ctx: SqliteContext) =
+        ctx.SelectAnon<RunStateItem>("SELECT step, result, is_success, start_utc, end_utc, serial FROM __run_state", [])
+
     type PipelineLogger =
         { Handler: LogItem -> unit }
 
@@ -460,7 +474,7 @@ module Store =
             match stateValueExist ctx name with
             | true -> Error $"State value `{name}` already exists"
             | false -> ps.AddStateValue(name, value) |> Ok
-            
+
         member ps.UpdateStateValue(name, value) = updateStateValue ctx name value
 
         member ps.GetState() = getState ctx
@@ -717,7 +731,7 @@ module Store =
         member ps.GetArtifactBucket(name) = getArtifactBucket ctx name
 
         member ps.ListArtifacts() = listArtifacts ctx
-        
+
         member ps.ArtifactExists(name) = artifactExists ctx name
 
         member ps.AddResource(name, resourceType, data: byte array) = addResource ctx name resourceType data
@@ -734,9 +748,9 @@ module Store =
             match resourceExists ctx name with
             | true -> Error $"Resource `{name}` already exists"
             | false -> ps.AddResource(name, resourceType, data) |> Ok
-        
+
         member ps.ListResources() = listResources ctx
-        
+
         member ps.ResourceExists(name) = resourceExists ctx name
 
         member ps.GetResourceEntity(name) = getResource ctx name
@@ -814,9 +828,9 @@ module Store =
               | None -> () ]
             |> path.ReplaceMultiple
 
-        
+
         member ps.GetTableListings() = getTableListing ctx
-        
+
         member ps.GetTableSchema(name: string) =
             getTableSchema ctx name
             |> Option.map (fun ts ->
@@ -828,7 +842,7 @@ module Store =
                 with ex ->
                     Error $"Failed to deserialize table schema. Error: {ex.Message}")
             |> Option.defaultWith (fun _ -> Error $"Table `{name}` not found")
-        
+
         member ps.CreateTable(name, columns) =
             let model =
                 ({ Name = name
@@ -930,6 +944,16 @@ module Store =
         member ps.GetLogErrors() = getLogErrors ctx
 
         member ps.GetLogWarnings() = getLogWarnings ctx
+
+        member ps.AddRunStateItem(step, result, isSuccess, startUtc, endUtc, serial) =
+            ({ Step = step
+               Result = result
+               IsSuccess = isSuccess
+               StartUtc = startUtc
+               EndUtc = endUtc
+               Serial = serial }
+            : RunStateItem)
+            |> addRunStateItem ctx
 
     /// <summary>
     /// A readonly connection to a pipeline store. This treats the store as immutable.
@@ -1079,9 +1103,9 @@ module Store =
         member ps.ArtifactExists(name) = artifactExists ctx name
 
         member ps.GetResourceEntity(name) = getResource ctx name
-        
+
         member ps.ListResources() = listResources ctx
-        
+
         member ps.ResourceExists(name) = resourceExists ctx name
 
         member ps.GetResource(name) =
