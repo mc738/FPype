@@ -37,7 +37,7 @@ module CreateOperations =
                 let timestamp = getTimestamp ()
 
                 let pipelineId =
-                    ({ Reference = pipeline.Name
+                    ({ Reference = pipeline.Reference
                        SubscriptionId = sr.Id
                        Name = pipeline.Name }
                     : Parameters.NewPipeline)
