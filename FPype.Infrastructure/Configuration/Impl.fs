@@ -1,6 +1,7 @@
 ﻿namespace FPype.Infrastructure.Configuration
 
 open System
+open System.IO
 open FPype.Data.Store
 open FPype.Infrastructure.Configuration.Common.Events
 open FPype.Infrastructure.Core.Persistence
@@ -156,7 +157,9 @@ module Impl =
                                 ActionResult.Success()
                         | _, ActionResult.Failure f -> r)
                     (ActionResult.Success())
-                |> ActionResult.map (fun _ -> cfg.SetSerialTip(newTip))
+                |> ActionResult.map (fun _ ->
+                    cfg.SetSerialTip(newTip)
+                    cfg)
             | Some sid ->
                 let msg = $"Configuration store subscription (`{sid}`) does not match requested subscription `{sub.Reference}`"
                 logger.LogError(msg)
@@ -184,5 +187,9 @@ module Impl =
         (failOnError: bool)
         (additionActions: string list)
         =
+            match File.Exists path with
+            | true ->
+                buildStoreFromSerial ctx logger fileRepo readArgs subscription path failOnError additionActions
+            | false ->
+                buildNewStore ctx logger fileRepo readArgs subscription path failOnError additionActions
         
-        ()
