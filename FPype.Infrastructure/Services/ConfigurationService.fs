@@ -27,6 +27,9 @@ type ConfigurationService(ctx: MySqlContext, log: ILogger<ConfigurationService>)
     member _.GetPipelines(userReference) =
         Configuration.Pipelines.ReadOperations.pipelines ctx log userReference
     
+    member _.GetPipeline(userReference, pipelineReference) =
+        Configuration.Pipelines.ReadOperations.pipeline ctx log userReference pipelineReference
+        
     member _.GetPipelineVersions(userReference, pipelineReference) =
         Configuration.Pipelines.ReadOperations.pipelineVersions ctx log userReference pipelineReference
     
