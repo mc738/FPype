@@ -7,6 +7,13 @@ open FPype.Data.Models
 open FPype.Data.Store
 open Freql.Sqlite
 
+[<AutoOpen>]
+module private Internal =
+
+    let serialTipKey = "serial_tip"
+
+    let subscriptionIdKey = "subscription_id"
+
 type ConfigurationStore(ctx: SqliteContext) =
 
     static member Initialize(path, ?additionActions: string list, ?metadata: Map<string, string>) =
@@ -93,6 +100,16 @@ type ConfigurationStore(ctx: SqliteContext) =
         Operations.selectMetadataItemRecords ctx [] []
         |> List.map (fun md -> md.ItemKey, md.ItemValue)
         |> Map.ofList
+
+    member pc.GetSerialTip() =
+        pc.GetMetadataItem serialTipKey
+        |> Option.bind (fun st ->
+            match Int32.TryParse st.ItemValue with
+            | true, v -> Some v
+            | false, _ -> None)
+
+    member pc.GetSubscriptionId() =
+        pc.GetMetadataItem subscriptionIdKey |> Option.map (fun md -> md.ItemValue)
 
     member pc.GetTable(tableName, ?version: ItemVersion) =
         ItemVersion.FromOptional version |> Tables.tryCreateTableModel ctx tableName

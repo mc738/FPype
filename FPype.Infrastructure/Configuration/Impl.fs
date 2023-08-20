@@ -181,3 +181,5 @@ module Impl =
                    Exception = None }
                 : FailureResult)
                 |> ActionResult.Failure)
+
+    let buildStore (ctx: MySql)
