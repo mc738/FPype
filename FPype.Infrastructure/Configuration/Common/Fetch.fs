@@ -55,6 +55,24 @@ module Fetch =
               Exception = Some ex }
             |> FetchResult.Failure
 
+    
+    let userById (ctx: MySqlContext) (id: int) =
+        try
+            Operations.selectUserRecord ctx [ "WHERE id = @0;" ] [ id ]
+            |> Option.map FetchResult.Success
+            |> Option.defaultWith (fun _ ->
+                ({ Message = $"User (id: {id}) not found"
+                   DisplayMessage = "User not found"
+                   Exception = None }
+                : FailureResult)
+                |> FetchResult.Failure)
+        with ex ->
+            { Message = "Unhandled exception while fetching user"
+              DisplayMessage = "Error fetching user"
+              Exception = Some ex }
+            |> FetchResult.Failure
+
+    
     let pipeline (ctx: MySqlContext) (reference: string) =
         try
             Operations.selectPipelineRecord ctx [ "WHERE reference = @0;" ] [ reference ]
