@@ -48,3 +48,19 @@ module Operations =
                 |> Operations.insertPipelineRunItem t
                 |> ignore))
         |> toActionResult "Queue pipeline run"
+
+    let startPipelineRun (ctx: MySqlContext) (runId: string) =
+        try
+            ctx.ExecuteAnonNonQuery(
+                "UPDATE pipeline_runs SET started_on = @0 WHERE id = @1",
+                [ DateTime.UtcNow; runId ]
+            )
+            |> ignore
+            |> Ok
+        with ex ->
+            ({ Message = $"Failed to start pipeline run. Error: {ex.Message}"
+               DisplayMessage = "Failed to start pipeline run"
+               Exception = Some ex }
+            : FailureResult)
+            |> Error
+        |> ActionResult.fromResult
