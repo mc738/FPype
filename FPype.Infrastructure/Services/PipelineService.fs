@@ -5,6 +5,7 @@ open Microsoft.Extensions.Logging
 open FPype.Infrastructure.Core.Persistence
 open Freql.MySql
 open FsToolbox.Core.Results
+open FPype.Infrastructure.Pipelines.Operations
 
 type PipelineService(ctx: MySqlContext, log: ILogger<PipelineService>) =
 
@@ -22,3 +23,7 @@ type PipelineService(ctx: MySqlContext, log: ILogger<PipelineService>) =
            RunBy = 1 }
         : Records.PipelineRunItem)
         |> FetchResult.Success
+
+
+    member _.QueuePipelineRunItem(userReference, pipelineVersionReference, basePath, runId) =
+        queuePipelineRun ctx log userReference pipelineVersionReference basePath runId
