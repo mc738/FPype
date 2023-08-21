@@ -28,7 +28,7 @@ module Fetch =
             Operations.selectSubscriptionRecord ctx [ "WHERE reference = @0" ] [ reference ]
             |> Option.map FetchResult.Success
             |> Option.defaultWith (fun _ ->
-                ({ Message = $"Subscription (id: {id}) not found"
+                ({ Message = $"Subscription (ref: {reference}) not found"
                    DisplayMessage = "Subscription not found"
                    Exception = None }
                 : FailureResult)
