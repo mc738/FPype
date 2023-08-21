@@ -64,3 +64,19 @@ module Operations =
             : FailureResult)
             |> Error
         |> ActionResult.fromResult
+        
+    let completePipelineRun (ctx: MySqlContext) (runId: string) (wasSuccess: bool) =
+        try
+            ctx.ExecuteAnonNonQuery(
+                "UPDATE pipeline_runs SET completed_on = @0, was_successful = @1 WHERE id = @2",
+                [ DateTime.UtcNow; wasSuccess; runId ]
+            )
+            |> ignore
+            |> Ok
+        with ex ->
+            ({ Message = $"Failed to complete pipeline run. Error: {ex.Message}"
+               DisplayMessage = "Failed to complete pipeline run"
+               Exception = Some ex }
+            : FailureResult)
+            |> Error
+        |> ActionResult.fromResult
