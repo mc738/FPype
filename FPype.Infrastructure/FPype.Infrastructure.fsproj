@@ -38,6 +38,7 @@
         <Compile Include="Configuration\ObjectTableMappers\ReadOperations.fs" />
         <Compile Include="Configuration\ObjectTableMappers\StoreOperations.fs" />
         <Compile Include="Configuration\Impl.fs" />
+        <Compile Include="Pipelines\Models.fs" />
         <Compile Include="Pipelines\Operations.fs" />
         <Compile Include="Services\PipelineService.fs" />
         <Compile Include="Services\ConfigurationService.fs" />
