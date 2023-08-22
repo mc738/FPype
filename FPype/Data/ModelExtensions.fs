@@ -152,7 +152,6 @@ module ModelExtensions =
                 | BaseType.Guid -> "varchar(36)", nn
                 | BaseType.Option t -> typeName t false
 
-
             let createTable (ctx: MySqlContext) (tableName: string) (columns: TableColumn list) =
                 let columnText =
                     columns
