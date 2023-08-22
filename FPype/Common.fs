@@ -133,7 +133,7 @@ type PipelineContext =
         | Ok store ->
             let offset = endTimestamp - startTimestamp
 
-            store.Log("end", "main", $"Pipeline completed successful ({offset.TotalSeconds}s)")
+            p.Store.Log("end", "main", $"Pipeline completed successful ({offset.TotalSeconds}s)")
 
             Ok store
         | Error e -> Error e
