@@ -128,7 +128,7 @@ module Operations =
             |> Error
         |> ActionResult.fromResult
 
-    let completePipelineRun (ctx: MySqlContext) (runId: string) (wasSuccess: bool) =
+    let completePipelineRun (ctx: MySqlContext) (logger: ILogger) (runId: string) (wasSuccess: bool) =
         try
             ctx.ExecuteAnonNonQuery(
                 "UPDATE pipeline_runs SET completed_on = @0, was_successful = @1 WHERE id = @2",

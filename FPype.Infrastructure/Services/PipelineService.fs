@@ -33,3 +33,6 @@ type PipelineService(ctx: MySqlContext, log: ILogger<PipelineService>) =
     member _.StartPipelineRunItem(runId: string) =
         startPipelineRun ctx log runId
         
+    member _.CompletePipelineRunItem(runId: string, wasSuccess: bool) =
+        completePipelineRun ctx log runId wasSuccess
+        
