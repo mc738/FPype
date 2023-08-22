@@ -1,6 +1,8 @@
 ﻿namespace FPype.Infrastructure.Pipelines
 
 open System
+open FsToolbox.Core.Results
+open Microsoft.Extensions.Logging
 
 module Operations =
 
@@ -11,10 +13,71 @@ module Operations =
     open FPype.Infrastructure.Core.Persistence
     open FPype.Infrastructure.Configuration.Common
 
+    module private Internal =
+
+        let fetchPipelineRunItem (ctx: MySqlContext) (reference: string) =
+            try
+                Operations.selectPipelineRunItemRecord ctx [ "WHERE reference = @0" ] [ reference ]
+                |> Option.map FetchResult.Success
+                |> Option.defaultWith (fun _ ->
+                    ({ Message = $"Pipeline run item (ref: {reference}) not found"
+                       DisplayMessage = "Pipeline run item not found"
+                       Exception = None }
+                    : FailureResult)
+                    |> FetchResult.Failure)
+            with ex ->
+                { Message = "Unhandled exception while fetching pipeline run item"
+                  DisplayMessage = "Error fetching pipeline run item"
+                  Exception = Some ex }
+                |> FetchResult.Failure
+
+    let getPipelineRunItem
+        (ctx: MySqlContext)
+        (logger: ILogger)
+        (userReference: string)
+        (runId: string)
+
+        =
+        Fetch.user ctx userReference
+        |> FetchResult.merge (fun ur sr -> ur, sr) (fun ur -> Fetch.subscriptionById ctx ur.SubscriptionId)
+        |> FetchResult.chain (fun (ur, sr) pri -> ur, sr, pri) (Internal.fetchPipelineRunItem ctx runId)
+        |> FetchResult.merge (fun (ur, sr, pri) pvr -> ur, sr, pvr, pri) (fun (_, _, pvr) ->
+            Fetch.pipelineVersionById ctx pvr.PipelineVersionId)
+        |> FetchResult.merge (fun (ur, sr, pvr, pri) pr -> ur, sr, pr, pvr, pri) (fun (_, _, pvr, _) ->
+            Fetch.pipelineById ctx pvr.PipelineId)
+        |> FetchResult.merge (fun (ur, sr, pr, pvr, pir) rur -> ur, sr, pr, pvr, pir, rur) (fun (_, _, _, _, pir) ->
+            Fetch.userById ctx pir.RunBy)
+        |> FetchResult.toResult
+        // Verify
+        |> Result.bind (fun (ur, sr, pr, pvr, pri, rur) ->
+            let verifiers =
+                [ Verification.userIsActive ur
+                  Verification.subscriptionIsActive sr
+                  Verification.subscriptionMatches sr pr.SubscriptionId ]
+
+            VerificationResult.verify verifiers (ur, sr, pr, pvr, pri, rur))
+        |> Result.map (fun (ur, sr, pr, pvr, pri, rur) ->
+            ({ RunId = runId
+               SubscriptionReference = sr.Reference
+               PipelineReference = pr.Reference
+               PipelineName = pr.Name
+               PipelineVersion = pvr.Version
+               PipelineVersionReference = pvr.Reference
+               QueuedOn = pri.QueuedOn
+               StartedOn = pri.StartedOn
+               CompletedOn = pri.CompletedOn
+               WasSuccessful = pri.WasSuccessful
+               BasePath = pri.BasePath
+               RunByReference = rur.Reference
+               RunByName = rur.Username }
+            : Models.PipelineRunDetails))
+        |> FetchResult.fromResult
+
     let queuePipelineRun
         (ctx: MySqlContext)
+        (logger: ILogger)
         (userReference: string)
-        (pipelineVersionId: string)
+        (pipelineVersionReference: string)
         (basePath: string)
         (runId: string)
         =
@@ -23,7 +86,7 @@ module Operations =
             |> FetchResult.merge (fun ur sr -> ur, sr) (fun ur -> Fetch.subscriptionById t ur.SubscriptionId)
             |> FetchResult.chain
                 (fun (ur, sr) pvr -> ur, sr, pvr)
-                (Fetch.pipelineVersionByReference t pipelineVersionId)
+                (Fetch.pipelineVersionByReference t pipelineVersionReference)
             |> FetchResult.merge (fun (ur, sr, pvr) pr -> ur, sr, pr, pvr) (fun (_, _, pvr) ->
                 Fetch.pipelineById t pvr.PipelineId)
             |> FetchResult.toResult
@@ -64,7 +127,7 @@ module Operations =
             : FailureResult)
             |> Error
         |> ActionResult.fromResult
-        
+
     let completePipelineRun (ctx: MySqlContext) (runId: string) (wasSuccess: bool) =
         try
             ctx.ExecuteAnonNonQuery(
