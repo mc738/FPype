@@ -112,7 +112,7 @@ module Operations =
                 |> ignore))
         |> toActionResult "Queue pipeline run"
 
-    let startPipelineRun (ctx: MySqlContext) (runId: string) =
+    let startPipelineRun (ctx: MySqlContext) (logger: ILogger) (runId: string) =
         try
             ctx.ExecuteAnonNonQuery(
                 "UPDATE pipeline_runs SET started_on = @0 WHERE id = @1",

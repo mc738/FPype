@@ -29,3 +29,7 @@ type PipelineService(ctx: MySqlContext, log: ILogger<PipelineService>) =
 
     member _.QueuePipelineRunItem(userReference, pipelineVersionReference, basePath, runId) =
         queuePipelineRun ctx log userReference pipelineVersionReference basePath runId
+        
+    member _.StartPipelineRunItem(runId: string) =
+        startPipelineRun ctx log runId
+        
