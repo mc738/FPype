@@ -954,6 +954,8 @@ module Store =
                Serial = serial }
             : RunStateItem)
             |> addRunStateItem ctx
+            
+        member ps.GetRunState() = getRunState ctx
 
     /// <summary>
     /// A readonly connection to a pipeline store. This treats the store as immutable.
