@@ -7,7 +7,7 @@ module Models =
     type PipelineRunDetails =
         {
             RunId: string
-            SubscriptionId: string
+            SubscriptionReference: string
             PipelineReference: string
             PipelineName: string
             PipelineVersion: int
