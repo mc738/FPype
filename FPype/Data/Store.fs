@@ -1186,3 +1186,5 @@ module Store =
         member ps.GetLogErrors() = getLogErrors ctx
 
         member ps.GetLogWarnings() = getLogWarnings ctx
+        
+        member ps.GetRunState() = getRunState ctx
