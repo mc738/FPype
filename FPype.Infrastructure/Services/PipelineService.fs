@@ -27,6 +27,9 @@ type PipelineService(ctx: MySqlContext, log: ILogger<PipelineService>) =
     member _.GetRunItemDetails(userReference: string, runId: string) =
         getPipelineRunItem ctx log userReference runId
 
+    member _.GetRunItemDetailsInternal(runId: string) =
+        getPipelineRunItemInternal ctx log runId
+    
     member _.QueuePipelineRunItem(userReference, pipelineVersionReference, basePath, runId) =
         queuePipelineRun ctx log userReference pipelineVersionReference basePath runId
         
