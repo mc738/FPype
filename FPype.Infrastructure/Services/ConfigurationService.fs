@@ -3,6 +3,7 @@ namespace FPype.Infrastructure.Services
 open System
 open Microsoft.Extensions.Logging
 open FPype.Infrastructure
+open FPype.Infrastructure.Configuration
 open FPype.Infrastructure.Core.Persistence
 open Freql.MySql
 open FsToolbox.Core.Results
@@ -163,3 +164,6 @@ type ConfigurationService(ctx: MySqlContext, log: ILogger<ConfigurationService>)
     member _.GetObjectTableMapperVersions(userReference, mapperReference) =
         Configuration.ObjectTableMappers.ReadOperations.objectTableMapperVersions ctx log userReference mapperReference
     
+    member _.BuildConfigurationStore(fileRepo, readArgs, subscriptionId, path, failOnError, additionalActions) =
+       buildStore ctx log fileRepo readArgs subscriptionId path failOnError additionalActions
+       
