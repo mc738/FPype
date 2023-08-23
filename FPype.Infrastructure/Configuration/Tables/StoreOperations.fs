@@ -147,6 +147,7 @@ module StoreOperations =
                         let columns =
                             Fetch.tableColumns ctx tv.Id
                             |> expandResult
+                            |> List.sortBy (fun tc -> tc.ColumnIndex)
                             |> List.map (fun tc ->
                                 ({ Id = IdType.Specific tc.Reference
                                    Name = tc.Name
