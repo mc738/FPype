@@ -492,7 +492,7 @@ module Types =
             | BaseType.Char -> handler1 (typeof<char>) (fun o -> o :?> char |> Value.Char)
             | BaseType.Decimal -> handler1 (typeof<decimal>) (fun o -> o :?> decimal |> Value.Decimal)
             | BaseType.Double -> handler1 (typeof<double>) (fun o -> o :?> double |> Value.Double)
-            | BaseType.Float -> handler1 (typeof<float>) (fun o -> o :?> float32 |> Value.Float)
+            | BaseType.Float -> handler1 (typeof<float32>) (fun o -> o :?> float32 |> Value.Float)
             | BaseType.Int -> handler1 (typeof<int>) (fun o -> o :?> int |> Value.Int)
             | BaseType.Short -> handler1 (typeof<int16>) (fun o -> o :?> int16 |> Value.Short)
             | BaseType.Long -> handler1 (typeof<int64>) (fun o -> o :?> int64 |> Value.Long)
