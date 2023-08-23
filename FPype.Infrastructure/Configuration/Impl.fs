@@ -131,35 +131,40 @@ module Impl =
             | Some sid when sid = sub.Reference ->
                 let eventRecords = Events.selectEventRecords ctx sub.Id cfgTip
 
-                let events = Events.deserializeRecords eventRecords
-                let newTip = eventRecords |> List.maxBy (fun er -> er.Id) |> (fun er -> er.Id)
+                match eventRecords.IsEmpty with
+                | true ->
+                    logger.LogInformation("No events to handle, configuration store is up-to-date.")
+                    ActionResult.Success cfg
+                | false ->
+                    let events = Events.deserializeRecords eventRecords
+                    let newTip = eventRecords |> List.maxBy (fun er -> er.Id) |> (fun er -> er.Id)
 
-                logger.LogInformation($"Events to handle: {events.Length}")
-                
-                events
-                |> List.fold
-                    (fun (r: ActionResult<unit>) er ->
-                        match er, r with
-                        | FetchResult.Success e, ActionResult.Success _ ->
-                            match Internal.handleEvent ctx logger fileRepo readArgs sub e cfg with
-                            | ActionResult.Success _ -> ActionResult.Success()
-                            | ActionResult.Failure f when failOnError ->
-                                // NOTE This uses the display message because the log is not fully internal (potentially).
-                                logger.LogWarning($"Failed to handle event. Reason: {f.DisplayMessage}. Skipping")
-                                ActionResult.Success()
-                            | ActionResult.Failure f -> ActionResult.Failure f
-                        | FetchResult.Failure f, _ ->
-                            match failOnError with
-                            | true -> ActionResult.Failure f
-                            | false ->
-                                // NOTE This uses the display message because the log is not fully internal (potentially).
-                                logger.LogWarning($"Failed to deserialize event. Reason: {f.DisplayMessage}. Skipping")
-                                ActionResult.Success()
-                        | _, ActionResult.Failure f -> r)
-                    (ActionResult.Success())
-                |> ActionResult.map (fun _ ->
-                    cfg.SetSerialTip(newTip)
-                    cfg)
+                    logger.LogInformation($"Events to handle: {events.Length}")
+                    
+                    events
+                    |> List.fold
+                        (fun (r: ActionResult<unit>) er ->
+                            match er, r with
+                            | FetchResult.Success e, ActionResult.Success _ ->
+                                match Internal.handleEvent ctx logger fileRepo readArgs sub e cfg with
+                                | ActionResult.Success _ -> ActionResult.Success()
+                                | ActionResult.Failure f when failOnError ->
+                                    // NOTE This uses the display message because the log is not fully internal (potentially).
+                                    logger.LogWarning($"Failed to handle event. Reason: {f.DisplayMessage}. Skipping")
+                                    ActionResult.Success()
+                                | ActionResult.Failure f -> ActionResult.Failure f
+                            | FetchResult.Failure f, _ ->
+                                match failOnError with
+                                | true -> ActionResult.Failure f
+                                | false ->
+                                    // NOTE This uses the display message because the log is not fully internal (potentially).
+                                    logger.LogWarning($"Failed to deserialize event. Reason: {f.DisplayMessage}. Skipping")
+                                    ActionResult.Success()
+                            | _, ActionResult.Failure f -> r)
+                        (ActionResult.Success())
+                    |> ActionResult.map (fun _ ->
+                        cfg.SetSerialTip(newTip)
+                        cfg)
             | Some sid ->
                 let msg = $"Configuration store subscription (`{sid}`) does not match requested subscription `{sub.Reference}`"
                 logger.LogError(msg)
