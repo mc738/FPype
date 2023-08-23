@@ -72,6 +72,52 @@ module Operations =
                RunByName = rur.Username }
             : Models.PipelineRunDetails))
         |> FetchResult.fromResult
+        
+    /// <summary>
+    /// A function to return a pipeline run item.
+    /// This is meant for internal use and doesn't require a user reference like getPipelineRunItem.
+    /// Also less verification checks are carried out.
+    /// </summary>
+    /// <param name="ctx">The MySql database context.</param>
+    /// <param name="logger">The logger.</param>
+    /// <param name="runId">The run id.</param>
+    let getPipelineRunItemInternal
+        (ctx: MySqlContext)
+        (logger: ILogger)
+        (runId: string)
+        =
+        Internal.fetchPipelineRunItem ctx runId
+        |> FetchResult.merge (fun pir sr -> sr, pir) (fun pir -> Fetch.subscriptionById ctx pir.SubscriptionId)
+        |> FetchResult.merge (fun (sr, pri) pvr -> sr, pvr, pri) (fun ( _, pvr) ->
+            Fetch.pipelineVersionById ctx pvr.PipelineVersionId)
+        |> FetchResult.merge (fun (sr, pvr, pri) pr -> sr, pr, pvr, pri) (fun (_, pvr, _) ->
+            Fetch.pipelineById ctx pvr.PipelineId)
+        |> FetchResult.merge (fun (sr, pr, pvr, pir) rur -> sr, pr, pvr, pir, rur) (fun ( _, _, _, pir) ->
+            Fetch.userById ctx pir.RunBy)
+        |> FetchResult.toResult
+        // Verify
+        |> Result.bind (fun (sr, pr, pvr, pri, rur) ->
+            let verifiers =
+                [ // Verification.subscriptionIsActive sr
+                  Verification.subscriptionMatches sr pr.SubscriptionId ]
+
+            VerificationResult.verify verifiers (sr, pr, pvr, pri, rur))
+        |> Result.map (fun (sr, pr, pvr, pri, rur) ->
+            ({ RunId = runId
+               SubscriptionReference = sr.Reference
+               PipelineReference = pr.Reference
+               PipelineName = pr.Name
+               PipelineVersion = pvr.Version
+               PipelineVersionReference = pvr.Reference
+               QueuedOn = pri.QueuedOn
+               StartedOn = pri.StartedOn
+               CompletedOn = pri.CompletedOn
+               WasSuccessful = pri.WasSuccessful
+               BasePath = pri.BasePath
+               RunByReference = rur.Reference
+               RunByName = rur.Username }
+            : Models.PipelineRunDetails))
+        |> FetchResult.fromResult
 
     let queuePipelineRun
         (ctx: MySqlContext)
