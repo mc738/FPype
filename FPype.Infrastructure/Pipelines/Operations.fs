@@ -161,7 +161,7 @@ module Operations =
     let startPipelineRun (ctx: MySqlContext) (logger: ILogger) (runId: string) =
         try
             ctx.ExecuteAnonNonQuery(
-                "UPDATE pipeline_runs SET started_on = @0 WHERE id = @1",
+                "UPDATE pipeline_runs SET started_on = @0 WHERE reference = @1",
                 [ DateTime.UtcNow; runId ]
             )
             |> ignore
@@ -177,7 +177,7 @@ module Operations =
     let completePipelineRun (ctx: MySqlContext) (logger: ILogger) (runId: string) (wasSuccess: bool) =
         try
             ctx.ExecuteAnonNonQuery(
-                "UPDATE pipeline_runs SET completed_on = @0, was_successful = @1 WHERE id = @2",
+                "UPDATE pipeline_runs SET completed_on = @0, was_successful = @1 WHERE reference = @2",
                 [ DateTime.UtcNow; wasSuccess; runId ]
             )
             |> ignore
