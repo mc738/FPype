@@ -27,6 +27,7 @@ module Tables =
           Name: string
           DataType: string
           Optional: bool
+          ColumnIndex: int option
           ImportHandler: string option }
 
         static member Deserialize(json: JsonElement) =
@@ -40,6 +41,7 @@ module Tables =
                   Name = n
                   DataType = dt
                   Optional = o
+                  ColumnIndex = Json.tryGetIntProperty "columnIndex" json
                   ImportHandler =
                     Json.tryGetProperty "importHandler" json
                     |> Option.map (fun r -> (*TODO check!*) r.ToString()) }
@@ -248,15 +250,17 @@ module Tables =
         |> Operations.insertTableModel ctx
 
     let addColumn (ctx: SqliteContext) (versionReference: string) (column: NewColumn) =
-        match Operations.selectTableModelVersionRecord ctx [ "WHERE reference = @0" ] [ versionReference ] with
+        match Operations.selectTableModelVersionRecord ctx [ "WHERE id = @0" ] [ versionReference ] with
         | Some tv ->
             let colIndex =
-                Operations.selectTableColumnRecord
-                    ctx
-                    [ "WHERE table_version_id = @0 ORDER BY column_index DESC LIMIT 1" ]
-                    [ tv.Version ]
-                |> Option.map (fun tcr -> tcr.ColumnIndex + 1)
-                |> Option.defaultValue 0
+                column.ColumnIndex
+                |> Option.defaultWith (fun _ ->
+                    Operations.selectTableColumnRecord
+                        ctx
+                        [ "WHERE table_version_id = @0 ORDER BY column_index DESC LIMIT 1" ]
+                        [ tv.Version ]
+                    |> Option.map (fun tcr -> tcr.ColumnIndex + 1)
+                    |> Option.defaultValue 0)
 
             match column.ImportHandler with
             | Some ih ->
