@@ -9,8 +9,8 @@ module Models =
           SubscriptionReference: string
           PipelineReference: string
           PipelineName: string
-          PipelineVersion: int
           PipelineVersionReference: string
+          PipelineVersion: int
           QueuedOn: DateTime
           StartedOn: DateTime option
           CompletedOn: DateTime option
