@@ -60,7 +60,7 @@ module StoreOperations =
                   // But can't hurt to check here again just in case.
                   Verification.subscriptionIsActive subscription ]
 
-            VerificationResult.verify verifiers (t, tv, tc))
+            VerificationResult.verify verifiers (t, tv , tc))
         |> Result.bind (fun (t, tv, tc) ->
 
             let columns =
@@ -70,11 +70,43 @@ module StoreOperations =
                        Name = c.Name
                        DataType = c.DataType
                        Optional = c.Optional
+                       ColumnIndex = Some c.ColumnIndex 
                        ImportHandler = c.ImportHandlerJson }
                     : Tables.NewColumn))
 
             match
-                store.AddTableVersion(IdType.Specific tv.Reference, t.Name, columns, ItemVersion.Specific tv.Version)
+                store.AddTableVersion(IdType.Specific tv.Reference, t.Name, [], ItemVersion.Specific tv.Version)
+            with
+            | Ok _ -> Ok()
+            | Error e ->
+                ({ Message = e
+                   DisplayMessage = $"Failed to add table version `{tv.Reference}` ({t.Name}) to configuration store"
+                   Exception = None }
+                : FailureResult)
+                |> Error)
+        |> ActionResult.fromResult
+        
+    let addTableVersionExcludingColumns
+        (ctx: MySqlContext)
+        (logger: ILogger)
+        (store: ConfigurationStore)
+        (subscription: Records.Subscription)
+        (versionReference: string)
+        =
+        Fetch.tableVersionByReference ctx versionReference
+        |> FetchResult.merge (fun tv t -> t, tv) (fun tv -> Fetch.tableById ctx tv.TableModelId)
+        |> FetchResult.toResult
+        |> Result.bind (fun (t, tv) ->
+            let verifiers =
+                [ Verification.subscriptionMatches subscription t.SubscriptionId
+                  // This is has likely already been checked.
+                  // But can't hurt to check here again just in case.
+                  Verification.subscriptionIsActive subscription ]
+
+            VerificationResult.verify verifiers (t, tv))
+        |> Result.bind (fun (t, tv) ->
+            match
+                store.AddTableVersion(IdType.Specific tv.Reference, t.Name, [], ItemVersion.Specific tv.Version)
             with
             | Ok _ -> Ok()
             | Error e ->
@@ -112,6 +144,7 @@ module StoreOperations =
                        Name = tc.Name
                        DataType = tc.DataType
                        Optional = tc.Optional
+                       ColumnIndex = Some tc.ColumnIndex 
                        ImportHandler = tc.ImportHandlerJson }
                     : Tables.NewColumn)
                 )
@@ -153,6 +186,7 @@ module StoreOperations =
                                    Name = tc.Name
                                    DataType = tc.DataType
                                    Optional = tc.Optional
+                                   ColumnIndex = Some tc.ColumnIndex 
                                    ImportHandler = tc.ImportHandlerJson }
                                 : Tables.NewColumn))
 
