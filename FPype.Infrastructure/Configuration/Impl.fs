@@ -18,6 +18,11 @@ module Impl =
 
     module Internal =
 
+        let filterEvents (events: ConfigurationEvent list) =
+            
+            
+            ()
+        
         let handleEvent
             (ctx: MySqlContext)
             (logger: ILogger)
@@ -37,7 +42,7 @@ module Impl =
                 Pipelines.StoreOperations.addPipelineResource ctx logger store subscription data.Reference
             | PipelineArgAdded data -> Pipelines.StoreOperations.addPipelineArg ctx logger store subscription data.Reference
             | TableAdded data -> Tables.StoreOperations.addTable ctx logger store subscription data.Reference
-            | TableVersionAdded data -> Tables.StoreOperations.addTableVersion ctx logger store subscription data.Reference
+            | TableVersionAdded data -> Tables.StoreOperations.addTableVersionExcludingColumns ctx logger store subscription data.Reference
             | TableColumnAdded data -> Tables.StoreOperations.addTableColumn ctx logger store subscription data.Reference
             | QueryAdded data -> Queries.StoreOperations.addQuery ctx logger store subscription data.Reference
             | QueryVersionAdded data -> Queries.StoreOperations.addQueryVersion ctx logger store subscription data.Reference
