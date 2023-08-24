@@ -29,11 +29,15 @@ module Import =
             |> Option.map (fun cs ->
                 cs
                 |> List.mapi (fun i c ->
+                    // NOTE should this be -
+                    // Tables.NewColumn.Deserialize(c)
+                    
                     match Json.tryGetStringProperty "name" c, Json.tryGetStringProperty "type" c with
                     | Some n, Some t ->
                         ({ Id = IdType.FromJson json
                            Name = n
                            DataType = t
+                           ColumnIndex = Json.tryGetIntProperty "columnIndex" c 
                            Optional = Json.tryGetBoolProperty "optional" c |> Option.defaultValue false
                            ImportHandler = Json.tryGetProperty "importHandler" c |> Option.map (fun ih -> ih.ToString()) }: Tables.NewColumn)
                         |> Ok
