@@ -17,11 +17,6 @@ module Impl =
     open FsToolbox.Core.Results
 
     module Internal =
-
-        let filterEvents (events: ConfigurationEvent list) =
-            
-            
-            ()
         
         let handleEvent
             (ctx: MySqlContext)
