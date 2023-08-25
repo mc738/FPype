@@ -45,7 +45,7 @@ module ReadOperations =
                    Name = pr.Name
                    Description = pvr.Description
                    Version = pvr.Version
-                   CreatedOn = pvr.CreatedOn 
+                   CreatedOn = pvr.CreatedOn
                    Actions =
                      ars
                      |> List.choose (fun ar ->
@@ -98,7 +98,7 @@ module ReadOperations =
                    Name = pr.Name
                    Description = pvr.Description
                    Version = pvr.Version
-                   CreatedOn = pvr.CreatedOn 
+                   CreatedOn = pvr.CreatedOn
                    Actions =
                      ars
                      |> List.choose (fun ar ->
@@ -185,7 +185,7 @@ module ReadOperations =
                 Operations.selectActionTypeRecords ctx [] []
                 |> List.map (fun atr -> atr.Id, atr.Name)
                 |> Map.ofList
-                
+
             // TODO what to do if this fails?
             let versions =
                 pvrs
@@ -197,7 +197,7 @@ module ReadOperations =
                            Name = pr.Name
                            Description = pvr.Description
                            Version = pvr.Version
-                           CreatedOn = pvr.CreatedOn 
+                           CreatedOn = pvr.CreatedOn
                            Actions =
                              ars
                              |> List.choose (fun ar ->
@@ -213,9 +213,32 @@ module ReadOperations =
                         : PipelineVersionDetails)
                         |> Some
                     | FetchResult.Failure fr -> None)
-            
+
             ({ Reference = pr.Reference
                Name = pr.Name
                Versions = versions }
             : PipelineDetails))
+        |> FetchResult.fromResult
+
+    let subscriptionPipelines (ctx: MySqlContext) (logger: ILogger) (userReference: string) =
+        Fetch.user ctx userReference
+        |> FetchResult.merge (fun ur sr -> ur, sr) (fun ur -> Fetch.subscriptionById ctx ur.Id)
+        |> FetchResult.toResult
+        |> Result.bind (fun (ur, sr) ->
+            let verifiers =
+                [ Verification.userIsActive ur; Verification.subscriptionIsActive sr ]
+
+            VerificationResult.verify verifiers (ur, sr))
+        |> Result.map (fun (ur, sr) ->
+            Operations.selectPipelineRecords ctx [ "WHERE subscription_id = @0" ] [ sr.Id ]
+            |> List.map (fun pr ->
+                ({ Reference = pr.Reference
+                   Name = pr.Name
+                   Versions =
+                     Operations.selectPipelineVersionRecords ctx [ "WHERE pipeline_id = @0;" ] [ pr.Id ]
+                     |> List.map (fun pvr ->
+                         ({ Reference = pvr.Reference
+                            Version = pvr.Version }
+                         : SubscriptionPipelineVersion)) }
+                : SubscriptionPipeline)))
         |> FetchResult.fromResult
