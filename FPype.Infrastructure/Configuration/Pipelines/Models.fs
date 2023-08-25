@@ -26,7 +26,7 @@ module Models =
         { Reference: string
           Name: string
           Versions: PipelineVersionDetails list }
-    
+
     and PipelineVersionDetails =
         { PipelineReference: string
           VersionReference: string
@@ -52,3 +52,10 @@ module Models =
           Version: int }
 
     type PipelineOverview = { Reference: string; Name: string }
+
+    type SubscriptionPipelineVersion = { Reference: string; Version: int }
+
+    type SubscriptionPipeline =
+        { Reference: string
+          Name: string
+          Versions: SubscriptionPipelineVersion list }
