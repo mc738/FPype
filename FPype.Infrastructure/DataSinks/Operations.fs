@@ -54,6 +54,8 @@ module Operations =
     let getAllMetadataForId (ctx: SqliteContext) (id: string) =
         ctx.SelectAnon<Metadata>("SELECT item_id, item_key, item_value FROM `__metadata` WHERE item_id = @0;", [ id ])
 
+    let getGlobalMetadata (ctx: SqliteContext) = getAllMetadataForId ctx <| Metadata.GlobalItemId()
+    
     let metadataExists (ctx: SqliteContext) (id: string) (key: string) = getMetadata ctx id key |> Option.isSome
 
 
