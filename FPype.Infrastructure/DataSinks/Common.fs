@@ -56,6 +56,8 @@ module Common =
             CONSTRAINT __metadata_pk PRIMARY KEY (item_id, item_key)
         );
         """
+        
+        static member GlobalItemId() = "global"
 
     [<CLIMutable>]
     type ReadRequest =
