@@ -44,7 +44,13 @@ module Operations =
 
     let insertGlobalMetadata (ctx:SqliteContext) (key: string) (value: string) =
         insertMetadata ctx (Metadata.GlobalItemId()) key value
-        
+
+    let getMetadata (ctx: SqliteContext) (id: string) (key: string) =
+        ctx.SelectAnon<Metadata>(
+            "SELECT item_id, item_key, item_value FROM `__metadata` WHERE item_id = @0 AND item_key = @1",
+            [ id; key ])
+    
+            
     let insertError (ctx: SqliteContext) (errorMessage: string) (data: byte array) =
         use ms = new MemoryStream(data)
 
