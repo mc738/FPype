@@ -45,6 +45,12 @@ module Operations =
     let insertGlobalMetadata (ctx: SqliteContext) (key: string) (value: string) =
         insertMetadata ctx (Metadata.GlobalItemId()) key value
 
+    let updateMetadataValue (ctx: SqliteContext) (id: string) (key: string) (value: string) =
+        ctx.ExecuteVerbatimNonQueryAnon(
+            "UPDATE `__metadata` SET item_value = @0 WHERE item_id = @1 AND item_key = @2",
+            [ value; id; key ]
+        )
+
     let getMetadata (ctx: SqliteContext) (id: string) (key: string) =
         ctx.SelectSingleAnon<Metadata>(
             "SELECT item_id, item_key, item_value FROM `__metadata` WHERE item_id = @0 AND item_key = @1",
@@ -54,8 +60,9 @@ module Operations =
     let getAllMetadataForId (ctx: SqliteContext) (id: string) =
         ctx.SelectAnon<Metadata>("SELECT item_id, item_key, item_value FROM `__metadata` WHERE item_id = @0;", [ id ])
 
-    let getGlobalMetadata (ctx: SqliteContext) = getAllMetadataForId ctx <| Metadata.GlobalItemId()
-    
+    let getGlobalMetadata (ctx: SqliteContext) =
+        getAllMetadataForId ctx <| Metadata.GlobalItemId()
+
     let metadataExists (ctx: SqliteContext) (id: string) (key: string) = getMetadata ctx id key |> Option.isSome
 
 
