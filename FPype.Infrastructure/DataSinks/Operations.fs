@@ -7,17 +7,17 @@ module Operations =
     open System.IO
     open Freql.Core.Common.Types
     open Freql.Sqlite
-        
+
     let createDataSinkTables (ctx: SqliteContext) =
-            [ ReadRequest.CreateTableSql()
-              Metadata.CreateTableSql()
-              InsertError.CreatedTableSql() ]
-            |> List.map ctx.ExecuteSqlNonQuery
-            |> ignore
-            
+        [ ReadRequest.CreateTableSql()
+          Metadata.CreateTableSql()
+          InsertError.CreatedTableSql() ]
+        |> List.map ctx.ExecuteSqlNonQuery
+        |> ignore
+
     let getLatestReadRequest (ctx: SqliteContext) (requesterId: string) =
-            let sql =
-                """
+        let sql =
+            """
                  SELECT
                      request_id,
                      requester,
@@ -30,10 +30,10 @@ module Operations =
                  LIMIT 1;
                  """
 
-            ctx.SelectSingleAnon<ReadRequest>(sql, [ requesterId ])
-    
+        ctx.SelectSingleAnon<ReadRequest>(sql, [ requesterId ])
+
     let insertReadRequest (ctx: SqliteContext) (requestRequest: ReadRequest) =
-            ctx.Insert(ReadRequest.TableName(), requestRequest)
+        ctx.Insert(ReadRequest.TableName(), requestRequest)
 
     let insertMetadata (ctx: SqliteContext) (id: string) (key: string) (value: string) =
         ({ ItemId = id
@@ -42,15 +42,18 @@ module Operations =
         : Metadata)
         |> fun md -> ctx.Insert(Metadata.TableName(), md)
 
-    let insertGlobalMetadata (ctx:SqliteContext) (key: string) (value: string) =
+    let insertGlobalMetadata (ctx: SqliteContext) (key: string) (value: string) =
         insertMetadata ctx (Metadata.GlobalItemId()) key value
 
     let getMetadata (ctx: SqliteContext) (id: string) (key: string) =
-        ctx.SelectAnon<Metadata>(
+        ctx.SelectSingleAnon<Metadata>(
             "SELECT item_id, item_key, item_value FROM `__metadata` WHERE item_id = @0 AND item_key = @1",
-            [ id; key ])
-    
-            
+            [ id; key ]
+        )
+
+    let getAllMetadataForId (ctx: SqliteContext) (id: string) =
+        ctx.SelectAnon<Metadata>("SELECT item_id, item_key, item_value FROM `__metadata` WHERE item_id = @0;", [ id ])
+
     let insertError (ctx: SqliteContext) (errorMessage: string) (data: byte array) =
         use ms = new MemoryStream(data)
 
