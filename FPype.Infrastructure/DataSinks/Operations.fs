@@ -43,11 +43,8 @@ module Operations =
         |> fun md -> ctx.Insert(Metadata.TableName(), md)
 
     let insertGlobalMetadata (ctx:SqliteContext) (key: string) (value: string) =
-        ({ ItemId = Metadata.GlobalItemId()
-           ItemKey = key
-           ItemValue = value })
-        |> fun md -> ctx.Insert(Metadata.TableName(), md)
-    
+        insertMetadata ctx (Metadata.GlobalItemId()) key value
+        
     let insertError (ctx: SqliteContext) (errorMessage: string) (data: byte array) =
         use ms = new MemoryStream(data)
 
