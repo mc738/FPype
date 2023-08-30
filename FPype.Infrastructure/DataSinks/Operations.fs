@@ -87,8 +87,11 @@ module Operations =
         | true -> Error $"Metadata item `{key}` already exists for id `{id}`"
         | false -> insertMetadata ctx id key value |> Ok
 
-    let tryInsertGlobalMetadata (ctx: SqliteContext) (key: string) (value: string) = ()
-
+    let tryInsertGlobalMetadata (ctx: SqliteContext) (key: string) (value: string) =
+        match globalMetadataExists ctx key with
+        | true -> Error $"Global metadata item `{key}` already exists"
+        | false -> insertGlobalMetadata ctx key value |> Ok
+        
     let insertError (ctx: SqliteContext) (errorMessage: string) (data: byte array) =
         use ms = new MemoryStream(data)
 
