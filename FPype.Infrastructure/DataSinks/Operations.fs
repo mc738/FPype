@@ -43,8 +43,8 @@ module Operations =
             [ id; key ]
         )
         
+    let getGlobalMetadata (ctx: SqliteContext) (key: string) = getMetadata ctx (Metadata.GlobalItemId()) key
     
-
     let getAllMetadataForId (ctx: SqliteContext) (id: string) =
         ctx.SelectAnon<Metadata>("SELECT item_id, item_key, item_value FROM `__metadata` WHERE item_id = @0;", [ id ])
 
