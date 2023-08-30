@@ -36,18 +36,22 @@ module Operations =
         ctx.Insert(ReadRequest.TableName(), requestRequest)
 
     // Metadata
-    
+
     let getMetadata (ctx: SqliteContext) (id: string) (key: string) =
         ctx.SelectSingleAnon<Metadata>(
             "SELECT item_id, item_key, item_value FROM `__metadata` WHERE item_id = @0 AND item_key = @1",
             [ id; key ]
         )
-    
-    
-    let getMetadataValue (ctx: SqliteContext) (id: string) (key: string) = getMetadata ctx id key |> Option.map (fun mdi -> mdi.ItemValue)
-        
-    let getGlobalMetadata (ctx: SqliteContext) (key: string) = getMetadata ctx (Metadata.GlobalItemId()) key
-    
+
+    let getMetadataValue (ctx: SqliteContext) (id: string) (key: string) =
+        getMetadata ctx id key |> Option.map (fun mdi -> mdi.ItemValue)
+
+    let getGlobalMetadata (ctx: SqliteContext) (key: string) =
+        getMetadata ctx (Metadata.GlobalItemId()) key
+
+    let getGlobalMetadataValue (ctx: SqliteContext) (key: string) =
+        getGlobalMetadata ctx key |> Option.map (fun mdi -> mdi.ItemValue)
+
     let getAllMetadataForId (ctx: SqliteContext) (id: string) =
         ctx.SelectAnon<Metadata>("SELECT item_id, item_key, item_value FROM `__metadata` WHERE item_id = @0;", [ id ])
 
@@ -56,8 +60,9 @@ module Operations =
 
     let metadataExists (ctx: SqliteContext) (id: string) (key: string) = getMetadata ctx id key |> Option.isSome
 
-    let globalMetadataExists (ctx: SqliteContext) (key: string) = getGlobalMetadata ctx key |> Option.isSome
-    
+    let globalMetadataExists (ctx: SqliteContext) (key: string) =
+        getGlobalMetadata ctx key |> Option.isSome
+
     let insertMetadata (ctx: SqliteContext) (id: string) (key: string) (value: string) =
         ({ ItemId = id
            ItemKey = key
@@ -73,7 +78,7 @@ module Operations =
             "UPDATE `__metadata` SET item_value = @0 WHERE item_id = @1 AND item_key = @2",
             [ value; id; key ]
         )
-        
+
     let updateGlobalMetadataValue (ctx: SqliteContext) (key: string) (value: string) =
         updateMetadataValue ctx (Metadata.GlobalItemId()) key value
 
@@ -81,9 +86,8 @@ module Operations =
         match metadataExists ctx id key with
         | true -> Error $"Metadata item `{key}` already exists for id `{id}`"
         | false -> insertMetadata ctx id key value |> Ok
-    
-    let tryInsertGlobalMetadata (ctx: SqliteContext) (key: string) (value: string) =
-        ()
+
+    let tryInsertGlobalMetadata (ctx: SqliteContext) (key: string) (value: string) = ()
 
     let insertError (ctx: SqliteContext) (errorMessage: string) (data: byte array) =
         use ms = new MemoryStream(data)
