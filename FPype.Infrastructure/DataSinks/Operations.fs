@@ -51,7 +51,6 @@ module Operations =
 
     let metadataExists (ctx: SqliteContext) (id: string) (key: string) = getMetadata ctx id key |> Option.isSome
 
-    
     let insertMetadata (ctx: SqliteContext) (id: string) (key: string) (value: string) =
         ({ ItemId = id
            ItemKey = key
@@ -68,6 +67,10 @@ module Operations =
             [ value; id; key ]
         )
 
+    let tryInsertMetadata (ctx: SqliteContext) (id: string) (key: string) (value: string) =
+        match metadataExists ctx id key with
+        | true -> Error $"Metadata item `{key}` already exists for id `{id}`"
+        | false -> insertMetadata ctx id key value |> Ok
     
 
     let insertError (ctx: SqliteContext) (errorMessage: string) (data: byte array) =
