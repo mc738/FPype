@@ -42,6 +42,9 @@ module Operations =
             "SELECT item_id, item_key, item_value FROM `__metadata` WHERE item_id = @0 AND item_key = @1",
             [ id; key ]
         )
+    
+    
+    let getMetadataValue (ctx: SqliteContext) (id: string) (key: string) = getMetadata ctx id key |> Option.map (fun mdi -> mdi.ItemValue)
         
     let getGlobalMetadata (ctx: SqliteContext) (key: string) = getMetadata ctx (Metadata.GlobalItemId()) key
     
