@@ -70,6 +70,9 @@ module Operations =
             "UPDATE `__metadata` SET item_value = @0 WHERE item_id = @1 AND item_key = @2",
             [ value; id; key ]
         )
+        
+    let updateGlobalMetadataValue (ctx: SqliteContext) (key: string) (value: string) =
+        updateMetadataValue ctx (Metadata.GlobalItemId()) key value
 
     let tryInsertMetadata (ctx: SqliteContext) (id: string) (key: string) (value: string) =
         match metadataExists ctx id key with
