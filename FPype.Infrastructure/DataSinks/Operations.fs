@@ -78,7 +78,7 @@ module Operations =
             "UPDATE `__metadata` SET item_value = @0 WHERE item_id = @1 AND item_key = @2",
             [ value; id; key ]
         )
-        
+        |> ignore
 
     let updateGlobalMetadataValue (ctx: SqliteContext) (key: string) (value: string) =
         updateMetadataValue ctx (Metadata.GlobalItemId()) key value |> ignore
