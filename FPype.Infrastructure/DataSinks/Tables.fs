@@ -4,7 +4,7 @@
 module Tables =
 
     open System
-    open System.IO    
+    open System.IO
     open Freql.Core.Common.Types
     open Freql.Sqlite
     open FsToolbox.Core.Results
@@ -12,7 +12,7 @@ module Tables =
     open FPype.Data.Models
     open FPype.Data.ModelExtensions.Sqlite
     open FPype.Configuration
-    
+
     [<AutoOpen>]
     module private Internal =
 
@@ -56,12 +56,10 @@ module Tables =
                 |> ignore
 
                 Operations.createDataSinkTables ctx
-                
-                [
-                    "subscription_id", subscriptionId
-                    "created_on", (DateTime.UtcNow.ToString())
-                ]
-                |> List.iter(fun (k, v) ->  Operations.insertGlobalMetadata ctx k v)
+
+                [ "subscription_id", subscriptionId
+                  "created_on", DateTime.UtcNow.ToString() ]
+                |> List.iter (fun (k, v) -> Operations.insertGlobalMetadata ctx k v)
                 |> Ok
         with exn ->
             ({ Message = $"Error creating `({schema.Name})` table: {exn.Message}"
