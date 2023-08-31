@@ -57,8 +57,8 @@ module Tables =
 
                 Operations.createDataSinkTables ctx
 
-                [ "subscription_id", subscriptionId
-                  "created_on", DateTime.UtcNow.ToString() ]
+                [ GlobalMetadataKeys.subscriptionId, subscriptionId
+                  GlobalMetadataKeys.createdOn, DateTime.UtcNow.ToString() ]
                 |> List.iter (fun (k, v) -> Operations.insertGlobalMetadata ctx k v)
                 |> Ok
         with exn ->

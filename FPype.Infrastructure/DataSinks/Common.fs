@@ -95,3 +95,11 @@ module Common =
             data_blob BLOB NOT NULL
         )
         """
+
+
+    [<RequireQualifiedAccess>]
+    module GlobalMetadataKeys =
+        
+        let subscriptionId = "subscription_id"
+        
+        let createdOn = "created_on"
