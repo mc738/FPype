@@ -81,7 +81,7 @@ module Operations =
         |> ignore
 
     let updateGlobalMetadataValue (ctx: SqliteContext) (key: string) (value: string) =
-        updateMetadataValue ctx (Metadata.GlobalItemId()) key value |> ignore
+        updateMetadataValue ctx (Metadata.GlobalItemId()) key value
 
     let tryInsertMetadata (ctx: SqliteContext) (id: string) (key: string) (value: string) =
         match metadataExists ctx id key with
