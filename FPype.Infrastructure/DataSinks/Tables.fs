@@ -55,7 +55,14 @@ module Tables =
                 |> createTable ctx
                 |> ignore
 
-                Operations.createDataSinkTables ctx |> Ok
+                Operations.createDataSinkTables ctx
+                
+                [
+                    "subscription_id", subscriptionId
+                    "created_on", (DateTime.UtcNow.ToString())
+                ]
+                |> List.iter(fun (k, v) ->  Operations.insertGlobalMetadata ctx k v)
+                |> Ok
         with exn ->
             ({ Message = $"Error creating `({schema.Name})` table: {exn.Message}"
                DisplayMessage = $"Error creating `({schema.Name})` table"
