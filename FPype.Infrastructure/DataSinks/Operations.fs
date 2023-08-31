@@ -98,6 +98,9 @@ module Operations =
         | true -> updateMetadataValue ctx id key value
         | false -> insertMetadata ctx id key value
        
+    let insertOrUpdateGlobalMetadata (ctx: SqliteContext) (key: string) (value: string) =
+        insertOrUpdateMetadata ctx (Metadata.GlobalItemId()) key value
+      
     let insertError (ctx: SqliteContext) (errorMessage: string) (data: byte array) =
         use ms = new MemoryStream(data)
 
