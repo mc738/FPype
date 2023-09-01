@@ -5,7 +5,7 @@ open System.Text.Json.Serialization
 open Freql.Core.Common
 open Freql.MySql
 
-/// Module generated on 01/09/2023 19:21:18 (utc) via Freql.Tools.
+/// Module generated on 01/09/2023 19:40:42 (utc) via Freql.Tools.
 [<RequireQualifiedAccess>]
 module Records =
     /// A record representing a row in the table `cfg_action_types`.
@@ -862,6 +862,48 @@ module Records =
     
         static member TableName() = "pipeline_runs"
     
+    /// A record representing a row in the table `pipeline_schedule_runs`.
+    type PipelineScheduleRun =
+        { [<JsonPropertyName("id")>] Id: int
+          [<JsonPropertyName("reference")>] Reference: string
+          [<JsonPropertyName("scheduleId")>] ScheduleId: int
+          [<JsonPropertyName("pipelineRunId")>] PipelineRunId: int
+          [<JsonPropertyName("runOn")>] RunOn: DateTime }
+    
+        static member Blank() =
+            { Id = 0
+              Reference = String.Empty
+              ScheduleId = 0
+              PipelineRunId = 0
+              RunOn = DateTime.UtcNow }
+    
+        static member CreateTableSql() = """
+        CREATE TABLE `pipeline_schedule_runs` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `reference` varchar(36) NOT NULL,
+  `schedule_id` int NOT NULL,
+  `pipeline_run_id` int NOT NULL,
+  `run_on` datetime NOT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `pipeline_schedule_runs_UN` (`reference`),
+  KEY `pipeline_schedule_runs_FK` (`schedule_id`),
+  CONSTRAINT `pipeline_schedule_runs_FK` FOREIGN KEY (`schedule_id`) REFERENCES `pipeline_schedules` (`id`),
+  CONSTRAINT `pipeline_schedule_runs_FK_1` FOREIGN KEY (`id`) REFERENCES `pipeline_runs` (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci
+        """
+    
+        static member SelectSql() = """
+        SELECT
+              pipeline_schedule_runs.`id`,
+              pipeline_schedule_runs.`reference`,
+              pipeline_schedule_runs.`schedule_id`,
+              pipeline_schedule_runs.`pipeline_run_id`,
+              pipeline_schedule_runs.`run_on`
+        FROM pipeline_schedule_runs
+        """
+    
+        static member TableName() = "pipeline_schedule_runs"
+    
     /// A record representing a row in the table `pipeline_schedules`.
     type PipelineSchedule =
         { [<JsonPropertyName("id")>] Id: int
@@ -982,7 +1024,7 @@ module Records =
         static member TableName() = "users"
     
 
-/// Module generated on 01/09/2023 19:21:18 (utc) via Freql.Tools.
+/// Module generated on 01/09/2023 19:40:42 (utc) via Freql.Tools.
 [<RequireQualifiedAccess>]
 module Parameters =
     /// A record representing a new row in the table `cfg_action_types`.
@@ -1283,6 +1325,20 @@ module Parameters =
               RunBy = 0 }
     
     
+    /// A record representing a new row in the table `pipeline_schedule_runs`.
+    type NewPipelineScheduleRun =
+        { [<JsonPropertyName("reference")>] Reference: string
+          [<JsonPropertyName("scheduleId")>] ScheduleId: int
+          [<JsonPropertyName("pipelineRunId")>] PipelineRunId: int
+          [<JsonPropertyName("runOn")>] RunOn: DateTime }
+    
+        static member Blank() =
+            { Reference = String.Empty
+              ScheduleId = 0
+              PipelineRunId = 0
+              RunOn = DateTime.UtcNow }
+    
+    
     /// A record representing a new row in the table `pipeline_schedules`.
     type NewPipelineSchedule =
         { [<JsonPropertyName("reference")>] Reference: string
@@ -1323,7 +1379,7 @@ module Parameters =
               Active = false }
     
     
-/// Module generated on 01/09/2023 19:21:18 (utc) via Freql.Tools.
+/// Module generated on 01/09/2023 19:40:42 (utc) via Freql.Tools.
 [<RequireQualifiedAccess>]
 module Operations =
 
@@ -1784,6 +1840,30 @@ module Operations =
     
     let insertPipelineRunItem (context: MySqlContext) (parameters: Parameters.NewPipelineRunItem) =
         context.Insert("pipeline_runs", parameters)
+    
+    /// Select a `Records.PipelineScheduleRun` from the table `pipeline_schedule_runs`.
+    /// Internally this calls `context.SelectSingleAnon<Records.PipelineScheduleRun>` and uses Records.PipelineScheduleRun.SelectSql().
+    /// The caller can provide extra string lines to create a query and boxed parameters.
+    /// It is up to the caller to verify the sql and parameters are correct,
+    /// this should be considered an internal function (not exposed in public APIs).
+    /// Parameters are assigned names based on their order in 0 indexed array. For example: @0,@1,@2...
+    /// Example: selectPipelineScheduleRunRecord ctx "WHERE `field` = @0" [ box `value` ]
+    let selectPipelineScheduleRunRecord (context: MySqlContext) (query: string list) (parameters: obj list) =
+        let sql = [ Records.PipelineScheduleRun.SelectSql() ] @ query |> buildSql
+        context.SelectSingleAnon<Records.PipelineScheduleRun>(sql, parameters)
+    
+    /// Internally this calls `context.SelectAnon<Records.PipelineScheduleRun>` and uses Records.PipelineScheduleRun.SelectSql().
+    /// The caller can provide extra string lines to create a query and boxed parameters.
+    /// It is up to the caller to verify the sql and parameters are correct,
+    /// this should be considered an internal function (not exposed in public APIs).
+    /// Parameters are assigned names based on their order in 0 indexed array. For example: @0,@1,@2...
+    /// Example: selectPipelineScheduleRunRecords ctx "WHERE `field` = @0" [ box `value` ]
+    let selectPipelineScheduleRunRecords (context: MySqlContext) (query: string list) (parameters: obj list) =
+        let sql = [ Records.PipelineScheduleRun.SelectSql() ] @ query |> buildSql
+        context.SelectAnon<Records.PipelineScheduleRun>(sql, parameters)
+    
+    let insertPipelineScheduleRun (context: MySqlContext) (parameters: Parameters.NewPipelineScheduleRun) =
+        context.Insert("pipeline_schedule_runs", parameters)
     
     /// Select a `Records.PipelineSchedule` from the table `pipeline_schedules`.
     /// Internally this calls `context.SelectSingleAnon<Records.PipelineSchedule>` and uses Records.PipelineSchedule.SelectSql().
