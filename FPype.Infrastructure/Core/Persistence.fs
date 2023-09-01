@@ -5,7 +5,7 @@ open System.Text.Json.Serialization
 open Freql.Core.Common
 open Freql.MySql
 
-/// Module generated on 29/06/2023 18:25:09 (utc) via Freql.Tools.
+/// Module generated on 01/09/2023 19:21:18 (utc) via Freql.Tools.
 [<RequireQualifiedAccess>]
 module Records =
     /// A record representing a row in the table `cfg_action_types`.
@@ -23,7 +23,7 @@ module Records =
   `name` varchar(100) NOT NULL,
   PRIMARY KEY (`id`),
   UNIQUE KEY `cfg_action_types_UN` (`name`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci
+) ENGINE=InnoDB AUTO_INCREMENT=7002 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci
         """
     
         static member SelectSql() = """
@@ -68,7 +68,7 @@ module Records =
   KEY `cfg_events_FK_1` (`user_id`),
   CONSTRAINT `cfg_events_FK` FOREIGN KEY (`subscription_id`) REFERENCES `subscriptions` (`id`),
   CONSTRAINT `cfg_events_FK_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=27 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci
+) ENGINE=InnoDB AUTO_INCREMENT=120 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci
         """
     
         static member SelectSql() = """
@@ -214,8 +214,8 @@ module Records =
   UNIQUE KEY `cfg_pipeline_actions_UN_2` (`pipeline_version_id`,`step`),
   KEY `cfg_pipeline_actions_FK_1` (`action_type_id`),
   CONSTRAINT `cfg_pipeline_actions_FK` FOREIGN KEY (`pipeline_version_id`) REFERENCES `cfg_pipeline_versions` (`id`),
-  CONSTRAINT `cfg_pipeline_actions_FK_1` FOREIGN KEY (`action_type_id`) REFERENCES `cfg_pipeline_versions` (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci
+  CONSTRAINT `cfg_pipeline_actions_FK_1` FOREIGN KEY (`action_type_id`) REFERENCES `cfg_action_types` (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=20 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci
         """
     
         static member SelectSql() = """
@@ -346,7 +346,7 @@ module Records =
   UNIQUE KEY `cfg_pipeline_versions_UN` (`reference`),
   UNIQUE KEY `cfg_pipeline_versions_UN_1` (`pipeline_id`,`version`),
   CONSTRAINT `cfg_pipeline_versions_FK` FOREIGN KEY (`pipeline_id`) REFERENCES `cfg_pipelines` (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci
+) ENGINE=InnoDB AUTO_INCREMENT=11 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci
         """
     
         static member SelectSql() = """
@@ -385,7 +385,7 @@ module Records =
   UNIQUE KEY `cfg_pipelines_UN` (`reference`),
   UNIQUE KEY `cfg_pipelines_UN_1` (`subscription_id`,`name`),
   CONSTRAINT `cfg_pipelines_FK` FOREIGN KEY (`subscription_id`) REFERENCES `subscriptions` (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci
+) ENGINE=InnoDB AUTO_INCREMENT=8 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci
         """
     
         static member SelectSql() = """
@@ -422,7 +422,7 @@ module Records =
   UNIQUE KEY `cfg_queries_UN` (`reference`),
   UNIQUE KEY `cfg_queries_UN_1` (`subscription_id`,`name`),
   CONSTRAINT `cfg_queries_FK` FOREIGN KEY (`subscription_id`) REFERENCES `subscriptions` (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci
+) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci
         """
     
         static member SelectSql() = """
@@ -471,7 +471,7 @@ module Records =
   UNIQUE KEY `cfg_query_versions_UN` (`reference`),
   UNIQUE KEY `cfg_query_versions_UN_1` (`query_id`,`version`),
   CONSTRAINT `cfg_query_versions_FK` FOREIGN KEY (`query_id`) REFERENCES `cfg_queries` (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci
+) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci
         """
     
         static member SelectSql() = """
@@ -615,7 +615,7 @@ module Records =
   UNIQUE KEY `cfg_table_columns_UN_1` (`table_version_id`,`name`),
   UNIQUE KEY `cfg_table_columns_UN_2` (`table_version_id`,`column_index`),
   CONSTRAINT `cfg_table_columns_FK` FOREIGN KEY (`table_version_id`) REFERENCES `cfg_table_model_versions` (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=33 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci
+) ENGINE=InnoDB AUTO_INCREMENT=84 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci
         """
     
         static member SelectSql() = """
@@ -659,7 +659,7 @@ module Records =
   UNIQUE KEY `cfg_table_model_versions_UN` (`reference`),
   UNIQUE KEY `cfg_table_model_versions_UN_1` (`table_model_id`,`version`),
   CONSTRAINT `cfg_table_model_versions_FK` FOREIGN KEY (`table_model_id`) REFERENCES `cfg_table_models` (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=11 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci
+) ENGINE=InnoDB AUTO_INCREMENT=20 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci
         """
     
         static member SelectSql() = """
@@ -697,7 +697,7 @@ module Records =
   UNIQUE KEY `cfg_table_models_UN` (`reference`),
   UNIQUE KEY `cfg_table_models_UN_1` (`subscription_id`,`name`),
   CONSTRAINT `cfg_table_models_FK` FOREIGN KEY (`subscription_id`) REFERENCES `subscriptions` (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=9 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci
+) ENGINE=InnoDB AUTO_INCREMENT=15 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci
         """
     
         static member SelectSql() = """
@@ -842,7 +842,7 @@ module Records =
   CONSTRAINT `pipeline_runs_FK` FOREIGN KEY (`subscription_id`) REFERENCES `subscriptions` (`id`),
   CONSTRAINT `pipeline_runs_FK_1` FOREIGN KEY (`pipeline_version_id`) REFERENCES `cfg_pipeline_versions` (`id`),
   CONSTRAINT `pipeline_runs_FK_2` FOREIGN KEY (`run_by`) REFERENCES `users` (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci
+) ENGINE=InnoDB AUTO_INCREMENT=20 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci
         """
     
         static member SelectSql() = """
@@ -861,6 +861,53 @@ module Records =
         """
     
         static member TableName() = "pipeline_runs"
+    
+    /// A record representing a row in the table `pipeline_schedules`.
+    type PipelineSchedule =
+        { [<JsonPropertyName("id")>] Id: int
+          [<JsonPropertyName("reference")>] Reference: string
+          [<JsonPropertyName("subscriptionId")>] SubscriptionId: int
+          [<JsonPropertyName("pipelineVersionId")>] PipelineVersionId: int
+          [<JsonPropertyName("scheduleCron")>] ScheduleCron: string
+          [<JsonPropertyName("active")>] Active: bool }
+    
+        static member Blank() =
+            { Id = 0
+              Reference = String.Empty
+              SubscriptionId = 0
+              PipelineVersionId = 0
+              ScheduleCron = String.Empty
+              Active = false }
+    
+        static member CreateTableSql() = """
+        CREATE TABLE `pipeline_schedules` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `reference` varchar(36) NOT NULL,
+  `subscription_id` int NOT NULL,
+  `pipeline_version_id` int NOT NULL,
+  `schedule_cron` text NOT NULL,
+  `active` tinyint(1) NOT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `pipeline_schedules_UN` (`reference`),
+  KEY `pipeline_schedules_FK` (`pipeline_version_id`),
+  KEY `pipeline_schedules_FK_1` (`subscription_id`),
+  CONSTRAINT `pipeline_schedules_FK` FOREIGN KEY (`pipeline_version_id`) REFERENCES `cfg_pipeline_versions` (`id`),
+  CONSTRAINT `pipeline_schedules_FK_1` FOREIGN KEY (`subscription_id`) REFERENCES `subscriptions` (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci
+        """
+    
+        static member SelectSql() = """
+        SELECT
+              pipeline_schedules.`id`,
+              pipeline_schedules.`reference`,
+              pipeline_schedules.`subscription_id`,
+              pipeline_schedules.`pipeline_version_id`,
+              pipeline_schedules.`schedule_cron`,
+              pipeline_schedules.`active`
+        FROM pipeline_schedules
+        """
+    
+        static member TableName() = "pipeline_schedules"
     
     /// A record representing a row in the table `subscriptions`.
     type Subscription =
@@ -935,7 +982,7 @@ module Records =
         static member TableName() = "users"
     
 
-/// Module generated on 29/06/2023 18:25:09 (utc) via Freql.Tools.
+/// Module generated on 01/09/2023 19:21:18 (utc) via Freql.Tools.
 [<RequireQualifiedAccess>]
 module Parameters =
     /// A record representing a new row in the table `cfg_action_types`.
@@ -1236,6 +1283,22 @@ module Parameters =
               RunBy = 0 }
     
     
+    /// A record representing a new row in the table `pipeline_schedules`.
+    type NewPipelineSchedule =
+        { [<JsonPropertyName("reference")>] Reference: string
+          [<JsonPropertyName("subscriptionId")>] SubscriptionId: int
+          [<JsonPropertyName("pipelineVersionId")>] PipelineVersionId: int
+          [<JsonPropertyName("scheduleCron")>] ScheduleCron: string
+          [<JsonPropertyName("active")>] Active: bool }
+    
+        static member Blank() =
+            { Reference = String.Empty
+              SubscriptionId = 0
+              PipelineVersionId = 0
+              ScheduleCron = String.Empty
+              Active = false }
+    
+    
     /// A record representing a new row in the table `subscriptions`.
     type NewSubscription =
         { [<JsonPropertyName("reference")>] Reference: string
@@ -1260,7 +1323,7 @@ module Parameters =
               Active = false }
     
     
-/// Module generated on 29/06/2023 18:25:09 (utc) via Freql.Tools.
+/// Module generated on 01/09/2023 19:21:18 (utc) via Freql.Tools.
 [<RequireQualifiedAccess>]
 module Operations =
 
@@ -1721,6 +1784,30 @@ module Operations =
     
     let insertPipelineRunItem (context: MySqlContext) (parameters: Parameters.NewPipelineRunItem) =
         context.Insert("pipeline_runs", parameters)
+    
+    /// Select a `Records.PipelineSchedule` from the table `pipeline_schedules`.
+    /// Internally this calls `context.SelectSingleAnon<Records.PipelineSchedule>` and uses Records.PipelineSchedule.SelectSql().
+    /// The caller can provide extra string lines to create a query and boxed parameters.
+    /// It is up to the caller to verify the sql and parameters are correct,
+    /// this should be considered an internal function (not exposed in public APIs).
+    /// Parameters are assigned names based on their order in 0 indexed array. For example: @0,@1,@2...
+    /// Example: selectPipelineScheduleRecord ctx "WHERE `field` = @0" [ box `value` ]
+    let selectPipelineScheduleRecord (context: MySqlContext) (query: string list) (parameters: obj list) =
+        let sql = [ Records.PipelineSchedule.SelectSql() ] @ query |> buildSql
+        context.SelectSingleAnon<Records.PipelineSchedule>(sql, parameters)
+    
+    /// Internally this calls `context.SelectAnon<Records.PipelineSchedule>` and uses Records.PipelineSchedule.SelectSql().
+    /// The caller can provide extra string lines to create a query and boxed parameters.
+    /// It is up to the caller to verify the sql and parameters are correct,
+    /// this should be considered an internal function (not exposed in public APIs).
+    /// Parameters are assigned names based on their order in 0 indexed array. For example: @0,@1,@2...
+    /// Example: selectPipelineScheduleRecords ctx "WHERE `field` = @0" [ box `value` ]
+    let selectPipelineScheduleRecords (context: MySqlContext) (query: string list) (parameters: obj list) =
+        let sql = [ Records.PipelineSchedule.SelectSql() ] @ query |> buildSql
+        context.SelectAnon<Records.PipelineSchedule>(sql, parameters)
+    
+    let insertPipelineSchedule (context: MySqlContext) (parameters: Parameters.NewPipelineSchedule) =
+        context.Insert("pipeline_schedules", parameters)
     
     /// Select a `Records.Subscription` from the table `subscriptions`.
     /// Internally this calls `context.SelectSingleAnon<Records.Subscription>` and uses Records.Subscription.SelectSql().
