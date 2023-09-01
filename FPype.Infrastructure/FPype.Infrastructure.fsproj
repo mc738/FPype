@@ -41,6 +41,7 @@
         <Compile Include="Pipelines\Models.fs" />
         <Compile Include="Pipelines\Operations.fs" />
         <Compile Include="Pipelines\Auditing.fs" />
+        <Folder Include="Scheduling\" />
         <Compile Include="Services\PipelineService.fs" />
         <Compile Include="Services\ConfigurationService.fs" />
         <Compile Include="Services\Extensions.fs" />
