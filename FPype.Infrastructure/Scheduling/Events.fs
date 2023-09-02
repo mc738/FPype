@@ -11,7 +11,7 @@ module Events =
         | ScheduleCreated of ScheduleCreatedEvent
         | ScheduleUpdated of ScheduleUpdatedEvent
         | ScheduleActivated of ScheduleActivatedEvent
-        | ScheduleDeactivated
+        | ScheduleDeactivated of ScheduleDeactivatedEvent
 
 
     and [<CLIMutable>] ScheduleCreatedEvent =
@@ -30,4 +30,6 @@ module Events =
         { [<JsonPropertyName("reference")>]
           Reference: string }
 
-    ()
+    and [<CLIMutable>] ScheduleDeactivatedEvent =
+        { [<JsonPropertyName("reference")>]
+          Reference: string }
