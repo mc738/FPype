@@ -8,7 +8,7 @@ module Events =
 
     type ScheduleEvent =
         | ScheduleCreated of ScheduleCreatedEvent
-        | ScheduleUpdated
+        | ScheduleUpdated of ScheduleUpdatedEvent
         | ScheduleActivated
         | ScheduleDeactivated
 
@@ -19,6 +19,11 @@ module Events =
           [<JsonPropertyName("scheduleCron")>]
           ScheduleCron: string }
 
-    
+    and [<CLIMutable>] ScheduleUpdatedEvent =
+        { [<JsonPropertyName("reference")>]
+          Reference: string
+          [<JsonPropertyName("newScheduleCron")>]
+          NewScheduleCron: string }
+
 
     ()
