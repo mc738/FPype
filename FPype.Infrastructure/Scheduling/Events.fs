@@ -27,6 +27,8 @@ module Events =
           Reference: string
           [<JsonPropertyName("newScheduleCron")>]
           NewScheduleCron: string }
+        
+        static member Name() = "schedule-updated"
 
     and [<CLIMutable>] ScheduleActivatedEvent =
         { [<JsonPropertyName("reference")>]
