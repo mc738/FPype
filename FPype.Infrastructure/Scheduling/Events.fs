@@ -1,5 +1,6 @@
 ﻿namespace FPype.Infrastructure.Scheduling
 
+open System
 open System.Text.Json.Serialization
 
 [<RequireQualifiedAccess>]
@@ -9,7 +10,7 @@ module Events =
     type ScheduleEvent =
         | ScheduleCreated of ScheduleCreatedEvent
         | ScheduleUpdated of ScheduleUpdatedEvent
-        | ScheduleActivated
+        | ScheduleActivated of ScheduleActivatedEvent
         | ScheduleDeactivated
 
 
@@ -25,5 +26,8 @@ module Events =
           [<JsonPropertyName("newScheduleCron")>]
           NewScheduleCron: string }
 
+    and [<CLIMutable>] ScheduleActivatedEvent =
+        { [<JsonPropertyName("reference")>]
+          Reference: string }
 
     ()
