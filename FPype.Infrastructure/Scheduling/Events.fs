@@ -33,6 +33,8 @@ module Events =
     and [<CLIMutable>] ScheduleActivatedEvent =
         { [<JsonPropertyName("reference")>]
           Reference: string }
+        
+        static member Name() = "schedule-activated"
 
     and [<CLIMutable>] ScheduleDeactivatedEvent =
         { [<JsonPropertyName("reference")>]
