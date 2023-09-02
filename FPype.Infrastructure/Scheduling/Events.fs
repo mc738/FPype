@@ -3,4 +3,14 @@
 [<RequireQualifiedAccess>]
 module Events =
     
+    
+    type ScheduleEvent =
+        | ScheduleCreated
+        | ScheduleUpdated
+        | ScheduleActivated
+        | ScheduleDeactivated
+        
+    
+    
+    
     ()
