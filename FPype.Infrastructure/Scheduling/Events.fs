@@ -1,12 +1,12 @@
 ﻿namespace FPype.Infrastructure.Scheduling
 
-open System
-open System.Text.Json.Serialization
-open FsToolbox.Core.Results
-
 [<RequireQualifiedAccess>]
 module Events =
 
+    open System
+    open System.Text.Json.Serialization
+    open FsToolbox.Core.Results
+    open FPype.Infrastructure.Core
 
     type ScheduleEvent =
         | ScheduleCreated of ScheduleCreatedEvent
@@ -17,7 +17,7 @@ module Events =
         static member TryDeserialize(name: string, data: string) =
             match name with
             | _ when name = ScheduleCreatedEvent.Name() ->
-                fromJson<PipelineAddedEvent> data |> Result.map ScheduleCreated
+                fromJson<ScheduleCreatedEvent> data |> Result.map ScheduleCreated
             | _ ->
                 let message = $"Unknowing configuration event type: `{name}`"
 
