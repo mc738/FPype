@@ -1,14 +1,15 @@
 ﻿namespace FPype.Infrastructure.Configuration.Common
 
-open System
-open System.Text.Json.Serialization
-open FPype.Infrastructure.Core.Persistence
-open Freql.MySql
-open FsToolbox.Core.Results
-open Microsoft.Extensions.Logging
-
 module Events =
 
+    open System
+    open System.Text.Json.Serialization
+    open Microsoft.Extensions.Logging
+    open FsToolbox.Core.Results
+    open Freql.MySql
+    open FPype.Infrastructure.Core
+    open FPype.Infrastructure.Core.Persistence
+        
     type ConfigurationEvent =
         // Pipelines
         | PipelineAdded of PipelineAddedEvent
