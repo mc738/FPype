@@ -37,28 +37,6 @@ module Shared =
             : FailureResult)
             |> ActionResult.Failure
 
-    let toJson (value: 'T) =
-        try
-            JsonSerializer.Serialize value |> Ok
-        with exn ->
-            Error(
-                { Message = exn.Message
-                  DisplayMessage = "Failed to serialize object."
-                  Exception = Some exn }
-                : FailureResult
-            )
-
-    let fromJson<'T> (json: string) =
-        try
-            JsonSerializer.Deserialize<'T> json |> Ok
-        with exn ->
-            Error(
-                { Message = exn.Message
-                  DisplayMessage = "Failed to deserialize object."
-                  Exception = Some exn }
-                : FailureResult
-            )
-
     let collectFetchResults<'T> (failOnError: bool) (results: FetchResult<'T> list) =
         results
         |> List.fold
