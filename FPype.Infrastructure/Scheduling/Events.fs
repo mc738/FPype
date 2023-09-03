@@ -18,8 +18,14 @@ module Events =
             match name with
             | _ when name = ScheduleCreatedEvent.Name() ->
                 fromJson<ScheduleCreatedEvent> data |> Result.map ScheduleCreated
+            | _ when name = ScheduleUpdatedEvent.Name() ->
+                fromJson<ScheduleUpdatedEvent> data |> Result.map ScheduleUpdated
+            | _ when name = ScheduleActivatedEvent.Name() ->
+                fromJson<ScheduleActivatedEvent> data |> Result.map ScheduleActivated
+            | _ when name = ScheduleDeactivatedEvent.Name() ->
+                fromJson<ScheduleDeactivatedEvent> data |> Result.map ScheduleDeactivated
             | _ ->
-                let message = $"Unknowing configuration event type: `{name}`"
+                let message = $"Unknowing schedule event type: `{name}`"
 
                 Error(
                     { Message = message
@@ -28,6 +34,7 @@ module Events =
                     : FailureResult
                 )
 
+        
 
 
     and [<CLIMutable>] ScheduleCreatedEvent =
