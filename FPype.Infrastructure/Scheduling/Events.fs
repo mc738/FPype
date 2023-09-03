@@ -2,6 +2,7 @@
 
 open System
 open System.Text.Json.Serialization
+open FsToolbox.Core.Results
 
 [<RequireQualifiedAccess>]
 module Events =
@@ -12,6 +13,21 @@ module Events =
         | ScheduleUpdated of ScheduleUpdatedEvent
         | ScheduleActivated of ScheduleActivatedEvent
         | ScheduleDeactivated of ScheduleDeactivatedEvent
+        
+        static member TryDeserialize(name: string, data: string) =
+            match name with
+            | _ when name = ScheduleCreatedEvent.Name() ->
+                fromJson<PipelineAddedEvent> data |> Result.map ScheduleCreated
+            | _ ->
+                let message = $"Unknowing configuration event type: `{name}`"
+
+                Error(
+                    { Message = message
+                      DisplayMessage = message
+                      Exception = None }
+                    : FailureResult
+                )
+
 
 
     and [<CLIMutable>] ScheduleCreatedEvent =
