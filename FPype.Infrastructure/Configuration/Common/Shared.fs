@@ -9,10 +9,6 @@ open Microsoft.FSharp.Core
 [<AutoOpen>]
 module Shared =
 
-    let createReference () = Guid.NewGuid().ToString("n")
-
-    let getTimestamp () = DateTime.UtcNow
-
     let handleFetchResult = ()
 
     let optionalToFetchResult<'T> (name: string) (result: Result<'T option, FailureResult>) =
@@ -57,9 +53,6 @@ module Shared =
         match results with
         | FetchResult.Success v -> v
         | FetchResult.Failure f -> []
-
-    
-    
 
     let chooseFetchResults<'T> (errorFn: FailureResult -> unit) (results: FetchResult<'T> list) =
         results

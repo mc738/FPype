@@ -3,8 +3,13 @@
 [<AutoOpen>]
 module Shared =
 
+    open System
     open System.Text.Json
     open FsToolbox.Core.Results
+    
+    let createReference () = Guid.NewGuid().ToString("n")
+
+    let getTimestamp () = DateTime.UtcNow
         
     let toJson (value: 'T) =
         try
