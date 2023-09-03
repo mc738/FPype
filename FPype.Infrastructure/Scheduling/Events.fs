@@ -1,5 +1,9 @@
 ﻿namespace FPype.Infrastructure.Scheduling
 
+open FPype.Infrastructure.Core.Persistence
+open Freql.MySql
+open Microsoft.Extensions.Logging
+
 [<RequireQualifiedAccess>]
 module Events =
 
@@ -68,3 +72,31 @@ module Events =
           Reference: string }
         
         static member Name() = "schedule-deactivated"
+
+    let addEvents
+        (ctx: MySqlContext)
+        (log: ILogger)
+        (subscriptionId: int)
+        (userId: int)
+        (timestamp: DateTime)
+        (events: ScheduleEvent list)
+        =
+        let batchReference = createReference ()
+
+        events
+        |> List.fold
+            (fun last e ->
+                match e.Serialize() with
+                | Ok(name, data) ->
+                    ({ ScheduleId = subscriptionId
+                       EventType = name
+                       EventTimestamp = timestamp
+                       EventData = data
+                       UserId = userId
+                       BatchReference = batchReference }
+                    : Parameters.NewPipelineScheduleEvent)
+                    |> Operations.insertPipelineScheduleEvent ctx
+
+                | Error e -> last)
+            0UL
+        |> int
