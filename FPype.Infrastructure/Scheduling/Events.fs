@@ -34,8 +34,12 @@ module Events =
                     : FailureResult
                 )
 
-        
-
+        member se.Serialize() =
+            match se with
+            | ScheduleCreated data -> toJson data |> Result.map (fun r -> ScheduleCreatedEvent.Name(), r)
+            | ScheduleUpdated data -> toJson data |> Result.map (fun r -> ScheduleUpdatedEvent.Name(), r)
+            | ScheduleActivated data -> toJson data |> Result.map (fun r -> ScheduleActivatedEvent.Name(), r)
+            | ScheduleDeactivated data -> toJson data |> Result.map (fun r -> ScheduleDeactivatedEvent.Name(), r)
 
     and [<CLIMutable>] ScheduleCreatedEvent =
         { [<JsonPropertyName("reference")>]
