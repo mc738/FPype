@@ -131,3 +131,7 @@ module Events =
         |> List.map (fun ce ->
             ScheduleEvent.TryDeserialize(ce.EventType, ce.EventData)
             |> FetchResult.fromResult)
+
+    let selectEvents (ctx: MySqlContext) (scheduleId: int) (previousTip: int) =
+        selectScheduleEventRecords ctx scheduleId previousTip
+        |> deserializeRecords
