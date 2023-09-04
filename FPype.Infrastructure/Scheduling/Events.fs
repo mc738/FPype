@@ -112,3 +112,11 @@ module Events =
             ctx
             [ "WHERE id > @1" ]
             [ previousTip ]
+
+    let selectScheduleTip (ctx: MySqlContext) (scheduleId: int) =
+        Operations.selectConfigurationEventRecord
+            ctx
+            [ "WHERE schedule_id = @0 ORDER BY id DESC" ]
+            [ scheduleId ]
+        |> Option.map (fun er -> er.Id)
+        |> Option.defaultValue 0
