@@ -106,3 +106,9 @@ module Events =
             ctx
             [ "WHERE schedule_id = @0 AND id > @1" ]
             [ scheduleId; previousTip ]
+
+    let selectAllEventRecordsFromPreviousTip (ctx: MySqlContext) (previousTip: int) =
+        Operations.selectPipelineScheduleEventRecords
+            ctx
+            [ "WHERE id > @1" ]
+            [ previousTip ]
