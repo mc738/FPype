@@ -125,3 +125,9 @@ module Events =
         Operations.selectPipelineScheduleEventRecord ctx [ "ORDER BY id DESC" ] []
         |> Option.map (fun er -> er.Id)
         |> Option.defaultValue 0
+        
+    let deserializeRecords (events: Records.PipelineScheduleEvent list) =
+        events
+        |> List.map (fun ce ->
+            ScheduleEvent.TryDeserialize(ce.EventType, ce.EventData)
+            |> FetchResult.fromResult)
