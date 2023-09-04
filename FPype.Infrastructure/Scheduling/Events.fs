@@ -1,17 +1,18 @@
 ﻿namespace FPype.Infrastructure.Scheduling
 
-open FPype.Infrastructure.Core.Persistence
-open Freql.MySql
-open Microsoft.Extensions.Logging
+
 
 [<RequireQualifiedAccess>]
 module Events =
 
     open System
     open System.Text.Json.Serialization
+    open Microsoft.Extensions.Logging
     open FsToolbox.Core.Results
+    open Freql.MySql
     open FPype.Infrastructure.Core
-
+    open FPype.Infrastructure.Core.Persistence
+    
     type ScheduleEvent =
         | ScheduleCreated of ScheduleCreatedEvent
         | ScheduleUpdated of ScheduleUpdatedEvent
