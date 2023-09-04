@@ -17,7 +17,7 @@ module Events =
         | ScheduleUpdated of ScheduleUpdatedEvent
         | ScheduleActivated of ScheduleActivatedEvent
         | ScheduleDeactivated of ScheduleDeactivatedEvent
-        
+
         static member TryDeserialize(name: string, data: string) =
             match name with
             | _ when name = ScheduleCreatedEvent.Name() ->
@@ -50,7 +50,7 @@ module Events =
           Reference: string
           [<JsonPropertyName("scheduleCron")>]
           ScheduleCron: string }
-        
+
         static member Name() = "schedule-created"
 
     and [<CLIMutable>] ScheduleUpdatedEvent =
@@ -58,19 +58,19 @@ module Events =
           Reference: string
           [<JsonPropertyName("newScheduleCron")>]
           NewScheduleCron: string }
-        
+
         static member Name() = "schedule-updated"
 
     and [<CLIMutable>] ScheduleActivatedEvent =
         { [<JsonPropertyName("reference")>]
           Reference: string }
-        
+
         static member Name() = "schedule-activated"
 
     and [<CLIMutable>] ScheduleDeactivatedEvent =
         { [<JsonPropertyName("reference")>]
           Reference: string }
-        
+
         static member Name() = "schedule-deactivated"
 
     let addEvents
@@ -100,3 +100,9 @@ module Events =
                 | Error e -> last)
             0UL
         |> int
+
+    let selectScheduleEventRecords (ctx: MySqlContext) (scheduleId: int) (previousTip: int) =
+        Operations.selectPipelineScheduleEventRecords
+            ctx
+            [ "WHERE schedule_id = @0 AND id > @1" ]
+            [ scheduleId; previousTip ]
