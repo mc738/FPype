@@ -114,9 +114,14 @@ module Events =
             [ previousTip ]
 
     let selectScheduleTip (ctx: MySqlContext) (scheduleId: int) =
-        Operations.selectConfigurationEventRecord
+        Operations.selectPipelineScheduleEventRecord
             ctx
             [ "WHERE schedule_id = @0 ORDER BY id DESC" ]
             [ scheduleId ]
+        |> Option.map (fun er -> er.Id)
+        |> Option.defaultValue 0
+        
+    let selectGlobalTip (ctx: MySqlContext) =
+        Operations.selectPipelineScheduleEventRecord ctx [ "ORDER BY id DESC" ] []
         |> Option.map (fun er -> er.Id)
         |> Option.defaultValue 0
