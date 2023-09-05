@@ -26,8 +26,8 @@ module Common =
                 Operations.selectPipelineScheduleEventRecord ctx [ "WHERE active = FALSE" ] []
                 |> FetchResult.Success
             with ex ->
-                { Message = "Unhandled exception while fetching active schedules"
-                  DisplayMessage = "Error fetching active schedules"
+                { Message = "Unhandled exception while fetching inactive schedules"
+                  DisplayMessage = "Error fetching inactive schedules"
                   Exception = Some ex }
                 |> FetchResult.Failure
            
