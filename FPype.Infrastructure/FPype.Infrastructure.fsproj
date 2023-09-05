@@ -45,6 +45,7 @@
         <Compile Include="Scheduling\Common.fs" />
         <Compile Include="Scheduling\Events.fs" />
         <Compile Include="Scheduling\Operations.fs" />
+        <Compile Include="Scheduling\CreateOperations.fs" />
         <Compile Include="Scheduling\Auditing.fs" />
         <Compile Include="Services\PipelineService.fs" />
         <Compile Include="Services\ConfigurationService.fs" />
