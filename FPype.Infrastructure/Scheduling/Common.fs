@@ -20,6 +20,16 @@ module Common =
                   DisplayMessage = "Error fetching active schedules"
                   Exception = Some ex }
                 |> FetchResult.Failure
+                
+        let inactiveSchedules (ctx: MySqlContext) =
+            try
+                Operations.selectPipelineScheduleEventRecord ctx [ "WHERE active = FALSE" ] []
+                |> FetchResult.Success
+            with ex ->
+                { Message = "Unhandled exception while fetching active schedules"
+                  DisplayMessage = "Error fetching active schedules"
+                  Exception = Some ex }
+                |> FetchResult.Failure
            
         let allSchedules (ctx: MySqlContext) =
             try
