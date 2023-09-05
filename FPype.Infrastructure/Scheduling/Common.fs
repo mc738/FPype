@@ -11,6 +11,16 @@ module Common =
         open FPype.Infrastructure.Core
         open FPype.Infrastructure.Core.Persistence
 
+        let activeSchedules (ctx: MySqlContext) =
+            try
+                Operations.selectPipelineScheduleEventRecord ctx [ "WHERE active = TRUE" ] []
+                |> FetchResult.Success
+            with ex ->
+                { Message = "Unhandled exception while fetching active schedules"
+                  DisplayMessage = "Error fetching active schedules"
+                  Exception = Some ex }
+                |> FetchResult.Failure
+        
         let scheduleById (ctx: MySqlContext) (id: int) =
             try
                 Operations.selectPipelineScheduleEventRecord ctx [ "WHERE id = @0" ] [ id ]
