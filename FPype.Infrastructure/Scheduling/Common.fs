@@ -41,6 +41,16 @@ module Common =
                   Exception = Some ex }
                 |> FetchResult.Failure
         
+        let getSchedulesBetweenIds (ctx: MySqlContext) (fromId: int) (toId: int) =
+            try
+                Operations.selectPipelineScheduleEventRecord ctx [ "WHERE (id <= @0) AND (id >= @1)" ] [ fromId; toId ]
+                |> FetchResult.Success
+            with ex ->
+                { Message = "Unhandled exception while fetching active schedules"
+                  DisplayMessage = "Error fetching active schedules"
+                  Exception = Some ex }
+                |> FetchResult.Failure
+        
         let scheduleById (ctx: MySqlContext) (id: int) =
             try
                 Operations.selectPipelineScheduleEventRecord ctx [ "WHERE id = @0" ] [ id ]
