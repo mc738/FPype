@@ -13,7 +13,7 @@ module Common =
 
         let activeSchedules (ctx: MySqlContext) =
             try
-                Operations.selectPipelineScheduleEventRecord ctx [ "WHERE active = TRUE" ] []
+                Operations.selectPipelineScheduleEventRecords ctx [ "WHERE active = TRUE" ] []
                 |> FetchResult.Success
             with ex ->
                 { Message = "Unhandled exception while fetching active schedules"
@@ -23,7 +23,7 @@ module Common =
                 
         let inactiveSchedules (ctx: MySqlContext) =
             try
-                Operations.selectPipelineScheduleEventRecord ctx [ "WHERE active = FALSE" ] []
+                Operations.selectPipelineScheduleEventRecords ctx [ "WHERE active = FALSE" ] []
                 |> FetchResult.Success
             with ex ->
                 { Message = "Unhandled exception while fetching inactive schedules"
@@ -33,7 +33,7 @@ module Common =
            
         let allSchedules (ctx: MySqlContext) =
             try
-                Operations.selectPipelineScheduleEventRecord ctx [] []
+                Operations.selectPipelineScheduleEventRecords ctx [] []
                 |> FetchResult.Success
             with ex ->
                 { Message = "Unhandled exception while fetching all schedules"
