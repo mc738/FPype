@@ -14,4 +14,4 @@ module CreateOperations =
             |> FetchResult.merge (fun ur sr -> ur, sr) (fun ur -> Fetch.subscriptionById t ur.Id)
             |> FetchResult.chain (fun (ur, sr) pvr -> ur, sr, pvr) (Fetch.pipelineVersionByReference t schedule.PipelineVersionReference)
             |> FetchResult.merge (fun (ur, sr, pvr) pr -> ur, sr, pr, pvr) (fun (ur, sr, pvr) -> Fetch.pipelineById t pvr.PipelineId)
-            )
+            |> FetchResult.toResult)
