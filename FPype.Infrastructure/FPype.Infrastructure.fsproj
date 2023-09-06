@@ -44,6 +44,7 @@
         <Compile Include="Pipelines\Auditing.fs" />
         <Compile Include="Scheduling\Common.fs" />
         <Compile Include="Scheduling\Events.fs" />
+        <Compile Include="Scheduling\Models.fs" />
         <Compile Include="Scheduling\Operations.fs" />
         <Compile Include="Scheduling\CreateOperations.fs" />
         <Compile Include="Scheduling\ReadOperations.fs" />
