@@ -34,3 +34,8 @@ module Verification =
         match result with
         | true -> VerificationResult.Success
         | false -> VerificationResult.Failure onFalse
+        
+    let isFalse (onTrue: FailureResult) (result: bool) =
+        match result with
+        | true -> VerificationResult.Failure onTrue
+        | false ->  VerificationResult.Success
