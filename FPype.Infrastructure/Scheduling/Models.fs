@@ -13,3 +13,5 @@ module Models =
           SubscriptionId: string
           PipelineVersionReference: string
           ScheduleCron: string }
+
+    type UpdateSchedule = { NewScheduleCron: string }
