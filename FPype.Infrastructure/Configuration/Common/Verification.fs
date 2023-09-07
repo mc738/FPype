@@ -1,5 +1,8 @@
 ﻿namespace FPype.Infrastructure.Configuration.Common
 
+open FPype.Infrastructure.Core
+open FsToolbox.Core.Results
+
 [<RequireQualifiedAccess>]
 module Verification =
         
@@ -26,3 +29,8 @@ module Verification =
         match subscription.Active = true with
         | true -> VerificationResult.Success
         | false -> VerificationResult.ItemInactive "Subscription"
+        
+    let isTrue (onFalse: FailureResult) (result: bool) =
+        match result with
+        | true -> VerificationResult.Success
+        | false -> VerificationResult.Failure onFalse
