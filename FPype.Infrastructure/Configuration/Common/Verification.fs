@@ -39,3 +39,6 @@ module Verification =
         match result with
         | true -> VerificationResult.Failure onTrue
         | false ->  VerificationResult.Success
+        
+    let bespoke<'T> (handler: 'T -> VerificationResult) (value: 'T) = handler value     
+    
