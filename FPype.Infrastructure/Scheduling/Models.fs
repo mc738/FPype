@@ -3,7 +3,8 @@
 module Models =
 
     type NewSchedule =
-        { PipelineVersionReference: string
+        { Reference: string
+          PipelineVersionReference: string
           ScheduleCron: string }
 
 
