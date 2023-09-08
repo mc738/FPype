@@ -3,7 +3,14 @@
 open FPype.Configuration.Persistence
 
 
-module Verification = ()
+[<RequireQualifiedAccess>]
+module Verification =
+    
+    let isActive<'T> (name: string) (testFn: 'T -> bool) (value: 'T) =
+        match testFn value with
+        | true -> VerificationResult.Success
+        | false -> VerificationResult.ItemInactive name
+        
     
     
     //let checkSubscription (subscription: Records.)
