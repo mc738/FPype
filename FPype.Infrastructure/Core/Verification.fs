@@ -10,8 +10,3 @@ module Verification =
         match testFn value with
         | true -> VerificationResult.Success
         | false -> VerificationResult.ItemInactive name
-        
-    
-    
-    //let checkSubscription (subscription: Records.)
-
