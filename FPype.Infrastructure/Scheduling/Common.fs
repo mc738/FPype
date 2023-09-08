@@ -13,7 +13,7 @@ module Common =
 
         let activeSchedules (ctx: MySqlContext) =
             try
-                Operations.selectPipelineScheduleEventRecords ctx [ "WHERE active = TRUE" ] []
+                Operations.selectPipelineScheduleRecords ctx [ "WHERE active = TRUE" ] []
                 |> FetchResult.Success
             with ex ->
                 { Message = "Unhandled exception while fetching active schedules"
@@ -23,7 +23,7 @@ module Common =
                 
         let inactiveSchedules (ctx: MySqlContext) =
             try
-                Operations.selectPipelineScheduleEventRecords ctx [ "WHERE active = FALSE" ] []
+                Operations.selectPipelineScheduleRecords ctx [ "WHERE active = FALSE" ] []
                 |> FetchResult.Success
             with ex ->
                 { Message = "Unhandled exception while fetching inactive schedules"
@@ -33,7 +33,7 @@ module Common =
            
         let allSchedules (ctx: MySqlContext) =
             try
-                Operations.selectPipelineScheduleEventRecords ctx [] []
+                Operations.selectPipelineScheduleRecords ctx [] []
                 |> FetchResult.Success
             with ex ->
                 { Message = "Unhandled exception while fetching all schedules"
@@ -43,7 +43,7 @@ module Common =
         
         let getSchedulesBetweenIds (ctx: MySqlContext) (fromId: int) (toId: int) =
             try
-                Operations.selectPipelineScheduleEventRecord ctx [ "WHERE (id <= @0) AND (id >= @1)" ] [ fromId; toId ]
+                Operations.selectPipelineScheduleRecord ctx [ "WHERE (id <= @0) AND (id >= @1)" ] [ fromId; toId ]
                 |> FetchResult.Success
             with ex ->
                 { Message = "Unhandled exception while fetching active schedules"
@@ -53,7 +53,7 @@ module Common =
         
         let scheduleById (ctx: MySqlContext) (id: int) =
             try
-                Operations.selectPipelineScheduleEventRecord ctx [ "WHERE id = @0" ] [ id ]
+                Operations.selectPipelineScheduleRecord ctx [ "WHERE id = @0" ] [ id ]
                 |> Option.map FetchResult.Success
                 |> Option.defaultWith (fun _ ->
                     ({ Message = $"Schedule (id: {id}) not found"
@@ -69,7 +69,7 @@ module Common =
 
         let scheduleByReference (ctx: MySqlContext) (reference: string) =
             try
-                Operations.selectPipelineScheduleEventRecord ctx [ "WHERE reference = @0" ] [ reference ]
+                Operations.selectPipelineScheduleRecord ctx [ "WHERE reference = @0" ] [ reference ]
                 |> Option.map FetchResult.Success
                 |> Option.defaultWith (fun _ ->
                     ({ Message = $"Schedule (ref: {reference}) not found"
