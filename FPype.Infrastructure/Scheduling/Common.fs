@@ -1,12 +1,15 @@
 ﻿namespace FPype.Infrastructure.Scheduling
 
+open FPype.Infrastructure.Core
+open FPype.Infrastructure.Core.Persistence
+
 [<AutoOpen>]
 module Common =
 
     [<RequireQualifiedAccess>]
     module Fetch =
 
-        open FsToolbox.Core.Results        
+        open FsToolbox.Core.Results
         open Freql.MySql
         open FPype.Infrastructure.Core
         open FPype.Infrastructure.Core.Persistence
@@ -20,7 +23,7 @@ module Common =
                   DisplayMessage = "Error fetching active schedules"
                   Exception = Some ex }
                 |> FetchResult.Failure
-                
+
         let inactiveSchedules (ctx: MySqlContext) =
             try
                 Operations.selectPipelineScheduleRecords ctx [ "WHERE active = FALSE" ] []
@@ -30,17 +33,16 @@ module Common =
                   DisplayMessage = "Error fetching inactive schedules"
                   Exception = Some ex }
                 |> FetchResult.Failure
-           
+
         let allSchedules (ctx: MySqlContext) =
             try
-                Operations.selectPipelineScheduleRecords ctx [] []
-                |> FetchResult.Success
+                Operations.selectPipelineScheduleRecords ctx [] [] |> FetchResult.Success
             with ex ->
                 { Message = "Unhandled exception while fetching all schedules"
                   DisplayMessage = "Error fetching all schedules"
                   Exception = Some ex }
                 |> FetchResult.Failure
-        
+
         let getSchedulesBetweenIds (ctx: MySqlContext) (fromId: int) (toId: int) =
             try
                 Operations.selectPipelineScheduleRecord ctx [ "WHERE (id <= @0) AND (id >= @1)" ] [ fromId; toId ]
@@ -50,7 +52,7 @@ module Common =
                   DisplayMessage = "Error fetching active schedules"
                   Exception = Some ex }
                 |> FetchResult.Failure
-        
+
         let scheduleById (ctx: MySqlContext) (id: int) =
             try
                 Operations.selectPipelineScheduleRecord ctx [ "WHERE id = @0" ] [ id ]
@@ -84,4 +86,8 @@ module Common =
                 |> FetchResult.Failure
 
 
-    
+    [<RequireQualifiedAccess>]
+    module Verification =
+
+        let scheduleIsActive (schedule: Records.PipelineSchedule) _ =
+            schedule |> Verification.isActive "Schedule" (fun s -> s.Active)
