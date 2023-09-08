@@ -11,15 +11,14 @@ module UpdateOperations =
     open FPype.Infrastructure.Core
     open FPype.Infrastructure.Core.Persistence
     
-    let schedule (ctx: MySqlContext) (logger: ILogger) (userReference: string) (update: UpdateSchedule) =
+    let schedule (ctx: MySqlContext) (logger: ILogger) (userReference: string) (scheduleReference: string) (update: UpdateSchedule) =
         ctx.ExecuteInTransaction(fun t ->
             // Fetch
             Fetch.user t userReference
             |> FetchResult.merge (fun ur sr -> ur, sr) (fun ur -> Fetch.subscriptionById t ur.Id)
-            |> FetchResult.chain (fun (ur, sr) pr -> ur, sr, pr) (Fetch.pipeline t pipelineReference)
-            |> FetchResult.merge (fun (ur, sr, pr) pvr -> ur, sr, pr, pvr) (fun (_, _, pr) ->
-                Fetch.pipelineLatestVersion t pr.Id)
-            |> FetchResult.toResult
-            )
+            |> FetchResult.chain (fun (ur, sr) psr -> ur, sr, psr) (Fetch.scheduleByReference t scheduleReference)
+            |> FetchResult.merge (fun (ur, sr, psr) pvr -> ur, sr, pvr, psr) (fun (_, _, psr) -> Fetch.pipelineVersionById t psr.PipelineVersionId)
+            |> FetchResult.merge (fun (ur, sr, pvr, psr) pr -> ur, sr, pr, pvr, psr) (fun (_, _, pvr, _) -> Fetch.pipelineById t pvr.PipelineId)
+            |> FetchResult.toResult)
     
 
