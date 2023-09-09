@@ -13,3 +13,4 @@ module Extensions =
                 .AddScoped<MySqlContext>(fun _ -> MySqlContext.Connect(connectionString))
                 .AddScoped<PipelineService>()
                 .AddScoped<ConfigurationService>()
+                .AddScoped<SchedulingService>()
