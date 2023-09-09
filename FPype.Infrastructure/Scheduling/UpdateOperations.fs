@@ -83,3 +83,4 @@ module UpdateOperations =
                     |> FPype.Infrastructure.Scheduling.Events.addEvents t logger sr.Id ur.Id (getTimestamp ())
                     |> ignore
                 | false -> logger.LogInformation($"Schedule `{psr.Reference}` is already active, skipping.")))
+        |> toActionResult "Active schedule"
