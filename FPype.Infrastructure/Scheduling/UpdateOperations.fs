@@ -49,7 +49,9 @@ module UpdateOperations =
                 [ Events.ScheduleEvent.ScheduleUpdated
                       { Reference = psr.Reference
                         NewScheduleCron = update.NewScheduleCron } ]
-                |> FPype.Infrastructure.Scheduling.Events.addEvents t logger sr.Id ur.Id (getTimestamp ())))
+                |> FPype.Infrastructure.Scheduling.Events.addEvents t logger sr.Id ur.Id (getTimestamp ())
+                |> ignore))
+        |> toActionResult "Update schedule"
 
 
     let activateSchedule (ctx: MySqlContext) (logger: ILogger) (userReference: string) (scheduleReference: string) =
