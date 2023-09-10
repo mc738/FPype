@@ -1,5 +1,6 @@
 ﻿namespace FPype.Infrastructure.Services
 
+open FPype.Infrastructure.Scheduling
 open Microsoft.Extensions.Logging
 open Freql.MySql
 open FPype.Infrastructure
@@ -18,5 +19,5 @@ type SchedulingService(ctx: MySqlContext, log: ILogger<SchedulingService>) =
     member _.DeactivateSchedule(userReference, scheduleReference) =
         Scheduling.UpdateOperations.deactivateSchedule ctx log userReference scheduleReference
         
-    member _.GetSerialTipInternal() =
+    member _.GetSerialTipInternal() = Events.selectGlobalTip ctx
         
