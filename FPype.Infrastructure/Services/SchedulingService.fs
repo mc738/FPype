@@ -14,3 +14,6 @@ type SchedulingService(ctx: MySqlContext, log: ILogger<SchedulingService>) =
     
     member _.ActivateSchedule(userReference, scheduleReference) =
         Scheduling.UpdateOperations.activateSchedule userReference scheduleReference
+        
+    member _.DeactivateSchedule(userReference, scheduleReference) =
+        Scheduling.UpdateOperations.deactivateSchedule userReference scheduleReference
