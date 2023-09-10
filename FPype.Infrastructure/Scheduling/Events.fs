@@ -111,7 +111,7 @@ module Events =
     let selectAllEventRecordsFromPreviousTip (ctx: MySqlContext) (previousTip: int) =
         Operations.selectPipelineScheduleEventRecords
             ctx
-            [ "WHERE id > @1" ]
+            [ "WHERE id > @0" ]
             [ previousTip ]
 
     let selectScheduleTip (ctx: MySqlContext) (scheduleId: int) =
