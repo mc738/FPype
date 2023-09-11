@@ -13,7 +13,7 @@ module Shared =
 
         static member Create(success: 'T list, errors: FailureResult list) = { Success = success; Errors = errors }
 
-        member rc.HasErrors() = rc.Errors.Length
+        member rc.HasErrors() = rc.Errors.IsEmpty |> not
 
     let createReference () = Guid.NewGuid().ToString("n")
 
