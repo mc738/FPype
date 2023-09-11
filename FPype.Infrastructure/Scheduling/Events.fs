@@ -1,5 +1,7 @@
 ﻿namespace FPype.Infrastructure.Scheduling
 
+open FPype.Infrastructure.Core
+
 
 
 [<RequireQualifiedAccess>]
@@ -133,7 +135,12 @@ module Events =
             ScheduleEvent.TryDeserialize(ce.EventType, ce.EventData)
             |> FetchResult.fromResult)
         |> FetchResult.unzipResults
+        |> ResultCollection.Create
 
-    let selectEvents (ctx: MySqlContext) (scheduleId: int) (previousTip: int) =
+    let selectScheduleEvents (ctx: MySqlContext) (scheduleId: int) (previousTip: int) =
         selectScheduleEventRecords ctx scheduleId previousTip
+        |> deserializeRecords
+        
+    let selectAllEvents (ctx: MySqlContext) (previousTip: int) =
+        selectAllEventRecordsFromPreviousTip ctx previousTip
         |> deserializeRecords
