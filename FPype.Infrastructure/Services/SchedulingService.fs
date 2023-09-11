@@ -21,6 +21,6 @@ type SchedulingService(ctx: MySqlContext, log: ILogger<SchedulingService>) =
         
     member _.GetSerialTipInternal() = Events.selectGlobalTip ctx
         
-    member _.GetAllEventsInternal(previousSerial) = ReadOperations.allEventsInternal ctx log previousSerial
+    member _.GetAllEventsFromFromSerialInternal(previousSerial) = ReadOperations.allEventsInternal ctx log previousSerial
     
-    member _.GetScheduleEventsInternal(previousSerial) = ReadOperations.scheduleEventsInternal ctx log previousSerial
+    member _.GetScheduleEventsFromSerialInternal(previousSerial) = ReadOperations.scheduleEventsInternal ctx log previousSerial
