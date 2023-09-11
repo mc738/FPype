@@ -24,5 +24,16 @@ module ReadOperations =
 
         rc.Success |> FetchResult.Success
 
-
-    ()
+    let scheduleEventsInternal (ctx: MySqlContext) (logger: ILogger) (scheduleReference: string) (previousTip: int) =
+        Fetch.scheduleByReference ctx scheduleReference
+        |> FetchResult.map (fun sr ->
+            let rc = Events.selectScheduleEvents ctx sr.Id previousTip
+            
+            match rc.HasErrors() with
+            | true ->
+                rc.Errors
+                |> List.iter (fun e -> logger.LogError($"Failed to deserialize event. Error: {e}"))
+            | false -> ()
+        
+            rc.Success)
+    
