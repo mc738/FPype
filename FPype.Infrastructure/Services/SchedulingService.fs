@@ -23,4 +23,4 @@ type SchedulingService(ctx: MySqlContext, log: ILogger<SchedulingService>) =
         
     member _.GetAllEventsInternal(previousSerial) = ReadOperations.allEventsInternal ctx log previousSerial
     
-    
+    member _.GetScheduleEventsInternal(previousSerial) = ReadOperations.scheduleEventsInternal ctx log previousSerial
