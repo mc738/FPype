@@ -7,11 +7,13 @@ module Models =
           PipelineVersionReference: string
           ScheduleCron: string }
 
-
     type ScheduleOverview =
         { Reference: string
-          SubscriptionId: string
+          SubscriptionReference: string
+          PipelineReference: string
+          Pipeline: string
           PipelineVersionReference: string
+          PipelineVersion: int
           ScheduleCron: string }
 
     type UpdateSchedule = { NewScheduleCron: string }

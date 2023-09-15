@@ -48,3 +48,4 @@ module CreateOperations =
                 |> FPype.Infrastructure.Scheduling.Events.addEvents t logger sr.Id ur.Id (getTimestamp ())
                 |> ignore))
         |> toActionResult "Create schedule"
+
