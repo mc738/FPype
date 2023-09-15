@@ -28,12 +28,40 @@ module ReadOperations =
         Fetch.scheduleByReference ctx scheduleReference
         |> FetchResult.map (fun sr ->
             let rc = Events.selectScheduleEvents ctx sr.Id previousTip
-            
+
             match rc.HasErrors() with
             | true ->
                 rc.Errors
                 |> List.iter (fun e -> logger.LogError($"Failed to deserialize event. Error: {e}"))
             | false -> ()
-        
+
             rc.Success)
-    
+
+    let activePipelinesForUser (ctx: MySqlContext) (logger: ILogger) (userReference: string) =
+        Fetch.user ctx userReference
+        |> FetchResult.merge (fun ur sr -> ur, sr) (fun ur -> Fetch.subscriptionById ctx ur.Id)
+        |> FetchResult.toResult
+        |> Result.bind (fun (ur, sr) ->
+            let verifiers =
+                [ Verification.userIsActive ur; Verification.subscriptionIsActive sr ]
+
+            VerificationResult.verify verifiers (ur, sr))
+        |> Result.map (fun (ur, sr) ->
+            Operations.selectPipelineScheduleRecords ctx [ "WHERE subscription_id = @0 AND active = TRUE" ] [ sr.Id ]
+            |> List.choose (fun psr ->
+                // TODO what to do if pipeline or pipeline version not found?
+                Operations.selectPipelineVersionRecord ctx [ "WHERE id = @0" ] [ psr.PipelineVersionId ]
+                |> Option.bind (fun pvr ->
+                    Operations.selectPipelineRecord ctx [ "WHERE id = @0" ] [ pvr.PipelineId ]
+                    |> Option.map (fun pr -> pr, pvr))
+                |> Option.map (fun (pr, pvr) ->
+
+                    ({ Reference = psr.Reference
+                       SubscriptionReference = sr.Reference
+                       PipelineReference = pr.Reference
+                       Pipeline = pr.Name
+                       PipelineVersionReference = pvr.Reference
+                       PipelineVersion = pvr.Version
+                       ScheduleCron = psr.ScheduleCron }
+                    : Models.ScheduleOverview))))
+        |> FetchResult.fromResult
