@@ -17,3 +17,8 @@ module Models =
           ScheduleCron: string }
 
     type UpdateSchedule = { NewScheduleCron: string }
+
+    type SchedulePipelineRun =
+        { Reference: string
+          RunId: string
+          ScheduleReference: string }
