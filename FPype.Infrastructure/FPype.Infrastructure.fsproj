@@ -7,7 +7,6 @@
 
     <ItemGroup>
         <Compile Include="Core\Persistence.fs" />
-        <Compile Include="Core\Common.fs" />
         <Compile Include="Core\Subscriptions.fs" />
         <Compile Include="Core\Users.fs" />
         <Compile Include="Core\Verification.fs" />

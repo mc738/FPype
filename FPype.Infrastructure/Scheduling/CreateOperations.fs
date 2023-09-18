@@ -49,3 +49,5 @@ module CreateOperations =
                 |> ignore))
         |> toActionResult "Create schedule"
 
+
+    let scheduleRun (ctx: MySqlContext) (logger: ILogger) = ()
