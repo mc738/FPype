@@ -66,7 +66,7 @@ module ReadOperations =
                     : Models.ScheduleOverview))))
         |> FetchResult.fromResult
 
-    let allActiveSchedules (ctx: MySqlContext) (logger: ILogger) (userReference: string) =
+    let allActiveSchedules (ctx: MySqlContext) (logger: ILogger) =
         try
             Operations.selectPipelineScheduleRecords ctx [ "WHERE active = TRUE" ] []
                 |> List.choose (fun psr ->
