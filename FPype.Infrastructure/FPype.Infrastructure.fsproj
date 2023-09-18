@@ -8,10 +8,11 @@
     <ItemGroup>
         <Compile Include="Core\Persistence.fs" />
         <Compile Include="Core\Common.fs" />
+        <Compile Include="Core\Subscriptions.fs" />
+        <Compile Include="Core\Users.fs" />
         <Compile Include="Core\Verification.fs" />
         <Compile Include="Core\Shared.fs" />
         <Compile Include="Configuration\Common\Shared.fs" />
-        <Compile Include="Configuration\Common\Verification.fs" />
         <Compile Include="Configuration\Common\Fetch.fs" />
         <Compile Include="Configuration\Common\Events.fs" />
         <Compile Include="Configuration\Pipelines\Models.fs" />
