@@ -65,3 +65,30 @@ module ReadOperations =
                        ScheduleCron = psr.ScheduleCron }
                     : Models.ScheduleOverview))))
         |> FetchResult.fromResult
+
+    let allActiveSchedules (ctx: MySqlContext) (logger: ILogger) (userReference: string) =
+        try
+            Operations.selectPipelineScheduleRecords ctx [ "WHERE active = TRUE" ] []
+                |> List.choose (fun psr ->
+                    // TODO what to do if pipeline or pipeline version not found?
+                    Operations.selectPipelineVersionRecord ctx [ "WHERE id = @0" ] [ psr.PipelineVersionId ]
+                    |> Option.bind (fun pvr ->
+                        Operations.selectPipelineRecord ctx [ "WHERE id = @0" ] [ pvr.PipelineId ]
+                        |> Option.map (fun pr -> pr, pvr))
+                    |> Option.map (fun (pr, pvr) ->
+
+                        ({ Reference = psr.Reference
+                           SubscriptionReference = sr.Reference
+                           PipelineReference = pr.Reference
+                           Pipeline = pr.Name
+                           PipelineVersionReference = pvr.Reference
+                           PipelineVersion = pvr.Version
+                           ScheduleCron = psr.ScheduleCron }
+                        : Models.ScheduleOverview)))
+            |> FetchResult.Success
+        with ex ->
+            { Message = "Unhandled exception while fetching active schedules"
+              DisplayMessage = "Error fetching active schedules"
+              Exception = Some ex }
+            |> FetchResult.Failure
+            
