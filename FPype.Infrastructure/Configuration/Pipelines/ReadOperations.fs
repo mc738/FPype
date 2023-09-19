@@ -28,7 +28,10 @@ module ReadOperations =
             let verifiers =
                 [ Verification.userIsActive ur
                   Verification.subscriptionIsActive sr
-                  Verification.userSubscriptionMatches ur pr.SubscriptionId ]
+                  Verification.userSubscriptionMatches ur pr.SubscriptionId
+                  // SECURITY These might not strictly be needed but a a good cover for regressions and ensure system users can not perform this operation.
+                  Verification.isNotSystemSubscription sr
+                  Verification.isNotSystemUser ur ]
 
             VerificationResult.verify verifiers (ur, sr, pr, pvr))
         // Map
@@ -81,7 +84,10 @@ module ReadOperations =
             let verifiers =
                 [ Verification.userIsActive ur
                   Verification.subscriptionIsActive sr
-                  Verification.userSubscriptionMatches ur pr.SubscriptionId ]
+                  Verification.userSubscriptionMatches ur pr.SubscriptionId
+                  // SECURITY These might not strictly be needed but a a good cover for regressions and ensure system users can not perform this operation.
+                  Verification.isNotSystemSubscription sr
+                  Verification.isNotSystemUser ur ]
 
             VerificationResult.verify verifiers (ur, sr, pr, pvr))
         // Map
@@ -128,7 +134,10 @@ module ReadOperations =
             let verifiers =
                 [ Verification.userIsActive ur
                   Verification.subscriptionIsActive sr
-                  Verification.userSubscriptionMatches ur pr.SubscriptionId ]
+                  Verification.userSubscriptionMatches ur pr.SubscriptionId
+                  // SECURITY These might not strictly be needed but a a good cover for regressions and ensure system users can not perform this operation.
+                  Verification.isNotSystemSubscription sr
+                  Verification.isNotSystemUser ur ]
 
             VerificationResult.verify verifiers (ur, sr, pr, pvrs))
         // Map
@@ -152,7 +161,11 @@ module ReadOperations =
         // Verify
         |> Result.bind (fun (ur, sr, prs) ->
             let verifiers =
-                [ Verification.userIsActive ur; Verification.subscriptionIsActive sr ]
+                [ Verification.userIsActive ur
+                  Verification.subscriptionIsActive sr
+                  // SECURITY These might not strictly be needed but a a good cover for regressions and ensure system users can not perform this operation.
+                  Verification.isNotSystemSubscription sr
+                  Verification.isNotSystemUser ur ]
 
             VerificationResult.verify verifiers (ur, sr, prs))
         // Map
@@ -176,7 +189,10 @@ module ReadOperations =
             let verifiers =
                 [ Verification.userIsActive ur
                   Verification.subscriptionIsActive sr
-                  Verification.subscriptionMatches sr pr.SubscriptionId ]
+                  Verification.subscriptionMatches sr pr.SubscriptionId
+                  // SECURITY These might not strictly be needed but a a good cover for regressions and ensure system users can not perform this operation.
+                  Verification.isNotSystemSubscription sr
+                  Verification.isNotSystemUser ur ]
 
             VerificationResult.verify verifiers (ur, sr, pr, pvrs))
         // Map
@@ -226,7 +242,11 @@ module ReadOperations =
         |> FetchResult.toResult
         |> Result.bind (fun (ur, sr) ->
             let verifiers =
-                [ Verification.userIsActive ur; Verification.subscriptionIsActive sr ]
+                [ Verification.userIsActive ur
+                  Verification.subscriptionIsActive sr
+                  // SECURITY These might not strictly be needed but a a good cover for regressions and ensure system users can not perform this operation.
+                  Verification.isNotSystemSubscription sr
+                  Verification.isNotSystemUser ur ]
 
             VerificationResult.verify verifiers (ur, sr))
         |> Result.map (fun (ur, sr) ->
