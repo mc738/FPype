@@ -21,7 +21,11 @@ module CreateOperations =
             // Verify
             |> Result.bind (fun (ur, sr) ->
                 let verifiers =
-                    [ Verification.userIsActive ur; Verification.subscriptionIsActive sr ]
+                    [ Verification.userIsActive ur
+                      Verification.subscriptionIsActive sr
+                      // SECURITY These might not strictly be needed but a a good cover for regressions and ensure system users can not perform this operation.
+                      Verification.isNotSystemSubscription sr
+                      Verification.isNotSystemUser ur ]
 
                 VerificationResult.verify verifiers (ur, sr))
             // Create
@@ -73,7 +77,11 @@ module CreateOperations =
             // Verify
             |> Result.bind (fun (ur, sr) ->
                 let verifiers =
-                    [ Verification.userIsActive ur; Verification.subscriptionIsActive sr ]
+                    [ Verification.userIsActive ur
+                      Verification.subscriptionIsActive sr
+                      // SECURITY These might not strictly be needed but a a good cover for regressions and ensure system users can not perform this operation.
+                      Verification.isNotSystemSubscription sr
+                      Verification.isNotSystemUser ur ]
 
                 VerificationResult.verify verifiers (ur, sr))
             // Create
@@ -138,7 +146,10 @@ module CreateOperations =
                 let verifiers =
                     [ Verification.userIsActive ur
                       Verification.subscriptionIsActive sr
-                      Verification.userSubscriptionMatches ur qr.SubscriptionId ]
+                      Verification.userSubscriptionMatches ur qr.SubscriptionId
+                      // SECURITY These might not strictly be needed but a a good cover for regressions and ensure system users can not perform this operation.
+                      Verification.isNotSystemSubscription sr
+                      Verification.isNotSystemUser ur ]
 
                 VerificationResult.verify verifiers (ur, sr, qr, qvr))
             // Create
@@ -189,7 +200,10 @@ module CreateOperations =
                     let verifiers =
                         [ Verification.userIsActive ur
                           Verification.subscriptionIsActive sr
-                          Verification.userSubscriptionMatches ur qr.SubscriptionId ]
+                          Verification.userSubscriptionMatches ur qr.SubscriptionId
+                          // SECURITY These might not strictly be needed but a a good cover for regressions and ensure system users can not perform this operation.
+                          Verification.isNotSystemSubscription sr
+                          Verification.isNotSystemUser ur ]
     
                     VerificationResult.verify verifiers (ur, sr, qr, qvr))
                 // Create
