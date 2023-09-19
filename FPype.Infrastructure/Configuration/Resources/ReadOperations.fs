@@ -30,7 +30,10 @@ module ReadOperations =
             let verifiers =
                 [ Verification.userIsActive ur
                   Verification.subscriptionIsActive sr
-                  Verification.userSubscriptionMatches ur rr.SubscriptionId ]
+                  Verification.userSubscriptionMatches ur rr.SubscriptionId
+                  // SECURITY These might not strictly be needed but a a good cover for regressions and ensure system users can not perform this operation.
+                  Verification.isNotSystemSubscription sr
+                  Verification.isNotSystemUser ur ]
 
             VerificationResult.verify verifiers (ur, sr, rr, rvr))
         // Map
@@ -66,7 +69,10 @@ module ReadOperations =
             let verifiers =
                 [ Verification.userIsActive ur
                   Verification.subscriptionIsActive sr
-                  Verification.userSubscriptionMatches ur rr.SubscriptionId ]
+                  Verification.userSubscriptionMatches ur rr.SubscriptionId
+                  // SECURITY These might not strictly be needed but a a good cover for regressions and ensure system users can not perform this operation.
+                  Verification.isNotSystemSubscription sr
+                  Verification.isNotSystemUser ur ]
 
             VerificationResult.verify verifiers (ur, sr, rr, rvr))
         // Map
@@ -96,7 +102,10 @@ module ReadOperations =
             let verifiers =
                 [ Verification.userIsActive ur
                   Verification.subscriptionIsActive sr
-                  Verification.userSubscriptionMatches ur rr.SubscriptionId ]
+                  Verification.userSubscriptionMatches ur rr.SubscriptionId
+                  // SECURITY These might not strictly be needed but a a good cover for regressions and ensure system users can not perform this operation.
+                  Verification.isNotSystemSubscription sr
+                  Verification.isNotSystemUser ur ]
 
             VerificationResult.verify verifiers (ur, sr, rr, rvrs))
         // Map
@@ -119,7 +128,11 @@ module ReadOperations =
         // Verify
         |> Result.bind (fun (ur, sr, rrs) ->
             let verifiers =
-                [ Verification.userIsActive ur; Verification.subscriptionIsActive sr ]
+                [ Verification.userIsActive ur
+                  Verification.subscriptionIsActive sr
+                  // SECURITY These might not strictly be needed but a a good cover for regressions and ensure system users can not perform this operation.
+                  Verification.isNotSystemSubscription sr
+                  Verification.isNotSystemUser ur ]
 
             VerificationResult.verify verifiers (ur, sr, rrs))
         // Map
