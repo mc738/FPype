@@ -79,7 +79,10 @@ module ReadOperations =
                     |> Option.bind (fun pvr ->
                         Operations.selectPipelineRecord ctx [ "WHERE id = @0" ] [ pvr.PipelineId ]
                         |> Option.map (fun pr -> pr, pvr))
-                    |> Option.map (fun (pr, pvr) ->
+                    |> Option.bind (fun (pr, pvr) ->
+                        Operations.selectSubscriptionRecord ctx [ "WHERE id = @0" ] [ pr.SubscriptionId ]
+                        |> Option.map (fun sr -> sr, pr, pvr))
+                    |> Option.map (fun (sr, pr, pvr) ->
 
                         ({ Reference = psr.Reference
                            SubscriptionReference = sr.Reference
