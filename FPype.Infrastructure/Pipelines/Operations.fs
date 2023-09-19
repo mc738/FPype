@@ -123,7 +123,11 @@ module Operations =
         // Verify
         |> Result.bind (fun (sr, ur) ->
             let verifiers =
-                [ Verification.subscriptionIsActive sr; Verification.userIsActive ur ]
+                [ Verification.subscriptionIsActive sr
+                  Verification.userIsActive ur
+                  // SECURITY These might not strictly be needed but a a good cover for regressions and ensure system users can not perform this operation.
+                  Verification.isNotSystemSubscription sr
+                  Verification.isNotSystemUser ur ]
 
             VerificationResult.verify verifiers (sr, ur))
         |> Result.map (fun (sr, ur) ->
@@ -175,7 +179,10 @@ module Operations =
                 let verifiers =
                     [ Verification.subscriptionIsActive sr
                       Verification.userIsActive ur
-                      Verification.subscriptionMatches sr pr.SubscriptionId ]
+                      Verification.subscriptionMatches sr pr.SubscriptionId
+                      // SECURITY These might not strictly be needed but a a good cover for regressions and ensure system users can not perform this operation.
+                      Verification.isNotSystemSubscription sr
+                      Verification.isNotSystemUser ur ]
 
                 VerificationResult.verify verifiers (ur, sr, pr, pvr))
             |> Result.map (fun (ur, sr, pr, pvr) ->
