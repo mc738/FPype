@@ -36,7 +36,10 @@ module UpdateOperations =
                     [ Verification.userIsActive ur
                       Verification.subscriptionIsActive sr
                       Verification.userSubscriptionMatches ur pr.SubscriptionId
-                      Verification.scheduleIsActive psr ]
+                      Verification.scheduleIsActive psr
+                      // SECURITY These might not strictly be needed but a a good cover for regressions and ensure system users can not perform this operation.
+                      Verification.isNotSystemSubscription sr
+                      Verification.isNotSystemUser ur ]
 
                 VerificationResult.verify verifiers (ur, sr, pr, pvr, psr))
             |> Result.map (fun (ur, sr, pr, pvr, psr) ->
@@ -70,7 +73,10 @@ module UpdateOperations =
                     [ Verification.userIsActive ur
                       Verification.subscriptionIsActive sr
                       Verification.userSubscriptionMatches ur pr.SubscriptionId
-                      Verification.scheduleIsActive psr ]
+                      Verification.scheduleIsActive psr
+                      // SECURITY These might not strictly be needed but a a good cover for regressions and ensure system users can not perform this operation.
+                      Verification.isNotSystemSubscription sr
+                      Verification.isNotSystemUser ur ]
 
                 VerificationResult.verify verifiers (ur, sr, pr, pvr, psr))
             |> Result.map (fun (ur, sr, pr, pvr, psr) ->
@@ -103,7 +109,10 @@ module UpdateOperations =
                     [ Verification.userIsActive ur
                       Verification.subscriptionIsActive sr
                       Verification.userSubscriptionMatches ur pr.SubscriptionId
-                      Verification.scheduleIsActive psr ]
+                      Verification.scheduleIsActive psr
+                      // SECURITY These might not strictly be needed but a a good cover for regressions and ensure system users can not perform this operation.
+                      Verification.isNotSystemSubscription sr
+                      Verification.isNotSystemUser ur ]
 
                 VerificationResult.verify verifiers (ur, sr, pr, pvr, psr))
             |> Result.map (fun (ur, sr, pr, pvr, psr) ->

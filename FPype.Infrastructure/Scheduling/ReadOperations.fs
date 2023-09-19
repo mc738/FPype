@@ -43,7 +43,11 @@ module ReadOperations =
         |> FetchResult.toResult
         |> Result.bind (fun (ur, sr) ->
             let verifiers =
-                [ Verification.userIsActive ur; Verification.subscriptionIsActive sr ]
+                [ Verification.userIsActive ur
+                  Verification.subscriptionIsActive sr
+                  // SECURITY These might not strictly be needed but a a good cover for regressions and ensure system users can not perform this operation.
+                  Verification.isNotSystemSubscription sr
+                  Verification.isNotSystemUser ur ]
 
             VerificationResult.verify verifiers (ur, sr))
         |> Result.map (fun (ur, sr) ->
