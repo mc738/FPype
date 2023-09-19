@@ -20,7 +20,11 @@ module CreateOperations =
             // Verify
             |> Result.bind (fun (ur, sr) ->
                 let verifiers =
-                    [ Verification.userIsActive ur; Verification.subscriptionIsActive sr ]
+                    [ Verification.userIsActive ur
+                      Verification.subscriptionIsActive sr
+                      // SECURITY These might not strictly be needed but a a good cover for regressions and ensure system users can not perform this operation.
+                      Verification.isNotSystemSubscription sr
+                      Verification.isNotSystemUser ur ]
 
                 VerificationResult.verify verifiers (ur, sr))
             // Create
@@ -105,7 +109,10 @@ module CreateOperations =
                 let verifiers =
                     [ Verification.userIsActive ur
                       Verification.subscriptionIsActive sr
-                      Verification.userSubscriptionMatches ur tr.SubscriptionId ]
+                      Verification.userSubscriptionMatches ur tr.SubscriptionId
+                      // SECURITY These might not strictly be needed but a a good cover for regressions and ensure system users can not perform this operation.
+                      Verification.isNotSystemSubscription sr
+                      Verification.isNotSystemUser ur ]
 
                 VerificationResult.verify verifiers (ur, sr, tr, tvr))
             // Create
@@ -179,7 +186,10 @@ module CreateOperations =
                 let verifiers =
                     [ Verification.userIsActive ur
                       Verification.subscriptionIsActive sr
-                      Verification.userSubscriptionMatches ur tr.SubscriptionId ]
+                      Verification.userSubscriptionMatches ur tr.SubscriptionId
+                      // SECURITY These might not strictly be needed but a a good cover for regressions and ensure system users can not perform this operation.
+                      Verification.isNotSystemSubscription sr
+                      Verification.isNotSystemUser ur ]
 
                 VerificationResult.verify verifiers (ur, sr, tr, tvr))
             |> Result.map (fun (ur, sr, tr, tvr) ->
