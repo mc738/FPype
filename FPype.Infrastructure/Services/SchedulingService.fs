@@ -12,7 +12,7 @@ type SchedulingService(ctx: MySqlContext, log: ILogger<SchedulingService>) =
 
     member _.QueueScheduledRun(scheduleReference, basePath, runId) =
         CreateOperations.scheduleRun ctx log scheduleReference basePath runId
-    
+
     member _.UpdateSchedule(userReference, scheduleReference, update) =
         UpdateOperations.schedule ctx log userReference scheduleReference update
 
@@ -38,6 +38,9 @@ type SchedulingService(ctx: MySqlContext, log: ILogger<SchedulingService>) =
 
     member _.GetActiveSchedulesForUser(userReference) =
         ReadOperations.activePipelinesForUser ctx log userReference
-        
+
     member _.GetAllActiveSchedules() =
         ReadOperations.allActiveSchedules ctx log
+
+    member _.A(userReference, scheduleReference) =
+        ReadOperations.schedule ctx log userReference scheduleReference
