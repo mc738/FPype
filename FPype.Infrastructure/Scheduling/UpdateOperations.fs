@@ -45,14 +45,14 @@ module UpdateOperations =
             |> Result.map (fun (ur, sr, pr, pvr, psr) ->
                 t.ExecuteAnonNonQuery(
                     "UPDATE pipeline_schedules SET schedule_cron = @0 WHERE id = @1",
-                    [ update.NewScheduleCron, psr.Id ]
+                    [ update.NewScheduleCron; psr.Id ]
                 )
                 |> ignore
 
                 [ Events.ScheduleEvent.ScheduleUpdated
                       { Reference = psr.Reference
                         NewScheduleCron = update.NewScheduleCron } ]
-                |> FPype.Infrastructure.Scheduling.Events.addEvents t logger sr.Id ur.Id (getTimestamp ())
+                |> FPype.Infrastructure.Scheduling.Events.addEvents t logger psr.Id ur.Id (getTimestamp ())
                 |> ignore))
         |> toActionResult "Update schedule"
 
@@ -87,7 +87,7 @@ module UpdateOperations =
                     |> ignore
 
                     [ Events.ScheduleEvent.ScheduleActivated { Reference = psr.Reference } ]
-                    |> FPype.Infrastructure.Scheduling.Events.addEvents t logger sr.Id ur.Id (getTimestamp ())
+                    |> FPype.Infrastructure.Scheduling.Events.addEvents t logger psr.Id ur.Id (getTimestamp ())
                     |> ignore
                 | false -> logger.LogInformation($"Schedule `{psr.Reference}` is already activated, skipping.")))
         |> toActionResult "Activate schedule"
@@ -123,7 +123,7 @@ module UpdateOperations =
                     |> ignore
 
                     [ Events.ScheduleEvent.ScheduleDeactivated { Reference = psr.Reference } ]
-                    |> FPype.Infrastructure.Scheduling.Events.addEvents t logger sr.Id ur.Id (getTimestamp ())
+                    |> FPype.Infrastructure.Scheduling.Events.addEvents t logger psr.Id ur.Id (getTimestamp ())
                     |> ignore
                 | false -> logger.LogInformation($"Schedule `{psr.Reference}` is already not deactivated, skipping.")))
         |> toActionResult "Deactivate schedule"
