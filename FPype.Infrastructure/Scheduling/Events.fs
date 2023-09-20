@@ -79,7 +79,7 @@ module Events =
     let addEvents
         (ctx: MySqlContext)
         (log: ILogger)
-        (subscriptionId: int)
+        (scheduleId: int)
         (userId: int)
         (timestamp: DateTime)
         (events: ScheduleEvent list)
@@ -91,7 +91,7 @@ module Events =
             (fun last e ->
                 match e.Serialize() with
                 | Ok(name, data) ->
-                    ({ ScheduleId = subscriptionId
+                    ({ ScheduleId = scheduleId
                        EventType = name
                        EventTimestamp = timestamp
                        EventData = data
