@@ -1,5 +1,6 @@
 ﻿namespace FPype.Infrastructure.Scheduling
 
+open System
 open Freql.MySql
 
 [<RequireQualifiedAccess>]
@@ -13,6 +14,43 @@ module ReadOperations =
     open FPype.Infrastructure.Core
     open FPype.Infrastructure.Core.Persistence
 
+    module private Internal =
+        
+        // SECURITY Because `additionConditions` is used to make generate SQL make sure this function is need called with untrusted values.
+        let getScheduledPipelineRunDetails (ctx: MySqlContext) (additionConditions: string option) (parameters: obj list) =
+            let baseSql =
+                """
+                SELECT 
+                    pr.reference AS run_id, 
+                    psr.reference AS schedule_reference,
+                    s.reference AS subscription_reference,
+                    cp.reference AS pipeline_reference,
+                    cp.name AS pipeline_name,
+                    cpv.reference AS pipeline_version_reference,
+                    cpv.`version` AS pipeline_version,
+                    psr.run_on AS run_on,
+                    pr.queued_on AS queued_on, 
+                    pr.started_on AS started_on, 
+                    pr.completed_on AS completed_on, 
+                    pr.was_successful AS was_successful, 
+                    pr.base_path, 
+                    u.reference AS run_by_reference,
+                    u.username AS run_by_name
+                FROM pipeline_schedule_runs psr 
+                JOIN pipeline_runs pr ON psr.pipeline_run_id = pr.id
+                JOIN cfg_pipeline_versions cpv ON pr.pipeline_version_id = cpv.id
+                JOIN cfg_pipelines cp ON cpv.pipeline_id = cp.id
+                JOIN users u ON pr.run_by = u.id
+                JOIN subscriptions s ON cp.subscription_id = s.id
+                """
+            
+            let sql =
+                match additionConditions with
+                | Some conditions -> [ baseSql; conditions ] |> String.concat Environment.NewLine
+                | None -> baseSql
+            
+            ctx.SelectAnon<ScheduledPipelineRunDetails>(sql, parameters)
+    
     let allEventsInternal (ctx: MySqlContext) (logger: ILogger) (previousTip: int) =
         let rc = Events.selectAllEvents ctx previousTip
 
@@ -136,3 +174,8 @@ module ReadOperations =
               DisplayMessage = "Error fetching active schedules"
               Exception = Some ex }
             |> FetchResult.Failure
+
+    let allSchedulePipelineRuns (ctx: MySqlContext) (logger: ILogger) (userReference: string) =
+        Fetch.user ctx userReference
+        |> FetchResult.merge (fun ur sr -> ur, sr) (fun ur -> Fetch.subscriptionById ctx ur.Id)
+        

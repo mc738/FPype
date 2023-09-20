@@ -1,5 +1,7 @@
 ﻿namespace FPype.Infrastructure.Scheduling
 
+open System
+
 module Models =
 
     type NewSchedule =
@@ -32,3 +34,20 @@ module Models =
         { Reference: string
           RunId: string
           ScheduleReference: string }
+
+    type ScheduledPipelineRunDetails =
+        { RunId: string
+          ScheduleReference: string
+          SubscriptionReference: string
+          PipelineReference: string
+          PipelineName: string
+          PipelineVersionReference: string
+          PipelineVersion: int
+          RunOn: DateTime
+          QueuedOn: DateTime
+          StartedOn: DateTime option
+          CompletedOn: DateTime option
+          WasSuccessful: bool option
+          BasePath: string
+          RunByReference: string
+          RunByName: string }
