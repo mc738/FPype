@@ -3,13 +3,21 @@
 open System
 open System.Text.Json
 open FPype.Data.Store
+open FPype.Infrastructure.Core
+open Freql.MySql
 open FsToolbox.Core.Results
+open Microsoft.Extensions.Logging
 open Microsoft.FSharp.Core
 
 [<AutoOpen>]
 module Shared =
 
     let handleFetchResult = ()
+
+    type FetchOperation<'T, 'U> =
+        { FetchHandler: MySqlContext -> ILogger -> FetchResult<'T>
+          Verifiers: 'T -> (unit -> VerificationResult) list
+          ResultHandler: 'T -> 'U }
 
     let optionalToFetchResult<'T> (name: string) (result: Result<'T option, FailureResult>) =
         match result with
