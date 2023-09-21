@@ -18,6 +18,8 @@ module ReadOperations =
         
         // SECURITY Because `additionConditions` is used to make generate SQL make sure this function is need called with untrusted values.
         let getScheduledPipelineRunDetails (ctx: MySqlContext) (additionConditions: string option) (parameters: obj list) =
+            // PERFORMANCE This used a custom query to cut down the number of fetches requred to populate the model.
+            
             let baseSql =
                 """
                 SELECT 
@@ -178,4 +180,36 @@ module ReadOperations =
     let allSchedulePipelineRuns (ctx: MySqlContext) (logger: ILogger) (userReference: string) =
         Fetch.user ctx userReference
         |> FetchResult.merge (fun ur sr -> ur, sr) (fun ur -> Fetch.subscriptionById ctx ur.Id)
+        |> FetchResult.toResult
+        |> Result.bind (fun (ur, sr) ->
+            let verifiers =
+                [ Verification.userIsActive ur
+                  Verification.subscriptionIsActive sr
+                  // SECURITY These might not strictly be needed but a a good cover for regressions and ensure system users can not perform this operation.
+                  Verification.isNotSystemSubscription sr
+                  Verification.isNotSystemUser ur ]
+
+            VerificationResult.verify verifiers (ur, sr))
+        |> Result.map (fun (ur, sr) ->
+            Internal.getScheduledPipelineRunDetails ctx (Some "WHERE s.id = @0") [ sr.Id ])
+        |> FetchResult.fromResult
+        
+    let schedulePipelineRuns (ctx: MySqlContext) (logger: ILogger) (userReference: string) (scheduleReference: string) =
+        Fetch.user ctx userReference
+        |> FetchResult.merge (fun ur sr -> ur, sr) (fun ur -> Fetch.subscriptionById ctx ur.Id)
+        |> FetchResult.chain (fun (ur, sr) psr -> ur, sr, psr) (Fetch.scheduleByReference ctx scheduleReference)
+        |> FetchResult.toResult
+        |> Result.bind (fun (ur, sr, psr) ->
+            let verifiers =
+                [ Verification.userIsActive ur
+                  Verification.subscriptionIsActive sr
+                  Verification.subscriptionMatches sr psr.SubscriptionId
+                  // SECURITY These might not strictly be needed but a a good cover for regressions and ensure system users can not perform this operation.
+                  Verification.isNotSystemSubscription sr
+                  Verification.isNotSystemUser ur ]
+
+            VerificationResult.verify verifiers (ur, sr, psr))
+        |> Result.map (fun (ur, sr, psr) ->
+            Internal.getScheduledPipelineRunDetails ctx (Some "WHERE psr.id = @0") [ psr.Id ])
+        |> FetchResult.fromResult
         
