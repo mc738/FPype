@@ -42,5 +42,11 @@ type SchedulingService(ctx: MySqlContext, log: ILogger<SchedulingService>) =
     member _.GetAllActiveSchedules() =
         ReadOperations.allActiveSchedules ctx log
 
-    member _.A(userReference, scheduleReference) =
+    member _.GetSchedule(userReference, scheduleReference) =
         ReadOperations.schedule ctx log userReference scheduleReference
+
+    member _.GetAllSchedulePipelineRuns(userReference) =
+        ReadOperations.allSchedulePipelineRuns ctx log userReference
+        
+    member _.GetSchedulePipelineRuns(userReference, scheduleReference) =
+        ReadOperations.schedulePipelineRuns userReference scheduleReference
