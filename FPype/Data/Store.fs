@@ -452,7 +452,7 @@ module Store =
                 store.AddStateValue(StateNames.initializedTimestamp, DateTime.UtcNow.ToString())
 
                 store)
-
+        
         member pd.Id = id
 
         member ps.BasePath = basePath
@@ -465,8 +465,15 @@ module Store =
 
         member ps.DefaultTmpPath = Path.Combine(basePath, "tmp")
 
-        member ps.Close() = ctx.Close()
-
+        member ps.Close(?waitTime: int) =
+            ctx.Close()
+            ctx.ClearPool()
+            (ctx.GetConnection() :>  IDisposable).Dispose()
+            // Wait for the connections to be closed.
+            match waitTime with
+            | Some wt -> Async.Sleep wt |> Async.RunSynchronously
+            | None -> ()
+            
         member ps.AddStateValue(name, value) =
             addStateValue ctx { Name = name; Value = value }
 
