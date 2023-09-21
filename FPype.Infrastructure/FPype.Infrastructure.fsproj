@@ -60,7 +60,7 @@
     </ItemGroup>
 
     <ItemGroup>
-      <PackageReference Include="freql.mysql" Version="0.9.2" />
+      <PackageReference Include="freql.mysql" Version="0.10.0" />
       <PackageReference Include="fstoolbox" Version="0.6.0" />
       <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="7.0.0" />
       <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="7.0.0" />
