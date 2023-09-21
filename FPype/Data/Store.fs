@@ -465,7 +465,7 @@ module Store =
 
         member ps.DefaultTmpPath = Path.Combine(basePath, "tmp")
 
-        member ps.Close(?waitTime: int) =
+        member ps.Close(?waitTime: int, ?cleanUpGC: bool) =
             ctx.Close()
             ctx.ClearPool()
             (ctx.GetConnection() :>  IDisposable).Dispose()
@@ -473,6 +473,16 @@ module Store =
             match waitTime with
             | Some wt -> Async.Sleep wt |> Async.RunSynchronously
             | None -> ()
+            
+            match cleanUpGC |> Option.defaultValue false with
+            | true ->
+                // Aggressively try to make sure file lock for store database is released.
+                // This is a bit of a hack but sometimes it is needed to make sure "file in use error" is not thrown. 
+                // PERFORMANCE This could cause performance issues due to calling GC.Collect() which is why it is not the default behaviour.
+                GC.WaitForPendingFinalizers()
+                GC.Collect()
+            | false -> ()
+                
             
         member ps.AddStateValue(name, value) =
             addStateValue ctx { Name = name; Value = value }
