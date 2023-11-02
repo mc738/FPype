@@ -42,6 +42,10 @@ module Common =
 
         type String with
 
+            /// <summary>
+            /// Replace multiple strings with new ones
+            /// </summary>
+            /// <param name="replacements"></param>
             member str.ReplaceMultiple(replacements: (string * string) list) =
                 replacements |> List.fold (fun (s:string) -> s.Replace) str
                 
