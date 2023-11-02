@@ -273,8 +273,8 @@ module Types =
         member bt.Serialize() =
             let rec handle (baseType: BaseType) =
                 match baseType with
-                | Boolean -> "bool"
-                | Byte -> "byte"
+                | BaseType.Boolean -> "bool"
+                | BaseType.Byte -> "byte"
                 | BaseType.Char -> "char"
                 | BaseType.DateTime -> "datetime"
                 | BaseType.Decimal -> "decimal"
