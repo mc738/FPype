@@ -185,6 +185,11 @@ module Types =
         /// <param name="typeInfo">The type.</param>
         static member FromType(typeInfo: Type) = BaseType.FromName(typeInfo.FullName)
 
+        /// <summary>
+        /// Type and get a base type from a byte code.
+        /// </summary>
+        /// <param name="value"></param>
+        /// <param name="isOptional"></param>
         static member TryFromByte(value: byte, isOptional: bool) =
             match value with
             | 1uy -> Ok Boolean
