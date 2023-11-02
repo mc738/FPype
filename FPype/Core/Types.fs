@@ -267,6 +267,9 @@ module Types =
 
             handler bt
 
+        /// <summary>
+        /// Serialize a base type 
+        /// </summary>
         member bt.Serialize() =
             let rec handle (baseType: BaseType) =
                 match baseType with
