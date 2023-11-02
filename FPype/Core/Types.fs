@@ -243,6 +243,9 @@ module Types =
             | BaseType.Option _ -> true
             | _ -> false
 
+        /// <summary>
+        /// Convert a base type to a .net type.
+        /// </summary>
         member bt.ToType() =
             let rec handler baseType =
                 match baseType with
