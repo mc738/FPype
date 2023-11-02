@@ -23,6 +23,10 @@ module Common =
             | false -> Error <| String.concat ", " errors
 
 
+    /// <summary>
+    /// Choose a result 
+    /// </summary>
+    /// <param name="r"></param>
     let chooseResults (r: Result<'a, 'b> list) =
         r
         |> List.fold
