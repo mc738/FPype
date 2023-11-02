@@ -235,6 +235,9 @@ module Types =
                 | true -> BaseType.Option bt
                 | false -> bt)
 
+        /// <summary>
+        /// Check if a base type is optional.
+        /// </summary>
         member bt.IsOptionType() =
             match bt with
             | BaseType.Option _ -> true
