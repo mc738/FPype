@@ -210,6 +210,11 @@ module Types =
                 | true -> Option bt
                 | false -> bt)
 
+        /// <summary>
+        /// Get a base type from a string id.
+        /// </summary>
+        /// <param name="id"></param>
+        /// <param name="optional"></param>
         static member FromId(id: string, optional: bool) =
             match id with
             | "bool" -> Some BaseType.Boolean
