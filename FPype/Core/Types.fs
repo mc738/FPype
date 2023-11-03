@@ -518,6 +518,11 @@ module Types =
 
             handler data
 
+        /// <summary>
+        /// Coerce a value to a base type.
+        /// </summary>
+        /// <param name="value"></param>
+        /// <param name="baseType"></param>
         static member CoerceValueToType<'T>(value: 'T, baseType: BaseType) =
             let handler value (target: Type) (successHandler: obj -> Value) =
                 TypeHelpers.convert value target
