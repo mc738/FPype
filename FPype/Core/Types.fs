@@ -360,6 +360,10 @@ module Types =
         | Guid of Guid
         | Option of Value option
 
+        /// <summary>
+        /// Try and deserialize a value from a byte array.
+        /// </summary>
+        /// <param name="data"></param>
         static member TryDeserialize(data: byte array) =
             let rec handler (data: byte array) =
                 match data |> Array.tryHead with
