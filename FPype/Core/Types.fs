@@ -322,6 +322,11 @@ module Types =
         | NullValue of string
         | Failure of string
 
+        /// <summary>
+        /// Bind a result to a function.
+        /// </summary>
+        /// <param name="fn"></param>
+        /// <param name="cr"></param>
         static member bind (fn: Value -> CoercionResult) (cr: CoercionResult) =
             match cr with
             | Success v -> fn v
