@@ -332,6 +332,11 @@ module Types =
             | Success v -> fn v
             | _ -> cr
 
+        /// <summary>
+        /// Map a result to a function.
+        /// </summary>
+        /// <param name="fn"></param>
+        /// <param name="cr"></param>
         static member map (fn: Value -> Value) (cr: CoercionResult) =
             match cr with
             | Success v -> fn v |> CoercionResult.Success
