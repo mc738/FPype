@@ -310,7 +310,10 @@ module Types =
                 | Option ibt -> handle ibt
 
             handle bt
-
+ 
+    /// <summary>
+    /// The result of a value coercion.
+    /// </summary>
     [<RequireQualifiedAccess>]
     type CoercionResult =
         | Success of Value
