@@ -342,6 +342,9 @@ module Types =
             | Success v -> fn v |> CoercionResult.Success
             | _ -> cr
 
+    /// <summary>
+    /// A FPype value.
+    /// </summary>
     and [<RequireQualifiedAccess>] Value =
         | Boolean of bool
         | Byte of byte
