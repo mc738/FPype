@@ -289,6 +289,9 @@ module Types =
 
             handle bt
 
+        /// <summary>
+        /// Convert a base type to byte code
+        /// </summary>
         member bt.ToByte() =
             let rec handle (baseType: BaseType) =
                 match baseType with
