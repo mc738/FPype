@@ -586,6 +586,10 @@ module Types =
                     | BaseType.Option _ -> CoercionResult.Failure "Nested option types not currently supported."
                 | _ -> CoercionResult.Failure "Could not get option value from object."
 
+        /// <summary>
+        /// Coerce a generic value.
+        /// </summary>
+        /// <param name="value"></param>
         static member CoerceValue<'T>(value: 'T) =
 
             let convert (target: Type) =
