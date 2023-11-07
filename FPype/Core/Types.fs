@@ -592,6 +592,7 @@ module Types =
         /// <param name="value"></param>
         static member CoerceValue<'T>(value: 'T) =
 
+            // Needed?
             let convert (target: Type) =
                 try
                     Convert.ChangeType(value, target) |> Ok
