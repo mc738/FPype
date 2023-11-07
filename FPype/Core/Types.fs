@@ -610,6 +610,11 @@ module Types =
             | Ok bt -> Value.CoerceValueToType(value, bt)
             | Error e -> CoercionResult.Failure $"Could not get base type. Error '{e}'"
 
+        /// <summary>
+        /// Get a value from a JsonValue.
+        /// </summary>
+        /// <param name="json"></param>
+        /// <param name="baseType"></param>
         static member FromJsonValue(json: JsonElement, baseType: BaseType) =
             let handleTypeError (jvk: JsonValueKind) (bt: BaseType) =
                 CoercionResult.IncompatibleType $"Json value kind `{jvk}` can not be coerced to type `{bt}`"
