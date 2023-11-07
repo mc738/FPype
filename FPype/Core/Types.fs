@@ -878,6 +878,10 @@ module Types =
 
             handler fv
 
+        /// <summary>
+        /// Check if a value matches a provided one.
+        /// </summary>
+        /// <param name="value"></param>
         member v.IsMatch(value: Value) =
             let rec handler (v: Value) (v2: Value) =
                 match v, v2 with
