@@ -828,6 +828,9 @@ module Types =
 
             handler fv
 
+        /// <summary>
+        /// Get the value as a decimal.
+        /// </summary>
         member fv.GetDecimal() =
             let rec handler (value: Value) =
                 match value with
