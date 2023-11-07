@@ -690,6 +690,12 @@ module Types =
                 with exn ->
                     CoercionResult.Failure $"Unhandled exception: {exn.Message}"
 
+        /// <summary>
+        /// Get a value from a string.
+        /// </summary>
+        /// <param name="str"></param>
+        /// <param name="baseType"></param>
+        /// <param name="format"></param>
         static member FromString(str: string, baseType: BaseType, ?format: string) =
             let rec handler (bt: BaseType) =
                 match baseType with
