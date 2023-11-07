@@ -906,6 +906,11 @@ module Types =
 
             handler v value
 
+        /// <summary>
+        /// Check if a value string matches a provided one.
+        /// </summary>
+        /// <param name="value"></param>
+        /// <param name="comparison"></param>
         member v.IsStringMatch(value: Value, comparison) =
             String.Equals(v.GetString(), value.GetString(), comparison)
 
