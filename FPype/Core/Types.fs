@@ -853,6 +853,9 @@ module Types =
 
             handler fv
 
+        /// <summary>
+        /// Get a value as a float.
+        /// </summary>
         member fv.GetFloat() =
             let rec handler (value: Value) =
                 match value with
