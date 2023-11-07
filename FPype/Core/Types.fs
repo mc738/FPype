@@ -803,6 +803,9 @@ module Types =
 
             handler fv
 
+        /// <summary>
+        /// Get the string of a value.
+        /// </summary>
         member fv.GetString() =
             let rec handler (value: Value) =
                 match value with
