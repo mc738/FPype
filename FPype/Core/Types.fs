@@ -938,6 +938,9 @@ module Types =
 
             handler v
 
+        /// <summary>
+        /// Serialize a value to bytes.
+        /// </summary>
         member v.Serialize() =
             let rec handler (value: Value) =
                 match value with
