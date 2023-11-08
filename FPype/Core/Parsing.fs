@@ -55,6 +55,9 @@ module Parsing =
                             | false -> None))
                 None
 
+    /// <summary>
+    /// A mark representing a place in a ParsableInput.
+    /// </summary>
     and Mark =
         { Definition: MarkDefinition
           StartIndex: int
