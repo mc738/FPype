@@ -63,6 +63,9 @@ module Parsing =
           StartIndex: int
           EndIndex: int }
 
+    /// <summary>
+    /// A parsable input.
+    /// </summary>
     and ParsableInput =
         { Input: string
           Position: int }
