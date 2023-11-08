@@ -2,6 +2,9 @@
 
 module Parsing =
 
+    /// <summary>
+    /// Mark definitions.
+    /// </summary>
     type MarkDefinition =
         | OneCharSymbol of char
         | TwoCharSymbol of char * char
