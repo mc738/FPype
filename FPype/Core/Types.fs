@@ -914,6 +914,9 @@ module Types =
         member v.IsStringMatch(value: Value, comparison) =
             String.Equals(v.GetString(), value.GetString(), comparison)
 
+        /// <summary>
+        /// Get the base type of a value.
+        /// </summary>
         member v.GetBaseType() =
             let rec handler (value: Value) =
                 match value with
