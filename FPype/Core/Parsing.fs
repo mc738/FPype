@@ -70,6 +70,10 @@ module Parsing =
         { Input: string
           Position: int }
 
+        /// <summary>
+        /// Create a ParsableInput from a string.
+        /// </summary>
+        /// <param name="value"></param>
         static member Create(value) = { Input = value; Position = 0 }
 
         member pi.CurrentChar =
