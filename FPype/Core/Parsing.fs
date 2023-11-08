@@ -10,6 +10,11 @@ module Parsing =
         | TwoCharSymbol of char * char
         | Nested of char * char
 
+        /// <summary>
+        /// See if a ParsableInput matches a MarkDefinition from a collection.
+        /// </summary>
+        /// <param name="definitions"></param>
+        /// <param name="input"></param>
         static member Match(definitions: MarkDefinition list, input: ParsableInput) =
             let handle (result: Mark option) (handler: ParsableInput -> Mark option) =
                 match result with
