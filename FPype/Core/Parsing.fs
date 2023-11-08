@@ -76,6 +76,9 @@ module Parsing =
         /// <param name="value"></param>
         static member Create(value) = { Input = value; Position = 0 }
 
+        /// <summary>
+        /// Get the current character in a ParsableInput.
+        /// </summary>
         member pi.CurrentChar =
             match pi.InBounds(pi.Position) with
             | true -> pi.Input.[pi.Position]
