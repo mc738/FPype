@@ -8,6 +8,7 @@
     <ItemGroup>
         <Compile Include="FunkySoup\Common.fs" />
         <Compile Include="FunkySoup\Serialization.fs" />
+        <Compile Include="FunkySoup\Actions.fs" />
     </ItemGroup>
 
 </Project>
