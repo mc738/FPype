@@ -315,6 +315,10 @@ type ConfigurationStore(ctx: SqliteContext) =
         ItemVersion.FromOptional version
         |> Resources.addVersionTransaction ctx id resource resourceType ms
 
+    /// <summary>
+    /// Import a pipeline configuration from a json file.
+    /// </summary>
+    /// <param name="path">The file path</param>
     member pc.ImportFromFile(path: string) = Import.fromFileTransaction ctx path
 
 //member pc.GetPipelineResources(pipeline: string, ?version: Version) =
