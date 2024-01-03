@@ -294,6 +294,14 @@ type ConfigurationStore(ctx: SqliteContext) =
     member pc.AddResource(resourceName: string) =
         Resources.addTransaction ctx resourceName
 
+    /// <summary>
+    /// Add a resource version.
+    /// </summary>
+    /// <param name="id">The resource version id</param>
+    /// <param name="resource">The resource id</param>
+    /// <param name="resourceType">The resource time</param>
+    /// <param name="raw">The resource data</param>
+    /// <param name="version">The version</param>
     member pc.AddResourceVersion
         (
             id: IdType,
