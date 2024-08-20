@@ -41,7 +41,7 @@ module CreateOperations =
                        SubscriptionId = sr.Id
                        PipelineVersionId = pvr.Id
                        ScheduleCron = schedule.ScheduleCron
-                       Active = true }
+                       Active = schedule.SetAsActive }
                     : Parameters.NewPipelineSchedule)
                     |> Operations.insertPipelineSchedule t
                     |> int
@@ -49,7 +49,8 @@ module CreateOperations =
                 [ Events.ScheduleEvent.ScheduleCreated
                       { Reference = schedule.Reference
                         ScheduleCron = schedule.ScheduleCron }
-                  Events.ScheduleEvent.ScheduleActivated { Reference = schedule.Reference } ]
+                  if schedule.SetAsActive then
+                      Events.ScheduleEvent.ScheduleActivated { Reference = schedule.Reference } ]
                 |> FPype.Infrastructure.Scheduling.Events.addEvents t logger scheduleId ur.Id (getTimestamp ())
                 |> ignore))
         |> toActionResult "Create schedule"

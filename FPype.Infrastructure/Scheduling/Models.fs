@@ -7,7 +7,8 @@ module Models =
     type NewSchedule =
         { Reference: string
           PipelineVersionReference: string
-          ScheduleCron: string }
+          ScheduleCron: string
+          SetAsActive: bool }
 
     type ScheduleDetails =
         { Reference: string
