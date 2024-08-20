@@ -50,7 +50,9 @@ module CreateOperations =
                       { Reference = schedule.Reference
                         ScheduleCron = schedule.ScheduleCron }
                   if schedule.SetAsActive then
-                      Events.ScheduleEvent.ScheduleActivated { Reference = schedule.Reference } ]
+                      Events.ScheduleEvent.ScheduleActivated { Reference = schedule.Reference }
+                  else
+                      Events.ScheduleEvent.ScheduleDeactivated { Reference = schedule.Reference } ]
                 |> FPype.Infrastructure.Scheduling.Events.addEvents t logger scheduleId ur.Id (getTimestamp ())
                 |> ignore))
         |> toActionResult "Create schedule"
