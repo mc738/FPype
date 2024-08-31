@@ -49,9 +49,11 @@
         <Compile Include="Scheduling\ReadOperations.fs" />
         <Compile Include="Scheduling\UpdateOperations.fs" />
         <Compile Include="Scheduling\Auditing.fs" />
+        <Compile Include="Services\ServiceContext.fs" />
         <Compile Include="Services\PipelineService.fs" />
         <Compile Include="Services\ConfigurationService.fs" />
         <Compile Include="Services\SchedulingService.fs" />
+        <Compile Include="Services\HealthChecks.fs" />
         <Compile Include="Services\Extensions.fs" />
         <Compile Include="DataSinks\Common.fs" />
         <Compile Include="DataSinks\Operations.fs" />
@@ -70,6 +72,15 @@
     <ItemGroup>
       <ProjectReference Include="..\..\Armarium\Armarium\Armarium.fsproj" />
       <ProjectReference Include="..\FPype\FPype.fsproj" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <Reference Include="Microsoft.Extensions.Diagnostics.HealthChecks">
+        <HintPath>..\..\..\..\.nuget\packages\microsoft.aspnetcore.app.ref\6.0.30\ref\net6.0\Microsoft.Extensions.Diagnostics.HealthChecks.dll</HintPath>
+      </Reference>
+      <Reference Include="Microsoft.Extensions.Diagnostics.HealthChecks.Abstractions">
+        <HintPath>..\..\..\..\.nuget\packages\microsoft.aspnetcore.app.ref\6.0.30\ref\net6.0\Microsoft.Extensions.Diagnostics.HealthChecks.Abstractions.dll</HintPath>
+      </Reference>
     </ItemGroup>
 
 </Project>
