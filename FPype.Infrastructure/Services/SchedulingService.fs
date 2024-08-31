@@ -5,7 +5,9 @@ open Microsoft.Extensions.Logging
 open Freql.MySql
 open FPype.Infrastructure
 
-type SchedulingService(ctx: MySqlContext, log: ILogger<SchedulingService>) =
+type SchedulingService(serviceContext: ServiceContext, log: ILogger<SchedulingService>) =
+
+    let ctx = serviceContext.GetContext()
 
     member _.AddSchedule(userReference, schedule) =
         CreateOperations.schedule ctx log userReference schedule
@@ -47,6 +49,6 @@ type SchedulingService(ctx: MySqlContext, log: ILogger<SchedulingService>) =
 
     member _.GetAllSchedulePipelineRuns(userReference) =
         ReadOperations.allSchedulePipelineRuns ctx log userReference
-        
+
     member _.GetSchedulePipelineRuns(userReference, scheduleReference) =
         ReadOperations.schedulePipelineRuns userReference scheduleReference

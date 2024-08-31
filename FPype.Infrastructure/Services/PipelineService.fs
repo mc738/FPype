@@ -7,8 +7,10 @@ open Freql.MySql
 open FsToolbox.Core.Results
 open FPype.Infrastructure.Pipelines.Operations
 
-type PipelineService(ctx: MySqlContext, log: ILogger<PipelineService>) =
+type PipelineService(serviceContext: ServiceContext, log: ILogger<PipelineService>) =
 
+    let ctx = serviceContext.GetContext()
+    
     member _.GetRunItem(userReference: string, runId: string) =
 
         ({ Id = 1

@@ -8,8 +8,10 @@ open FPype.Infrastructure.Core.Persistence
 open Freql.MySql
 open FsToolbox.Core.Results
 
-type ConfigurationService(ctx: MySqlContext, log: ILogger<ConfigurationService>) =
+type ConfigurationService(serviceContext: ServiceContext, log: ILogger<ConfigurationService>) =
 
+    let ctx = serviceContext.GetContext()
+    
     member _.AddPipeline(userReference: string, pipeline: Configuration.Pipelines.Models.NewPipeline) =
         Configuration.Pipelines.CreateOperations.pipeline ctx log userReference pipeline
 
