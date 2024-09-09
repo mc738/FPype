@@ -11,10 +11,9 @@ module Visualizations =
 
     module ``generate-time-series-chart-collection`` =
 
-        open FPype.Visualizations.Charts.LineCharts
 
         let name = "generate_time_series_chart_collection"
-        
+
         type Parameters =
             { ResultBucket: string
               FileNameFormat: string
@@ -58,14 +57,14 @@ module Visualizations =
                 (Ok())
             |> Result.map (fun _ -> store)
 
-        let createAction stepName parameters = run parameters |> createAction name stepName
-        
+        let createAction stepName parameters =
+            run parameters |> createAction name stepName
+
     module ``generate-candle-stick-chart-collection`` =
 
-        open FPype.Visualizations.Charts.CandleStickCharts
 
         let name = "generate_candle_stick_chart_collection"
-        
+
         type Parameters =
             { ResultBucket: string
               FileNameFormat: string
@@ -109,4 +108,5 @@ module Visualizations =
                 (Ok())
             |> Result.map (fun _ -> store)
 
-        let createAction stepName parameters = run parameters |> createAction name stepName
+        let createAction stepName parameters =
+            run parameters |> createAction name stepName

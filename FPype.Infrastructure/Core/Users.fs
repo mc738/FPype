@@ -1,7 +1,6 @@
 ﻿namespace FPype.Infrastructure.Core
 
 open Freql.MySql
-open FsToolbox.Core.Results
 
 [<RequireQualifiedAccess>]
 module Users =

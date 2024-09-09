@@ -5,7 +5,6 @@ module Tables =
 
     open System
     open System.IO
-    open Freql.Core.Common.Types
     open Freql.Sqlite
     open FsToolbox.Core.Results
     open FPype.Core.Types

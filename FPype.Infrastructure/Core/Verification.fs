@@ -1,10 +1,9 @@
 ﻿namespace FPype.Infrastructure.Core
 
-open System
 open FsToolbox.Core.Results
 
 
- [<RequireQualifiedAccess>]
+[<RequireQualifiedAccess>]
 type VerificationResult =
     | Success
     | MissingPermission of Name: string
@@ -108,7 +107,7 @@ module Verification =
                Exception = None }
             : FailureResult)
             |> VerificationResult.Failure
-            
+
     let isNotSystemSubscription (subscription: Records.Subscription) _ =
         match Subscriptions.isSystemSubscription subscription |> not with
         | true -> VerificationResult.Success
@@ -118,7 +117,7 @@ module Verification =
                Exception = None }
             : FailureResult)
             |> VerificationResult.Failure
-    
+
     let isSystemUser (user: Records.User) _ =
         match Users.isSystemUser user with
         | true -> VerificationResult.Success
@@ -128,7 +127,7 @@ module Verification =
                Exception = None }
             : FailureResult)
             |> VerificationResult.Failure
-            
+
     let isNotSystemUser (user: Records.User) _ =
         match Users.isSystemUser user |> not with
         | true -> VerificationResult.Success

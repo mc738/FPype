@@ -6,7 +6,6 @@ open FPype.Data.Models
 module Sqlite =
 
     open Freql.Sqlite
-    open FPype.Data.Models
     open FPype.Data.ModelExtensions.Sqlite
 
     let createTable (path: string) (table: TableModel) =

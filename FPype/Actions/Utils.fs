@@ -6,7 +6,6 @@ open FPype.Data.Store
 module Utils =
 
     open System.IO
-    open FPype.Data.Store
 
     module ``create-directory`` =
 
@@ -28,7 +27,8 @@ module Utils =
             with ex ->
                 Error $"Failed to create directory `{fullPath}` - {ex.Message}"
 
-        let createAction stepName parameters = run parameters |> createAction name stepName
+        let createAction stepName parameters =
+            run parameters |> createAction name stepName
 
     module ``set-variable`` =
 
@@ -62,4 +62,5 @@ module Utils =
 
                 store)
 
-        let createAction stepName parameters = run parameters |> createAction name stepName
+        let createAction stepName parameters =
+            run parameters |> createAction name stepName

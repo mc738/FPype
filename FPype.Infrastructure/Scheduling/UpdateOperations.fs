@@ -1,6 +1,5 @@
 ﻿namespace FPype.Infrastructure.Scheduling
 
-open System.Security.Cryptography.Xml
 
 [<RequireQualifiedAccess>]
 module UpdateOperations =
@@ -11,7 +10,6 @@ module UpdateOperations =
     open FPype.Infrastructure.Configuration.Common
     open FsToolbox.Core.Results
     open FPype.Infrastructure.Core
-    open FPype.Infrastructure.Core.Persistence
 
     let schedule
         (ctx: MySqlContext)

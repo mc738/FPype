@@ -1,6 +1,5 @@
 ﻿namespace FPype.Infrastructure.Configuration.Tables
 
-open System
 open Microsoft.Extensions.Logging
 
 [<RequireQualifiedAccess>]
@@ -60,7 +59,7 @@ module StoreOperations =
                   // But can't hurt to check here again just in case.
                   Verification.subscriptionIsActive subscription ]
 
-            VerificationResult.verify verifiers (t, tv , tc))
+            VerificationResult.verify verifiers (t, tv, tc))
         |> Result.bind (fun (t, tv, tc) ->
 
             let columns =
@@ -70,13 +69,11 @@ module StoreOperations =
                        Name = c.Name
                        DataType = c.DataType
                        Optional = c.Optional
-                       ColumnIndex = Some c.ColumnIndex 
+                       ColumnIndex = Some c.ColumnIndex
                        ImportHandler = c.ImportHandlerJson }
                     : Tables.NewColumn))
 
-            match
-                store.AddTableVersion(IdType.Specific tv.Reference, t.Name, [], ItemVersion.Specific tv.Version)
-            with
+            match store.AddTableVersion(IdType.Specific tv.Reference, t.Name, [], ItemVersion.Specific tv.Version) with
             | Ok _ -> Ok()
             | Error e ->
                 ({ Message = e
@@ -85,7 +82,7 @@ module StoreOperations =
                 : FailureResult)
                 |> Error)
         |> ActionResult.fromResult
-        
+
     let addTableVersionExcludingColumns
         (ctx: MySqlContext)
         (logger: ILogger)
@@ -105,9 +102,7 @@ module StoreOperations =
 
             VerificationResult.verify verifiers (t, tv))
         |> Result.bind (fun (t, tv) ->
-            match
-                store.AddTableVersion(IdType.Specific tv.Reference, t.Name, [], ItemVersion.Specific tv.Version)
-            with
+            match store.AddTableVersion(IdType.Specific tv.Reference, t.Name, [], ItemVersion.Specific tv.Version) with
             | Ok _ -> Ok()
             | Error e ->
                 ({ Message = e
@@ -144,7 +139,7 @@ module StoreOperations =
                        Name = tc.Name
                        DataType = tc.DataType
                        Optional = tc.Optional
-                       ColumnIndex = Some tc.ColumnIndex 
+                       ColumnIndex = Some tc.ColumnIndex
                        ImportHandler = tc.ImportHandlerJson }
                     : Tables.NewColumn)
                 )
@@ -186,7 +181,7 @@ module StoreOperations =
                                    Name = tc.Name
                                    DataType = tc.DataType
                                    Optional = tc.Optional
-                                   ColumnIndex = Some tc.ColumnIndex 
+                                   ColumnIndex = Some tc.ColumnIndex
                                    ImportHandler = tc.ImportHandlerJson }
                                 : Tables.NewColumn))
 

@@ -71,12 +71,7 @@ module StoreOperations =
                     |> Result.map (fun q -> q.ToSql())
                 | false -> Ok qv.RawQuery
                 |> Result.bind (fun rq ->
-                    store.AddQueryVersion(
-                        IdType.Specific qv.Reference,
-                        q.Name,
-                        rq,
-                        ItemVersion.Specific qv.Version
-                    ))
+                    store.AddQueryVersion(IdType.Specific qv.Reference, q.Name, rq, ItemVersion.Specific qv.Version))
 
             match result with
             | Ok _ -> Ok()

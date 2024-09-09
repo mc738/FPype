@@ -12,10 +12,6 @@ module Transform =
 
     open System.IO
     open System.Text.Json
-    open FPype.Core
-    open FPype.Core.Types
-    open FPype.Data.Models
-    open FPype.Data.Store
     open FPype.Data.Grouping
 
     module Internal =
@@ -269,9 +265,9 @@ module Transform =
             writer.Flush()
 
             store.AddArtifact(mapper.ObjectName, "objects", "object", ms.ToArray())
-            
+
             store.Log(stepName, name, $"Object `{mapper.ObjectName}` created and saved as artifact.")
-            
+
             Ok store
 
         let createAction stepName parameters =
@@ -317,7 +313,7 @@ module Transform =
 
                     store)
             | Error e -> Error e
-            
+
         let createAction stepName parameters =
             run parameters stepName |> createAction name stepName
 

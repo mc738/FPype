@@ -8,7 +8,6 @@ open Freql.Core.Common.Types
 [<RequireQualifiedAccess>]
 module Tables =
 
-    open System.Text.Json
     open Freql.Sqlite
     open FsToolbox.Core
     open FsToolbox.Extensions

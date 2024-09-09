@@ -22,9 +22,7 @@ open FsToolbox.Core
 [<RequireQualifiedAccess>]
 module Server =
 
-    open System.IO
     open System.IO.Pipes
-    open FPype.Scripting.Core
 
     (*
     type ServerState =

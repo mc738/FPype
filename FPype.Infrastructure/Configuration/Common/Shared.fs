@@ -1,8 +1,5 @@
 ﻿namespace FPype.Infrastructure.Configuration.Common
 
-open System
-open System.Text.Json
-open FPype.Data.Store
 open FPype.Infrastructure.Core
 open Freql.MySql
 open FsToolbox.Core.Results

@@ -6,7 +6,6 @@ open Microsoft.Extensions.Logging
 [<RequireQualifiedAccess>]
 module StoreOperations =
 
-    open FPype.Configuration
     open FPype.Infrastructure.Configuration.Common
     open FPype.Infrastructure.Core
     open FPype.Infrastructure.Core.Persistence

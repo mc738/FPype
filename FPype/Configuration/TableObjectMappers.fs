@@ -51,7 +51,8 @@ module TableObjectMappers =
                    Query = q
                    Table = t
                    ParameterIndexes = parameterIndexes
-                   Properties = properties }: RelatedObjectTableSource)
+                   Properties = properties }
+                : RelatedObjectTableSource)
                 |> PropertySource.Table)
         | None, _, _, _ -> Error "Missing `name` property"
         | _, Error e, _, _ -> Error $"Error creating table: {e}"
@@ -94,7 +95,8 @@ module TableObjectMappers =
                     ({ ObjectName = objectName
                        Table = t
                        Query = q
-                       Properties = p }: TableObjectMap))
+                       Properties = p }
+                    : TableObjectMap))
             | Error e -> Error $"Failed to create properties. Error: {e}"
         | None, _, _, _ -> Error "Missing `objectName` property"
         | _, Error e, _, _ -> Error $"Error creating query: {e}"
@@ -166,7 +168,8 @@ module TableObjectMappers =
            Version = version
            Mapper = BlobField.FromBytes ms
            Hash = hash
-           CreatedOn = timestamp () }: Parameters.NewTableObjectMapperVersion)
+           CreatedOn = timestamp () }
+        : Parameters.NewTableObjectMapperVersion)
         |> Operations.insertTableObjectMapperVersion ctx
 
     let addRawLatestVersionTransaction (ctx: SqliteContext) (id: IdType) (name: string) (mapper: string) =
@@ -191,7 +194,8 @@ module TableObjectMappers =
                Version = version
                Mapper = BlobField.FromBytes ms
                Hash = hash
-               CreatedOn = timestamp () }: Parameters.NewTableObjectMapperVersion)
+               CreatedOn = timestamp () }
+            : Parameters.NewTableObjectMapperVersion)
             |> Operations.insertTableObjectMapperVersion ctx
             |> Ok
 
@@ -214,7 +218,7 @@ module TableObjectMappers =
 
     let add (ctx: SqliteContext) (mapperName: string) =
         ({ Name = mapperName }: Parameters.NewTableObjectMapper)
-        |> Operations.insertTableObjectMapper ctx 
-       
+        |> Operations.insertTableObjectMapper ctx
+
     let addTransaction (ctx: SqliteContext) (mapperName: string) =
         ctx.ExecuteInTransaction(fun t -> add t mapperName)
