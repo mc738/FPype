@@ -11,7 +11,7 @@ module ScatterCharts =
           YValueIndex: int
           XRange: ValueRange
           YRange: ValueRange }
-    
+
     and TwoWayComparisonChartSettings =
         { Height: float option
           Width: float option
@@ -93,7 +93,7 @@ module ScatterCharts =
                XMinorMarkers = tsc.YMinorMarkers
                YMajorMarkers = tsc.YMajorMarkers
                YMinorMarkers = tsc.YMinorMarkers }
-            : ScatterCharts.Settings)  
-    
-    
+            : ScatterCharts.Settings)
+
+
     ()

@@ -2,8 +2,6 @@
 
 open FPype.Infrastructure.Scheduling
 open Microsoft.Extensions.Logging
-open Freql.MySql
-open FPype.Infrastructure
 
 type SchedulingService(serviceContext: ServiceContext, log: ILogger<SchedulingService>) =
 

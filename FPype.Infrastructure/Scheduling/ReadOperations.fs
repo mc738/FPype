@@ -8,18 +8,21 @@ module ReadOperations =
 
     open Microsoft.Extensions.Logging
     open FPype.Infrastructure.Scheduling.Models
-    open Freql.MySql
     open FPype.Infrastructure.Configuration.Common
     open FsToolbox.Core.Results
     open FPype.Infrastructure.Core
     open FPype.Infrastructure.Core.Persistence
 
     module private Internal =
-        
+
         // SECURITY Because `additionConditions` is used to make generate SQL make sure this function is need called with untrusted values.
-        let getScheduledPipelineRunDetails (ctx: MySqlContext) (additionConditions: string option) (parameters: obj list) =
+        let getScheduledPipelineRunDetails
+            (ctx: MySqlContext)
+            (additionConditions: string option)
+            (parameters: obj list)
+            =
             // PERFORMANCE This used a custom query to cut down the number of fetches requred to populate the model.
-            
+
             let baseSql =
                 """
                 SELECT 
@@ -45,14 +48,14 @@ module ReadOperations =
                 JOIN users u ON pr.run_by = u.id
                 JOIN subscriptions s ON cp.subscription_id = s.id
                 """
-            
+
             let sql =
                 match additionConditions with
                 | Some conditions -> [ baseSql; conditions ] |> String.concat Environment.NewLine
                 | None -> baseSql
-            
+
             ctx.SelectAnon<ScheduledPipelineRunDetails>(sql, parameters)
-    
+
     let allEventsInternal (ctx: MySqlContext) (logger: ILogger) (previousTip: int) =
         let rc = Events.selectAllEvents ctx previousTip
 
@@ -190,10 +193,9 @@ module ReadOperations =
                   Verification.isNotSystemUser ur ]
 
             VerificationResult.verify verifiers (ur, sr))
-        |> Result.map (fun (ur, sr) ->
-            Internal.getScheduledPipelineRunDetails ctx (Some "WHERE s.id = @0") [ sr.Id ])
+        |> Result.map (fun (ur, sr) -> Internal.getScheduledPipelineRunDetails ctx (Some "WHERE s.id = @0") [ sr.Id ])
         |> FetchResult.fromResult
-        
+
     let schedulePipelineRuns (ctx: MySqlContext) (logger: ILogger) (userReference: string) (scheduleReference: string) =
         Fetch.user ctx userReference
         |> FetchResult.merge (fun ur sr -> ur, sr) (fun ur -> Fetch.subscriptionById ctx ur.Id)
@@ -212,4 +214,3 @@ module ReadOperations =
         |> Result.map (fun (ur, sr, psr) ->
             Internal.getScheduledPipelineRunDetails ctx (Some "WHERE psr.id = @0") [ psr.Id ])
         |> FetchResult.fromResult
-        

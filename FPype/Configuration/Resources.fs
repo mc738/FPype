@@ -6,7 +6,6 @@ open Freql.Core.Common.Types
 [<RequireQualifiedAccess>]
 module Resources =
 
-    open System.IO
     open Freql.Sqlite
     open FsToolbox.Extensions
     open FPype.Configuration.Persistence
@@ -71,7 +70,8 @@ module Resources =
            ResourceType = resourceType
            RawBlob = BlobField.FromBytes raw
            Hash = hash
-           CreatedOn = timestamp () }: Parameters.NewResourceVersion)
+           CreatedOn = timestamp () }
+        : Parameters.NewResourceVersion)
         |> Operations.insertResourceVersion ctx
 
     let addLatestVersionTransaction
@@ -106,7 +106,8 @@ module Resources =
                ResourceType = resourceType
                RawBlob = BlobField.FromBytes raw
                Hash = hash
-               CreatedOn = timestamp () }: Parameters.NewResourceVersion)
+               CreatedOn = timestamp () }
+            : Parameters.NewResourceVersion)
             |> Operations.insertResourceVersion ctx
             |> Ok
 
@@ -146,6 +147,6 @@ module Resources =
     let add (ctx: SqliteContext) (resourceName: string) =
         ({ Name = resourceName }: Parameters.NewResource)
         |> Operations.insertResource ctx
-        
+
     let addTransaction (ctx: SqliteContext) (resourceName: string) =
         ctx.ExecuteInTransaction(fun t -> add t resourceName)

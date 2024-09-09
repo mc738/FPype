@@ -5,10 +5,8 @@ open Microsoft.Extensions.Logging
 [<RequireQualifiedAccess>]
 module ReadOperations =
 
-    open FPype.Core.Types
     open FPype.Infrastructure.Configuration.Common
     open FPype.Infrastructure.Core
-    open FPype.Infrastructure.Core.Persistence
     open Freql.MySql
     open FsToolbox.Core.Results
 
@@ -87,7 +85,12 @@ module ReadOperations =
             : TableObjectMapperDetails))
         |> FetchResult.fromResult
 
-    let tableObjectMapperVersions (ctx: MySqlContext) (logger: ILogger) (userReference: string) (mapperReference: string) =
+    let tableObjectMapperVersions
+        (ctx: MySqlContext)
+        (logger: ILogger)
+        (userReference: string)
+        (mapperReference: string)
+        =
         Fetch.user ctx userReference
         |> FetchResult.merge (fun ur sr -> ur, sr) (fun ur -> Fetch.subscriptionById ctx ur.Id)
         |> FetchResult.chain (fun (ur, sr) mr -> ur, sr, mr) (Fetch.tableObjectMapper ctx mapperReference)
@@ -115,7 +118,7 @@ module ReadOperations =
                    Version = mvr.Version }
                 : TableObjectMapperVersionOverview)))
         |> FetchResult.fromResult
-    
+
     let tableObjectMappers (ctx: MySqlContext) (logger: ILogger) (userReference: string) =
         Fetch.user ctx userReference
         |> FetchResult.merge (fun ur sr -> ur, sr) (fun ur -> Fetch.subscriptionById ctx ur.Id)

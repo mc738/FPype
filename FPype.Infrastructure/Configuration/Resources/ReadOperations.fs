@@ -6,10 +6,8 @@ open Microsoft.Extensions.Logging
 module ReadOperations =
 
 
-    open FPype.Core.Types
     open FPype.Infrastructure.Configuration.Common
     open FPype.Infrastructure.Core
-    open FPype.Infrastructure.Core.Persistence
     open Freql.MySql
     open FsToolbox.Core.Results
 
@@ -89,7 +87,7 @@ module ReadOperations =
                    CreatedOn = rvr.CreatedOn } }
             : ResourceDetails))
         |> FetchResult.fromResult
-        
+
     let resourceVersions (ctx: MySqlContext) (logger: ILogger) (userReference: string) (resourceReference: string) =
         Fetch.user ctx userReference
         |> FetchResult.merge (fun ur sr -> ur, sr) (fun ur -> Fetch.subscriptionById ctx ur.Id)
@@ -118,7 +116,7 @@ module ReadOperations =
                    Version = rvr.Version }
                 : ResourceVersionOverview)))
         |> FetchResult.fromResult
-    
+
     let resources (ctx: MySqlContext) (logger: ILogger) (userReference: string) =
         Fetch.user ctx userReference
         |> FetchResult.merge (fun ur sr -> ur, sr) (fun ur -> Fetch.subscriptionById ctx ur.Id)

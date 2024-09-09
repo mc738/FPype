@@ -5,10 +5,8 @@ open Microsoft.Extensions.Logging
 [<RequireQualifiedAccess>]
 module ReadOperations =
 
-    open FPype.Core.Types
     open FPype.Infrastructure.Configuration.Common
     open FPype.Infrastructure.Core
-    open FPype.Infrastructure.Core.Persistence
     open Freql.MySql
     open FsToolbox.Core.Results
 
