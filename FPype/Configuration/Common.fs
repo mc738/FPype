@@ -5,7 +5,6 @@ open System.Globalization
 open System.Text
 open System.Text.Json
 open FPype.Core.Types
-open FPype.Data.Store
 open Freql.Core.Common.Types
 open FsToolbox.Core
 
@@ -62,7 +61,7 @@ module Common =
     type QueryVersion =
         { Name: string
           Version: ItemVersion }
-        
+
         static member FromJson(json: JsonElement) =
             Json.tryGetStringProperty "name" json
             |> Option.map (fun n ->
@@ -79,7 +78,7 @@ module Common =
             Json.tryGetProperty "query" json
             |> Option.map QueryVersion.TryFromJson
             |> Option.defaultValue (Error "Missing `query` object")
-    
+
     [<RequireQualifiedAccess>]
     type IdType =
         | Generated
@@ -94,7 +93,7 @@ module Common =
             match id with
             | Generated -> Guid.NewGuid().ToString("n")
             | Specific v -> v
-            
+
         member id.Generate() =
             match id with
             | Generated -> Guid.NewGuid().ToString("n") |> Specific

@@ -4,10 +4,8 @@ open FSVG
 
 module CandleStickCharts =
 
-    open System
     open System.Text.Json
     open FsToolbox.Core
-    open FSVG
     open FSVG.Charts
     open FPype.Core
     open FPype.Core.Types

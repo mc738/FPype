@@ -1,7 +1,6 @@
 ﻿namespace FPype.Infrastructure.DataSinks
 
 open System
-open FPype.Data.ModelExtensions
 open Freql.Core.Common.Types
 
 [<AutoOpen>]
@@ -38,7 +37,7 @@ module Common =
           RequesterId: string
           IncludeDataSinkColumns: bool }
 
-    
+
     [<CLIMutable>]
     type Metadata =
         { ItemId: string
@@ -46,7 +45,7 @@ module Common =
           ItemValue: string }
 
         static member TableName() = "__metadata"
-        
+
         static member CreateTableSql() =
             """
         CREATE TABLE __metadata (
@@ -56,7 +55,7 @@ module Common =
             CONSTRAINT __metadata_pk PRIMARY KEY (item_id, item_key)
         );
         """
-        
+
         static member GlobalItemId() = "global"
 
     [<CLIMutable>]
@@ -67,7 +66,7 @@ module Common =
           WasSuccessful: bool }
 
         static member TableName() = "__read_requests"
-        
+
         static member CreateTableSql() =
             """
         CREATE TABLE IF NOT EXISTS __read_requests (
@@ -84,9 +83,9 @@ module Common =
         { ErrorMessage: string
           DataTimestamp: DateTime
           DataBlob: BlobField }
-        
+
         static member TableName() = "__insert_errors"
-        
+
         static member CreatedTableSql() =
             """
         CREATE TABLE IF NOT EXISTS __insert_errors (
@@ -99,7 +98,7 @@ module Common =
 
     [<RequireQualifiedAccess>]
     module GlobalMetadataKeys =
-        
+
         let subscriptionId = "subscription_id"
-        
+
         let createdOn = "created_on"

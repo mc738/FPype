@@ -3,7 +3,6 @@
 [<RequireQualifiedAccess>]
 module Client =
 
-    open System.IO
     open System.IO.Pipes
     open FPype.Scripting.Core
 

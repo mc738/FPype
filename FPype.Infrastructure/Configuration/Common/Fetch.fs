@@ -55,7 +55,7 @@ module Fetch =
               Exception = Some ex }
             |> FetchResult.Failure
 
-    
+
     let userById (ctx: MySqlContext) (id: int) =
         try
             Operations.selectUserRecord ctx [ "WHERE id = @0;" ] [ id ]
@@ -72,7 +72,7 @@ module Fetch =
               Exception = Some ex }
             |> FetchResult.Failure
 
-    
+
     let pipeline (ctx: MySqlContext) (reference: string) =
         try
             Operations.selectPipelineRecord ctx [ "WHERE reference = @0;" ] [ reference ]
@@ -114,7 +114,7 @@ module Fetch =
               DisplayMessage = "Error fetching pipelines"
               Exception = Some ex }
             |> FetchResult.Failure
-    
+
     let pipelineLatestVersion (ctx: MySqlContext) (pipelineId: int) =
         try
             Operations.selectPipelineVersionRecord
@@ -246,7 +246,7 @@ module Fetch =
               DisplayMessage = "Error fetching pipeline args"
               Exception = Some ex }
             |> FetchResult.Failure
-    
+
     let pipelineActionByReference (ctx: MySqlContext) (reference: string) =
         try
             Operations.selectPipelineActionRecord ctx [ "WHERE reference = @0" ] [ reference ]
@@ -490,7 +490,7 @@ module Fetch =
               DisplayMessage = "Error fetching query"
               Exception = Some ex }
             |> FetchResult.Failure
-    
+
     let queryLatestVersion (ctx: MySqlContext) (queryId: int) =
         try
             Operations.selectQueryVersionRecord ctx [ "WHERE query_id = @0 ORDER BY version DESC LIMIT 1;" ] [ queryId ]
@@ -538,7 +538,7 @@ module Fetch =
               DisplayMessage = "Error fetching query version"
               Exception = Some ex }
             |> FetchResult.Failure
-            
+
     let queryVersionsByQueryId (ctx: MySqlContext) (queryId: int) =
         try
             Operations.selectQueryVersionRecords ctx [ "WHERE query_id = @0;" ] [ queryId ]
@@ -582,7 +582,7 @@ module Fetch =
               Exception = Some ex }
             |> FetchResult.Failure
 
-    
+
     let resourcesBySubscriptionId (ctx: MySqlContext) (subscriptionId: int) =
         try
             Operations.selectResourceRecords ctx [ "WHERE subscription_id = @0" ] [ subscriptionId ]
@@ -592,7 +592,7 @@ module Fetch =
               DisplayMessage = "Error fetching resource"
               Exception = Some ex }
             |> FetchResult.Failure
-    
+
     let resourceLatestVersion (ctx: MySqlContext) (resourceId: int) =
         try
             Operations.selectResourceVersionRecord
@@ -715,7 +715,7 @@ module Fetch =
               DisplayMessage = "Error fetching table object mapper"
               Exception = Some ex }
             |> FetchResult.Failure
-    
+
     let tableObjectMapperLatestVersion (ctx: MySqlContext) (tableObjectMapperId: int) =
         try
             Operations.selectTableObjectMapperVersionRecord
@@ -780,7 +780,7 @@ module Fetch =
               Exception = Some ex }
             |> FetchResult.Failure
 
-    
+
     // Object table mappers
     let objectTableMapper (ctx: MySqlContext) (reference: string) =
         try
@@ -823,7 +823,7 @@ module Fetch =
               DisplayMessage = "Error fetching object table mappers"
               Exception = Some ex }
             |> FetchResult.Failure
-    
+
     let objectTableMapperLatestVersion (ctx: MySqlContext) (objectTableMapperId: int) =
         try
             Operations.selectObjectTableMapperVersionRecord
@@ -877,7 +877,7 @@ module Fetch =
               DisplayMessage = "Error fetching object table mapper version"
               Exception = Some ex }
             |> FetchResult.Failure
-            
+
     let objectTableMapperVersionByMapperId (ctx: MySqlContext) (mapperId: int) =
         try
             Operations.selectObjectTableMapperVersionRecords ctx [ "WHERE object_table_mapper_id = @0;" ] [ mapperId ]

@@ -2,7 +2,7 @@
 
 [<RequireQualifiedAccess>]
 module Names =
-    
+
     type GeneratorConfiguration =
         { MaleTitles: WeightedList<string>
           FemaleTitles: WeightedList<string>
@@ -10,7 +10,6 @@ module Names =
           FemaleFirstNames: string array
           MiddleNames: string array
           LastNames: string array }
-    
-    
-    ()
 
+
+    ()

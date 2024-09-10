@@ -6,81 +6,81 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <Compile Include="Core\Persistence.fs" />
-        <Compile Include="Core\Subscriptions.fs" />
-        <Compile Include="Core\Users.fs" />
-        <Compile Include="Core\Verification.fs" />
-        <Compile Include="Core\Shared.fs" />
-        <Compile Include="Configuration\Common\Shared.fs" />
-        <Compile Include="Configuration\Common\Fetch.fs" />
-        <Compile Include="Configuration\Common\Events.fs" />
-        <Compile Include="Configuration\Pipelines\Models.fs" />
-        <Compile Include="Configuration\Pipelines\CreateOperations.fs" />
-        <Compile Include="Configuration\Pipelines\ReadOperations.fs" />
-        <Compile Include="Configuration\Pipelines\StoreOperations.fs" />
-        <Compile Include="Configuration\Tables\Models.fs" />
-        <Compile Include="Configuration\Tables\CreateOperations.fs" />
-        <Compile Include="Configuration\Tables\ReadOperations.fs" />
-        <Compile Include="Configuration\Tables\StoreOperations.fs" />
-        <Compile Include="Configuration\Queries\Models.fs" />
-        <Compile Include="Configuration\Queries\CreateOperations.fs" />
-        <Compile Include="Configuration\Queries\ReadOperations.fs" />
-        <Compile Include="Configuration\Queries\StoreOperations.fs" />
-        <Compile Include="Configuration\Resources\Models.fs" />
-        <Compile Include="Configuration\Resources\CreateOperations.fs" />
-        <Compile Include="Configuration\Resources\ReadOperations.fs" />
-        <Compile Include="Configuration\Resources\StoreOperations.fs" />
-        <Compile Include="Configuration\TableObjectMappers\Models.fs" />
-        <Compile Include="Configuration\TableObjectMappers\CreateOperations.fs" />
-        <Compile Include="Configuration\TableObjectMappers\ReadOperations.fs" />
-        <Compile Include="Configuration\TableObjectMappers\StoreOperations.fs" />
-        <Compile Include="Configuration\ObjectTableMappers\Models.fs" />
-        <Compile Include="Configuration\ObjectTableMappers\CreateOperations.fs" />
-        <Compile Include="Configuration\ObjectTableMappers\ReadOperations.fs" />
-        <Compile Include="Configuration\ObjectTableMappers\StoreOperations.fs" />
-        <Compile Include="Configuration\Impl.fs" />
-        <Compile Include="Pipelines\Models.fs" />
-        <Compile Include="Pipelines\Operations.fs" />
-        <Compile Include="Pipelines\Auditing.fs" />
-        <Compile Include="Scheduling\Common.fs" />
-        <Compile Include="Scheduling\Events.fs" />
-        <Compile Include="Scheduling\Models.fs" />
-        <Compile Include="Scheduling\CreateOperations.fs" />
-        <Compile Include="Scheduling\ReadOperations.fs" />
-        <Compile Include="Scheduling\UpdateOperations.fs" />
-        <Compile Include="Scheduling\Auditing.fs" />
-        <Compile Include="Services\ServiceContext.fs" />
-        <Compile Include="Services\PipelineService.fs" />
-        <Compile Include="Services\ConfigurationService.fs" />
-        <Compile Include="Services\SchedulingService.fs" />
-        <Compile Include="Services\HealthChecks.fs" />
-        <Compile Include="Services\Extensions.fs" />
-        <Compile Include="DataSinks\Common.fs" />
-        <Compile Include="DataSinks\Operations.fs" />
-        <Compile Include="DataSinks\Tables.fs" />
-        <Compile Include="DataSinks\Objects.fs" />
+        <Compile Include="Core\Persistence.fs"/>
+        <Compile Include="Core\Subscriptions.fs"/>
+        <Compile Include="Core\Users.fs"/>
+        <Compile Include="Core\Verification.fs"/>
+        <Compile Include="Core\Shared.fs"/>
+        <Compile Include="Configuration\Common\Shared.fs"/>
+        <Compile Include="Configuration\Common\Fetch.fs"/>
+        <Compile Include="Configuration\Common\Events.fs"/>
+        <Compile Include="Configuration\Pipelines\Models.fs"/>
+        <Compile Include="Configuration\Pipelines\CreateOperations.fs"/>
+        <Compile Include="Configuration\Pipelines\ReadOperations.fs"/>
+        <Compile Include="Configuration\Pipelines\StoreOperations.fs"/>
+        <Compile Include="Configuration\Tables\Models.fs"/>
+        <Compile Include="Configuration\Tables\CreateOperations.fs"/>
+        <Compile Include="Configuration\Tables\ReadOperations.fs"/>
+        <Compile Include="Configuration\Tables\StoreOperations.fs"/>
+        <Compile Include="Configuration\Queries\Models.fs"/>
+        <Compile Include="Configuration\Queries\CreateOperations.fs"/>
+        <Compile Include="Configuration\Queries\ReadOperations.fs"/>
+        <Compile Include="Configuration\Queries\StoreOperations.fs"/>
+        <Compile Include="Configuration\Resources\Models.fs"/>
+        <Compile Include="Configuration\Resources\CreateOperations.fs"/>
+        <Compile Include="Configuration\Resources\ReadOperations.fs"/>
+        <Compile Include="Configuration\Resources\StoreOperations.fs"/>
+        <Compile Include="Configuration\TableObjectMappers\Models.fs"/>
+        <Compile Include="Configuration\TableObjectMappers\CreateOperations.fs"/>
+        <Compile Include="Configuration\TableObjectMappers\ReadOperations.fs"/>
+        <Compile Include="Configuration\TableObjectMappers\StoreOperations.fs"/>
+        <Compile Include="Configuration\ObjectTableMappers\Models.fs"/>
+        <Compile Include="Configuration\ObjectTableMappers\CreateOperations.fs"/>
+        <Compile Include="Configuration\ObjectTableMappers\ReadOperations.fs"/>
+        <Compile Include="Configuration\ObjectTableMappers\StoreOperations.fs"/>
+        <Compile Include="Configuration\Impl.fs"/>
+        <Compile Include="Pipelines\Models.fs"/>
+        <Compile Include="Pipelines\Operations.fs"/>
+        <Compile Include="Pipelines\Auditing.fs"/>
+        <Compile Include="Scheduling\Common.fs"/>
+        <Compile Include="Scheduling\Events.fs"/>
+        <Compile Include="Scheduling\Models.fs"/>
+        <Compile Include="Scheduling\CreateOperations.fs"/>
+        <Compile Include="Scheduling\ReadOperations.fs"/>
+        <Compile Include="Scheduling\UpdateOperations.fs"/>
+        <Compile Include="Scheduling\Auditing.fs"/>
+        <Compile Include="Services\ServiceContext.fs"/>
+        <Compile Include="Services\PipelineService.fs"/>
+        <Compile Include="Services\ConfigurationService.fs"/>
+        <Compile Include="Services\SchedulingService.fs"/>
+        <Compile Include="Services\HealthChecks.fs"/>
+        <Compile Include="Services\Extensions.fs"/>
+        <Compile Include="DataSinks\Common.fs"/>
+        <Compile Include="DataSinks\Operations.fs"/>
+        <Compile Include="DataSinks\Tables.fs"/>
+        <Compile Include="DataSinks\Objects.fs"/>
     </ItemGroup>
 
     <ItemGroup>
-      <PackageReference Include="freql.mysql" Version="0.10.0" />
-      <PackageReference Include="fstoolbox" Version="0.9.3" />
-      <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="7.0.0" />
-      <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="7.0.0" />
-      <PackageReference Update="FSharp.Core" Version="8.0.301" />
+        <PackageReference Include="freql.mysql" Version="0.10.0"/>
+        <PackageReference Include="fstoolbox" Version="0.9.3"/>
+        <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="7.0.0"/>
+        <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="7.0.0"/>
+        <PackageReference Update="FSharp.Core" Version="8.0.301"/>
     </ItemGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\..\Armarium\Armarium\Armarium.fsproj" />
-      <ProjectReference Include="..\FPype\FPype.fsproj" />
+        <ProjectReference Include="..\..\Armarium\Armarium\Armarium.fsproj"/>
+        <ProjectReference Include="..\FPype\FPype.fsproj"/>
     </ItemGroup>
 
     <ItemGroup>
-      <Reference Include="Microsoft.Extensions.Diagnostics.HealthChecks">
-        <HintPath>..\..\..\..\.nuget\packages\microsoft.aspnetcore.app.ref\6.0.30\ref\net6.0\Microsoft.Extensions.Diagnostics.HealthChecks.dll</HintPath>
-      </Reference>
-      <Reference Include="Microsoft.Extensions.Diagnostics.HealthChecks.Abstractions">
-        <HintPath>..\..\..\..\.nuget\packages\microsoft.aspnetcore.app.ref\6.0.30\ref\net6.0\Microsoft.Extensions.Diagnostics.HealthChecks.Abstractions.dll</HintPath>
-      </Reference>
+        <Reference Include="Microsoft.Extensions.Diagnostics.HealthChecks">
+            <HintPath>..\..\..\..\.nuget\packages\microsoft.aspnetcore.app.ref\6.0.30\ref\net6.0\Microsoft.Extensions.Diagnostics.HealthChecks.dll</HintPath>
+        </Reference>
+        <Reference Include="Microsoft.Extensions.Diagnostics.HealthChecks.Abstractions">
+            <HintPath>..\..\..\..\.nuget\packages\microsoft.aspnetcore.app.ref\6.0.30\ref\net6.0\Microsoft.Extensions.Diagnostics.HealthChecks.Abstractions.dll</HintPath>
+        </Reference>
     </ItemGroup>
 
 </Project>

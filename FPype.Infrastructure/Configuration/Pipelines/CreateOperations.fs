@@ -1,13 +1,10 @@
 ﻿namespace FPype.Infrastructure.Configuration.Pipelines
 
-open System.Text
-open FsToolbox.Core
 open Microsoft.Extensions.Logging
 
 [<RequireQualifiedAccess>]
 module CreateOperations =
 
-    open System
     open FPype.Infrastructure.Core
     open FsToolbox.Core.Results
     open FsToolbox.Extensions
@@ -229,7 +226,7 @@ module CreateOperations =
                 | Some atr ->
                     let hash = action.ActionData.GetSHA256Hash()
                     let timestamp = getTimestamp ()
-                    
+
                     ({ Reference = action.Reference
                        PipelineVersionId = pvr.Id
                        Name = action.Name

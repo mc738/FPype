@@ -12,9 +12,8 @@ module Events =
     open Microsoft.Extensions.Logging
     open FsToolbox.Core.Results
     open Freql.MySql
-    open FPype.Infrastructure.Core
     open FPype.Infrastructure.Core.Persistence
-    
+
     type ScheduleEvent =
         | ScheduleCreated of ScheduleCreatedEvent
         | ScheduleUpdated of ScheduleUpdatedEvent
@@ -111,24 +110,18 @@ module Events =
             [ scheduleId; previousTip ]
 
     let selectAllEventRecordsFromPreviousTip (ctx: MySqlContext) (previousTip: int) =
-        Operations.selectPipelineScheduleEventRecords
-            ctx
-            [ "WHERE id > @0" ]
-            [ previousTip ]
+        Operations.selectPipelineScheduleEventRecords ctx [ "WHERE id > @0" ] [ previousTip ]
 
     let selectScheduleTip (ctx: MySqlContext) (scheduleId: int) =
-        Operations.selectPipelineScheduleEventRecord
-            ctx
-            [ "WHERE schedule_id = @0 ORDER BY id DESC" ]
-            [ scheduleId ]
+        Operations.selectPipelineScheduleEventRecord ctx [ "WHERE schedule_id = @0 ORDER BY id DESC" ] [ scheduleId ]
         |> Option.map (fun er -> er.Id)
         |> Option.defaultValue 0
-        
+
     let selectGlobalTip (ctx: MySqlContext) =
         Operations.selectPipelineScheduleEventRecord ctx [ "ORDER BY id DESC" ] []
         |> Option.map (fun er -> er.Id)
         |> Option.defaultValue 0
-        
+
     let deserializeRecords (events: Records.PipelineScheduleEvent list) =
         events
         |> List.map (fun ce ->
@@ -138,9 +131,7 @@ module Events =
         |> ResultCollection.Create
 
     let selectScheduleEvents (ctx: MySqlContext) (scheduleId: int) (previousTip: int) =
-        selectScheduleEventRecords ctx scheduleId previousTip
-        |> deserializeRecords
-        
+        selectScheduleEventRecords ctx scheduleId previousTip |> deserializeRecords
+
     let selectAllEvents (ctx: MySqlContext) (previousTip: int) =
-        selectAllEventRecordsFromPreviousTip ctx previousTip
-        |> deserializeRecords
+        selectAllEventRecordsFromPreviousTip ctx previousTip |> deserializeRecords

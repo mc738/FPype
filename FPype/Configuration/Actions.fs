@@ -1,11 +1,9 @@
 ﻿namespace FPype.Configuration
 
-open DocumentFormat.OpenXml.Spreadsheet
 open FPype.Actions
 open FPype.Actions.ML
 open FPype.Visualizations.Charts.LineCharts
 open Freql.Sqlite
-open Microsoft.VisualBasic.CompilerServices
 
 module Actions =
 
@@ -14,12 +12,9 @@ module Actions =
     open FPype.Configuration.Persistence
     open Freql.Core.Common.Types
     open Microsoft.FSharp.Core
-    open System.Text.Json
-    open Freql.Sqlite
     open FsToolbox.Core
     open FsToolbox.Extensions
     open FPype.Core
-    open FPype.Actions
 
     type NewPipelineAction =
         { Id: IdType

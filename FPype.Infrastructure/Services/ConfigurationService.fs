@@ -4,14 +4,11 @@ open System
 open Microsoft.Extensions.Logging
 open FPype.Infrastructure
 open FPype.Infrastructure.Configuration
-open FPype.Infrastructure.Core.Persistence
-open Freql.MySql
-open FsToolbox.Core.Results
 
 type ConfigurationService(serviceContext: ServiceContext, log: ILogger<ConfigurationService>) =
 
     let ctx = serviceContext.GetContext()
-    
+
     member _.AddPipeline(userReference: string, pipeline: Configuration.Pipelines.Models.NewPipeline) =
         Configuration.Pipelines.CreateOperations.pipeline ctx log userReference pipeline
 

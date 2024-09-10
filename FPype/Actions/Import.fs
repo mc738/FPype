@@ -5,13 +5,9 @@ open FPype.Data
 [<RequireQualifiedAccess>]
 module Import =
 
-    open System
     open System.IO
     open System.Net.Http
     open FsToolbox.Extensions
-    open FPype.Data.Store
-    open FPype.Core.Types
-    open FPype.Data.Models
     open FPype.Data.Store
 
     [<RequireQualifiedAccess>]
@@ -22,7 +18,7 @@ module Import =
 
         let run (parameters: Parameters) (store: PipelineStore) =
             let fullPath = store.SubstituteValues parameters.Path
-            
+
             match File.Exists fullPath, store.GetImportsPath() with
             | true, Some importsPath ->
                 //store.GetState()
@@ -35,7 +31,8 @@ module Import =
             | false, _ -> Error $"File `{fullPath}` not found."
             | _, None -> Error "Imports path not found in store state."
 
-        let createAction stepName parameters = run parameters |> createAction name stepName
+        let createAction stepName parameters =
+            run parameters |> createAction name stepName
 
     module ``chunk-file`` =
         let name = "chunk_file"
@@ -64,7 +61,8 @@ module Import =
             | false, _ -> Error $"File `{parameters.Path}` not found."
             | _, None -> Error "Imports path not found in store state."
 
-        let createAction stepName parameters = run parameters |> createAction name stepName
+        let createAction stepName parameters =
+            run parameters |> createAction name stepName
 
     module ``unzip-files`` =
 
@@ -130,5 +128,5 @@ module Import =
 
                 store)
 
-        let createAction stepName parameters = run parameters |> createAction name stepName
-        
+        let createAction stepName parameters =
+            run parameters |> createAction name stepName

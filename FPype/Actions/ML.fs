@@ -6,11 +6,6 @@ open FPype.Data.Store
 
 module ML =
 
-    open System
-    open FsToolbox.Extensions
-    open FPype.Data
-    open FPype.Data.Models
-    open FPype.Data.Store
     open FPype.ML
 
     module ``train-binary-classification-model`` =

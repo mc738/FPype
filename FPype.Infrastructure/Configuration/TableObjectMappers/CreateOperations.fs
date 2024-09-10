@@ -4,7 +4,7 @@ open Microsoft.Extensions.Logging
 
 [<RequireQualifiedAccess>]
 module CreateOperations =
-    
+
     open FPype.Infrastructure.Core
     open FPype.Infrastructure.Core.Persistence
     open FPype.Infrastructure.Configuration.Common
@@ -32,7 +32,7 @@ module CreateOperations =
             |> Result.map (fun (ur, sr) ->
                 let timestamp = getTimestamp ()
                 let hash = mapper.Version.MapperData.GetSHA256Hash()
-                
+
                 let mapperId =
                     ({ Reference = mapper.Reference
                        SubscriptionId = sr.Id
@@ -44,13 +44,13 @@ module CreateOperations =
                 ({ Reference = mapper.Version.Reference
                    TableObjectMapperId = mapperId
                    Version = 1
-                   MapperJson = mapper.Version.MapperData 
+                   MapperJson = mapper.Version.MapperData
                    Hash = hash
                    CreatedOn = timestamp }
                 : Parameters.NewTableObjectMapperVersion)
                 |> Operations.insertTableObjectMapperVersion t
                 |> ignore
-                
+
                 [ ({ Reference = mapper.Reference
                      MapperName = mapper.Name }
                   : Events.TableObjectMapperAddedEvent)
@@ -66,7 +66,13 @@ module CreateOperations =
                 |> ignore))
         |> toActionResult "Create table object mapper"
 
-    let tableObjectMapperVersion (ctx: MySqlContext) (logger: ILogger) (userReference: string) (mapperReference: string) (version: NewTableObjectMapperVersion) =
+    let tableObjectMapperVersion
+        (ctx: MySqlContext)
+        (logger: ILogger)
+        (userReference: string)
+        (mapperReference: string)
+        (version: NewTableObjectMapperVersion)
+        =
         ctx.ExecuteInTransaction(fun t ->
             // Fetch
             Fetch.user t userReference
@@ -95,13 +101,13 @@ module CreateOperations =
                 ({ Reference = version.Reference
                    TableObjectMapperId = mr.Id
                    Version = versionNumber
-                   MapperJson = version.MapperData 
+                   MapperJson = version.MapperData
                    Hash = hash
                    CreatedOn = timestamp }
                 : Parameters.NewTableObjectMapperVersion)
                 |> Operations.insertTableObjectMapperVersion t
                 |> ignore
-                
+
                 [ ({ Reference = version.Reference
                      MapperReference = mr.Reference
                      Version = versionNumber

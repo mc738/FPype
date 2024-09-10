@@ -2,7 +2,7 @@
 
 module LineCharts =
 
-        
+
     open System
     open System.Text.Json
     open FsToolbox.Core
@@ -12,7 +12,7 @@ module LineCharts =
     open FPype.Core.Types
     open FPype.Data.Models
 
-        
+
     type TimeSeriesEntry = { Value: float; Timestamp: DateTime }
 
     type TimeSeriesChartGeneratorSettings =

@@ -18,14 +18,16 @@ module Models =
         { Reference: string
           Name: string
           Version: NewSerializedQueryVersion }
-    
-    and NewSerializedQueryVersion = { Reference: string; SerializedQuery: SerializableQueries.Query }
-    
+
+    and NewSerializedQueryVersion =
+        { Reference: string
+          SerializedQuery: SerializableQueries.Query }
+
     type QueryDetails =
         { Reference: string
           Name: string
           Versions: QueryVersionDetails list }
-        
+
     and QueryVersionDetails =
         { QueryReference: string
           Reference: string
@@ -43,7 +45,7 @@ module Models =
               Version = entity.Version
               RawQuery = entity.RawQuery
               Hash = entity.Hash
-              IsSerialized = entity.IsSerialized 
+              IsSerialized = entity.IsSerialized
               CreatedOn = entity.CreatedOn }
 
     type QueryVersionOverview =

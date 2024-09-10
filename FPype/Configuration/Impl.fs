@@ -3,8 +3,6 @@
 open System
 open System.IO
 open FPype.Configuration.Persistence
-open FPype.Data.Models
-open FPype.Data.Store
 open Freql.Sqlite
 
 [<AutoOpen>]
@@ -73,15 +71,15 @@ type ConfigurationStore(ctx: SqliteContext) =
                 : Parameters.NewMetadataItem)
                 |> Operations.insertMetadataItem ctx
             | None -> ()
-            
+
             match serialTip with
             | Some t ->
                 ({ ItemKey = serialTipKey
                    ItemValue = string t }
-                 : Parameters.NewMetadataItem)
+                : Parameters.NewMetadataItem)
                 |> Operations.insertMetadataItem ctx
             | None -> ()
-                
+
             ConfigurationStore ctx
 
     static member Load(path) =

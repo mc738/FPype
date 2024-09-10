@@ -2,19 +2,18 @@
 
 [<AutoOpen>]
 module Models =
-    
+
     open System
-    
+
     type NewObjectTableMapper =
         { Reference: string
           Name: string
           Version: NewObjectTableMapperVersion }
 
-    and NewObjectTableMapperVersion = {
-        Reference: string
-        TableModelReference: string
-        MapperData: string
-    }
+    and NewObjectTableMapperVersion =
+        { Reference: string
+          TableModelReference: string
+          MapperData: string }
 
     type ObjectTableMapperDetails =
         { Reference: string

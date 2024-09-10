@@ -1,11 +1,9 @@
 ﻿namespace FPype.Scripting
 
 open System
-open System.IO.Pipes
 open System.Text
 open System.Text.Json
 open System.Text.Json.Serialization
-open System.Threading.Channels
 open FPype.Core.Types
 open FPype.Data
 open FPype.Data.Models

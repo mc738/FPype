@@ -7,14 +7,10 @@ module ObjectTableMappers =
     open System.IO
     open Freql.Core.Common.Types
     open Microsoft.FSharp.Core
-    open System.Text.Json
     open Freql.Sqlite
-    open FsToolbox.Core
     open FsToolbox.Extensions
-    open FPype.Core
     open FPype.Configuration.Persistence
-    open FPype.Data.Models
-    
+
     type NewObjectTableMapperVersion =
         { Id: IdType
           Name: string
@@ -48,7 +44,7 @@ module ObjectTableMappers =
             tryCreateObjectMapper ctx json)
         |> Option.defaultValue (Error $"Could not find object mapper `{mapperName}`")
     *)
-    
+
     let latestVersion (ctx: SqliteContext) (name: string) =
         ctx.Bespoke(
             "SELECT version FROM table_object_mapper_versions WHERE table_object_mapper = @0 ORDER BY version DESC LIMIT 1;",
@@ -87,16 +83,24 @@ module ObjectTableMappers =
         ({ Id = id.Get()
            ObjectTableMapper = name
            Version = version
-           TableModelVersionId = tableVersionId 
+           TableModelVersionId = tableVersionId
            Mapper = BlobField.FromBytes ms
            Hash = hash
-           CreatedOn = timestamp () }: Parameters.NewObjectTableMapperVersion)
+           CreatedOn = timestamp () }
+        : Parameters.NewObjectTableMapperVersion)
         |> Operations.insertObjectTableMapperVersion ctx
 
     let addRawLatestVersionTransaction (ctx: SqliteContext) (id: IdType) (name: string) (mapper: string) =
         ctx.ExecuteInTransaction(fun t -> addRawLatestVersion t id name mapper)
 
-    let addRawSpecificVersion (ctx: SqliteContext) (id: IdType) (name: string) (tableVersionId: string) (mapper: string) (version: int) =
+    let addRawSpecificVersion
+        (ctx: SqliteContext)
+        (id: IdType)
+        (name: string)
+        (tableVersionId: string)
+        (mapper: string)
+        (version: int)
+        =
         match getVersionId ctx name version with
         | Some _ -> Error $"Version `{version}` of table object mapper `{name}` already exists."
         | None ->
@@ -113,10 +117,11 @@ module ObjectTableMappers =
             ({ Id = id.Get()
                ObjectTableMapper = name
                Version = version
-               TableModelVersionId =  tableVersionId
+               TableModelVersionId = tableVersionId
                Mapper = BlobField.FromBytes ms
                Hash = hash
-               CreatedOn = timestamp () }: Parameters.NewObjectTableMapperVersion)
+               CreatedOn = timestamp () }
+            : Parameters.NewObjectTableMapperVersion)
             |> Operations.insertObjectTableMapperVersion ctx
             |> Ok
 
@@ -132,15 +137,18 @@ module ObjectTableMappers =
 
     let addRawVersion (ctx: SqliteContext) (mapper: NewObjectTableMapperVersion) =
         match mapper.Version with
-        | ItemVersion.Latest -> addRawLatestVersion ctx mapper.Id mapper.Name mapper.TableVersionId mapper.Mapper |> Ok
-        | ItemVersion.Specific v -> addRawSpecificVersion ctx mapper.Id mapper.Name mapper.TableVersionId mapper.Mapper v
+        | ItemVersion.Latest ->
+            addRawLatestVersion ctx mapper.Id mapper.Name mapper.TableVersionId mapper.Mapper
+            |> Ok
+        | ItemVersion.Specific v ->
+            addRawSpecificVersion ctx mapper.Id mapper.Name mapper.TableVersionId mapper.Mapper v
 
     let addRawVersionTransaction (ctx: SqliteContext) (mapper: NewObjectTableMapperVersion) =
         ctx.ExecuteInTransactionV2(fun t -> addRawVersion t mapper)
 
     let add (ctx: SqliteContext) (mapperName: string) =
         ({ Name = mapperName }: Parameters.NewObjectTableMapper)
-        |> Operations.insertObjectTableMapper ctx 
-       
+        |> Operations.insertObjectTableMapper ctx
+
     let addTransaction (ctx: SqliteContext) (mapperName: string) =
         ctx.ExecuteInTransaction(fun t -> add t mapperName)

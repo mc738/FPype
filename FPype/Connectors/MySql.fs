@@ -11,7 +11,7 @@ module MySql =
         use ctx = MySqlContext.Connect(connectionString)
 
         table.MySqlSelect(ctx)
-    
+
     let selectConditional (connectionString: string) (table: TableModel) (conditions: string) (parameters: obj list) =
         use ctx = MySqlContext.Connect(connectionString)
 

@@ -2,7 +2,6 @@ namespace FPype.Infrastructure.Core.Persistence
 
 open System
 open System.Text.Json.Serialization
-open Freql.Core.Common
 open Freql.MySql
 
 /// Module generated on 01/09/2023 19:45:01 (utc) via Freql.Tools.
@@ -10,14 +9,15 @@ open Freql.MySql
 module Records =
     /// A record representing a row in the table `cfg_action_types`.
     type ActionType =
-        { [<JsonPropertyName("id")>] Id: int
-          [<JsonPropertyName("name")>] Name: string }
-    
-        static member Blank() =
-            { Id = 0
-              Name = String.Empty }
-    
-        static member CreateTableSql() = """
+        { [<JsonPropertyName("id")>]
+          Id: int
+          [<JsonPropertyName("name")>]
+          Name: string }
+
+        static member Blank() = { Id = 0; Name = String.Empty }
+
+        static member CreateTableSql() =
+            """
         CREATE TABLE `cfg_action_types` (
   `id` int NOT NULL AUTO_INCREMENT,
   `name` varchar(100) NOT NULL,
@@ -25,26 +25,34 @@ module Records =
   UNIQUE KEY `cfg_action_types_UN` (`name`)
 ) ENGINE=InnoDB AUTO_INCREMENT=7002 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci
         """
-    
-        static member SelectSql() = """
+
+        static member SelectSql() =
+            """
         SELECT
               cfg_action_types.`id`,
               cfg_action_types.`name`
         FROM cfg_action_types
         """
-    
+
         static member TableName() = "cfg_action_types"
-    
+
     /// A record representing a row in the table `cfg_events`.
     type ConfigurationEvent =
-        { [<JsonPropertyName("id")>] Id: int
-          [<JsonPropertyName("subscriptionId")>] SubscriptionId: int
-          [<JsonPropertyName("eventType")>] EventType: string
-          [<JsonPropertyName("eventTimestamp")>] EventTimestamp: DateTime
-          [<JsonPropertyName("eventData")>] EventData: string
-          [<JsonPropertyName("userId")>] UserId: int
-          [<JsonPropertyName("batchReference")>] BatchReference: string }
-    
+        { [<JsonPropertyName("id")>]
+          Id: int
+          [<JsonPropertyName("subscriptionId")>]
+          SubscriptionId: int
+          [<JsonPropertyName("eventType")>]
+          EventType: string
+          [<JsonPropertyName("eventTimestamp")>]
+          EventTimestamp: DateTime
+          [<JsonPropertyName("eventData")>]
+          EventData: string
+          [<JsonPropertyName("userId")>]
+          UserId: int
+          [<JsonPropertyName("batchReference")>]
+          BatchReference: string }
+
         static member Blank() =
             { Id = 0
               SubscriptionId = 0
@@ -53,8 +61,9 @@ module Records =
               EventData = String.Empty
               UserId = 0
               BatchReference = String.Empty }
-    
-        static member CreateTableSql() = """
+
+        static member CreateTableSql() =
+            """
         CREATE TABLE `cfg_events` (
   `id` int NOT NULL AUTO_INCREMENT,
   `subscription_id` int NOT NULL,
@@ -70,8 +79,9 @@ module Records =
   CONSTRAINT `cfg_events_FK_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=120 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci
         """
-    
-        static member SelectSql() = """
+
+        static member SelectSql() =
+            """
         SELECT
               cfg_events.`id`,
               cfg_events.`subscription_id`,
@@ -82,20 +92,28 @@ module Records =
               cfg_events.`batch_reference`
         FROM cfg_events
         """
-    
+
         static member TableName() = "cfg_events"
-    
+
     /// A record representing a row in the table `cfg_object_table_mapper_versions`.
     type ObjectTableMapperVersion =
-        { [<JsonPropertyName("id")>] Id: int
-          [<JsonPropertyName("reference")>] Reference: string
-          [<JsonPropertyName("objectTableMapperId")>] ObjectTableMapperId: int
-          [<JsonPropertyName("version")>] Version: int
-          [<JsonPropertyName("tableModelVersionId")>] TableModelVersionId: int
-          [<JsonPropertyName("mapperJson")>] MapperJson: string
-          [<JsonPropertyName("hash")>] Hash: string
-          [<JsonPropertyName("createdOn")>] CreatedOn: DateTime }
-    
+        { [<JsonPropertyName("id")>]
+          Id: int
+          [<JsonPropertyName("reference")>]
+          Reference: string
+          [<JsonPropertyName("objectTableMapperId")>]
+          ObjectTableMapperId: int
+          [<JsonPropertyName("version")>]
+          Version: int
+          [<JsonPropertyName("tableModelVersionId")>]
+          TableModelVersionId: int
+          [<JsonPropertyName("mapperJson")>]
+          MapperJson: string
+          [<JsonPropertyName("hash")>]
+          Hash: string
+          [<JsonPropertyName("createdOn")>]
+          CreatedOn: DateTime }
+
         static member Blank() =
             { Id = 0
               Reference = String.Empty
@@ -105,8 +123,9 @@ module Records =
               MapperJson = String.Empty
               Hash = String.Empty
               CreatedOn = DateTime.UtcNow }
-    
-        static member CreateTableSql() = """
+
+        static member CreateTableSql() =
+            """
         CREATE TABLE `cfg_object_table_mapper_versions` (
   `id` int NOT NULL AUTO_INCREMENT,
   `reference` varchar(36) NOT NULL,
@@ -124,8 +143,9 @@ module Records =
   CONSTRAINT `cfg_object_table_mapper_versions_FK_1` FOREIGN KEY (`table_model_version_id`) REFERENCES `cfg_table_model_versions` (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci
         """
-    
-        static member SelectSql() = """
+
+        static member SelectSql() =
+            """
         SELECT
               cfg_object_table_mapper_versions.`id`,
               cfg_object_table_mapper_versions.`reference`,
@@ -137,23 +157,28 @@ module Records =
               cfg_object_table_mapper_versions.`created_on`
         FROM cfg_object_table_mapper_versions
         """
-    
+
         static member TableName() = "cfg_object_table_mapper_versions"
-    
+
     /// A record representing a row in the table `cfg_object_table_mappers`.
     type ObjectTableMapper =
-        { [<JsonPropertyName("id")>] Id: int
-          [<JsonPropertyName("reference")>] Reference: string
-          [<JsonPropertyName("subscriptionId")>] SubscriptionId: int
-          [<JsonPropertyName("name")>] Name: string }
-    
+        { [<JsonPropertyName("id")>]
+          Id: int
+          [<JsonPropertyName("reference")>]
+          Reference: string
+          [<JsonPropertyName("subscriptionId")>]
+          SubscriptionId: int
+          [<JsonPropertyName("name")>]
+          Name: string }
+
         static member Blank() =
             { Id = 0
               Reference = String.Empty
               SubscriptionId = 0
               Name = String.Empty }
-    
-        static member CreateTableSql() = """
+
+        static member CreateTableSql() =
+            """
         CREATE TABLE `cfg_object_table_mappers` (
   `id` int NOT NULL AUTO_INCREMENT,
   `reference` varchar(36) NOT NULL,
@@ -165,8 +190,9 @@ module Records =
   CONSTRAINT `cfg_object_table_mappers_FK` FOREIGN KEY (`subscription_id`) REFERENCES `subscriptions` (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci
         """
-    
-        static member SelectSql() = """
+
+        static member SelectSql() =
+            """
         SELECT
               cfg_object_table_mappers.`id`,
               cfg_object_table_mappers.`reference`,
@@ -174,20 +200,28 @@ module Records =
               cfg_object_table_mappers.`name`
         FROM cfg_object_table_mappers
         """
-    
+
         static member TableName() = "cfg_object_table_mappers"
-    
+
     /// A record representing a row in the table `cfg_pipeline_actions`.
     type PipelineAction =
-        { [<JsonPropertyName("id")>] Id: int
-          [<JsonPropertyName("reference")>] Reference: string
-          [<JsonPropertyName("pipelineVersionId")>] PipelineVersionId: int
-          [<JsonPropertyName("name")>] Name: string
-          [<JsonPropertyName("actionTypeId")>] ActionTypeId: int
-          [<JsonPropertyName("actionJson")>] ActionJson: string
-          [<JsonPropertyName("hash")>] Hash: string
-          [<JsonPropertyName("step")>] Step: int }
-    
+        { [<JsonPropertyName("id")>]
+          Id: int
+          [<JsonPropertyName("reference")>]
+          Reference: string
+          [<JsonPropertyName("pipelineVersionId")>]
+          PipelineVersionId: int
+          [<JsonPropertyName("name")>]
+          Name: string
+          [<JsonPropertyName("actionTypeId")>]
+          ActionTypeId: int
+          [<JsonPropertyName("actionJson")>]
+          ActionJson: string
+          [<JsonPropertyName("hash")>]
+          Hash: string
+          [<JsonPropertyName("step")>]
+          Step: int }
+
         static member Blank() =
             { Id = 0
               Reference = String.Empty
@@ -197,8 +231,9 @@ module Records =
               ActionJson = String.Empty
               Hash = String.Empty
               Step = 0 }
-    
-        static member CreateTableSql() = """
+
+        static member CreateTableSql() =
+            """
         CREATE TABLE `cfg_pipeline_actions` (
   `id` int NOT NULL AUTO_INCREMENT,
   `reference` varchar(36) NOT NULL,
@@ -217,8 +252,9 @@ module Records =
   CONSTRAINT `cfg_pipeline_actions_FK_1` FOREIGN KEY (`action_type_id`) REFERENCES `cfg_action_types` (`id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=20 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci
         """
-    
-        static member SelectSql() = """
+
+        static member SelectSql() =
+            """
         SELECT
               cfg_pipeline_actions.`id`,
               cfg_pipeline_actions.`reference`,
@@ -230,18 +266,24 @@ module Records =
               cfg_pipeline_actions.`step`
         FROM cfg_pipeline_actions
         """
-    
+
         static member TableName() = "cfg_pipeline_actions"
-    
+
     /// A record representing a row in the table `cfg_pipeline_args`.
     type PipelineArg =
-        { [<JsonPropertyName("id")>] Id: int
-          [<JsonPropertyName("reference")>] Reference: string
-          [<JsonPropertyName("pipelineVersionId")>] PipelineVersionId: int
-          [<JsonPropertyName("name")>] Name: string
-          [<JsonPropertyName("required")>] Required: bool
-          [<JsonPropertyName("defaultValue")>] DefaultValue: string option }
-    
+        { [<JsonPropertyName("id")>]
+          Id: int
+          [<JsonPropertyName("reference")>]
+          Reference: string
+          [<JsonPropertyName("pipelineVersionId")>]
+          PipelineVersionId: int
+          [<JsonPropertyName("name")>]
+          Name: string
+          [<JsonPropertyName("required")>]
+          Required: bool
+          [<JsonPropertyName("defaultValue")>]
+          DefaultValue: string option }
+
         static member Blank() =
             { Id = 0
               Reference = String.Empty
@@ -249,8 +291,9 @@ module Records =
               Name = String.Empty
               Required = false
               DefaultValue = None }
-    
-        static member CreateTableSql() = """
+
+        static member CreateTableSql() =
+            """
         CREATE TABLE `cfg_pipeline_args` (
   `id` int NOT NULL AUTO_INCREMENT,
   `reference` varchar(36) NOT NULL,
@@ -264,8 +307,9 @@ module Records =
   CONSTRAINT `cfg_pipeline_args_FK` FOREIGN KEY (`pipeline_version_id`) REFERENCES `cfg_pipeline_versions` (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci
         """
-    
-        static member SelectSql() = """
+
+        static member SelectSql() =
+            """
         SELECT
               cfg_pipeline_args.`id`,
               cfg_pipeline_args.`reference`,
@@ -275,23 +319,28 @@ module Records =
               cfg_pipeline_args.`default_value`
         FROM cfg_pipeline_args
         """
-    
+
         static member TableName() = "cfg_pipeline_args"
-    
+
     /// A record representing a row in the table `cfg_pipeline_resources`.
     type PipelineResource =
-        { [<JsonPropertyName("id")>] Id: int
-          [<JsonPropertyName("reference")>] Reference: string
-          [<JsonPropertyName("pipelineVersionId")>] PipelineVersionId: int
-          [<JsonPropertyName("resourceVersionId")>] ResourceVersionId: int }
-    
+        { [<JsonPropertyName("id")>]
+          Id: int
+          [<JsonPropertyName("reference")>]
+          Reference: string
+          [<JsonPropertyName("pipelineVersionId")>]
+          PipelineVersionId: int
+          [<JsonPropertyName("resourceVersionId")>]
+          ResourceVersionId: int }
+
         static member Blank() =
             { Id = 0
               Reference = String.Empty
               PipelineVersionId = 0
               ResourceVersionId = 0 }
-    
-        static member CreateTableSql() = """
+
+        static member CreateTableSql() =
+            """
         CREATE TABLE `cfg_pipeline_resources` (
   `id` int NOT NULL AUTO_INCREMENT,
   `reference` varchar(36) NOT NULL,
@@ -305,8 +354,9 @@ module Records =
   CONSTRAINT `cfg_pipeline_resources_FK_1` FOREIGN KEY (`resource_version_id`) REFERENCES `cfg_resource_versions` (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci
         """
-    
-        static member SelectSql() = """
+
+        static member SelectSql() =
+            """
         SELECT
               cfg_pipeline_resources.`id`,
               cfg_pipeline_resources.`reference`,
@@ -314,18 +364,24 @@ module Records =
               cfg_pipeline_resources.`resource_version_id`
         FROM cfg_pipeline_resources
         """
-    
+
         static member TableName() = "cfg_pipeline_resources"
-    
+
     /// A record representing a row in the table `cfg_pipeline_versions`.
     type PipelineVersion =
-        { [<JsonPropertyName("id")>] Id: int
-          [<JsonPropertyName("reference")>] Reference: string
-          [<JsonPropertyName("pipelineId")>] PipelineId: int
-          [<JsonPropertyName("version")>] Version: int
-          [<JsonPropertyName("description")>] Description: string
-          [<JsonPropertyName("createdOn")>] CreatedOn: DateTime }
-    
+        { [<JsonPropertyName("id")>]
+          Id: int
+          [<JsonPropertyName("reference")>]
+          Reference: string
+          [<JsonPropertyName("pipelineId")>]
+          PipelineId: int
+          [<JsonPropertyName("version")>]
+          Version: int
+          [<JsonPropertyName("description")>]
+          Description: string
+          [<JsonPropertyName("createdOn")>]
+          CreatedOn: DateTime }
+
         static member Blank() =
             { Id = 0
               Reference = String.Empty
@@ -333,8 +389,9 @@ module Records =
               Version = 0
               Description = String.Empty
               CreatedOn = DateTime.UtcNow }
-    
-        static member CreateTableSql() = """
+
+        static member CreateTableSql() =
+            """
         CREATE TABLE `cfg_pipeline_versions` (
   `id` int NOT NULL AUTO_INCREMENT,
   `reference` varchar(36) NOT NULL,
@@ -348,8 +405,9 @@ module Records =
   CONSTRAINT `cfg_pipeline_versions_FK` FOREIGN KEY (`pipeline_id`) REFERENCES `cfg_pipelines` (`id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=11 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci
         """
-    
-        static member SelectSql() = """
+
+        static member SelectSql() =
+            """
         SELECT
               cfg_pipeline_versions.`id`,
               cfg_pipeline_versions.`reference`,
@@ -359,23 +417,28 @@ module Records =
               cfg_pipeline_versions.`created_on`
         FROM cfg_pipeline_versions
         """
-    
+
         static member TableName() = "cfg_pipeline_versions"
-    
+
     /// A record representing a row in the table `cfg_pipelines`.
     type Pipeline =
-        { [<JsonPropertyName("id")>] Id: int
-          [<JsonPropertyName("reference")>] Reference: string
-          [<JsonPropertyName("subscriptionId")>] SubscriptionId: int
-          [<JsonPropertyName("name")>] Name: string }
-    
+        { [<JsonPropertyName("id")>]
+          Id: int
+          [<JsonPropertyName("reference")>]
+          Reference: string
+          [<JsonPropertyName("subscriptionId")>]
+          SubscriptionId: int
+          [<JsonPropertyName("name")>]
+          Name: string }
+
         static member Blank() =
             { Id = 0
               Reference = String.Empty
               SubscriptionId = 0
               Name = String.Empty }
-    
-        static member CreateTableSql() = """
+
+        static member CreateTableSql() =
+            """
         CREATE TABLE `cfg_pipelines` (
   `id` int NOT NULL AUTO_INCREMENT,
   `reference` varchar(36) NOT NULL,
@@ -387,8 +450,9 @@ module Records =
   CONSTRAINT `cfg_pipelines_FK` FOREIGN KEY (`subscription_id`) REFERENCES `subscriptions` (`id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=8 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci
         """
-    
-        static member SelectSql() = """
+
+        static member SelectSql() =
+            """
         SELECT
               cfg_pipelines.`id`,
               cfg_pipelines.`reference`,
@@ -396,23 +460,28 @@ module Records =
               cfg_pipelines.`name`
         FROM cfg_pipelines
         """
-    
+
         static member TableName() = "cfg_pipelines"
-    
+
     /// A record representing a row in the table `cfg_queries`.
     type Query =
-        { [<JsonPropertyName("id")>] Id: int
-          [<JsonPropertyName("reference")>] Reference: string
-          [<JsonPropertyName("subscriptionId")>] SubscriptionId: int
-          [<JsonPropertyName("name")>] Name: string }
-    
+        { [<JsonPropertyName("id")>]
+          Id: int
+          [<JsonPropertyName("reference")>]
+          Reference: string
+          [<JsonPropertyName("subscriptionId")>]
+          SubscriptionId: int
+          [<JsonPropertyName("name")>]
+          Name: string }
+
         static member Blank() =
             { Id = 0
               Reference = String.Empty
               SubscriptionId = 0
               Name = String.Empty }
-    
-        static member CreateTableSql() = """
+
+        static member CreateTableSql() =
+            """
         CREATE TABLE `cfg_queries` (
   `id` int NOT NULL AUTO_INCREMENT,
   `reference` varchar(36) NOT NULL,
@@ -424,8 +493,9 @@ module Records =
   CONSTRAINT `cfg_queries_FK` FOREIGN KEY (`subscription_id`) REFERENCES `subscriptions` (`id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci
         """
-    
-        static member SelectSql() = """
+
+        static member SelectSql() =
+            """
         SELECT
               cfg_queries.`id`,
               cfg_queries.`reference`,
@@ -433,20 +503,28 @@ module Records =
               cfg_queries.`name`
         FROM cfg_queries
         """
-    
+
         static member TableName() = "cfg_queries"
-    
+
     /// A record representing a row in the table `cfg_query_versions`.
     type QueryVersion =
-        { [<JsonPropertyName("id")>] Id: int
-          [<JsonPropertyName("reference")>] Reference: string
-          [<JsonPropertyName("queryId")>] QueryId: int
-          [<JsonPropertyName("version")>] Version: int
-          [<JsonPropertyName("rawQuery")>] RawQuery: string
-          [<JsonPropertyName("hash")>] Hash: string
-          [<JsonPropertyName("isSerialized")>] IsSerialized: bool
-          [<JsonPropertyName("createdOn")>] CreatedOn: DateTime }
-    
+        { [<JsonPropertyName("id")>]
+          Id: int
+          [<JsonPropertyName("reference")>]
+          Reference: string
+          [<JsonPropertyName("queryId")>]
+          QueryId: int
+          [<JsonPropertyName("version")>]
+          Version: int
+          [<JsonPropertyName("rawQuery")>]
+          RawQuery: string
+          [<JsonPropertyName("hash")>]
+          Hash: string
+          [<JsonPropertyName("isSerialized")>]
+          IsSerialized: bool
+          [<JsonPropertyName("createdOn")>]
+          CreatedOn: DateTime }
+
         static member Blank() =
             { Id = 0
               Reference = String.Empty
@@ -456,8 +534,9 @@ module Records =
               Hash = String.Empty
               IsSerialized = false
               CreatedOn = DateTime.UtcNow }
-    
-        static member CreateTableSql() = """
+
+        static member CreateTableSql() =
+            """
         CREATE TABLE `cfg_query_versions` (
   `id` int NOT NULL AUTO_INCREMENT,
   `reference` varchar(36) NOT NULL,
@@ -473,8 +552,9 @@ module Records =
   CONSTRAINT `cfg_query_versions_FK` FOREIGN KEY (`query_id`) REFERENCES `cfg_queries` (`id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci
         """
-    
-        static member SelectSql() = """
+
+        static member SelectSql() =
+            """
         SELECT
               cfg_query_versions.`id`,
               cfg_query_versions.`reference`,
@@ -486,20 +566,28 @@ module Records =
               cfg_query_versions.`created_on`
         FROM cfg_query_versions
         """
-    
+
         static member TableName() = "cfg_query_versions"
-    
+
     /// A record representing a row in the table `cfg_resource_versions`.
     type ResourceVersion =
-        { [<JsonPropertyName("id")>] Id: int
-          [<JsonPropertyName("reference")>] Reference: string
-          [<JsonPropertyName("resourceId")>] ResourceId: int
-          [<JsonPropertyName("version")>] Version: int
-          [<JsonPropertyName("resourceType")>] ResourceType: string
-          [<JsonPropertyName("resourcePath")>] ResourcePath: string
-          [<JsonPropertyName("hash")>] Hash: string
-          [<JsonPropertyName("createdOn")>] CreatedOn: DateTime }
-    
+        { [<JsonPropertyName("id")>]
+          Id: int
+          [<JsonPropertyName("reference")>]
+          Reference: string
+          [<JsonPropertyName("resourceId")>]
+          ResourceId: int
+          [<JsonPropertyName("version")>]
+          Version: int
+          [<JsonPropertyName("resourceType")>]
+          ResourceType: string
+          [<JsonPropertyName("resourcePath")>]
+          ResourcePath: string
+          [<JsonPropertyName("hash")>]
+          Hash: string
+          [<JsonPropertyName("createdOn")>]
+          CreatedOn: DateTime }
+
         static member Blank() =
             { Id = 0
               Reference = String.Empty
@@ -509,8 +597,9 @@ module Records =
               ResourcePath = String.Empty
               Hash = String.Empty
               CreatedOn = DateTime.UtcNow }
-    
-        static member CreateTableSql() = """
+
+        static member CreateTableSql() =
+            """
         CREATE TABLE `cfg_resource_versions` (
   `id` int NOT NULL AUTO_INCREMENT,
   `reference` varchar(36) NOT NULL,
@@ -526,8 +615,9 @@ module Records =
   CONSTRAINT `cfg_resource_versions_FK` FOREIGN KEY (`resource_id`) REFERENCES `cfg_resources` (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci
         """
-    
-        static member SelectSql() = """
+
+        static member SelectSql() =
+            """
         SELECT
               cfg_resource_versions.`id`,
               cfg_resource_versions.`reference`,
@@ -539,23 +629,28 @@ module Records =
               cfg_resource_versions.`created_on`
         FROM cfg_resource_versions
         """
-    
+
         static member TableName() = "cfg_resource_versions"
-    
+
     /// A record representing a row in the table `cfg_resources`.
     type Resource =
-        { [<JsonPropertyName("id")>] Id: int
-          [<JsonPropertyName("reference")>] Reference: string
-          [<JsonPropertyName("subscriptionId")>] SubscriptionId: int
-          [<JsonPropertyName("name")>] Name: string }
-    
+        { [<JsonPropertyName("id")>]
+          Id: int
+          [<JsonPropertyName("reference")>]
+          Reference: string
+          [<JsonPropertyName("subscriptionId")>]
+          SubscriptionId: int
+          [<JsonPropertyName("name")>]
+          Name: string }
+
         static member Blank() =
             { Id = 0
               Reference = String.Empty
               SubscriptionId = 0
               Name = String.Empty }
-    
-        static member CreateTableSql() = """
+
+        static member CreateTableSql() =
+            """
         CREATE TABLE `cfg_resources` (
   `id` int NOT NULL AUTO_INCREMENT,
   `reference` varchar(36) NOT NULL,
@@ -567,8 +662,9 @@ module Records =
   CONSTRAINT `cfg_resources_FK` FOREIGN KEY (`subscription_id`) REFERENCES `subscriptions` (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci
         """
-    
-        static member SelectSql() = """
+
+        static member SelectSql() =
+            """
         SELECT
               cfg_resources.`id`,
               cfg_resources.`reference`,
@@ -576,20 +672,28 @@ module Records =
               cfg_resources.`name`
         FROM cfg_resources
         """
-    
+
         static member TableName() = "cfg_resources"
-    
+
     /// A record representing a row in the table `cfg_table_columns`.
     type TableColumn =
-        { [<JsonPropertyName("id")>] Id: int
-          [<JsonPropertyName("reference")>] Reference: string
-          [<JsonPropertyName("tableVersionId")>] TableVersionId: int
-          [<JsonPropertyName("name")>] Name: string
-          [<JsonPropertyName("dataType")>] DataType: string
-          [<JsonPropertyName("optional")>] Optional: bool
-          [<JsonPropertyName("importHandlerJson")>] ImportHandlerJson: string option
-          [<JsonPropertyName("columnIndex")>] ColumnIndex: int }
-    
+        { [<JsonPropertyName("id")>]
+          Id: int
+          [<JsonPropertyName("reference")>]
+          Reference: string
+          [<JsonPropertyName("tableVersionId")>]
+          TableVersionId: int
+          [<JsonPropertyName("name")>]
+          Name: string
+          [<JsonPropertyName("dataType")>]
+          DataType: string
+          [<JsonPropertyName("optional")>]
+          Optional: bool
+          [<JsonPropertyName("importHandlerJson")>]
+          ImportHandlerJson: string option
+          [<JsonPropertyName("columnIndex")>]
+          ColumnIndex: int }
+
         static member Blank() =
             { Id = 0
               Reference = String.Empty
@@ -599,8 +703,9 @@ module Records =
               Optional = false
               ImportHandlerJson = None
               ColumnIndex = 0 }
-    
-        static member CreateTableSql() = """
+
+        static member CreateTableSql() =
+            """
         CREATE TABLE `cfg_table_columns` (
   `id` int NOT NULL AUTO_INCREMENT,
   `reference` varchar(36) NOT NULL,
@@ -617,8 +722,9 @@ module Records =
   CONSTRAINT `cfg_table_columns_FK` FOREIGN KEY (`table_version_id`) REFERENCES `cfg_table_model_versions` (`id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=84 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci
         """
-    
-        static member SelectSql() = """
+
+        static member SelectSql() =
+            """
         SELECT
               cfg_table_columns.`id`,
               cfg_table_columns.`reference`,
@@ -630,25 +736,31 @@ module Records =
               cfg_table_columns.`column_index`
         FROM cfg_table_columns
         """
-    
+
         static member TableName() = "cfg_table_columns"
-    
+
     /// A record representing a row in the table `cfg_table_model_versions`.
     type TableModelVersion =
-        { [<JsonPropertyName("id")>] Id: int
-          [<JsonPropertyName("reference")>] Reference: string
-          [<JsonPropertyName("tableModelId")>] TableModelId: int
-          [<JsonPropertyName("version")>] Version: int
-          [<JsonPropertyName("createdOn")>] CreatedOn: DateTime }
-    
+        { [<JsonPropertyName("id")>]
+          Id: int
+          [<JsonPropertyName("reference")>]
+          Reference: string
+          [<JsonPropertyName("tableModelId")>]
+          TableModelId: int
+          [<JsonPropertyName("version")>]
+          Version: int
+          [<JsonPropertyName("createdOn")>]
+          CreatedOn: DateTime }
+
         static member Blank() =
             { Id = 0
               Reference = String.Empty
               TableModelId = 0
               Version = 0
               CreatedOn = DateTime.UtcNow }
-    
-        static member CreateTableSql() = """
+
+        static member CreateTableSql() =
+            """
         CREATE TABLE `cfg_table_model_versions` (
   `id` int NOT NULL AUTO_INCREMENT,
   `reference` varchar(36) NOT NULL,
@@ -661,8 +773,9 @@ module Records =
   CONSTRAINT `cfg_table_model_versions_FK` FOREIGN KEY (`table_model_id`) REFERENCES `cfg_table_models` (`id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=20 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci
         """
-    
-        static member SelectSql() = """
+
+        static member SelectSql() =
+            """
         SELECT
               cfg_table_model_versions.`id`,
               cfg_table_model_versions.`reference`,
@@ -671,23 +784,28 @@ module Records =
               cfg_table_model_versions.`created_on`
         FROM cfg_table_model_versions
         """
-    
+
         static member TableName() = "cfg_table_model_versions"
-    
+
     /// A record representing a row in the table `cfg_table_models`.
     type TableModel =
-        { [<JsonPropertyName("id")>] Id: int
-          [<JsonPropertyName("reference")>] Reference: string
-          [<JsonPropertyName("subscriptionId")>] SubscriptionId: int
-          [<JsonPropertyName("name")>] Name: string }
-    
+        { [<JsonPropertyName("id")>]
+          Id: int
+          [<JsonPropertyName("reference")>]
+          Reference: string
+          [<JsonPropertyName("subscriptionId")>]
+          SubscriptionId: int
+          [<JsonPropertyName("name")>]
+          Name: string }
+
         static member Blank() =
             { Id = 0
               Reference = String.Empty
               SubscriptionId = 0
               Name = String.Empty }
-    
-        static member CreateTableSql() = """
+
+        static member CreateTableSql() =
+            """
         CREATE TABLE `cfg_table_models` (
   `id` int NOT NULL AUTO_INCREMENT,
   `reference` varchar(36) NOT NULL,
@@ -699,8 +817,9 @@ module Records =
   CONSTRAINT `cfg_table_models_FK` FOREIGN KEY (`subscription_id`) REFERENCES `subscriptions` (`id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=15 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci
         """
-    
-        static member SelectSql() = """
+
+        static member SelectSql() =
+            """
         SELECT
               cfg_table_models.`id`,
               cfg_table_models.`reference`,
@@ -708,19 +827,26 @@ module Records =
               cfg_table_models.`name`
         FROM cfg_table_models
         """
-    
+
         static member TableName() = "cfg_table_models"
-    
+
     /// A record representing a row in the table `cfg_table_object_mapper_versions`.
     type TableObjectMapperVersion =
-        { [<JsonPropertyName("id")>] Id: int
-          [<JsonPropertyName("reference")>] Reference: string
-          [<JsonPropertyName("tableObjectMapperId")>] TableObjectMapperId: int
-          [<JsonPropertyName("version")>] Version: int
-          [<JsonPropertyName("mapperJson")>] MapperJson: string
-          [<JsonPropertyName("hash")>] Hash: string
-          [<JsonPropertyName("createdOn")>] CreatedOn: DateTime }
-    
+        { [<JsonPropertyName("id")>]
+          Id: int
+          [<JsonPropertyName("reference")>]
+          Reference: string
+          [<JsonPropertyName("tableObjectMapperId")>]
+          TableObjectMapperId: int
+          [<JsonPropertyName("version")>]
+          Version: int
+          [<JsonPropertyName("mapperJson")>]
+          MapperJson: string
+          [<JsonPropertyName("hash")>]
+          Hash: string
+          [<JsonPropertyName("createdOn")>]
+          CreatedOn: DateTime }
+
         static member Blank() =
             { Id = 0
               Reference = String.Empty
@@ -729,8 +855,9 @@ module Records =
               MapperJson = String.Empty
               Hash = String.Empty
               CreatedOn = DateTime.UtcNow }
-    
-        static member CreateTableSql() = """
+
+        static member CreateTableSql() =
+            """
         CREATE TABLE `cfg_table_object_mapper_versions` (
   `id` int NOT NULL AUTO_INCREMENT,
   `reference` varchar(36) NOT NULL,
@@ -745,8 +872,9 @@ module Records =
   CONSTRAINT `cfg_table_object_mapper_versions_FK` FOREIGN KEY (`table_object_mapper_id`) REFERENCES `cfg_table_object_mappers` (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci
         """
-    
-        static member SelectSql() = """
+
+        static member SelectSql() =
+            """
         SELECT
               cfg_table_object_mapper_versions.`id`,
               cfg_table_object_mapper_versions.`reference`,
@@ -757,23 +885,28 @@ module Records =
               cfg_table_object_mapper_versions.`created_on`
         FROM cfg_table_object_mapper_versions
         """
-    
+
         static member TableName() = "cfg_table_object_mapper_versions"
-    
+
     /// A record representing a row in the table `cfg_table_object_mappers`.
     type TableObjectMapper =
-        { [<JsonPropertyName("id")>] Id: int
-          [<JsonPropertyName("reference")>] Reference: string
-          [<JsonPropertyName("subscriptionId")>] SubscriptionId: int
-          [<JsonPropertyName("name")>] Name: string }
-    
+        { [<JsonPropertyName("id")>]
+          Id: int
+          [<JsonPropertyName("reference")>]
+          Reference: string
+          [<JsonPropertyName("subscriptionId")>]
+          SubscriptionId: int
+          [<JsonPropertyName("name")>]
+          Name: string }
+
         static member Blank() =
             { Id = 0
               Reference = String.Empty
               SubscriptionId = 0
               Name = String.Empty }
-    
-        static member CreateTableSql() = """
+
+        static member CreateTableSql() =
+            """
         CREATE TABLE `cfg_table_object_mappers` (
   `id` int NOT NULL AUTO_INCREMENT,
   `reference` varchar(36) NOT NULL,
@@ -785,8 +918,9 @@ module Records =
   CONSTRAINT `cfg_table_object_mappers_FK` FOREIGN KEY (`subscription_id`) REFERENCES `subscriptions` (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci
         """
-    
-        static member SelectSql() = """
+
+        static member SelectSql() =
+            """
         SELECT
               cfg_table_object_mappers.`id`,
               cfg_table_object_mappers.`reference`,
@@ -794,22 +928,32 @@ module Records =
               cfg_table_object_mappers.`name`
         FROM cfg_table_object_mappers
         """
-    
+
         static member TableName() = "cfg_table_object_mappers"
-    
+
     /// A record representing a row in the table `pipeline_runs`.
     type PipelineRunItem =
-        { [<JsonPropertyName("id")>] Id: int
-          [<JsonPropertyName("reference")>] Reference: string
-          [<JsonPropertyName("subscriptionId")>] SubscriptionId: int
-          [<JsonPropertyName("pipelineVersionId")>] PipelineVersionId: int
-          [<JsonPropertyName("queuedOn")>] QueuedOn: DateTime
-          [<JsonPropertyName("startedOn")>] StartedOn: DateTime option
-          [<JsonPropertyName("completedOn")>] CompletedOn: DateTime option
-          [<JsonPropertyName("wasSuccessful")>] WasSuccessful: bool option
-          [<JsonPropertyName("basePath")>] BasePath: string
-          [<JsonPropertyName("runBy")>] RunBy: int }
-    
+        { [<JsonPropertyName("id")>]
+          Id: int
+          [<JsonPropertyName("reference")>]
+          Reference: string
+          [<JsonPropertyName("subscriptionId")>]
+          SubscriptionId: int
+          [<JsonPropertyName("pipelineVersionId")>]
+          PipelineVersionId: int
+          [<JsonPropertyName("queuedOn")>]
+          QueuedOn: DateTime
+          [<JsonPropertyName("startedOn")>]
+          StartedOn: DateTime option
+          [<JsonPropertyName("completedOn")>]
+          CompletedOn: DateTime option
+          [<JsonPropertyName("wasSuccessful")>]
+          WasSuccessful: bool option
+          [<JsonPropertyName("basePath")>]
+          BasePath: string
+          [<JsonPropertyName("runBy")>]
+          RunBy: int }
+
         static member Blank() =
             { Id = 0
               Reference = String.Empty
@@ -821,8 +965,9 @@ module Records =
               WasSuccessful = None
               BasePath = String.Empty
               RunBy = 0 }
-    
-        static member CreateTableSql() = """
+
+        static member CreateTableSql() =
+            """
         CREATE TABLE `pipeline_runs` (
   `id` int NOT NULL AUTO_INCREMENT,
   `reference` varchar(36) NOT NULL,
@@ -844,8 +989,9 @@ module Records =
   CONSTRAINT `pipeline_runs_FK_2` FOREIGN KEY (`run_by`) REFERENCES `users` (`id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=20 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci
         """
-    
-        static member SelectSql() = """
+
+        static member SelectSql() =
+            """
         SELECT
               pipeline_runs.`id`,
               pipeline_runs.`reference`,
@@ -859,19 +1005,26 @@ module Records =
               pipeline_runs.`run_by`
         FROM pipeline_runs
         """
-    
+
         static member TableName() = "pipeline_runs"
-    
+
     /// A record representing a row in the table `pipeline_schedule_events`.
     type PipelineScheduleEvent =
-        { [<JsonPropertyName("id")>] Id: int
-          [<JsonPropertyName("scheduleId")>] ScheduleId: int
-          [<JsonPropertyName("eventType")>] EventType: string
-          [<JsonPropertyName("eventTimestamp")>] EventTimestamp: DateTime
-          [<JsonPropertyName("eventData")>] EventData: string
-          [<JsonPropertyName("userId")>] UserId: int
-          [<JsonPropertyName("batchReference")>] BatchReference: string }
-    
+        { [<JsonPropertyName("id")>]
+          Id: int
+          [<JsonPropertyName("scheduleId")>]
+          ScheduleId: int
+          [<JsonPropertyName("eventType")>]
+          EventType: string
+          [<JsonPropertyName("eventTimestamp")>]
+          EventTimestamp: DateTime
+          [<JsonPropertyName("eventData")>]
+          EventData: string
+          [<JsonPropertyName("userId")>]
+          UserId: int
+          [<JsonPropertyName("batchReference")>]
+          BatchReference: string }
+
         static member Blank() =
             { Id = 0
               ScheduleId = 0
@@ -880,8 +1033,9 @@ module Records =
               EventData = String.Empty
               UserId = 0
               BatchReference = String.Empty }
-    
-        static member CreateTableSql() = """
+
+        static member CreateTableSql() =
+            """
         CREATE TABLE `pipeline_schedule_events` (
   `id` int NOT NULL AUTO_INCREMENT,
   `schedule_id` int NOT NULL,
@@ -897,8 +1051,9 @@ module Records =
   CONSTRAINT `pipeline_schedule_events_FK_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci
         """
-    
-        static member SelectSql() = """
+
+        static member SelectSql() =
+            """
         SELECT
               pipeline_schedule_events.`id`,
               pipeline_schedule_events.`schedule_id`,
@@ -909,25 +1064,31 @@ module Records =
               pipeline_schedule_events.`batch_reference`
         FROM pipeline_schedule_events
         """
-    
+
         static member TableName() = "pipeline_schedule_events"
-    
+
     /// A record representing a row in the table `pipeline_schedule_runs`.
     type PipelineScheduleRun =
-        { [<JsonPropertyName("id")>] Id: int
-          [<JsonPropertyName("reference")>] Reference: string
-          [<JsonPropertyName("scheduleId")>] ScheduleId: int
-          [<JsonPropertyName("pipelineRunId")>] PipelineRunId: int
-          [<JsonPropertyName("runOn")>] RunOn: DateTime }
-    
+        { [<JsonPropertyName("id")>]
+          Id: int
+          [<JsonPropertyName("reference")>]
+          Reference: string
+          [<JsonPropertyName("scheduleId")>]
+          ScheduleId: int
+          [<JsonPropertyName("pipelineRunId")>]
+          PipelineRunId: int
+          [<JsonPropertyName("runOn")>]
+          RunOn: DateTime }
+
         static member Blank() =
             { Id = 0
               Reference = String.Empty
               ScheduleId = 0
               PipelineRunId = 0
               RunOn = DateTime.UtcNow }
-    
-        static member CreateTableSql() = """
+
+        static member CreateTableSql() =
+            """
         CREATE TABLE `pipeline_schedule_runs` (
   `id` int NOT NULL AUTO_INCREMENT,
   `reference` varchar(36) NOT NULL,
@@ -941,8 +1102,9 @@ module Records =
   CONSTRAINT `pipeline_schedule_runs_FK_1` FOREIGN KEY (`id`) REFERENCES `pipeline_runs` (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci
         """
-    
-        static member SelectSql() = """
+
+        static member SelectSql() =
+            """
         SELECT
               pipeline_schedule_runs.`id`,
               pipeline_schedule_runs.`reference`,
@@ -951,18 +1113,24 @@ module Records =
               pipeline_schedule_runs.`run_on`
         FROM pipeline_schedule_runs
         """
-    
+
         static member TableName() = "pipeline_schedule_runs"
-    
+
     /// A record representing a row in the table `pipeline_schedules`.
     type PipelineSchedule =
-        { [<JsonPropertyName("id")>] Id: int
-          [<JsonPropertyName("reference")>] Reference: string
-          [<JsonPropertyName("subscriptionId")>] SubscriptionId: int
-          [<JsonPropertyName("pipelineVersionId")>] PipelineVersionId: int
-          [<JsonPropertyName("scheduleCron")>] ScheduleCron: string
-          [<JsonPropertyName("active")>] Active: bool }
-    
+        { [<JsonPropertyName("id")>]
+          Id: int
+          [<JsonPropertyName("reference")>]
+          Reference: string
+          [<JsonPropertyName("subscriptionId")>]
+          SubscriptionId: int
+          [<JsonPropertyName("pipelineVersionId")>]
+          PipelineVersionId: int
+          [<JsonPropertyName("scheduleCron")>]
+          ScheduleCron: string
+          [<JsonPropertyName("active")>]
+          Active: bool }
+
         static member Blank() =
             { Id = 0
               Reference = String.Empty
@@ -970,8 +1138,9 @@ module Records =
               PipelineVersionId = 0
               ScheduleCron = String.Empty
               Active = false }
-    
-        static member CreateTableSql() = """
+
+        static member CreateTableSql() =
+            """
         CREATE TABLE `pipeline_schedules` (
   `id` int NOT NULL AUTO_INCREMENT,
   `reference` varchar(36) NOT NULL,
@@ -987,8 +1156,9 @@ module Records =
   CONSTRAINT `pipeline_schedules_FK_1` FOREIGN KEY (`subscription_id`) REFERENCES `subscriptions` (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci
         """
-    
-        static member SelectSql() = """
+
+        static member SelectSql() =
+            """
         SELECT
               pipeline_schedules.`id`,
               pipeline_schedules.`reference`,
@@ -998,21 +1168,25 @@ module Records =
               pipeline_schedules.`active`
         FROM pipeline_schedules
         """
-    
+
         static member TableName() = "pipeline_schedules"
-    
+
     /// A record representing a row in the table `subscriptions`.
     type Subscription =
-        { [<JsonPropertyName("id")>] Id: int
-          [<JsonPropertyName("reference")>] Reference: string
-          [<JsonPropertyName("active")>] Active: bool }
-    
+        { [<JsonPropertyName("id")>]
+          Id: int
+          [<JsonPropertyName("reference")>]
+          Reference: string
+          [<JsonPropertyName("active")>]
+          Active: bool }
+
         static member Blank() =
             { Id = 0
               Reference = String.Empty
               Active = false }
-    
-        static member CreateTableSql() = """
+
+        static member CreateTableSql() =
+            """
         CREATE TABLE `subscriptions` (
   `id` int NOT NULL AUTO_INCREMENT,
   `reference` varchar(36) NOT NULL,
@@ -1021,33 +1195,40 @@ module Records =
   UNIQUE KEY `subscriptions_UN` (`reference`)
 ) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci
         """
-    
-        static member SelectSql() = """
+
+        static member SelectSql() =
+            """
         SELECT
               subscriptions.`id`,
               subscriptions.`reference`,
               subscriptions.`active`
         FROM subscriptions
         """
-    
+
         static member TableName() = "subscriptions"
-    
+
     /// A record representing a row in the table `users`.
     type User =
-        { [<JsonPropertyName("id")>] Id: int
-          [<JsonPropertyName("reference")>] Reference: string
-          [<JsonPropertyName("subscriptionId")>] SubscriptionId: int
-          [<JsonPropertyName("username")>] Username: string
-          [<JsonPropertyName("active")>] Active: bool }
-    
+        { [<JsonPropertyName("id")>]
+          Id: int
+          [<JsonPropertyName("reference")>]
+          Reference: string
+          [<JsonPropertyName("subscriptionId")>]
+          SubscriptionId: int
+          [<JsonPropertyName("username")>]
+          Username: string
+          [<JsonPropertyName("active")>]
+          Active: bool }
+
         static member Blank() =
             { Id = 0
               Reference = String.Empty
               SubscriptionId = 0
               Username = String.Empty
               Active = false }
-    
-        static member CreateTableSql() = """
+
+        static member CreateTableSql() =
+            """
         CREATE TABLE `users` (
   `id` int NOT NULL AUTO_INCREMENT,
   `reference` varchar(100) NOT NULL,
@@ -1060,8 +1241,9 @@ module Records =
   CONSTRAINT `users_FK` FOREIGN KEY (`subscription_id`) REFERENCES `subscriptions` (`id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci
         """
-    
-        static member SelectSql() = """
+
+        static member SelectSql() =
+            """
         SELECT
               users.`id`,
               users.`reference`,
@@ -1070,30 +1252,36 @@ module Records =
               users.`active`
         FROM users
         """
-    
+
         static member TableName() = "users"
-    
+
 
 /// Module generated on 01/09/2023 19:45:01 (utc) via Freql.Tools.
 [<RequireQualifiedAccess>]
 module Parameters =
     /// A record representing a new row in the table `cfg_action_types`.
     type NewActionType =
-        { [<JsonPropertyName("name")>] Name: string }
-    
-        static member Blank() =
-            { Name = String.Empty }
-    
-    
+        { [<JsonPropertyName("name")>]
+          Name: string }
+
+        static member Blank() = { Name = String.Empty }
+
+
     /// A record representing a new row in the table `cfg_events`.
     type NewConfigurationEvent =
-        { [<JsonPropertyName("subscriptionId")>] SubscriptionId: int
-          [<JsonPropertyName("eventType")>] EventType: string
-          [<JsonPropertyName("eventTimestamp")>] EventTimestamp: DateTime
-          [<JsonPropertyName("eventData")>] EventData: string
-          [<JsonPropertyName("userId")>] UserId: int
-          [<JsonPropertyName("batchReference")>] BatchReference: string }
-    
+        { [<JsonPropertyName("subscriptionId")>]
+          SubscriptionId: int
+          [<JsonPropertyName("eventType")>]
+          EventType: string
+          [<JsonPropertyName("eventTimestamp")>]
+          EventTimestamp: DateTime
+          [<JsonPropertyName("eventData")>]
+          EventData: string
+          [<JsonPropertyName("userId")>]
+          UserId: int
+          [<JsonPropertyName("batchReference")>]
+          BatchReference: string }
+
         static member Blank() =
             { SubscriptionId = 0
               EventType = String.Empty
@@ -1101,18 +1289,25 @@ module Parameters =
               EventData = String.Empty
               UserId = 0
               BatchReference = String.Empty }
-    
-    
+
+
     /// A record representing a new row in the table `cfg_object_table_mapper_versions`.
     type NewObjectTableMapperVersion =
-        { [<JsonPropertyName("reference")>] Reference: string
-          [<JsonPropertyName("objectTableMapperId")>] ObjectTableMapperId: int
-          [<JsonPropertyName("version")>] Version: int
-          [<JsonPropertyName("tableModelVersionId")>] TableModelVersionId: int
-          [<JsonPropertyName("mapperJson")>] MapperJson: string
-          [<JsonPropertyName("hash")>] Hash: string
-          [<JsonPropertyName("createdOn")>] CreatedOn: DateTime }
-    
+        { [<JsonPropertyName("reference")>]
+          Reference: string
+          [<JsonPropertyName("objectTableMapperId")>]
+          ObjectTableMapperId: int
+          [<JsonPropertyName("version")>]
+          Version: int
+          [<JsonPropertyName("tableModelVersionId")>]
+          TableModelVersionId: int
+          [<JsonPropertyName("mapperJson")>]
+          MapperJson: string
+          [<JsonPropertyName("hash")>]
+          Hash: string
+          [<JsonPropertyName("createdOn")>]
+          CreatedOn: DateTime }
+
         static member Blank() =
             { Reference = String.Empty
               ObjectTableMapperId = 0
@@ -1121,30 +1316,40 @@ module Parameters =
               MapperJson = String.Empty
               Hash = String.Empty
               CreatedOn = DateTime.UtcNow }
-    
-    
+
+
     /// A record representing a new row in the table `cfg_object_table_mappers`.
     type NewObjectTableMapper =
-        { [<JsonPropertyName("reference")>] Reference: string
-          [<JsonPropertyName("subscriptionId")>] SubscriptionId: int
-          [<JsonPropertyName("name")>] Name: string }
-    
+        { [<JsonPropertyName("reference")>]
+          Reference: string
+          [<JsonPropertyName("subscriptionId")>]
+          SubscriptionId: int
+          [<JsonPropertyName("name")>]
+          Name: string }
+
         static member Blank() =
             { Reference = String.Empty
               SubscriptionId = 0
               Name = String.Empty }
-    
-    
+
+
     /// A record representing a new row in the table `cfg_pipeline_actions`.
     type NewPipelineAction =
-        { [<JsonPropertyName("reference")>] Reference: string
-          [<JsonPropertyName("pipelineVersionId")>] PipelineVersionId: int
-          [<JsonPropertyName("name")>] Name: string
-          [<JsonPropertyName("actionTypeId")>] ActionTypeId: int
-          [<JsonPropertyName("actionJson")>] ActionJson: string
-          [<JsonPropertyName("hash")>] Hash: string
-          [<JsonPropertyName("step")>] Step: int }
-    
+        { [<JsonPropertyName("reference")>]
+          Reference: string
+          [<JsonPropertyName("pipelineVersionId")>]
+          PipelineVersionId: int
+          [<JsonPropertyName("name")>]
+          Name: string
+          [<JsonPropertyName("actionTypeId")>]
+          ActionTypeId: int
+          [<JsonPropertyName("actionJson")>]
+          ActionJson: string
+          [<JsonPropertyName("hash")>]
+          Hash: string
+          [<JsonPropertyName("step")>]
+          Step: int }
+
         static member Blank() =
             { Reference = String.Empty
               PipelineVersionId = 0
@@ -1153,86 +1358,112 @@ module Parameters =
               ActionJson = String.Empty
               Hash = String.Empty
               Step = 0 }
-    
-    
+
+
     /// A record representing a new row in the table `cfg_pipeline_args`.
     type NewPipelineArg =
-        { [<JsonPropertyName("reference")>] Reference: string
-          [<JsonPropertyName("pipelineVersionId")>] PipelineVersionId: int
-          [<JsonPropertyName("name")>] Name: string
-          [<JsonPropertyName("required")>] Required: bool
-          [<JsonPropertyName("defaultValue")>] DefaultValue: string option }
-    
+        { [<JsonPropertyName("reference")>]
+          Reference: string
+          [<JsonPropertyName("pipelineVersionId")>]
+          PipelineVersionId: int
+          [<JsonPropertyName("name")>]
+          Name: string
+          [<JsonPropertyName("required")>]
+          Required: bool
+          [<JsonPropertyName("defaultValue")>]
+          DefaultValue: string option }
+
         static member Blank() =
             { Reference = String.Empty
               PipelineVersionId = 0
               Name = String.Empty
               Required = false
               DefaultValue = None }
-    
-    
+
+
     /// A record representing a new row in the table `cfg_pipeline_resources`.
     type NewPipelineResource =
-        { [<JsonPropertyName("reference")>] Reference: string
-          [<JsonPropertyName("pipelineVersionId")>] PipelineVersionId: int
-          [<JsonPropertyName("resourceVersionId")>] ResourceVersionId: int }
-    
+        { [<JsonPropertyName("reference")>]
+          Reference: string
+          [<JsonPropertyName("pipelineVersionId")>]
+          PipelineVersionId: int
+          [<JsonPropertyName("resourceVersionId")>]
+          ResourceVersionId: int }
+
         static member Blank() =
             { Reference = String.Empty
               PipelineVersionId = 0
               ResourceVersionId = 0 }
-    
-    
+
+
     /// A record representing a new row in the table `cfg_pipeline_versions`.
     type NewPipelineVersion =
-        { [<JsonPropertyName("reference")>] Reference: string
-          [<JsonPropertyName("pipelineId")>] PipelineId: int
-          [<JsonPropertyName("version")>] Version: int
-          [<JsonPropertyName("description")>] Description: string
-          [<JsonPropertyName("createdOn")>] CreatedOn: DateTime }
-    
+        { [<JsonPropertyName("reference")>]
+          Reference: string
+          [<JsonPropertyName("pipelineId")>]
+          PipelineId: int
+          [<JsonPropertyName("version")>]
+          Version: int
+          [<JsonPropertyName("description")>]
+          Description: string
+          [<JsonPropertyName("createdOn")>]
+          CreatedOn: DateTime }
+
         static member Blank() =
             { Reference = String.Empty
               PipelineId = 0
               Version = 0
               Description = String.Empty
               CreatedOn = DateTime.UtcNow }
-    
-    
+
+
     /// A record representing a new row in the table `cfg_pipelines`.
     type NewPipeline =
-        { [<JsonPropertyName("reference")>] Reference: string
-          [<JsonPropertyName("subscriptionId")>] SubscriptionId: int
-          [<JsonPropertyName("name")>] Name: string }
-    
+        { [<JsonPropertyName("reference")>]
+          Reference: string
+          [<JsonPropertyName("subscriptionId")>]
+          SubscriptionId: int
+          [<JsonPropertyName("name")>]
+          Name: string }
+
         static member Blank() =
             { Reference = String.Empty
               SubscriptionId = 0
               Name = String.Empty }
-    
-    
+
+
     /// A record representing a new row in the table `cfg_queries`.
     type NewQuery =
-        { [<JsonPropertyName("reference")>] Reference: string
-          [<JsonPropertyName("subscriptionId")>] SubscriptionId: int
-          [<JsonPropertyName("name")>] Name: string }
-    
+        { [<JsonPropertyName("reference")>]
+          Reference: string
+          [<JsonPropertyName("subscriptionId")>]
+          SubscriptionId: int
+          [<JsonPropertyName("name")>]
+          Name: string }
+
         static member Blank() =
             { Reference = String.Empty
               SubscriptionId = 0
               Name = String.Empty }
-    
-    
+
+
     /// A record representing a new row in the table `cfg_query_versions`.
     type NewQueryVersion =
-        { [<JsonPropertyName("reference")>] Reference: string
-          [<JsonPropertyName("queryId")>] QueryId: int
-          [<JsonPropertyName("version")>] Version: int
-          [<JsonPropertyName("rawQuery")>] RawQuery: string
-          [<JsonPropertyName("hash")>] Hash: string
-          [<JsonPropertyName("isSerialized")>] IsSerialized: bool
-          [<JsonPropertyName("createdOn")>] CreatedOn: DateTime }
-    
+        { [<JsonPropertyName("reference")>]
+          Reference: string
+          [<JsonPropertyName("queryId")>]
+          QueryId: int
+          [<JsonPropertyName("version")>]
+          Version: int
+          [<JsonPropertyName("rawQuery")>]
+          RawQuery: string
+          [<JsonPropertyName("hash")>]
+          Hash: string
+          [<JsonPropertyName("isSerialized")>]
+          IsSerialized: bool
+          [<JsonPropertyName("createdOn")>]
+          CreatedOn: DateTime }
+
         static member Blank() =
             { Reference = String.Empty
               QueryId = 0
@@ -1241,18 +1472,25 @@ module Parameters =
               Hash = String.Empty
               IsSerialized = false
               CreatedOn = DateTime.UtcNow }
-    
-    
+
+
     /// A record representing a new row in the table `cfg_resource_versions`.
     type NewResourceVersion =
-        { [<JsonPropertyName("reference")>] Reference: string
-          [<JsonPropertyName("resourceId")>] ResourceId: int
-          [<JsonPropertyName("version")>] Version: int
-          [<JsonPropertyName("resourceType")>] ResourceType: string
-          [<JsonPropertyName("resourcePath")>] ResourcePath: string
-          [<JsonPropertyName("hash")>] Hash: string
-          [<JsonPropertyName("createdOn")>] CreatedOn: DateTime }
-    
+        { [<JsonPropertyName("reference")>]
+          Reference: string
+          [<JsonPropertyName("resourceId")>]
+          ResourceId: int
+          [<JsonPropertyName("version")>]
+          Version: int
+          [<JsonPropertyName("resourceType")>]
+          ResourceType: string
+          [<JsonPropertyName("resourcePath")>]
+          ResourcePath: string
+          [<JsonPropertyName("hash")>]
+          Hash: string
+          [<JsonPropertyName("createdOn")>]
+          CreatedOn: DateTime }
+
         static member Blank() =
             { Reference = String.Empty
               ResourceId = 0
@@ -1261,30 +1499,40 @@ module Parameters =
               ResourcePath = String.Empty
               Hash = String.Empty
               CreatedOn = DateTime.UtcNow }
-    
-    
+
+
     /// A record representing a new row in the table `cfg_resources`.
     type NewResource =
-        { [<JsonPropertyName("reference")>] Reference: string
-          [<JsonPropertyName("subscriptionId")>] SubscriptionId: int
-          [<JsonPropertyName("name")>] Name: string }
-    
+        { [<JsonPropertyName("reference")>]
+          Reference: string
+          [<JsonPropertyName("subscriptionId")>]
+          SubscriptionId: int
+          [<JsonPropertyName("name")>]
+          Name: string }
+
         static member Blank() =
             { Reference = String.Empty
               SubscriptionId = 0
               Name = String.Empty }
-    
-    
+
+
     /// A record representing a new row in the table `cfg_table_columns`.
     type NewTableColumn =
-        { [<JsonPropertyName("reference")>] Reference: string
-          [<JsonPropertyName("tableVersionId")>] TableVersionId: int
-          [<JsonPropertyName("name")>] Name: string
-          [<JsonPropertyName("dataType")>] DataType: string
-          [<JsonPropertyName("optional")>] Optional: bool
-          [<JsonPropertyName("importHandlerJson")>] ImportHandlerJson: string option
-          [<JsonPropertyName("columnIndex")>] ColumnIndex: int }
-    
+        { [<JsonPropertyName("reference")>]
+          Reference: string
+          [<JsonPropertyName("tableVersionId")>]
+          TableVersionId: int
+          [<JsonPropertyName("name")>]
+          Name: string
+          [<JsonPropertyName("dataType")>]
+          DataType: string
+          [<JsonPropertyName("optional")>]
+          Optional: bool
+          [<JsonPropertyName("importHandlerJson")>]
+          ImportHandlerJson: string option
+          [<JsonPropertyName("columnIndex")>]
+          ColumnIndex: int }
+
         static member Blank() =
             { Reference = String.Empty
               TableVersionId = 0
@@ -1293,43 +1541,56 @@ module Parameters =
               Optional = false
               ImportHandlerJson = None
               ColumnIndex = 0 }
-    
-    
+
+
     /// A record representing a new row in the table `cfg_table_model_versions`.
     type NewTableModelVersion =
-        { [<JsonPropertyName("reference")>] Reference: string
-          [<JsonPropertyName("tableModelId")>] TableModelId: int
-          [<JsonPropertyName("version")>] Version: int
-          [<JsonPropertyName("createdOn")>] CreatedOn: DateTime }
-    
+        { [<JsonPropertyName("reference")>]
+          Reference: string
+          [<JsonPropertyName("tableModelId")>]
+          TableModelId: int
+          [<JsonPropertyName("version")>]
+          Version: int
+          [<JsonPropertyName("createdOn")>]
+          CreatedOn: DateTime }
+
         static member Blank() =
             { Reference = String.Empty
               TableModelId = 0
               Version = 0
               CreatedOn = DateTime.UtcNow }
-    
-    
+
+
     /// A record representing a new row in the table `cfg_table_models`.
     type NewTableModel =
-        { [<JsonPropertyName("reference")>] Reference: string
-          [<JsonPropertyName("subscriptionId")>] SubscriptionId: int
-          [<JsonPropertyName("name")>] Name: string }
-    
+        { [<JsonPropertyName("reference")>]
+          Reference: string
+          [<JsonPropertyName("subscriptionId")>]
+          SubscriptionId: int
+          [<JsonPropertyName("name")>]
+          Name: string }
+
         static member Blank() =
             { Reference = String.Empty
               SubscriptionId = 0
               Name = String.Empty }
-    
-    
+
+
     /// A record representing a new row in the table `cfg_table_object_mapper_versions`.
     type NewTableObjectMapperVersion =
-        { [<JsonPropertyName("reference")>] Reference: string
-          [<JsonPropertyName("tableObjectMapperId")>] TableObjectMapperId: int
-          [<JsonPropertyName("version")>] Version: int
-          [<JsonPropertyName("mapperJson")>] MapperJson: string
-          [<JsonPropertyName("hash")>] Hash: string
-          [<JsonPropertyName("createdOn")>] CreatedOn: DateTime }
-    
+        { [<JsonPropertyName("reference")>]
+          Reference: string
+          [<JsonPropertyName("tableObjectMapperId")>]
+          TableObjectMapperId: int
+          [<JsonPropertyName("version")>]
+          Version: int
+          [<JsonPropertyName("mapperJson")>]
+          MapperJson: string
+          [<JsonPropertyName("hash")>]
+          Hash: string
+          [<JsonPropertyName("createdOn")>]
+          CreatedOn: DateTime }
+
         static member Blank() =
             { Reference = String.Empty
               TableObjectMapperId = 0
@@ -1337,32 +1598,44 @@ module Parameters =
               MapperJson = String.Empty
               Hash = String.Empty
               CreatedOn = DateTime.UtcNow }
-    
-    
+
+
     /// A record representing a new row in the table `cfg_table_object_mappers`.
     type NewTableObjectMapper =
-        { [<JsonPropertyName("reference")>] Reference: string
-          [<JsonPropertyName("subscriptionId")>] SubscriptionId: int
-          [<JsonPropertyName("name")>] Name: string }
-    
+        { [<JsonPropertyName("reference")>]
+          Reference: string
+          [<JsonPropertyName("subscriptionId")>]
+          SubscriptionId: int
+          [<JsonPropertyName("name")>]
+          Name: string }
+
         static member Blank() =
             { Reference = String.Empty
               SubscriptionId = 0
               Name = String.Empty }
-    
-    
+
+
     /// A record representing a new row in the table `pipeline_runs`.
     type NewPipelineRunItem =
-        { [<JsonPropertyName("reference")>] Reference: string
-          [<JsonPropertyName("subscriptionId")>] SubscriptionId: int
-          [<JsonPropertyName("pipelineVersionId")>] PipelineVersionId: int
-          [<JsonPropertyName("queuedOn")>] QueuedOn: DateTime
-          [<JsonPropertyName("startedOn")>] StartedOn: DateTime option
-          [<JsonPropertyName("completedOn")>] CompletedOn: DateTime option
-          [<JsonPropertyName("wasSuccessful")>] WasSuccessful: bool option
-          [<JsonPropertyName("basePath")>] BasePath: string
-          [<JsonPropertyName("runBy")>] RunBy: int }
-    
+        { [<JsonPropertyName("reference")>]
+          Reference: string
+          [<JsonPropertyName("subscriptionId")>]
+          SubscriptionId: int
+          [<JsonPropertyName("pipelineVersionId")>]
+          PipelineVersionId: int
+          [<JsonPropertyName("queuedOn")>]
+          QueuedOn: DateTime
+          [<JsonPropertyName("startedOn")>]
+          StartedOn: DateTime option
+          [<JsonPropertyName("completedOn")>]
+          CompletedOn: DateTime option
+          [<JsonPropertyName("wasSuccessful")>]
+          WasSuccessful: bool option
+          [<JsonPropertyName("basePath")>]
+          BasePath: string
+          [<JsonPropertyName("runBy")>]
+          RunBy: int }
+
         static member Blank() =
             { Reference = String.Empty
               SubscriptionId = 0
@@ -1373,17 +1646,23 @@ module Parameters =
               WasSuccessful = None
               BasePath = String.Empty
               RunBy = 0 }
-    
-    
+
+
     /// A record representing a new row in the table `pipeline_schedule_events`.
     type NewPipelineScheduleEvent =
-        { [<JsonPropertyName("scheduleId")>] ScheduleId: int
-          [<JsonPropertyName("eventType")>] EventType: string
-          [<JsonPropertyName("eventTimestamp")>] EventTimestamp: DateTime
-          [<JsonPropertyName("eventData")>] EventData: string
-          [<JsonPropertyName("userId")>] UserId: int
-          [<JsonPropertyName("batchReference")>] BatchReference: string }
-    
+        { [<JsonPropertyName("scheduleId")>]
+          ScheduleId: int
+          [<JsonPropertyName("eventType")>]
+          EventType: string
+          [<JsonPropertyName("eventTimestamp")>]
+          EventTimestamp: DateTime
+          [<JsonPropertyName("eventData")>]
+          EventData: string
+          [<JsonPropertyName("userId")>]
+          UserId: int
+          [<JsonPropertyName("batchReference")>]
+          BatchReference: string }
+
         static member Blank() =
             { ScheduleId = 0
               EventType = String.Empty
@@ -1391,67 +1670,83 @@ module Parameters =
               EventData = String.Empty
               UserId = 0
               BatchReference = String.Empty }
-    
-    
+
+
     /// A record representing a new row in the table `pipeline_schedule_runs`.
     type NewPipelineScheduleRun =
-        { [<JsonPropertyName("reference")>] Reference: string
-          [<JsonPropertyName("scheduleId")>] ScheduleId: int
-          [<JsonPropertyName("pipelineRunId")>] PipelineRunId: int
-          [<JsonPropertyName("runOn")>] RunOn: DateTime }
-    
+        { [<JsonPropertyName("reference")>]
+          Reference: string
+          [<JsonPropertyName("scheduleId")>]
+          ScheduleId: int
+          [<JsonPropertyName("pipelineRunId")>]
+          PipelineRunId: int
+          [<JsonPropertyName("runOn")>]
+          RunOn: DateTime }
+
         static member Blank() =
             { Reference = String.Empty
               ScheduleId = 0
               PipelineRunId = 0
               RunOn = DateTime.UtcNow }
-    
-    
+
+
     /// A record representing a new row in the table `pipeline_schedules`.
     type NewPipelineSchedule =
-        { [<JsonPropertyName("reference")>] Reference: string
-          [<JsonPropertyName("subscriptionId")>] SubscriptionId: int
-          [<JsonPropertyName("pipelineVersionId")>] PipelineVersionId: int
-          [<JsonPropertyName("scheduleCron")>] ScheduleCron: string
-          [<JsonPropertyName("active")>] Active: bool }
-    
+        { [<JsonPropertyName("reference")>]
+          Reference: string
+          [<JsonPropertyName("subscriptionId")>]
+          SubscriptionId: int
+          [<JsonPropertyName("pipelineVersionId")>]
+          PipelineVersionId: int
+          [<JsonPropertyName("scheduleCron")>]
+          ScheduleCron: string
+          [<JsonPropertyName("active")>]
+          Active: bool }
+
         static member Blank() =
             { Reference = String.Empty
               SubscriptionId = 0
               PipelineVersionId = 0
               ScheduleCron = String.Empty
               Active = false }
-    
-    
+
+
     /// A record representing a new row in the table `subscriptions`.
     type NewSubscription =
-        { [<JsonPropertyName("reference")>] Reference: string
-          [<JsonPropertyName("active")>] Active: bool }
-    
+        { [<JsonPropertyName("reference")>]
+          Reference: string
+          [<JsonPropertyName("active")>]
+          Active: bool }
+
         static member Blank() =
             { Reference = String.Empty
               Active = false }
-    
-    
+
+
     /// A record representing a new row in the table `users`.
     type NewUser =
-        { [<JsonPropertyName("reference")>] Reference: string
-          [<JsonPropertyName("subscriptionId")>] SubscriptionId: int
-          [<JsonPropertyName("username")>] Username: string
-          [<JsonPropertyName("active")>] Active: bool }
-    
+        { [<JsonPropertyName("reference")>]
+          Reference: string
+          [<JsonPropertyName("subscriptionId")>]
+          SubscriptionId: int
+          [<JsonPropertyName("username")>]
+          Username: string
+          [<JsonPropertyName("active")>]
+          Active: bool }
+
         static member Blank() =
             { Reference = String.Empty
               SubscriptionId = 0
               Username = String.Empty
               Active = false }
-    
-    
+
+
 /// Module generated on 01/09/2023 19:45:01 (utc) via Freql.Tools.
 [<RequireQualifiedAccess>]
 module Operations =
 
-    let buildSql (lines: string list) = lines |> String.concat Environment.NewLine
+    let buildSql (lines: string list) =
+        lines |> String.concat Environment.NewLine
 
     /// Select a `Records.ActionType` from the table `cfg_action_types`.
     /// Internally this calls `context.SelectSingleAnon<Records.ActionType>` and uses Records.ActionType.SelectSql().
@@ -1463,7 +1758,7 @@ module Operations =
     let selectActionTypeRecord (context: MySqlContext) (query: string list) (parameters: obj list) =
         let sql = [ Records.ActionType.SelectSql() ] @ query |> buildSql
         context.SelectSingleAnon<Records.ActionType>(sql, parameters)
-    
+
     /// Internally this calls `context.SelectAnon<Records.ActionType>` and uses Records.ActionType.SelectSql().
     /// The caller can provide extra string lines to create a query and boxed parameters.
     /// It is up to the caller to verify the sql and parameters are correct,
@@ -1473,10 +1768,10 @@ module Operations =
     let selectActionTypeRecords (context: MySqlContext) (query: string list) (parameters: obj list) =
         let sql = [ Records.ActionType.SelectSql() ] @ query |> buildSql
         context.SelectAnon<Records.ActionType>(sql, parameters)
-    
+
     let insertActionType (context: MySqlContext) (parameters: Parameters.NewActionType) =
         context.Insert("cfg_action_types", parameters)
-    
+
     /// Select a `Records.ConfigurationEvent` from the table `cfg_events`.
     /// Internally this calls `context.SelectSingleAnon<Records.ConfigurationEvent>` and uses Records.ConfigurationEvent.SelectSql().
     /// The caller can provide extra string lines to create a query and boxed parameters.
@@ -1487,7 +1782,7 @@ module Operations =
     let selectConfigurationEventRecord (context: MySqlContext) (query: string list) (parameters: obj list) =
         let sql = [ Records.ConfigurationEvent.SelectSql() ] @ query |> buildSql
         context.SelectSingleAnon<Records.ConfigurationEvent>(sql, parameters)
-    
+
     /// Internally this calls `context.SelectAnon<Records.ConfigurationEvent>` and uses Records.ConfigurationEvent.SelectSql().
     /// The caller can provide extra string lines to create a query and boxed parameters.
     /// It is up to the caller to verify the sql and parameters are correct,
@@ -1497,10 +1792,10 @@ module Operations =
     let selectConfigurationEventRecords (context: MySqlContext) (query: string list) (parameters: obj list) =
         let sql = [ Records.ConfigurationEvent.SelectSql() ] @ query |> buildSql
         context.SelectAnon<Records.ConfigurationEvent>(sql, parameters)
-    
+
     let insertConfigurationEvent (context: MySqlContext) (parameters: Parameters.NewConfigurationEvent) =
         context.Insert("cfg_events", parameters)
-    
+
     /// Select a `Records.ObjectTableMapperVersion` from the table `cfg_object_table_mapper_versions`.
     /// Internally this calls `context.SelectSingleAnon<Records.ObjectTableMapperVersion>` and uses Records.ObjectTableMapperVersion.SelectSql().
     /// The caller can provide extra string lines to create a query and boxed parameters.
@@ -1511,7 +1806,7 @@ module Operations =
     let selectObjectTableMapperVersionRecord (context: MySqlContext) (query: string list) (parameters: obj list) =
         let sql = [ Records.ObjectTableMapperVersion.SelectSql() ] @ query |> buildSql
         context.SelectSingleAnon<Records.ObjectTableMapperVersion>(sql, parameters)
-    
+
     /// Internally this calls `context.SelectAnon<Records.ObjectTableMapperVersion>` and uses Records.ObjectTableMapperVersion.SelectSql().
     /// The caller can provide extra string lines to create a query and boxed parameters.
     /// It is up to the caller to verify the sql and parameters are correct,
@@ -1521,10 +1816,10 @@ module Operations =
     let selectObjectTableMapperVersionRecords (context: MySqlContext) (query: string list) (parameters: obj list) =
         let sql = [ Records.ObjectTableMapperVersion.SelectSql() ] @ query |> buildSql
         context.SelectAnon<Records.ObjectTableMapperVersion>(sql, parameters)
-    
+
     let insertObjectTableMapperVersion (context: MySqlContext) (parameters: Parameters.NewObjectTableMapperVersion) =
         context.Insert("cfg_object_table_mapper_versions", parameters)
-    
+
     /// Select a `Records.ObjectTableMapper` from the table `cfg_object_table_mappers`.
     /// Internally this calls `context.SelectSingleAnon<Records.ObjectTableMapper>` and uses Records.ObjectTableMapper.SelectSql().
     /// The caller can provide extra string lines to create a query and boxed parameters.
@@ -1535,7 +1830,7 @@ module Operations =
     let selectObjectTableMapperRecord (context: MySqlContext) (query: string list) (parameters: obj list) =
         let sql = [ Records.ObjectTableMapper.SelectSql() ] @ query |> buildSql
         context.SelectSingleAnon<Records.ObjectTableMapper>(sql, parameters)
-    
+
     /// Internally this calls `context.SelectAnon<Records.ObjectTableMapper>` and uses Records.ObjectTableMapper.SelectSql().
     /// The caller can provide extra string lines to create a query and boxed parameters.
     /// It is up to the caller to verify the sql and parameters are correct,
@@ -1545,10 +1840,10 @@ module Operations =
     let selectObjectTableMapperRecords (context: MySqlContext) (query: string list) (parameters: obj list) =
         let sql = [ Records.ObjectTableMapper.SelectSql() ] @ query |> buildSql
         context.SelectAnon<Records.ObjectTableMapper>(sql, parameters)
-    
+
     let insertObjectTableMapper (context: MySqlContext) (parameters: Parameters.NewObjectTableMapper) =
         context.Insert("cfg_object_table_mappers", parameters)
-    
+
     /// Select a `Records.PipelineAction` from the table `cfg_pipeline_actions`.
     /// Internally this calls `context.SelectSingleAnon<Records.PipelineAction>` and uses Records.PipelineAction.SelectSql().
     /// The caller can provide extra string lines to create a query and boxed parameters.
@@ -1559,7 +1854,7 @@ module Operations =
     let selectPipelineActionRecord (context: MySqlContext) (query: string list) (parameters: obj list) =
         let sql = [ Records.PipelineAction.SelectSql() ] @ query |> buildSql
         context.SelectSingleAnon<Records.PipelineAction>(sql, parameters)
-    
+
     /// Internally this calls `context.SelectAnon<Records.PipelineAction>` and uses Records.PipelineAction.SelectSql().
     /// The caller can provide extra string lines to create a query and boxed parameters.
     /// It is up to the caller to verify the sql and parameters are correct,
@@ -1569,10 +1864,10 @@ module Operations =
     let selectPipelineActionRecords (context: MySqlContext) (query: string list) (parameters: obj list) =
         let sql = [ Records.PipelineAction.SelectSql() ] @ query |> buildSql
         context.SelectAnon<Records.PipelineAction>(sql, parameters)
-    
+
     let insertPipelineAction (context: MySqlContext) (parameters: Parameters.NewPipelineAction) =
         context.Insert("cfg_pipeline_actions", parameters)
-    
+
     /// Select a `Records.PipelineArg` from the table `cfg_pipeline_args`.
     /// Internally this calls `context.SelectSingleAnon<Records.PipelineArg>` and uses Records.PipelineArg.SelectSql().
     /// The caller can provide extra string lines to create a query and boxed parameters.
@@ -1583,7 +1878,7 @@ module Operations =
     let selectPipelineArgRecord (context: MySqlContext) (query: string list) (parameters: obj list) =
         let sql = [ Records.PipelineArg.SelectSql() ] @ query |> buildSql
         context.SelectSingleAnon<Records.PipelineArg>(sql, parameters)
-    
+
     /// Internally this calls `context.SelectAnon<Records.PipelineArg>` and uses Records.PipelineArg.SelectSql().
     /// The caller can provide extra string lines to create a query and boxed parameters.
     /// It is up to the caller to verify the sql and parameters are correct,
@@ -1593,10 +1888,10 @@ module Operations =
     let selectPipelineArgRecords (context: MySqlContext) (query: string list) (parameters: obj list) =
         let sql = [ Records.PipelineArg.SelectSql() ] @ query |> buildSql
         context.SelectAnon<Records.PipelineArg>(sql, parameters)
-    
+
     let insertPipelineArg (context: MySqlContext) (parameters: Parameters.NewPipelineArg) =
         context.Insert("cfg_pipeline_args", parameters)
-    
+
     /// Select a `Records.PipelineResource` from the table `cfg_pipeline_resources`.
     /// Internally this calls `context.SelectSingleAnon<Records.PipelineResource>` and uses Records.PipelineResource.SelectSql().
     /// The caller can provide extra string lines to create a query and boxed parameters.
@@ -1607,7 +1902,7 @@ module Operations =
     let selectPipelineResourceRecord (context: MySqlContext) (query: string list) (parameters: obj list) =
         let sql = [ Records.PipelineResource.SelectSql() ] @ query |> buildSql
         context.SelectSingleAnon<Records.PipelineResource>(sql, parameters)
-    
+
     /// Internally this calls `context.SelectAnon<Records.PipelineResource>` and uses Records.PipelineResource.SelectSql().
     /// The caller can provide extra string lines to create a query and boxed parameters.
     /// It is up to the caller to verify the sql and parameters are correct,
@@ -1617,10 +1912,10 @@ module Operations =
     let selectPipelineResourceRecords (context: MySqlContext) (query: string list) (parameters: obj list) =
         let sql = [ Records.PipelineResource.SelectSql() ] @ query |> buildSql
         context.SelectAnon<Records.PipelineResource>(sql, parameters)
-    
+
     let insertPipelineResource (context: MySqlContext) (parameters: Parameters.NewPipelineResource) =
         context.Insert("cfg_pipeline_resources", parameters)
-    
+
     /// Select a `Records.PipelineVersion` from the table `cfg_pipeline_versions`.
     /// Internally this calls `context.SelectSingleAnon<Records.PipelineVersion>` and uses Records.PipelineVersion.SelectSql().
     /// The caller can provide extra string lines to create a query and boxed parameters.
@@ -1631,7 +1926,7 @@ module Operations =
     let selectPipelineVersionRecord (context: MySqlContext) (query: string list) (parameters: obj list) =
         let sql = [ Records.PipelineVersion.SelectSql() ] @ query |> buildSql
         context.SelectSingleAnon<Records.PipelineVersion>(sql, parameters)
-    
+
     /// Internally this calls `context.SelectAnon<Records.PipelineVersion>` and uses Records.PipelineVersion.SelectSql().
     /// The caller can provide extra string lines to create a query and boxed parameters.
     /// It is up to the caller to verify the sql and parameters are correct,
@@ -1641,10 +1936,10 @@ module Operations =
     let selectPipelineVersionRecords (context: MySqlContext) (query: string list) (parameters: obj list) =
         let sql = [ Records.PipelineVersion.SelectSql() ] @ query |> buildSql
         context.SelectAnon<Records.PipelineVersion>(sql, parameters)
-    
+
     let insertPipelineVersion (context: MySqlContext) (parameters: Parameters.NewPipelineVersion) =
         context.Insert("cfg_pipeline_versions", parameters)
-    
+
     /// Select a `Records.Pipeline` from the table `cfg_pipelines`.
     /// Internally this calls `context.SelectSingleAnon<Records.Pipeline>` and uses Records.Pipeline.SelectSql().
     /// The caller can provide extra string lines to create a query and boxed parameters.
@@ -1655,7 +1950,7 @@ module Operations =
     let selectPipelineRecord (context: MySqlContext) (query: string list) (parameters: obj list) =
         let sql = [ Records.Pipeline.SelectSql() ] @ query |> buildSql
         context.SelectSingleAnon<Records.Pipeline>(sql, parameters)
-    
+
     /// Internally this calls `context.SelectAnon<Records.Pipeline>` and uses Records.Pipeline.SelectSql().
     /// The caller can provide extra string lines to create a query and boxed parameters.
     /// It is up to the caller to verify the sql and parameters are correct,
@@ -1665,10 +1960,10 @@ module Operations =
     let selectPipelineRecords (context: MySqlContext) (query: string list) (parameters: obj list) =
         let sql = [ Records.Pipeline.SelectSql() ] @ query |> buildSql
         context.SelectAnon<Records.Pipeline>(sql, parameters)
-    
+
     let insertPipeline (context: MySqlContext) (parameters: Parameters.NewPipeline) =
         context.Insert("cfg_pipelines", parameters)
-    
+
     /// Select a `Records.Query` from the table `cfg_queries`.
     /// Internally this calls `context.SelectSingleAnon<Records.Query>` and uses Records.Query.SelectSql().
     /// The caller can provide extra string lines to create a query and boxed parameters.
@@ -1679,7 +1974,7 @@ module Operations =
     let selectQueryRecord (context: MySqlContext) (query: string list) (parameters: obj list) =
         let sql = [ Records.Query.SelectSql() ] @ query |> buildSql
         context.SelectSingleAnon<Records.Query>(sql, parameters)
-    
+
     /// Internally this calls `context.SelectAnon<Records.Query>` and uses Records.Query.SelectSql().
     /// The caller can provide extra string lines to create a query and boxed parameters.
     /// It is up to the caller to verify the sql and parameters are correct,
@@ -1689,10 +1984,10 @@ module Operations =
     let selectQueryRecords (context: MySqlContext) (query: string list) (parameters: obj list) =
         let sql = [ Records.Query.SelectSql() ] @ query |> buildSql
         context.SelectAnon<Records.Query>(sql, parameters)
-    
+
     let insertQuery (context: MySqlContext) (parameters: Parameters.NewQuery) =
         context.Insert("cfg_queries", parameters)
-    
+
     /// Select a `Records.QueryVersion` from the table `cfg_query_versions`.
     /// Internally this calls `context.SelectSingleAnon<Records.QueryVersion>` and uses Records.QueryVersion.SelectSql().
     /// The caller can provide extra string lines to create a query and boxed parameters.
@@ -1703,7 +1998,7 @@ module Operations =
     let selectQueryVersionRecord (context: MySqlContext) (query: string list) (parameters: obj list) =
         let sql = [ Records.QueryVersion.SelectSql() ] @ query |> buildSql
         context.SelectSingleAnon<Records.QueryVersion>(sql, parameters)
-    
+
     /// Internally this calls `context.SelectAnon<Records.QueryVersion>` and uses Records.QueryVersion.SelectSql().
     /// The caller can provide extra string lines to create a query and boxed parameters.
     /// It is up to the caller to verify the sql and parameters are correct,
@@ -1713,10 +2008,10 @@ module Operations =
     let selectQueryVersionRecords (context: MySqlContext) (query: string list) (parameters: obj list) =
         let sql = [ Records.QueryVersion.SelectSql() ] @ query |> buildSql
         context.SelectAnon<Records.QueryVersion>(sql, parameters)
-    
+
     let insertQueryVersion (context: MySqlContext) (parameters: Parameters.NewQueryVersion) =
         context.Insert("cfg_query_versions", parameters)
-    
+
     /// Select a `Records.ResourceVersion` from the table `cfg_resource_versions`.
     /// Internally this calls `context.SelectSingleAnon<Records.ResourceVersion>` and uses Records.ResourceVersion.SelectSql().
     /// The caller can provide extra string lines to create a query and boxed parameters.
@@ -1727,7 +2022,7 @@ module Operations =
     let selectResourceVersionRecord (context: MySqlContext) (query: string list) (parameters: obj list) =
         let sql = [ Records.ResourceVersion.SelectSql() ] @ query |> buildSql
         context.SelectSingleAnon<Records.ResourceVersion>(sql, parameters)
-    
+
     /// Internally this calls `context.SelectAnon<Records.ResourceVersion>` and uses Records.ResourceVersion.SelectSql().
     /// The caller can provide extra string lines to create a query and boxed parameters.
     /// It is up to the caller to verify the sql and parameters are correct,
@@ -1737,10 +2032,10 @@ module Operations =
     let selectResourceVersionRecords (context: MySqlContext) (query: string list) (parameters: obj list) =
         let sql = [ Records.ResourceVersion.SelectSql() ] @ query |> buildSql
         context.SelectAnon<Records.ResourceVersion>(sql, parameters)
-    
+
     let insertResourceVersion (context: MySqlContext) (parameters: Parameters.NewResourceVersion) =
         context.Insert("cfg_resource_versions", parameters)
-    
+
     /// Select a `Records.Resource` from the table `cfg_resources`.
     /// Internally this calls `context.SelectSingleAnon<Records.Resource>` and uses Records.Resource.SelectSql().
     /// The caller can provide extra string lines to create a query and boxed parameters.
@@ -1751,7 +2046,7 @@ module Operations =
     let selectResourceRecord (context: MySqlContext) (query: string list) (parameters: obj list) =
         let sql = [ Records.Resource.SelectSql() ] @ query |> buildSql
         context.SelectSingleAnon<Records.Resource>(sql, parameters)
-    
+
     /// Internally this calls `context.SelectAnon<Records.Resource>` and uses Records.Resource.SelectSql().
     /// The caller can provide extra string lines to create a query and boxed parameters.
     /// It is up to the caller to verify the sql and parameters are correct,
@@ -1761,10 +2056,10 @@ module Operations =
     let selectResourceRecords (context: MySqlContext) (query: string list) (parameters: obj list) =
         let sql = [ Records.Resource.SelectSql() ] @ query |> buildSql
         context.SelectAnon<Records.Resource>(sql, parameters)
-    
+
     let insertResource (context: MySqlContext) (parameters: Parameters.NewResource) =
         context.Insert("cfg_resources", parameters)
-    
+
     /// Select a `Records.TableColumn` from the table `cfg_table_columns`.
     /// Internally this calls `context.SelectSingleAnon<Records.TableColumn>` and uses Records.TableColumn.SelectSql().
     /// The caller can provide extra string lines to create a query and boxed parameters.
@@ -1775,7 +2070,7 @@ module Operations =
     let selectTableColumnRecord (context: MySqlContext) (query: string list) (parameters: obj list) =
         let sql = [ Records.TableColumn.SelectSql() ] @ query |> buildSql
         context.SelectSingleAnon<Records.TableColumn>(sql, parameters)
-    
+
     /// Internally this calls `context.SelectAnon<Records.TableColumn>` and uses Records.TableColumn.SelectSql().
     /// The caller can provide extra string lines to create a query and boxed parameters.
     /// It is up to the caller to verify the sql and parameters are correct,
@@ -1785,10 +2080,10 @@ module Operations =
     let selectTableColumnRecords (context: MySqlContext) (query: string list) (parameters: obj list) =
         let sql = [ Records.TableColumn.SelectSql() ] @ query |> buildSql
         context.SelectAnon<Records.TableColumn>(sql, parameters)
-    
+
     let insertTableColumn (context: MySqlContext) (parameters: Parameters.NewTableColumn) =
         context.Insert("cfg_table_columns", parameters)
-    
+
     /// Select a `Records.TableModelVersion` from the table `cfg_table_model_versions`.
     /// Internally this calls `context.SelectSingleAnon<Records.TableModelVersion>` and uses Records.TableModelVersion.SelectSql().
     /// The caller can provide extra string lines to create a query and boxed parameters.
@@ -1799,7 +2094,7 @@ module Operations =
     let selectTableModelVersionRecord (context: MySqlContext) (query: string list) (parameters: obj list) =
         let sql = [ Records.TableModelVersion.SelectSql() ] @ query |> buildSql
         context.SelectSingleAnon<Records.TableModelVersion>(sql, parameters)
-    
+
     /// Internally this calls `context.SelectAnon<Records.TableModelVersion>` and uses Records.TableModelVersion.SelectSql().
     /// The caller can provide extra string lines to create a query and boxed parameters.
     /// It is up to the caller to verify the sql and parameters are correct,
@@ -1809,10 +2104,10 @@ module Operations =
     let selectTableModelVersionRecords (context: MySqlContext) (query: string list) (parameters: obj list) =
         let sql = [ Records.TableModelVersion.SelectSql() ] @ query |> buildSql
         context.SelectAnon<Records.TableModelVersion>(sql, parameters)
-    
+
     let insertTableModelVersion (context: MySqlContext) (parameters: Parameters.NewTableModelVersion) =
         context.Insert("cfg_table_model_versions", parameters)
-    
+
     /// Select a `Records.TableModel` from the table `cfg_table_models`.
     /// Internally this calls `context.SelectSingleAnon<Records.TableModel>` and uses Records.TableModel.SelectSql().
     /// The caller can provide extra string lines to create a query and boxed parameters.
@@ -1823,7 +2118,7 @@ module Operations =
     let selectTableModelRecord (context: MySqlContext) (query: string list) (parameters: obj list) =
         let sql = [ Records.TableModel.SelectSql() ] @ query |> buildSql
         context.SelectSingleAnon<Records.TableModel>(sql, parameters)
-    
+
     /// Internally this calls `context.SelectAnon<Records.TableModel>` and uses Records.TableModel.SelectSql().
     /// The caller can provide extra string lines to create a query and boxed parameters.
     /// It is up to the caller to verify the sql and parameters are correct,
@@ -1833,10 +2128,10 @@ module Operations =
     let selectTableModelRecords (context: MySqlContext) (query: string list) (parameters: obj list) =
         let sql = [ Records.TableModel.SelectSql() ] @ query |> buildSql
         context.SelectAnon<Records.TableModel>(sql, parameters)
-    
+
     let insertTableModel (context: MySqlContext) (parameters: Parameters.NewTableModel) =
         context.Insert("cfg_table_models", parameters)
-    
+
     /// Select a `Records.TableObjectMapperVersion` from the table `cfg_table_object_mapper_versions`.
     /// Internally this calls `context.SelectSingleAnon<Records.TableObjectMapperVersion>` and uses Records.TableObjectMapperVersion.SelectSql().
     /// The caller can provide extra string lines to create a query and boxed parameters.
@@ -1847,7 +2142,7 @@ module Operations =
     let selectTableObjectMapperVersionRecord (context: MySqlContext) (query: string list) (parameters: obj list) =
         let sql = [ Records.TableObjectMapperVersion.SelectSql() ] @ query |> buildSql
         context.SelectSingleAnon<Records.TableObjectMapperVersion>(sql, parameters)
-    
+
     /// Internally this calls `context.SelectAnon<Records.TableObjectMapperVersion>` and uses Records.TableObjectMapperVersion.SelectSql().
     /// The caller can provide extra string lines to create a query and boxed parameters.
     /// It is up to the caller to verify the sql and parameters are correct,
@@ -1857,10 +2152,10 @@ module Operations =
     let selectTableObjectMapperVersionRecords (context: MySqlContext) (query: string list) (parameters: obj list) =
         let sql = [ Records.TableObjectMapperVersion.SelectSql() ] @ query |> buildSql
         context.SelectAnon<Records.TableObjectMapperVersion>(sql, parameters)
-    
+
     let insertTableObjectMapperVersion (context: MySqlContext) (parameters: Parameters.NewTableObjectMapperVersion) =
         context.Insert("cfg_table_object_mapper_versions", parameters)
-    
+
     /// Select a `Records.TableObjectMapper` from the table `cfg_table_object_mappers`.
     /// Internally this calls `context.SelectSingleAnon<Records.TableObjectMapper>` and uses Records.TableObjectMapper.SelectSql().
     /// The caller can provide extra string lines to create a query and boxed parameters.
@@ -1871,7 +2166,7 @@ module Operations =
     let selectTableObjectMapperRecord (context: MySqlContext) (query: string list) (parameters: obj list) =
         let sql = [ Records.TableObjectMapper.SelectSql() ] @ query |> buildSql
         context.SelectSingleAnon<Records.TableObjectMapper>(sql, parameters)
-    
+
     /// Internally this calls `context.SelectAnon<Records.TableObjectMapper>` and uses Records.TableObjectMapper.SelectSql().
     /// The caller can provide extra string lines to create a query and boxed parameters.
     /// It is up to the caller to verify the sql and parameters are correct,
@@ -1881,10 +2176,10 @@ module Operations =
     let selectTableObjectMapperRecords (context: MySqlContext) (query: string list) (parameters: obj list) =
         let sql = [ Records.TableObjectMapper.SelectSql() ] @ query |> buildSql
         context.SelectAnon<Records.TableObjectMapper>(sql, parameters)
-    
+
     let insertTableObjectMapper (context: MySqlContext) (parameters: Parameters.NewTableObjectMapper) =
         context.Insert("cfg_table_object_mappers", parameters)
-    
+
     /// Select a `Records.PipelineRunItem` from the table `pipeline_runs`.
     /// Internally this calls `context.SelectSingleAnon<Records.PipelineRunItem>` and uses Records.PipelineRunItem.SelectSql().
     /// The caller can provide extra string lines to create a query and boxed parameters.
@@ -1895,7 +2190,7 @@ module Operations =
     let selectPipelineRunItemRecord (context: MySqlContext) (query: string list) (parameters: obj list) =
         let sql = [ Records.PipelineRunItem.SelectSql() ] @ query |> buildSql
         context.SelectSingleAnon<Records.PipelineRunItem>(sql, parameters)
-    
+
     /// Internally this calls `context.SelectAnon<Records.PipelineRunItem>` and uses Records.PipelineRunItem.SelectSql().
     /// The caller can provide extra string lines to create a query and boxed parameters.
     /// It is up to the caller to verify the sql and parameters are correct,
@@ -1905,10 +2200,10 @@ module Operations =
     let selectPipelineRunItemRecords (context: MySqlContext) (query: string list) (parameters: obj list) =
         let sql = [ Records.PipelineRunItem.SelectSql() ] @ query |> buildSql
         context.SelectAnon<Records.PipelineRunItem>(sql, parameters)
-    
+
     let insertPipelineRunItem (context: MySqlContext) (parameters: Parameters.NewPipelineRunItem) =
         context.Insert("pipeline_runs", parameters)
-    
+
     /// Select a `Records.PipelineScheduleEvent` from the table `pipeline_schedule_events`.
     /// Internally this calls `context.SelectSingleAnon<Records.PipelineScheduleEvent>` and uses Records.PipelineScheduleEvent.SelectSql().
     /// The caller can provide extra string lines to create a query and boxed parameters.
@@ -1919,7 +2214,7 @@ module Operations =
     let selectPipelineScheduleEventRecord (context: MySqlContext) (query: string list) (parameters: obj list) =
         let sql = [ Records.PipelineScheduleEvent.SelectSql() ] @ query |> buildSql
         context.SelectSingleAnon<Records.PipelineScheduleEvent>(sql, parameters)
-    
+
     /// Internally this calls `context.SelectAnon<Records.PipelineScheduleEvent>` and uses Records.PipelineScheduleEvent.SelectSql().
     /// The caller can provide extra string lines to create a query and boxed parameters.
     /// It is up to the caller to verify the sql and parameters are correct,
@@ -1929,10 +2224,10 @@ module Operations =
     let selectPipelineScheduleEventRecords (context: MySqlContext) (query: string list) (parameters: obj list) =
         let sql = [ Records.PipelineScheduleEvent.SelectSql() ] @ query |> buildSql
         context.SelectAnon<Records.PipelineScheduleEvent>(sql, parameters)
-    
+
     let insertPipelineScheduleEvent (context: MySqlContext) (parameters: Parameters.NewPipelineScheduleEvent) =
         context.Insert("pipeline_schedule_events", parameters)
-    
+
     /// Select a `Records.PipelineScheduleRun` from the table `pipeline_schedule_runs`.
     /// Internally this calls `context.SelectSingleAnon<Records.PipelineScheduleRun>` and uses Records.PipelineScheduleRun.SelectSql().
     /// The caller can provide extra string lines to create a query and boxed parameters.
@@ -1943,7 +2238,7 @@ module Operations =
     let selectPipelineScheduleRunRecord (context: MySqlContext) (query: string list) (parameters: obj list) =
         let sql = [ Records.PipelineScheduleRun.SelectSql() ] @ query |> buildSql
         context.SelectSingleAnon<Records.PipelineScheduleRun>(sql, parameters)
-    
+
     /// Internally this calls `context.SelectAnon<Records.PipelineScheduleRun>` and uses Records.PipelineScheduleRun.SelectSql().
     /// The caller can provide extra string lines to create a query and boxed parameters.
     /// It is up to the caller to verify the sql and parameters are correct,
@@ -1953,10 +2248,10 @@ module Operations =
     let selectPipelineScheduleRunRecords (context: MySqlContext) (query: string list) (parameters: obj list) =
         let sql = [ Records.PipelineScheduleRun.SelectSql() ] @ query |> buildSql
         context.SelectAnon<Records.PipelineScheduleRun>(sql, parameters)
-    
+
     let insertPipelineScheduleRun (context: MySqlContext) (parameters: Parameters.NewPipelineScheduleRun) =
         context.Insert("pipeline_schedule_runs", parameters)
-    
+
     /// Select a `Records.PipelineSchedule` from the table `pipeline_schedules`.
     /// Internally this calls `context.SelectSingleAnon<Records.PipelineSchedule>` and uses Records.PipelineSchedule.SelectSql().
     /// The caller can provide extra string lines to create a query and boxed parameters.
@@ -1967,7 +2262,7 @@ module Operations =
     let selectPipelineScheduleRecord (context: MySqlContext) (query: string list) (parameters: obj list) =
         let sql = [ Records.PipelineSchedule.SelectSql() ] @ query |> buildSql
         context.SelectSingleAnon<Records.PipelineSchedule>(sql, parameters)
-    
+
     /// Internally this calls `context.SelectAnon<Records.PipelineSchedule>` and uses Records.PipelineSchedule.SelectSql().
     /// The caller can provide extra string lines to create a query and boxed parameters.
     /// It is up to the caller to verify the sql and parameters are correct,
@@ -1977,10 +2272,10 @@ module Operations =
     let selectPipelineScheduleRecords (context: MySqlContext) (query: string list) (parameters: obj list) =
         let sql = [ Records.PipelineSchedule.SelectSql() ] @ query |> buildSql
         context.SelectAnon<Records.PipelineSchedule>(sql, parameters)
-    
+
     let insertPipelineSchedule (context: MySqlContext) (parameters: Parameters.NewPipelineSchedule) =
         context.Insert("pipeline_schedules", parameters)
-    
+
     /// Select a `Records.Subscription` from the table `subscriptions`.
     /// Internally this calls `context.SelectSingleAnon<Records.Subscription>` and uses Records.Subscription.SelectSql().
     /// The caller can provide extra string lines to create a query and boxed parameters.
@@ -1991,7 +2286,7 @@ module Operations =
     let selectSubscriptionRecord (context: MySqlContext) (query: string list) (parameters: obj list) =
         let sql = [ Records.Subscription.SelectSql() ] @ query |> buildSql
         context.SelectSingleAnon<Records.Subscription>(sql, parameters)
-    
+
     /// Internally this calls `context.SelectAnon<Records.Subscription>` and uses Records.Subscription.SelectSql().
     /// The caller can provide extra string lines to create a query and boxed parameters.
     /// It is up to the caller to verify the sql and parameters are correct,
@@ -2001,10 +2296,10 @@ module Operations =
     let selectSubscriptionRecords (context: MySqlContext) (query: string list) (parameters: obj list) =
         let sql = [ Records.Subscription.SelectSql() ] @ query |> buildSql
         context.SelectAnon<Records.Subscription>(sql, parameters)
-    
+
     let insertSubscription (context: MySqlContext) (parameters: Parameters.NewSubscription) =
         context.Insert("subscriptions", parameters)
-    
+
     /// Select a `Records.User` from the table `users`.
     /// Internally this calls `context.SelectSingleAnon<Records.User>` and uses Records.User.SelectSql().
     /// The caller can provide extra string lines to create a query and boxed parameters.
@@ -2015,7 +2310,7 @@ module Operations =
     let selectUserRecord (context: MySqlContext) (query: string list) (parameters: obj list) =
         let sql = [ Records.User.SelectSql() ] @ query |> buildSql
         context.SelectSingleAnon<Records.User>(sql, parameters)
-    
+
     /// Internally this calls `context.SelectAnon<Records.User>` and uses Records.User.SelectSql().
     /// The caller can provide extra string lines to create a query and boxed parameters.
     /// It is up to the caller to verify the sql and parameters are correct,
@@ -2025,7 +2320,5 @@ module Operations =
     let selectUserRecords (context: MySqlContext) (query: string list) (parameters: obj list) =
         let sql = [ Records.User.SelectSql() ] @ query |> buildSql
         context.SelectAnon<Records.User>(sql, parameters)
-    
-    let insertUser (context: MySqlContext) (parameters: Parameters.NewUser) =
-        context.Insert("users", parameters)
-    
+
+    let insertUser (context: MySqlContext) (parameters: Parameters.NewUser) = context.Insert("users", parameters)

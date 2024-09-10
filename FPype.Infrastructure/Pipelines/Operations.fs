@@ -9,7 +9,6 @@ module Operations =
 
 
     open Freql.MySql
-    open FsToolbox.Core.Results
     open FPype.Infrastructure.Core
     open FPype.Infrastructure.Core.Persistence
     open FPype.Infrastructure.Configuration.Common

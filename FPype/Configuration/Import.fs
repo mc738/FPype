@@ -9,7 +9,7 @@ module Import =
     open Microsoft.FSharp.Core
     open FPype.Core
     open FPype.Core.Logging
-    
+
     [<AutoOpen>]
     module private Helpers =
 
@@ -31,15 +31,17 @@ module Import =
                 |> List.mapi (fun i c ->
                     // NOTE should this be -
                     // Tables.NewColumn.Deserialize(c)
-                    
+
                     match Json.tryGetStringProperty "name" c, Json.tryGetStringProperty "type" c with
                     | Some n, Some t ->
                         ({ Id = IdType.FromJson json
                            Name = n
                            DataType = t
-                           ColumnIndex = Json.tryGetIntProperty "columnIndex" c 
+                           ColumnIndex = Json.tryGetIntProperty "columnIndex" c
                            Optional = Json.tryGetBoolProperty "optional" c |> Option.defaultValue false
-                           ImportHandler = Json.tryGetProperty "importHandler" c |> Option.map (fun ih -> ih.ToString()) }: Tables.NewColumn)
+                           ImportHandler =
+                             Json.tryGetProperty "importHandler" c |> Option.map (fun ih -> ih.ToString()) }
+                        : Tables.NewColumn)
                         |> Ok
                     | None, _ -> Error $"Column `{i}` missing `name` property"
                     | _, None -> Error $"Column `{i}` missing `name` property")
@@ -49,7 +51,8 @@ module Import =
                 ({ Id = IdType.FromJson json
                    Name = name
                    Version = ItemVersion.FromJson json
-                   Columns = columns }: Tables.NewTableVersion))
+                   Columns = columns }
+                : Tables.NewTableVersion))
         | None -> Error "Missing `name` property"
         |> Result.bind (
             match transaction with
@@ -66,7 +69,8 @@ module Import =
             ({ Id = IdType.FromJson json
                Name = n
                Version = ItemVersion.FromJson json
-               Query = q }: Queries.NewQueryVersion)
+               Query = q }
+            : Queries.NewQueryVersion)
             |> Ok
         | None, _ -> Error "Missing `name` property"
         | _, None -> Error "Missing `query` property"
@@ -85,7 +89,8 @@ module Import =
             ({ Id = IdType.FromJson json
                Name = n
                Version = ItemVersion.FromJson json
-               Mapper = m.ToString() }: TableObjectMappers.NewTableObjectMapperVersion)
+               Mapper = m.ToString() }
+            : TableObjectMappers.NewTableObjectMapperVersion)
             |> Ok
         | None, _ -> Error "Missing `name` property"
         | _, None -> Error "Missing `mapper` property"
@@ -109,7 +114,8 @@ module Import =
                Version = ItemVersion.FromJson json
                ActionType = t
                ActionData = d.ToString()
-               Step = Json.tryGetIntProperty "step" json }: Actions.NewPipelineAction)
+               Step = Json.tryGetIntProperty "step" json }
+            : Actions.NewPipelineAction)
             |> Ok
         | None, _, _, _ -> Error "Missing `pipeline` property"
         | _, None, _, _ -> Error "Missing `name` property"
@@ -130,7 +136,8 @@ module Import =
             ({ Id = IdType.FromJson json
                Name = n
                Description = Json.tryGetStringProperty "description" json |> Option.defaultValue ""
-               Version = ItemVersion.FromJson json }: Pipelines.NewPipelineVersion)
+               Version = ItemVersion.FromJson json }
+            : Pipelines.NewPipelineVersion)
             |> fun pipeline ->
                 match transaction with
                 | true -> Pipelines.addVersionTransaction ctx pipeline
@@ -148,7 +155,8 @@ module Import =
                Name = n
                Version = ItemVersion.FromJson json
                Required = Json.tryGetBoolProperty "required" json |> Option.defaultValue false
-               DefaultValue = Json.tryGetStringProperty "default" json }: Pipelines.NewPipelineArg)
+               DefaultValue = Json.tryGetStringProperty "default" json }
+            : Pipelines.NewPipelineArg)
             |> Ok
         | None, _ -> Error "Missing `name` property"
         | _, None -> Error "Missing `pipeline` property"

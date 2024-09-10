@@ -8,7 +8,6 @@ module Export =
     open FsToolbox.Extensions
     open FPype.Data
     open FPype.Data.Models
-    open FPype.Data.Store
 
     module ``table-to-csv`` =
 

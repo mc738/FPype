@@ -3,7 +3,6 @@
 open System
 open FPype.Configuration
 open Freql.Core.Common.Types
-open FsToolbox.Core
 
 [<RequireQualifiedAccess>]
 module Objects =
@@ -70,7 +69,7 @@ module Objects =
                 use ctx = SqliteContext.Create(fullPath)
 
                 createDataSinkTables ctx
-                
+
                 [ GlobalMetadataKeys.subscriptionId, subscriptionId
                   GlobalMetadataKeys.createdOn, DateTime.UtcNow.ToString() ]
                 |> List.iter (fun (k, v) -> Operations.insertGlobalMetadata ctx k v)

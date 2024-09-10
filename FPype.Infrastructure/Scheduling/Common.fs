@@ -11,8 +11,6 @@ module Common =
 
         open FsToolbox.Core.Results
         open Freql.MySql
-        open FPype.Infrastructure.Core
-        open FPype.Infrastructure.Core.Persistence
 
         let activeSchedules (ctx: MySqlContext) =
             try

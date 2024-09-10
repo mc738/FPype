@@ -9,7 +9,6 @@ module CreateOperations =
     open FPype.Infrastructure.Core.Persistence
     open FPype.Infrastructure.Configuration.Common
     open Freql.MySql
-    open FsToolbox.Extensions
     open FsToolbox.Core.Results
 
     let resource (ctx: MySqlContext) (logger: ILogger) (userReference: string) (resource: NewResource) =
@@ -96,7 +95,7 @@ module CreateOperations =
             |> Result.map (fun (ur, sr, rr, rvr) ->
                 let timestamp = getTimestamp ()
                 let versionNumber = rvr.Version + 1
-                
+
                 ({ Reference = version.Reference
                    ResourceId = rr.Id
                    Version = versionNumber
@@ -107,7 +106,7 @@ module CreateOperations =
                 : Parameters.NewResourceVersion)
                 |> Operations.insertResourceVersion t
                 |> ignore
-                
+
                 [ ({ Reference = version.Reference
                      ResourceReference = rr.Reference
                      Version = versionNumber

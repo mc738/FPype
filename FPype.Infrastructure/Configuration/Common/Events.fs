@@ -9,7 +9,7 @@ module Events =
     open Freql.MySql
     open FPype.Infrastructure.Core
     open FPype.Infrastructure.Core.Persistence
-        
+
     type ConfigurationEvent =
         // Pipelines
         | PipelineAdded of PipelineAddedEvent
@@ -360,5 +360,4 @@ module Events =
             |> FetchResult.fromResult)
 
     let selectEvents (ctx: MySqlContext) (subscriptionId: int) (previousTip: int) =
-        selectEventRecords ctx subscriptionId previousTip
-        |> deserializeRecords
+        selectEventRecords ctx subscriptionId previousTip |> deserializeRecords

@@ -4,13 +4,15 @@
 module Models =
 
     open System
-    
+
     type NewTableObjectMapper =
         { Reference: string
           Name: string
           Version: NewTableObjectMapperVersion }
 
-    and NewTableObjectMapperVersion = { Reference: string; MapperData: string }
+    and NewTableObjectMapperVersion =
+        { Reference: string
+          MapperData: string }
 
     type TableObjectMapperDetails =
         { Reference: string
@@ -23,7 +25,7 @@ module Models =
           MapperData: string
           Hash: string
           CreatedOn: DateTime }
-        
+
     type TableObjectMapperVersionOverview =
         { MapperReference: string
           Reference: string

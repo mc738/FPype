@@ -3,7 +3,6 @@
 [<RequireQualifiedAccess>]
 module Queries =
 
-    open System
     open System.IO
     open System.Text.Json
     open Freql.Core.Common.Types
@@ -80,7 +79,8 @@ module Queries =
            Version = version
            QueryBlob = BlobField.FromBytes ms
            Hash = hash
-           CreatedOn = timestamp () }: Parameters.NewQueryVersion)
+           CreatedOn = timestamp () }
+        : Parameters.NewQueryVersion)
         |> Operations.insertQueryVersion ctx
 
     let addLatestTransaction (ctx: SqliteContext) (id: IdType) (name: string) (query: string) =
@@ -103,7 +103,8 @@ module Queries =
                Version = version
                QueryBlob = BlobField.FromBytes ms
                Hash = hash
-               CreatedOn = timestamp () }: Parameters.NewQueryVersion)
+               CreatedOn = timestamp () }
+            : Parameters.NewQueryVersion)
             |> Operations.insertQueryVersion ctx
             |> Ok
 
@@ -119,9 +120,7 @@ module Queries =
         ctx.ExecuteInTransactionV2(fun t -> addVersion t query)
 
     let add (ctx: SqliteContext) (queryName: string) =
-        ({ Name = queryName }: Parameters.NewQuery)
-        |> Operations.insertQuery ctx
-        
+        ({ Name = queryName }: Parameters.NewQuery) |> Operations.insertQuery ctx
+
     let addTransaction (ctx: SqliteContext) (queryName: string) =
         ctx.ExecuteInTransaction(fun t -> add t queryName)
-        

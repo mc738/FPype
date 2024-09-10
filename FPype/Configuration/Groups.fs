@@ -26,7 +26,8 @@ module Groups =
             |> fun dg ->
                 ({ FieldName = fieldName
                    Label = label
-                   Groups = dg }: DateGroups)
+                   Groups = dg }
+                : DateGroups)
             |> Ok
         | None, _, _, _ -> Error "Missing start property"
         | _, None, _, _ -> Error "Missing length property"

@@ -3,17 +3,12 @@
 open DocumentFormat.OpenXml.Packaging
 open FPype.Core.Types
 open FPype.Data.Models
-open FPype.ML
 
 [<RequireQualifiedAccess>]
 module Extract =
 
     open System
-    open System.Text.Json
-    open FPype.Core.Types
-    open FPype.Data.Models
     open FPype.Data.Store
-    open FsToolbox.Core
     open FsToolbox.Tools
     open FsToolbox.Extensions
     open FPype.Core
@@ -529,7 +524,7 @@ module Extract =
                 |> (fun (s, e) ->
                     { Rows = s |> List.rev
                       Errors = e |> List.rev })
-                
+
         let name = "extract_from_xlsx"
 
         type Parameters =
@@ -558,11 +553,11 @@ module Extract =
                         | None -> Error $"Worksheet `{parameters.WorksheetName}` not found"
 
                     exec fn true path
-                    
+
                 with exn ->
                     Error $"Error handling xlsx file: {exn}")
             |> Result.bind (fun rows ->
-                
+
                 let mappedColumns = mapTableColumns 0 parameters.Table parameters.ColumnMap
 
                 let r = createXlsxRows mappedColumns rows
@@ -583,6 +578,6 @@ module Extract =
             |> Result.map (fun r ->
                 store.Log(stepName, name, $"Imported {r.Length} row(s) to table `{parameters.Table.Name}`.")
                 store)
-            
+
         let createAction stepName parameters =
             run parameters stepName |> createAction name stepName

@@ -9,8 +9,6 @@ open FsToolbox.Extensions.Strings
 module FSharp =
 
     open System
-    open FPype.Data.Store
-    open FPype.Scripting.Core
 
     [<AutoOpen>]
     module private Helpers =
@@ -18,7 +16,7 @@ module FSharp =
         let deserializeOption<'T> (fn: string -> Result<'T, string>) (str: string) =
             match str.IsNotNullOrWhiteSpace() with
             | true -> fn str |> Result.map Some
-            | false ->  Ok None
+            | false -> Ok None
 
     /// <summary>
     /// The script context.
@@ -340,7 +338,6 @@ module FSharp =
         open System.IO
         open System.Text
         open FSharp.Compiler.Interactive.Shell
-        open Freql.Sqlite
 
         let fsiSession _ =
             // Initialize output and input streams

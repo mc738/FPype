@@ -1,8 +1,6 @@
 ﻿namespace FPype.Infrastructure.Configuration
 
-open System
 open System.IO
-open FPype.Data.Store
 open FPype.Infrastructure.Configuration.Common.Events
 open FPype.Infrastructure.Core.Persistence
 open Microsoft.Extensions.Logging
@@ -17,7 +15,7 @@ module Impl =
     open FsToolbox.Core.Results
 
     module Internal =
-        
+
         let handleEvent
             (ctx: MySqlContext)
             (logger: ILogger)
@@ -35,23 +33,44 @@ module Impl =
                 Pipelines.StoreOperations.addPipelineAction ctx logger store subscription data.Reference
             | PipelineResourceAdded data ->
                 Pipelines.StoreOperations.addPipelineResource ctx logger store subscription data.Reference
-            | PipelineArgAdded data -> Pipelines.StoreOperations.addPipelineArg ctx logger store subscription data.Reference
+            | PipelineArgAdded data ->
+                Pipelines.StoreOperations.addPipelineArg ctx logger store subscription data.Reference
             | TableAdded data -> Tables.StoreOperations.addTable ctx logger store subscription data.Reference
-            | TableVersionAdded data -> Tables.StoreOperations.addTableVersionExcludingColumns ctx logger store subscription data.Reference
-            | TableColumnAdded data -> Tables.StoreOperations.addTableColumn ctx logger store subscription data.Reference
+            | TableVersionAdded data ->
+                Tables.StoreOperations.addTableVersionExcludingColumns ctx logger store subscription data.Reference
+            | TableColumnAdded data ->
+                Tables.StoreOperations.addTableColumn ctx logger store subscription data.Reference
             | QueryAdded data -> Queries.StoreOperations.addQuery ctx logger store subscription data.Reference
-            | QueryVersionAdded data -> Queries.StoreOperations.addQueryVersion ctx logger store subscription data.Reference
+            | QueryVersionAdded data ->
+                Queries.StoreOperations.addQueryVersion ctx logger store subscription data.Reference
             | ResourceAdded data -> Resources.StoreOperations.addResource ctx logger store subscription data.Reference
             | ResourceVersionAdded data ->
-                Resources.StoreOperations.addResourceVersion ctx logger store fileRepo readArgs subscription data.Reference
+                Resources.StoreOperations.addResourceVersion
+                    ctx
+                    logger
+                    store
+                    fileRepo
+                    readArgs
+                    subscription
+                    data.Reference
             | TableObjectMapperAdded data ->
                 TableObjectMappers.StoreOperations.addTableObjectMapper ctx store subscription data.Reference
             | TableObjectMapperVersionAdded data ->
-                TableObjectMappers.StoreOperations.addTableObjectMapperVersion ctx logger store subscription data.Reference
+                TableObjectMappers.StoreOperations.addTableObjectMapperVersion
+                    ctx
+                    logger
+                    store
+                    subscription
+                    data.Reference
             | ObjectTableMapperAdded data ->
                 ObjectTableMappers.StoreOperations.addObjectTableMapper ctx logger store subscription data.Reference
             | ObjectTableMapperVersionAdded data ->
-                ObjectTableMappers.StoreOperations.addObjectTableMapperVersion ctx logger store subscription data.Reference
+                ObjectTableMappers.StoreOperations.addObjectTableMapperVersion
+                    ctx
+                    logger
+                    store
+                    subscription
+                    data.Reference
 
     let buildNewStore
         (ctx: MySqlContext)
@@ -72,14 +91,20 @@ module Impl =
             // This might not be the best idea (?) but it is to ensure no updates happen while building the config
 
             logger.LogInformation($"Build fresh configuration store for subscription {sub.Id}")
-            
+
             let result =
                 ctx.ExecuteInTransaction(fun t ->
 
                     let tip = Events.selectGlobalTip t
 
-                    let cfg = ConfigurationStore.Initialize(path, additionActions, subscriptionId = subscription, serialTip = tip)
-                    
+                    let cfg =
+                        ConfigurationStore.Initialize(
+                            path,
+                            additionActions,
+                            subscriptionId = subscription,
+                            serialTip = tip
+                        )
+
                     Tables.StoreOperations.addAllTableVersions t logger failOnError sub cfg
                     |> ActionResult.bind (Queries.StoreOperations.addAllQueryVersions t logger failOnError sub)
                     |> ActionResult.bind (
@@ -115,18 +140,18 @@ module Impl =
         Fetch.subscriptionByReference ctx subscription
         |> FetchResult.toActionResult
         |> ActionResult.bind (fun sub ->
-            
+
             let cfg = ConfigurationStore.Load(path)
 
             let cfgSubscriptionId = cfg.GetSubscriptionId()
-            
-            // NOTE Should this default to 0?
-            let cfgTip =
-                cfg.GetSerialTip()
-                |> Option.defaultValue 0
 
-            logger.LogInformation($"Building configuration store for subscription {sub.Reference}. Current serial: {cfgTip}")
-            
+            // NOTE Should this default to 0?
+            let cfgTip = cfg.GetSerialTip() |> Option.defaultValue 0
+
+            logger.LogInformation(
+                $"Building configuration store for subscription {sub.Reference}. Current serial: {cfgTip}"
+            )
+
             match cfgSubscriptionId with
             | Some sid when sid = sub.Reference ->
                 let eventRecords = Events.selectEventRecords ctx sub.Id cfgTip
@@ -140,7 +165,7 @@ module Impl =
                     let newTip = eventRecords |> List.maxBy (fun er -> er.Id) |> (fun er -> er.Id)
 
                     logger.LogInformation($"Events to handle: {events.Length}")
-                    
+
                     events
                     |> List.fold
                         (fun (r: ActionResult<unit>) er ->
@@ -158,7 +183,10 @@ module Impl =
                                 | true -> ActionResult.Failure f
                                 | false ->
                                     // NOTE This uses the display message because the log is not fully internal (potentially).
-                                    logger.LogWarning($"Failed to deserialize event. Reason: {f.DisplayMessage}. Skipping")
+                                    logger.LogWarning(
+                                        $"Failed to deserialize event. Reason: {f.DisplayMessage}. Skipping"
+                                    )
+
                                     ActionResult.Success()
                             | _, ActionResult.Failure f -> r)
                         (ActionResult.Success())
@@ -166,8 +194,11 @@ module Impl =
                         cfg.SetSerialTip(newTip)
                         cfg)
             | Some sid ->
-                let msg = $"Configuration store subscription (`{sid}`) does not match requested subscription `{sub.Reference}`"
+                let msg =
+                    $"Configuration store subscription (`{sid}`) does not match requested subscription `{sub.Reference}`"
+
                 logger.LogError(msg)
+
                 ({ Message = msg
                    DisplayMessage = "Subscription mismatch"
                    Exception = None }
@@ -176,6 +207,7 @@ module Impl =
             | None ->
                 let msg = "Configuration store subscription has no subscription id set"
                 logger.LogError(msg)
+
                 ({ Message = msg
                    DisplayMessage = "Subscription missing"
                    Exception = None }
@@ -192,9 +224,6 @@ module Impl =
         (failOnError: bool)
         (additionActions: string list)
         =
-            match File.Exists path with
-            | true ->
-                buildStoreFromSerial ctx logger fileRepo readArgs subscription path failOnError additionActions
-            | false ->
-                buildNewStore ctx logger fileRepo readArgs subscription path failOnError additionActions
-        
+        match File.Exists path with
+        | true -> buildStoreFromSerial ctx logger fileRepo readArgs subscription path failOnError additionActions
+        | false -> buildNewStore ctx logger fileRepo readArgs subscription path failOnError additionActions

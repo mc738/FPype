@@ -17,8 +17,11 @@ module CreateOperations =
             // Fetch
             Fetch.user t userReference
             |> FetchResult.merge (fun ur sr -> ur, sr) (fun ur -> Fetch.subscriptionById t ur.Id)
-            |> FetchResult.chain (fun (ur, sr) tvr -> ur, sr, tvr) (Fetch.tableVersionByReference t mapper.Version.TableModelReference)
-            |> FetchResult.merge (fun (ur, sr, tvr) tr -> ur, sr, tr, tvr) (fun (_, _, tvr) -> Fetch.tableById t tvr.Id)
+            |> FetchResult.chain
+                (fun (ur, sr) tvr -> ur, sr, tvr)
+                (Fetch.tableVersionByReference t mapper.Version.TableModelReference)
+            |> FetchResult.merge (fun (ur, sr, tvr) tr -> ur, sr, tr, tvr) (fun (_, _, tvr) ->
+                Fetch.tableById t tvr.Id)
             |> FetchResult.toResult
             // Verify
             |> Result.bind (fun (ur, sr, tr, tvr) ->
@@ -54,7 +57,7 @@ module CreateOperations =
                 : Parameters.NewObjectTableMapperVersion)
                 |> Operations.insertObjectTableMapperVersion t
                 |> ignore
-                
+
                 [ ({ Reference = mapper.Reference
                      MapperName = mapper.Name }
                   : Events.ObjectTableMapperAddedEvent)
@@ -107,7 +110,7 @@ module CreateOperations =
             |> Result.map (fun (ur, sr, mr, mvr, tr, tvr) ->
                 let timestamp = getTimestamp ()
                 let hash = version.MapperData.GetSHA256Hash()
-                let versionNumber = mvr.Version + 1 
+                let versionNumber = mvr.Version + 1
 
                 ({ Reference = version.Reference
                    ObjectTableMapperId = mr.Id
@@ -119,7 +122,7 @@ module CreateOperations =
                 : Parameters.NewObjectTableMapperVersion)
                 |> Operations.insertObjectTableMapperVersion t
                 |> ignore
-                
+
                 [ ({ Reference = version.Reference
                      MapperReference = mr.Reference
                      Version = versionNumber

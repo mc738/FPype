@@ -4,18 +4,17 @@
 module Models =
 
     open System
-        
+
     type NewResource =
         { Reference: string
           Name: string
           Version: NewResourceVersion }
 
-    and NewResourceVersion = {
-        Reference: string
-        Type: string
-        Path: string
-        Hash: string
-    }
+    and NewResourceVersion =
+        { Reference: string
+          Type: string
+          Path: string
+          Hash: string }
 
     type ResourceDetails =
         { Reference: string
