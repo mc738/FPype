@@ -15,13 +15,3 @@ module Import =
             interface IPipelineAction with
                 
                 member _.ActionType = nameof(ImportFileAction)
-    
-    //type ImportFileAction() =
-    //    
-    //    interface IPipelineAction with
-    //        member this.ActionType = nameof(ImportFileAction)
-    //    
-    //    
-    //    [<JsonPropertyName "">]
-    //    member val Path 
-    //
