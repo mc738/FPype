@@ -1,5 +1,6 @@
 ﻿namespace FPype.Actions
 
+open FPype.Visualizations.Charts
 open FPype.Visualizations.Charts.CandleStickCharts
 
 module Visualizations =
@@ -95,7 +96,7 @@ module Visualizations =
                     match r with
                     | Ok _ ->
                         store.BespokeSelectRows(parameters.SeriesTable, parameters.SeriesQuerySql, [ cat ])
-                        |> generate parameters.GeneratorSettings
+                        |> CandleStickCharts.generate parameters.GeneratorSettings
                         |> Result.map (fun c ->
                             // If all ok save the chart.
                             store.AddArtifact(
