@@ -12,4 +12,8 @@
         <Compile Include="Common\Actions\JsonSerialization.fs" />
     </ItemGroup>
 
+    <ItemGroup>
+      <ProjectReference Include="..\FPype\FPype.fsproj" />
+    </ItemGroup>
+
 </Project>
