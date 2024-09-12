@@ -65,15 +65,9 @@ module Utils =
             member this.ToSerializedActionParameters() =
                 // This is handled specifically because of table models.
                 // So instead it serialized the data specifically.
-                use ms = new MemoryStream()
-                use writer = new Utf8JsonWriter(ms)
-
-                Json.writeObject
-                    (fun w ->
+                writeJson (
+                    Json.writeObject (fun w ->
                         w.WriteString("path", this.Path)
                         this.VariableName |> Option.iter (fun v -> w.WriteString("variable", v))
                         Json.writeArray (fun aw -> this.Tables |> List.iter (fun t -> t.WriteToJson aw)) "tables" w)
-                    writer
-
-                writer.Flush()
-                ms.ToArray() |> Encoding.UTF8.GetString
+                )
