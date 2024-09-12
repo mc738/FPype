@@ -6,9 +6,10 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <Compile Include="Library.fs"/>
         <Compile Include="Common\Actions\Shared.fs" />
+        <Compile Include="Common\Actions\Utils.fs" />
         <Compile Include="Common\Actions\Import.fs" />
+        <Compile Include="Common\Actions\Extract.fs" />
         <Compile Include="Common\Actions\JsonSerialization.fs" />
     </ItemGroup>
 
