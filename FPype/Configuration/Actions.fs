@@ -1,4 +1,6 @@
-﻿namespace FPype.Configuration
+﻿// ReSharper disable FSharpRedundantBackticks
+
+namespace FPype.Configuration
 
 open FPype.Actions
 open FPype.Actions.ML
@@ -91,9 +93,8 @@ module Actions =
             let deserialize (stepName: string) (json: JsonElement) =
                 match
                     Json.tryGetStringProperty "path" json,
-                    // TODO - should this be collectionName?
-                    Json.tryGetStringProperty "name" json,
-                    Json.tryGetIntProperty "size" json
+                    Json.tryGetStringProperty "collection" json,
+                    Json.tryGetIntProperty "chunkSize" json
                 with
                 | Some path, Some name, Some size ->
                     ({ Path = path
@@ -103,8 +104,8 @@ module Actions =
                     |> Import.``chunk-file``.createAction stepName
                     |> Ok
                 | None, _, _ -> Error "Missing path property"
-                | _, None, _ -> Error "Missing name property"
-                | _, _, None -> Error "Missing size property"
+                | _, None, _ -> Error "Missing collectionName property"
+                | _, _, None -> Error "Missing chunkSize property"
 
         module ``http-get`` =
             let deserialize (stepName: string) (json: JsonElement) =
@@ -123,10 +124,10 @@ module Actions =
                         |> Option.defaultValue Map.empty
 
                     ({ Url = url
-                       AdditionHeaders = additionalHeaders
+                       AdditionalHeaders = additionalHeaders
                        Name = name
                        ResponseType = Json.tryGetStringProperty "responseType" json
-                       Collection = Json.tryGetStringProperty "collection" json }
+                       CollectionName = Json.tryGetStringProperty "collection" json }
                     : Import.``http-get``.Parameters)
                     |> Import.``http-get``.createAction stepName
                     |> Ok
@@ -368,7 +369,7 @@ module Actions =
 
         let names = []
 
-        let all (ctx: SqliteContext) = []
+        let all (_: SqliteContext) = []
 
     module Export =
 
