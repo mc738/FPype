@@ -1,10 +1,8 @@
 namespace FPype.Interoperability.Common.Actions
 
-open System.Text.Json.Serialization
-open FPype.Actions
-
 module Import =
 
+    open System.Text.Json.Serialization
     open FPype.Actions
 
     type ImportFileAction =
@@ -64,6 +62,8 @@ module Import =
 
 
         interface IPipelineAction with
+        
+            [<JsonPropertyName "actionType">]
             member this.ActionType = nameof this
 
             member this.GetActionName() = Import.``http-get``.name
