@@ -84,7 +84,7 @@ module Import =
 
         type Parameters =
             { Url: string
-              AdditionHeaders: Map<string, string>
+              AdditionalHeaders: Map<string, string>
               Name: string
               ResponseType: string option
               Collection: string option }
@@ -92,7 +92,7 @@ module Import =
         let run (parameters: Parameters) (store: PipelineStore) =
             use client = new HttpClient()
 
-            parameters.AdditionHeaders
+            parameters.AdditionalHeaders
             |> Map.iter (fun k v -> client.DefaultRequestHeaders.Add(k, v))
 
             let handler _ =
