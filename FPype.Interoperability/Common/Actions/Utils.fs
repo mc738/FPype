@@ -69,5 +69,5 @@ module Utils =
                     Json.writeObject (fun w ->
                         w.WriteString("path", this.Path)
                         this.VariableName |> Option.iter (fun v -> w.WriteString("variable", v))
-                        Json.writeArray (fun aw -> this.Tables |> List.iter (fun t -> t.WriteToJson aw)) "tables" w)
+                        Json.writeArray (fun aw -> this.Tables |> List.iter (fun t -> t.WriteToJsonValue aw)) "tables" w)
                 )
