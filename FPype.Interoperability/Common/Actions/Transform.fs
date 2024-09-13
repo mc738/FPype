@@ -74,12 +74,9 @@ module Transform =
                         this.Table.WriteToJsonProperty("table", w))
                 )
 
-    
     type AggregateByDateAction =
         { [<JsonPropertyName "dateGroups">]
           DateGroups: IDateGroups
-          [<JsonPropertyName "categoryField">]
-          CategoryField: string
           [<JsonPropertyName "query">]
           Query: ActionQueryVersion
           [<JsonPropertyName "table">]
@@ -90,14 +87,33 @@ module Transform =
             [<JsonPropertyName "actionType">]
             member this.ActionType = nameof this
 
-            member this.GetActionName() =
-                Transform.``aggregate-by-date-and-category``.name
+            member this.GetActionName() = Transform.``aggregate-by-date``.name
 
             member this.ToSerializedActionParameters() =
                 writeJson (
                     Json.writeObject (fun w ->
                         this.DateGroups.WriteToJsonProperty("dateGroups", w)
-                        w.WriteString("categoryField", this.CategoryField)
                         this.Table.WriteToJsonProperty("query", w)
                         this.Table.WriteToJsonProperty("table", w))
+                )
+
+    type MapToObjectAction =
+        { [<JsonPropertyName "mapper">]
+          Mapper: string
+          [<JsonPropertyName "version">]
+          Version: int option }
+
+        interface IPipelineAction with
+
+            [<JsonPropertyName "actionType">]
+            member this.ActionType = nameof this
+
+
+            member this.GetActionName() = Transform.``map-to-object``.name
+
+            member this.ToSerializedActionParameters() =
+                writeJson (
+                    Json.writeObject (fun w ->
+                        w.WriteString("mapper", this.Mapper)
+                        this.Version |> Option.iter (fun v -> w.WriteNumber("version", 0)))
                 )
