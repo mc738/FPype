@@ -46,3 +46,58 @@ module Transform =
                         this.Table.WriteToJsonProperty("query", w)
                         this.Table.WriteToJsonProperty("table", w))
                 )
+
+    type AggregateByDateAndCategoryAction =
+        { [<JsonPropertyName "dateGroups">]
+          DateGroups: IDateGroups
+          [<JsonPropertyName "categoryField">]
+          CategoryField: string
+          [<JsonPropertyName "query">]
+          Query: ActionQueryVersion
+          [<JsonPropertyName "table">]
+          Table: ActionTableVersion }
+
+        interface IPipelineAction with
+
+            [<JsonPropertyName "actionType">]
+            member this.ActionType = nameof this
+
+            member this.GetActionName() =
+                Transform.``aggregate-by-date-and-category``.name
+
+            member this.ToSerializedActionParameters() =
+                writeJson (
+                    Json.writeObject (fun w ->
+                        this.DateGroups.WriteToJsonProperty("dateGroups", w)
+                        w.WriteString("categoryField", this.CategoryField)
+                        this.Table.WriteToJsonProperty("query", w)
+                        this.Table.WriteToJsonProperty("table", w))
+                )
+
+    
+    type AggregateByDateAction =
+        { [<JsonPropertyName "dateGroups">]
+          DateGroups: IDateGroups
+          [<JsonPropertyName "categoryField">]
+          CategoryField: string
+          [<JsonPropertyName "query">]
+          Query: ActionQueryVersion
+          [<JsonPropertyName "table">]
+          Table: ActionTableVersion }
+
+        interface IPipelineAction with
+
+            [<JsonPropertyName "actionType">]
+            member this.ActionType = nameof this
+
+            member this.GetActionName() =
+                Transform.``aggregate-by-date-and-category``.name
+
+            member this.ToSerializedActionParameters() =
+                writeJson (
+                    Json.writeObject (fun w ->
+                        this.DateGroups.WriteToJsonProperty("dateGroups", w)
+                        w.WriteString("categoryField", this.CategoryField)
+                        this.Table.WriteToJsonProperty("query", w)
+                        this.Table.WriteToJsonProperty("table", w))
+                )
