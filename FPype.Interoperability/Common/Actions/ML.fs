@@ -140,13 +140,27 @@ module ML =
                     w.WriteString("dataType", this.DataType))
                 writer
 
-    
-    
+    type MLRowFilter =
+        { [<JsonPropertyName "columnName">]
+          ColumnName: string
+          [<JsonPropertyName "minimum">]
+          Minimum: float option
+          [<JsonPropertyName "maximum">]
+          Maximum: float option }
+
+        member this.WriteToJsonValue(writer) =
+            Json.writeObject
+                (fun w ->
+                    w.WriteString("columnName", this.ColumnName)
+                    this.Minimum |> Option.iter (fun v -> w.WriteNumber("minimum", v))
+                    this.Maximum |> Option.iter (fun v -> w.WriteNumber("maximum", v)))
+                writer
+
     type GeneralSettings =
         { [<JsonPropertyName "hasHeaders">]
           HasHeaders: bool
           [<JsonPropertyName "separators">]
-          Separators: char array
+          Separators: string array
           [<JsonPropertyName "allowQuoting">]
           AllowQuoting: bool
           [<JsonPropertyName "readMultilines">]
@@ -154,9 +168,17 @@ module ML =
           [<JsonPropertyName "trainingTestSplit">]
           TrainingTestSplit: float
           Columns: MLDataColumn list
-          RowFilters: RowFilter list
+          RowFilters: MLRowFilter list
           [<JsonPropertyName "transformations">]
           Transformations: ITransformationType list }
+        
+        member this.WriteToJsonValue(writer) =
+            Json.writeObject
+                (fun w ->
+                    w.WriteString("columnName", this.ColumnName)
+                    this.Minimum |> Option.iter (fun v -> w.WriteNumber("minimum", v))
+                    this.Maximum |> Option.iter (fun v -> w.WriteNumber("maximum", v)))
+                writer
 
     type TrainBinaryClassificationModelAction =
         { [<JsonPropertyName "modelName">]
