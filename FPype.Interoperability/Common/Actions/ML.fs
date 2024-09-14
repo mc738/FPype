@@ -123,9 +123,40 @@ module ML =
                         w.WriteString("outputColumnName", this.OutputColumnName)
                         w.WriteString("inputColumnName", this.InputColumnName))
                     writer
-                    
-                    
-    type 
+
+    type MLDataColumn =
+        { [<JsonPropertyName "index">]
+          Index: int
+          [<JsonPropertyName "name">]
+          Name: string
+          [<JsonPropertyName "dataType">]
+          DataType: string }
+
+        member this.WriteToJsonValue(writer) =
+            Json.writeObject
+                (fun w ->
+                    w.WriteNumber("index", this.Index)
+                    w.WriteString("name", this.Name)
+                    w.WriteString("dataType", this.DataType))
+                writer
+
+    
+    
+    type GeneralSettings =
+        { [<JsonPropertyName "hasHeaders">]
+          HasHeaders: bool
+          [<JsonPropertyName "separators">]
+          Separators: char array
+          [<JsonPropertyName "allowQuoting">]
+          AllowQuoting: bool
+          [<JsonPropertyName "readMultilines">]
+          ReadMultilines: bool
+          [<JsonPropertyName "trainingTestSplit">]
+          TrainingTestSplit: float
+          Columns: MLDataColumn list
+          RowFilters: RowFilter list
+          [<JsonPropertyName "transformations">]
+          Transformations: ITransformationType list }
 
     type TrainBinaryClassificationModelAction =
         { [<JsonPropertyName "modelName">]
