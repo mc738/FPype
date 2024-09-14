@@ -240,12 +240,73 @@ module ML =
                         |> Option.iter (fun v -> w.WriteNumber("maximumNumberOfIterations", v)))
                     name
                     writer
-    
+
+
+    type IMulticlassTrainerSettings =
+
+        abstract member TrainerType: string
+
+        abstract member WriteToJsonProperty: Name: string * Writer: Utf8JsonWriter -> unit
+
+    type SdcaMaximumEntropyMulticlassTrainerSettings =
+        { [<JsonPropertyName "labelColumnName">]
+          LabelColumnName: string
+          [<JsonPropertyName "featureColumnName">]
+          FeatureColumnName: string
+          [<JsonPropertyName "exampleWeightColumnName">]
+          ExampleWeightColumnName: string
+          [<JsonPropertyName "l2Regularization">]
+          L2Regularization: double option
+          [<JsonPropertyName "l1Regularization">]
+          L1Regularization: double option
+          [<JsonPropertyName "maximumNumberOfIterations">]
+          MaximumNumberOfIterations: int option }
+        
+        interface IMulticlassTrainerSettings with
+        
+            [<JsonPropertyName "trainerType">]
+            member this.TrainerType = nameof this
+            
+            
+            member this.WriteToJsonProperty(name, writer) =
+                Json.writePropertyObject
+                    (fun w ->
+                        w.WriteString("type", "sdca-maximum-entropy")
+                        w.WriteString("labelColumnName", this.LabelColumnName)
+                        w.WriteString("featureColumnName", this.FeatureColumnName)
+                        w.WriteString("exampleWeightColumnName", this.ExampleWeightColumnName)
+
+                        this.L2Regularization
+                        |> Option.iter (fun v -> w.WriteNumber("l2Regularization", v))
+
+                        this.L1Regularization
+                        |> Option.iter (fun v -> w.WriteNumber("l1Regularization", v))
+
+                        this.MaximumNumberOfIterations
+                        |> Option.iter (fun v -> w.WriteNumber("maximumNumberOfIterations", v)))
+                    name
+                    writer
+
     type BinaryClassificationTrainingSettings =
         { [<JsonPropertyName "general">]
           General: GeneralSettings
           [<JsonPropertyName "trainer">]
           Trainer: IBinaryTrainerSettings }
+
+        member this.WriteToJsonProperty(name, writer) =
+
+            Json.writePropertyObject
+                (fun w ->
+                    this.General.WriteToJsonProperty("general", w)
+                    this.Trainer.WriteToJsonProperty("trainer", w))
+                name
+                writer
+
+    type MulticlassClassificationTrainingSettings =
+        { [<JsonPropertyName "general">]
+          General: GeneralSettings
+          [<JsonPropertyName "trainer">]
+          Trainer: IMulticlassTrainerSettings }
 
         member this.WriteToJsonProperty(name, writer) =
 
@@ -287,11 +348,35 @@ module ML =
                         w.WriteString("modelSavePath", this.ModelSavePath)
                         this.ContextSeed |> Option.iter (fun v -> w.WriteNumber("contextSeed", v))
                         ())
-                    )
-
+                )
 
     type TrainMulticlassClassificationModelAction =
-        {
+        { [<JsonPropertyName "trainingSettings">]
+          TrainingSettings: MulticlassClassificationTrainingSettings
+          [<JsonPropertyName "modelName">]
+          ModelName: string
+          // TODO fix this?
+          [<JsonPropertyName "source">]
+          DataSource: string
+          [<JsonPropertyName "modelSavePath">]
+          ModelSavePath: string
+          [<JsonPropertyName "contextSeed">]
+          ContextSeed: int option }
+
+        interface IPipelineAction with
+        
+            [<JsonPropertyName "actionType">]
+            member this.ActionType = failwith "todo"
             
-        }
- 
+            member this.GetActionName() = ML.``train-multiclass-classification-model``.name
+            
+            member this.ToSerializedActionParameters() =
+                writeJson (
+                    Json.writeObject (fun w ->
+                        this.TrainingSettings.WriteToJsonProperty("trainingSettings", w)
+                        w.WriteString("modelName", this.ModelName)
+                        w.WriteString("source", this.DataSource)
+                        w.WriteString("modelSavePath", this.ModelSavePath)
+                        this.ContextSeed |> Option.iter (fun v -> w.WriteNumber("contextSeed", v))
+                        ())
+                )
