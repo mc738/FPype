@@ -160,24 +160,40 @@ module ML =
         { [<JsonPropertyName "hasHeaders">]
           HasHeaders: bool
           [<JsonPropertyName "separators">]
-          Separators: string array
+          Separators: string list
           [<JsonPropertyName "allowQuoting">]
           AllowQuoting: bool
           [<JsonPropertyName "readMultilines">]
           ReadMultilines: bool
           [<JsonPropertyName "trainingTestSplit">]
           TrainingTestSplit: float
+          [<JsonPropertyName "columns">]
           Columns: MLDataColumn list
+          [<JsonPropertyName "rowFilters">]
           RowFilters: MLRowFilter list
           [<JsonPropertyName "transformations">]
           Transformations: ITransformationType list }
-        
+
         member this.WriteToJsonValue(writer) =
             Json.writeObject
                 (fun w ->
-                    w.WriteString("columnName", this.ColumnName)
-                    this.Minimum |> Option.iter (fun v -> w.WriteNumber("minimum", v))
-                    this.Maximum |> Option.iter (fun v -> w.WriteNumber("maximum", v)))
+                    w.WriteBoolean("hasHeaders", this.HasHeaders)
+                    Json.writeArray (fun aw -> this.Separators |> List.iter aw.WriteStringValue) "separators" w
+                    w.WriteBoolean("allowQuoting", this.AllowQuoting)
+                    w.WriteBoolean("readMultilines", this.ReadMultilines)
+                    w.WriteBoolean("trainingTestSplit", this.ReadMultilines)
+                    w.WriteNumber("trainingTestSplit", this.TrainingTestSplit)
+                    Json.writeArray (fun aw -> this.Columns |> List.iter (fun c -> c.WriteToJsonValue aw)) "columns" w
+
+                    Json.writeArray
+                        (fun aw -> this.RowFilters |> List.iter (fun rf -> rf.WriteToJsonValue aw))
+                        "rowFilters"
+                        w
+
+                    Json.writeArray
+                        (fun aw -> this.Transformations |> List.iter (fun t -> t.WriteToJsonValue aw))
+                        "transformations"
+                        w)
                 writer
 
     type TrainBinaryClassificationModelAction =
