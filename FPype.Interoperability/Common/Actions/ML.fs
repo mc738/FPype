@@ -257,7 +257,9 @@ module ML =
                 writer
 
     type TrainBinaryClassificationModelAction =
-        { [<JsonPropertyName "modelName">]
+        { [<JsonPropertyName "trainingSettings">]
+          TrainingSettings: BinaryClassificationTrainingSettings
+          [<JsonPropertyName "modelName">]
           ModelName: string
           // TODO fix this?
           [<JsonPropertyName "source">]
@@ -276,7 +278,20 @@ module ML =
             member this.GetActionName() =
                 ML.``train-binary-classification-model``.name
 
-            member this.ToSerializedActionParameters() = failwith "todo"
+            member this.ToSerializedActionParameters() =
+                writeJson (
+                    Json.writeObject (fun w ->
+                        this.TrainingSettings.WriteToJsonProperty("trainingSettings", w)
+                        w.WriteString("modelName", this.ModelName)
+                        w.WriteString("source", this.DataSource)
+                        w.WriteString("modelSavePath", this.ModelSavePath)
+                        this.ContextSeed |> Option.iter (fun v -> w.WriteNumber("contextSeed", v))
+                        ())
+                    )
 
 
+    type TrainMulticlassClassificationModelAction =
+        {
+            
+        }
  
