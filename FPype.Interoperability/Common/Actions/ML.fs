@@ -174,8 +174,8 @@ module ML =
           [<JsonPropertyName "transformations">]
           Transformations: ITransformationType list }
 
-        member this.WriteToJsonValue(writer) =
-            Json.writeObject
+        member this.WriteToJsonProperty(name, writer) =
+            Json.writePropertyObject
                 (fun w ->
                     w.WriteBoolean("hasHeaders", this.HasHeaders)
                     Json.writeArray (fun aw -> this.Separators |> List.iter aw.WriteStringValue) "separators" w
@@ -194,6 +194,66 @@ module ML =
                         (fun aw -> this.Transformations |> List.iter (fun t -> t.WriteToJsonValue aw))
                         "transformations"
                         w)
+                name
+                writer
+
+    type IBinaryTrainerSettings =
+
+        abstract member TrainerType: string
+
+        abstract member WriteToJsonProperty: Name: string * Writer: Utf8JsonWriter -> unit
+
+    type SdcaLogisticRegressionBinaryTrainerSettings =
+        { [<JsonPropertyName "labelColumnName">]
+          LabelColumnName: string
+          [<JsonPropertyName "featureColumnName">]
+          FeatureColumnName: string
+          [<JsonPropertyName "exampleWeightColumnName">]
+          ExampleWeightColumnName: string
+          [<JsonPropertyName "l2Regularization">]
+          L2Regularization: double option
+          [<JsonPropertyName "l1Regularization">]
+          L1Regularization: double option
+          [<JsonPropertyName "maximumNumberOfIterations">]
+          MaximumNumberOfIterations: int option }
+
+        interface IBinaryTrainerSettings with
+
+            [<JsonPropertyName "trainerType">]
+            member this.TrainerType = nameof this
+
+            member this.WriteToJsonProperty(name, writer) =
+                Json.writePropertyObject
+                    (fun w ->
+                        w.WriteString("type", "sdca-logistic-regression")
+                        w.WriteString("labelColumnName", this.LabelColumnName)
+                        w.WriteString("featureColumnName", this.FeatureColumnName)
+                        w.WriteString("exampleWeightColumnName", this.ExampleWeightColumnName)
+
+                        this.L2Regularization
+                        |> Option.iter (fun v -> w.WriteNumber("l2Regularization", v))
+
+                        this.L1Regularization
+                        |> Option.iter (fun v -> w.WriteNumber("l1Regularization", v))
+
+                        this.MaximumNumberOfIterations
+                        |> Option.iter (fun v -> w.WriteNumber("maximumNumberOfIterations", v)))
+                    name
+                    writer
+    
+    type BinaryClassificationTrainingSettings =
+        { [<JsonPropertyName "general">]
+          General: GeneralSettings
+          [<JsonPropertyName "trainer">]
+          Trainer: IBinaryTrainerSettings }
+
+        member this.WriteToJsonProperty(name, writer) =
+
+            Json.writePropertyObject
+                (fun w ->
+                    this.General.WriteToJsonProperty("general", w)
+                    this.Trainer.WriteToJsonProperty("trainer", w))
+                name
                 writer
 
     type TrainBinaryClassificationModelAction =
@@ -219,6 +279,4 @@ module ML =
             member this.ToSerializedActionParameters() = failwith "todo"
 
 
-
-
-    ()
+ 
