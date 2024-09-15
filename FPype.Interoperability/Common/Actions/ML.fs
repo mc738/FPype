@@ -291,7 +291,46 @@ module ML =
         abstract member TrainerType: string
 
         abstract member WriteToJsonProperty: Name: string * Writer: Utf8JsonWriter -> unit
+
+    type SdcaRegressionTrainerSettings =
+        { [<JsonPropertyName "labelColumnName">]
+          LabelColumnName: string
+          [<JsonPropertyName "featureColumnName">]
+          FeatureColumnName: string
+          [<JsonPropertyName "exampleWeightColumnName">]
+          ExampleWeightColumnName: string
+          [<JsonPropertyName "l2Regularization">]
+          L2Regularization: double option
+          [<JsonPropertyName "l1Regularization">]
+          L1Regularization: double option
+          [<JsonPropertyName "maximumNumberOfIterations">]
+          MaximumNumberOfIterations: int option }
+        
+        interface IRegressionTrainerSettings with
+            
+            [<JsonPropertyName "trainerType">]
+            member this.TrainerType = nameof this
+            member this.WriteToJsonProperty(name, writer) =
+                Json.writePropertyObject
+                    (fun w ->
+                        w.WriteString("type", "sdca")
+                        w.WriteString("labelColumnName", this.LabelColumnName)
+                        w.WriteString("featureColumnName", this.FeatureColumnName)
+                        w.WriteString("exampleWeightColumnName", this.ExampleWeightColumnName)
+
+                        this.L2Regularization
+                        |> Option.iter (fun v -> w.WriteNumber("l2Regularization", v))
+
+                        this.L1Regularization
+                        |> Option.iter (fun v -> w.WriteNumber("l1Regularization", v))
+
+                        this.MaximumNumberOfIterations
+                        |> Option.iter (fun v -> w.WriteNumber("maximumNumberOfIterations", v)))
+                    name
+                    writer
     
+    
+        
     type BinaryClassificationTrainingSettings =
         { [<JsonPropertyName "general">]
           General: GeneralSettings
