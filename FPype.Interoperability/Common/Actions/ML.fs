@@ -361,19 +361,38 @@ module ML =
           MatrixColumnIndexColumnName: string
           [<JsonPropertyName "matrixRowIndexColumnName">]
           MatrixRowIndexColumnName: string }
-        
+
         interface IMatrixFactorizationTrainerSettings with
-        
+
             [<JsonPropertyName "trainerType">]
             member this.TrainerType = nameof this
+
             member this.WriteToJsonProperty(name, writer) =
                 Json.writePropertyObject
                     (fun w ->
-                        this.Alpha |> Option.iter (fun v -> w.WriteString("", ))
-                        ())
+                        this.Alpha |> Option.iter (fun v -> w.WriteNumber("alpha", v))
+                        this.C |> Option.iter (fun v -> w.WriteNumber("c", v))
+                        this.Lambda |> Option.iter (fun v -> w.WriteNumber("lambda", v))
+
+                        this.ApproximationRank
+                        |> Option.iter (fun v -> w.WriteNumber("approximationRank", v))
+
+                        this.LearningRate |> Option.iter (fun v -> w.WriteNumber("learningRate", v))
+                        w.WriteString("lossFunction", this.LossFunction)
+                        this.NonNegative |> Option.iter (fun v -> w.WriteBoolean("nonNegative", v))
+                        w.WriteString("labelColumnName", this.LabelColumnName)
+
+                        this.NumberOfIterations
+                        |> Option.iter (fun v -> w.WriteNumber("numberOfIterations", v))
+
+                        this.NumberOfThreads
+                        |> Option.iter (fun v -> w.WriteNumber("numberOfThreads", v))
+
+                        w.WriteString("matrixColumnIndexColumnName", this.MatrixColumnIndexColumnName)
+                        w.WriteString("matrixRowIndexColumnName", this.MatrixRowIndexColumnName))
                     name
                     writer
-        
+
     type BinaryClassificationTrainingSettings =
         { [<JsonPropertyName "general">]
           General: GeneralSettings
@@ -423,7 +442,7 @@ module ML =
         { [<JsonPropertyName "general">]
           General: GeneralSettings
           [<JsonPropertyName "trainer">]
-          Trainer: IRegressionTrainerSettings }
+          Trainer: IMatrixFactorizationTrainerSettings }
 
         member this.WriteToJsonProperty(name, writer) =
 
@@ -532,7 +551,7 @@ module ML =
 
     type TrainMatrixFactorizationModelAction =
         { [<JsonPropertyName "trainingSettings">]
-          TrainingSettings: RegressionTrainingSettings
+          TrainingSettings: MatrixFactorizationTrainingSettings
           [<JsonPropertyName "modelName">]
           ModelName: string
           // TODO fix this?
@@ -548,7 +567,7 @@ module ML =
             [<JsonPropertyName "actionType">]
             member this.ActionType = nameof this
 
-            member this.GetActionName() = ML.``train-regression-model``.name
+            member this.GetActionName() = ML.``train-matrix-factorization-model``.name
 
             member this.ToSerializedActionParameters() =
                 writeJson (
