@@ -365,7 +365,7 @@ module ML =
         { [<JsonPropertyName "general">]
           General: GeneralSettings
           [<JsonPropertyName "trainer">]
-          Trainer: IMulticlassTrainerSettings }
+          Trainer: IRegressionTrainerSettings }
 
         member this.WriteToJsonProperty(name, writer) =
 
@@ -443,7 +443,7 @@ module ML =
 
     type TrainRegressionModelAction =
         { [<JsonPropertyName "trainingSettings">]
-          TrainingSettings: MulticlassClassificationTrainingSettings
+          TrainingSettings: RegressionTrainingSettings
           [<JsonPropertyName "modelName">]
           ModelName: string
           // TODO fix this?
