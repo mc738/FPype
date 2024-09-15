@@ -305,11 +305,12 @@ module ML =
           L1Regularization: double option
           [<JsonPropertyName "maximumNumberOfIterations">]
           MaximumNumberOfIterations: int option }
-        
+
         interface IRegressionTrainerSettings with
-            
+
             [<JsonPropertyName "trainerType">]
             member this.TrainerType = nameof this
+
             member this.WriteToJsonProperty(name, writer) =
                 Json.writePropertyObject
                     (fun w ->
@@ -328,8 +329,50 @@ module ML =
                         |> Option.iter (fun v -> w.WriteNumber("maximumNumberOfIterations", v)))
                     name
                     writer
-    
-    
+
+    type IMatrixFactorizationTrainerSettings =
+
+        abstract member TrainerType: string
+
+        abstract member WriteToJsonProperty: Name: string * Writer: Utf8JsonWriter -> unit
+
+    type MatrixFactorizationTrainerSettings =
+        { [<JsonPropertyName "alpha">]
+          Alpha: double option
+          [<JsonPropertyName "c">]
+          C: double option
+          [<JsonPropertyName "lambda">]
+          Lambda: double option
+          [<JsonPropertyName "approximationRank">]
+          ApproximationRank: int option
+          [<JsonPropertyName "learningRate">]
+          LearningRate: double option
+          [<JsonPropertyName "lossFunction">]
+          LossFunction: string
+          [<JsonPropertyName "nonNegative">]
+          NonNegative: bool option
+          [<JsonPropertyName "labelColumnName">]
+          LabelColumnName: string
+          [<JsonPropertyName "numberOfIterations">]
+          NumberOfIterations: int option
+          [<JsonPropertyName "numberOfThreads">]
+          NumberOfThreads: int option
+          [<JsonPropertyName "matrixColumnIndexColumnName">]
+          MatrixColumnIndexColumnName: string
+          [<JsonPropertyName "matrixRowIndexColumnName">]
+          MatrixRowIndexColumnName: string }
+        
+        interface IMatrixFactorizationTrainerSettings with
+        
+            [<JsonPropertyName "trainerType">]
+            member this.TrainerType = nameof this
+            member this.WriteToJsonProperty(name, writer) =
+                Json.writePropertyObject
+                    (fun w ->
+                        this.Alpha |> Option.iter (fun v -> w.WriteString("", ))
+                        ())
+                    name
+                    writer
         
     type BinaryClassificationTrainingSettings =
         { [<JsonPropertyName "general">]
@@ -360,8 +403,23 @@ module ML =
                     this.Trainer.WriteToJsonProperty("trainer", w))
                 name
                 writer
-                
+
     type RegressionTrainingSettings =
+        { [<JsonPropertyName "general">]
+          General: GeneralSettings
+          [<JsonPropertyName "trainer">]
+          Trainer: IRegressionTrainerSettings }
+
+        member this.WriteToJsonProperty(name, writer) =
+
+            Json.writePropertyObject
+                (fun w ->
+                    this.General.WriteToJsonProperty("general", w)
+                    this.Trainer.WriteToJsonProperty("trainer", w))
+                name
+                writer
+
+    type MatrixFactorizationTrainingSettings =
         { [<JsonPropertyName "general">]
           General: GeneralSettings
           [<JsonPropertyName "trainer">]
@@ -442,6 +500,37 @@ module ML =
                 )
 
     type TrainRegressionModelAction =
+        { [<JsonPropertyName "trainingSettings">]
+          TrainingSettings: RegressionTrainingSettings
+          [<JsonPropertyName "modelName">]
+          ModelName: string
+          // TODO fix this?
+          [<JsonPropertyName "source">]
+          DataSource: string
+          [<JsonPropertyName "modelSavePath">]
+          ModelSavePath: string
+          [<JsonPropertyName "contextSeed">]
+          ContextSeed: int option }
+
+        interface IPipelineAction with
+
+            [<JsonPropertyName "actionType">]
+            member this.ActionType = nameof this
+
+            member this.GetActionName() = ML.``train-regression-model``.name
+
+            member this.ToSerializedActionParameters() =
+                writeJson (
+                    Json.writeObject (fun w ->
+                        this.TrainingSettings.WriteToJsonProperty("trainingSettings", w)
+                        w.WriteString("modelName", this.ModelName)
+                        w.WriteString("source", this.DataSource)
+                        w.WriteString("modelSavePath", this.ModelSavePath)
+                        this.ContextSeed |> Option.iter (fun v -> w.WriteNumber("contextSeed", v))
+                        ())
+                )
+
+    type TrainMatrixFactorizationModelAction =
         { [<JsonPropertyName "trainingSettings">]
           TrainingSettings: RegressionTrainingSettings
           [<JsonPropertyName "modelName">]
