@@ -241,7 +241,6 @@ module ML =
                     name
                     writer
 
-
     type IMulticlassTrainerSettings =
 
         abstract member TrainerType: string
@@ -261,13 +260,13 @@ module ML =
           L1Regularization: double option
           [<JsonPropertyName "maximumNumberOfIterations">]
           MaximumNumberOfIterations: int option }
-        
+
         interface IMulticlassTrainerSettings with
-        
+
             [<JsonPropertyName "trainerType">]
             member this.TrainerType = nameof this
-            
-            
+
+
             member this.WriteToJsonProperty(name, writer) =
                 Json.writePropertyObject
                     (fun w ->
@@ -287,6 +286,12 @@ module ML =
                     name
                     writer
 
+    type IRegressionTrainerSettings =
+
+        abstract member TrainerType: string
+
+        abstract member WriteToJsonProperty: Name: string * Writer: Utf8JsonWriter -> unit
+    
     type BinaryClassificationTrainingSettings =
         { [<JsonPropertyName "general">]
           General: GeneralSettings
@@ -303,6 +308,21 @@ module ML =
                 writer
 
     type MulticlassClassificationTrainingSettings =
+        { [<JsonPropertyName "general">]
+          General: GeneralSettings
+          [<JsonPropertyName "trainer">]
+          Trainer: IMulticlassTrainerSettings }
+
+        member this.WriteToJsonProperty(name, writer) =
+
+            Json.writePropertyObject
+                (fun w ->
+                    this.General.WriteToJsonProperty("general", w)
+                    this.Trainer.WriteToJsonProperty("trainer", w))
+                name
+                writer
+                
+    type RegressionTrainingSettings =
         { [<JsonPropertyName "general">]
           General: GeneralSettings
           [<JsonPropertyName "trainer">]
@@ -364,12 +384,44 @@ module ML =
           ContextSeed: int option }
 
         interface IPipelineAction with
-        
+
             [<JsonPropertyName "actionType">]
-            member this.ActionType = failwith "todo"
-            
-            member this.GetActionName() = ML.``train-multiclass-classification-model``.name
-            
+            member this.ActionType = nameof this
+
+            member this.GetActionName() =
+                ML.``train-multiclass-classification-model``.name
+
+            member this.ToSerializedActionParameters() =
+                writeJson (
+                    Json.writeObject (fun w ->
+                        this.TrainingSettings.WriteToJsonProperty("trainingSettings", w)
+                        w.WriteString("modelName", this.ModelName)
+                        w.WriteString("source", this.DataSource)
+                        w.WriteString("modelSavePath", this.ModelSavePath)
+                        this.ContextSeed |> Option.iter (fun v -> w.WriteNumber("contextSeed", v))
+                        ())
+                )
+
+    type TrainRegressionModelAction =
+        { [<JsonPropertyName "trainingSettings">]
+          TrainingSettings: MulticlassClassificationTrainingSettings
+          [<JsonPropertyName "modelName">]
+          ModelName: string
+          // TODO fix this?
+          [<JsonPropertyName "source">]
+          DataSource: string
+          [<JsonPropertyName "modelSavePath">]
+          ModelSavePath: string
+          [<JsonPropertyName "contextSeed">]
+          ContextSeed: int option }
+
+        interface IPipelineAction with
+
+            [<JsonPropertyName "actionType">]
+            member this.ActionType = nameof this
+
+            member this.GetActionName() = ML.``train-regression-model``.name
+
             member this.ToSerializedActionParameters() =
                 writeJson (
                     Json.writeObject (fun w ->
