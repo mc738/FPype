@@ -27,8 +27,8 @@ module Import =
     type ChunkFileAction =
         { [<JsonPropertyName "path">]
           Path: string
-          [<JsonPropertyName "collectionName">]
-          CollectionName: string
+          [<JsonPropertyName "collection">]
+          Collection: string
           [<JsonPropertyName "chunkSize">]
           ChunkSize: int }
 
@@ -41,7 +41,7 @@ module Import =
 
             member this.ToSerializedActionParameters() =
                 ({ Path = this.Path
-                   CollectionName = this.CollectionName
+                   CollectionName = this.Collection
                    ChunkSize = this.ChunkSize }
                 : Import.``chunk-file``.Parameters)
                 |> serializeAsJson
@@ -73,6 +73,6 @@ module Import =
                    AdditionalHeaders = this.AdditionHeaders |> List.map (fun kv -> kv.Key, kv.Value) |> Map.ofList
                    Name = this.Name
                    ResponseType = this.ResponseType
-                   Collection = this.Collection }
+                   CollectionName = this.Collection }
                 : Import.``http-get``.Parameters)
                 |> serializeAsJson
