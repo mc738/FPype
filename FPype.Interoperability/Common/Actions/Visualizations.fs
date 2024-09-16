@@ -1,9 +1,13 @@
 namespace FPype.Interoperability.Common.Actions
 
-open System.Text.Json.Serialization
 
 module Visualizations =
 
+    open System.Text.Json
+    open FsToolbox.Core
+    open System.Text.Json.Serialization
+    open FPype.Actions
+    
     type ValueRangeItem =
         { [<JsonPropertyName("isUnits")>]
           IsUnits: bool
@@ -47,8 +51,12 @@ module Visualizations =
         }
         
         interface IPipelineAction with
-            member this.ActionType = failwith "todo"
-            member this.GetActionName() = failwith "todo"
+        
+            [<JsonPropertyName "actionType">]
+            member this.ActionType = nameof this
+            
+            
+            member this.GetActionName() = Visualizations.``generate-time-series-chart-collection``.name
             member this.ToSerializedActionParameters() = failwith "todo"
 
     and TimeSeriesChartGeneratorSettings =
