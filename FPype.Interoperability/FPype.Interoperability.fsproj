@@ -10,6 +10,10 @@
         <Compile Include="Common\Actions\Utils.fs" />
         <Compile Include="Common\Actions\Import.fs" />
         <Compile Include="Common\Actions\Extract.fs" />
+        <Compile Include="Common\Actions\Transform.fs" />
+        <Compile Include="Common\Actions\Export.fs" />
+        <Compile Include="Common\Actions\ML.fs" />
+        <Compile Include="Common\Actions\Visualizations.fs" />
         <Compile Include="Common\Actions\JsonSerialization.fs" />
     </ItemGroup>
 
