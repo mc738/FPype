@@ -137,6 +137,3 @@ type PipelineContext =
 
             Ok store
         | Error e -> Error e
-
-
-    
