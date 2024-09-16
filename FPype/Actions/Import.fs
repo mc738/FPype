@@ -87,7 +87,7 @@ module Import =
               AdditionalHeaders: Map<string, string>
               Name: string
               ResponseType: string option
-              Collection: string option }
+              CollectionName: string option }
 
         let run (parameters: Parameters) (store: PipelineStore) =
             use client = new HttpClient()
@@ -117,7 +117,7 @@ module Import =
                     r.ToUtf8Bytes()
                 )
 
-                let collection = parameters.Collection |> Option.defaultValue "imports"
+                let collection = parameters.CollectionName |> Option.defaultValue "imports"
 
                 store.AddDataSource(
                     parameters.Name,
