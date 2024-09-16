@@ -45,6 +45,11 @@ module Visualizations =
     [JsonPropertyName("settings")] public TimeSeriesChartGeneratorSettings Settings { get; set; } = new();
     *)
         }
+        
+        interface IPipelineAction with
+            member this.ActionType = failwith "todo"
+            member this.GetActionName() = failwith "todo"
+            member this.ToSerializedActionParameters() = failwith "todo"
 
     and TimeSeriesChartGeneratorSettings =
         { [<JsonPropertyName "timestampValueIndex">]
