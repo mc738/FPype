@@ -84,15 +84,6 @@ module Visualizations =
           MaximumValue: ValueRangeItem
 
         (*
-            [JsonPropertyName("timestampValueIndex")]
-    public int TimestampValueIndex { get; set; }
-
-    [JsonPropertyName("timestampFormat")] public string TimestampFormat { get; set; } = string.Empty;
-
-    [JsonPropertyName("minimumValue")] public ValueRangeItem MinimumValue { get; set; } = new();
-
-    [JsonPropertyName("maximumValue")] public ValueRangeItem MaximumValue { get; set; } = new();
-
     [JsonPropertyName("chartSettings")] public TimeSeriesChartSettings ChartSettings { get; set; } = new();
 
     [JsonPropertyName("seriesSettings")]
@@ -108,12 +99,14 @@ module Visualizations =
                     w.WriteString("timestampFormat", this.TimestampFormat)
                     this.MinimumValue.WriteToJsonProperty("minimumValue", w)
                     this.MaximumValue.WriteToJsonProperty("maximumValue", w)
-
-
-                    ())
+                    
+                    )
                 name
                 writer
 
-
+    and TimeSeriesChartSettings = {
+        
+    }
+    
 
     ()
