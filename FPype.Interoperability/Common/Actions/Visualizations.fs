@@ -85,5 +85,15 @@ module Visualizations =
         *)
 
         }
+        
+        member this.WriteToJsonProperty(name, writer) =
+            Json.writePropertyObject (fun w ->
+                
+                
+                ())
+                name
+                writer
+        
+        
 
     ()
