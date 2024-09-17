@@ -55,7 +55,6 @@ module Visualizations =
             [<JsonPropertyName "actionType">]
             member this.ActionType = nameof this
             
-            
             member this.GetActionName() = Visualizations.``generate-time-series-chart-collection``.name
             member this.ToSerializedActionParameters() = failwith "todo"
 
