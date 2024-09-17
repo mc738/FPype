@@ -63,6 +63,10 @@ module Visualizations =
           TimestampValueIndex: int
           [<JsonPropertyName "timestampFormat">]
           TimestampFormat: string
+          [<JsonPropertyName "minimumValue">]
+          MinimumValue: ValueRangeItem
+          [<JsonPropertyName "maximumValue">]
+          MaximumValue: ValueRangeItem
 
         (*
             [JsonPropertyName("timestampValueIndex")]
