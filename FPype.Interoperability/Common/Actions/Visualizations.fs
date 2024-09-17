@@ -106,6 +106,8 @@ module Visualizations =
                 (fun w ->
                     w.WriteNumber("timestampValueIndex", this.TimestampValueIndex)
                     w.WriteString("timestampFormat", this.TimestampFormat)
+                    this.MinimumValue.WriteToJsonProperty("minimumValue", w)
+                    this.MaximumValue.WriteToJsonProperty("maximumValue", w)
 
 
                     ())
