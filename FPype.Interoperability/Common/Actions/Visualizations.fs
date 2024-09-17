@@ -13,6 +13,13 @@ module Visualizations =
           IsUnits: bool
           [<JsonPropertyName("value")>]
           Value: double }
+        
+        member this.WriteToJsonProperty(name, writer) =
+            Json.writePropertyObject (fun w ->
+                
+                ())
+                name
+                writer
 
     type GenerateTimeSeriesChartCollectionAction =
         { [<JsonPropertyName "resultBucket">]
@@ -88,6 +95,8 @@ module Visualizations =
         
         member this.WriteToJsonProperty(name, writer) =
             Json.writePropertyObject (fun w ->
+                w.WriteNumber("timestampValueIndex", this.TimestampValueIndex)
+                w.WriteString("timestampFormat", this.TimestampFormat)
                 
                 
                 ())
