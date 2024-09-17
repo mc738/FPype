@@ -7,17 +7,23 @@ module Visualizations =
     open FsToolbox.Core
     open System.Text.Json.Serialization
     open FPype.Actions
-    
+
     type ValueRangeItem =
         { [<JsonPropertyName("isUnits")>]
           IsUnits: bool
           [<JsonPropertyName("value")>]
           Value: double }
-        
+
         member this.WriteToJsonProperty(name, writer) =
-            Json.writePropertyObject (fun w ->
-                
-                ())
+            Json.writePropertyObject
+                (fun w ->
+                    match this.IsUnits with
+                    | true ->
+                        w.WriteString("type", "unitSize")
+                        w.WriteNumber("size", this.Value)
+                    | false ->
+                        w.WriteString("type", "specific")
+                        w.WriteNumber("value", this.Value))
                 name
                 writer
 
@@ -56,13 +62,15 @@ module Visualizations =
     [JsonPropertyName("settings")] public TimeSeriesChartGeneratorSettings Settings { get; set; } = new();
     *)
         }
-        
+
         interface IPipelineAction with
-        
+
             [<JsonPropertyName "actionType">]
             member this.ActionType = nameof this
-            
-            member this.GetActionName() = Visualizations.``generate-time-series-chart-collection``.name
+
+            member this.GetActionName() =
+                Visualizations.``generate-time-series-chart-collection``.name
+
             member this.ToSerializedActionParameters() = failwith "todo"
 
     and TimeSeriesChartGeneratorSettings =
@@ -92,17 +100,18 @@ module Visualizations =
         *)
 
         }
-        
+
         member this.WriteToJsonProperty(name, writer) =
-            Json.writePropertyObject (fun w ->
-                w.WriteNumber("timestampValueIndex", this.TimestampValueIndex)
-                w.WriteString("timestampFormat", this.TimestampFormat)
-                
-                
-                ())
+            Json.writePropertyObject
+                (fun w ->
+                    w.WriteNumber("timestampValueIndex", this.TimestampValueIndex)
+                    w.WriteString("timestampFormat", this.TimestampFormat)
+
+
+                    ())
                 name
                 writer
-        
-        
+
+
 
     ()
