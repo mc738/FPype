@@ -108,5 +108,6 @@ module Visualizations =
         
     }
     
+        member this.WriteToJsonProperty(name, writer)
 
     ()
