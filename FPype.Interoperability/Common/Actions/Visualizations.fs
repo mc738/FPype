@@ -115,6 +115,11 @@ module Visualizations =
         TopOffset: double option
         [<JsonPropertyName "leftOffset">]
         LeftOffset: double option
+        [<JsonPropertyName "rightOffset">]
+        RightOffset: double option
+        
+        
+        
         (*
         [JsonPropertyName("height")] public double? Height { get; set; }
 
