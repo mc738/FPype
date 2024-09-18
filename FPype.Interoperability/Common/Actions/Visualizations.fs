@@ -124,6 +124,9 @@ module Visualizations =
         XLabel: string
         [<JsonPropertyName "yLabel">]    
         YLabel: string
+        [<JsonPropertyName "yMajorMarkers">]    
+        YMajorMarkers: double list
+        
         
         (*
         [JsonPropertyName("height")] public double? Height { get; set; }
