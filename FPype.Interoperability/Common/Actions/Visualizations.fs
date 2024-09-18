@@ -105,7 +105,10 @@ module Visualizations =
                 writer
 
     and TimeSeriesChartSettings = {
+        [<JsonPropertyName "height">]
         Height: double option
+        [<JsonPropertyName "width">]    
+        Width: double option
         
         (*
         [JsonPropertyName("height")] public double? Height { get; set; }
