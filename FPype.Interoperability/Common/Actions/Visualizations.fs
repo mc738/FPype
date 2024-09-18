@@ -105,9 +105,35 @@ module Visualizations =
                 writer
 
     and TimeSeriesChartSettings = {
+        Height: double option
         
+        (*
+        [JsonPropertyName("height")] public double? Height { get; set; }
+
+    [JsonPropertyName("width")] public double? Width { get; set; }
+
+    [JsonPropertyName("bottomOffset")] public double? BottomOffset { get; set; }
+
+    [JsonPropertyName("topOffset")] public double? TopOffset { get; set; }
+
+    [JsonPropertyName("leftOffset")] public double? LeftOffset { get; set; }
+
+    [JsonPropertyName("rightOffset")] public double? RightOffset { get; set; }
+
+    [JsonPropertyName("legendPosition")] public LegendPosition LegendPosition { get; set; } = LegendPosition.None;
+
+    [JsonPropertyName("title")] public string Title { get; set; } = string.Empty;
+
+    [JsonPropertyName("xLabel")] public string XLabel { get; set; } = string.Empty;
+
+    [JsonPropertyName("yLabel")] public string YLabel { get; set; } = string.Empty;
+
+    [JsonPropertyName("yMajorMarkers")] public IEnumerable<double> YMajorMarkers { get; set; } = new List<double>();
+
+    [JsonPropertyName("yMinorMarkers")] public IEnumerable<double> YMinorMarkers { get; set; } = new List<double>();
+        *)
     }
     
-        member this.WriteToJsonProperty(name, writer)
+        member this.WriteToJsonProperty(name, writer) =
+            ()
 
-    ()
